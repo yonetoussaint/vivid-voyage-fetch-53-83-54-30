@@ -30,7 +30,6 @@ interface ReviewItemProps {
   onCommentClick?: (reviewId: string) => void; // Make this optional
   onLikeClick?: (reviewId: string) => void;
   onMediaClick?: (url: string) => void;
-  navigateToReviewsPage?: boolean; // Add this prop
 }
 
 const ReviewItem = ({
@@ -40,7 +39,6 @@ const ReviewItem = ({
   onCommentClick,
   onLikeClick,
   onMediaClick = (url) => window.open(url, '_blank'),
-  navigateToReviewsPage = true // Default to true
 }: ReviewItemProps) => {
   const navigate = useNavigate(); // Add this hook
   const {
@@ -56,18 +54,11 @@ const ReviewItem = ({
   } = review;
 
   const handleCommentClick = (reviewId: string) => {
-    if (navigateToReviewsPage) {
-      // Navigate to reviews page with the review ID as state
-      navigate('/reviews', { 
-        state: { 
-          selectedReviewId: reviewId,
-          scrollToReview: reviewId 
-        } 
-      });
-    } else {
-      // Use the original onCommentClick function if provided
-      onCommentClick?.(reviewId);
-    }
+    // Navigate to reviews page with the review ID as URL parameter
+    navigate(`/reviews/${reviewId}`);
+    
+    // Also call the original onCommentClick if provided
+    onCommentClick?.(reviewId);
   };
 
   return (
