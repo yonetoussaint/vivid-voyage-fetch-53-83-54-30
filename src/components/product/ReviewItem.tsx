@@ -2,6 +2,7 @@ import React from 'react';
 import { Star, Play, Heart } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/hooks/customer-reviews.hooks";
+import { useNavigate } from 'react-router-dom'; // Add this import
 
 export interface MediaItem {
   type: 'image' | 'video';
@@ -26,9 +27,10 @@ interface ReviewItemProps {
   review: Review;
   expandedReviews: Set<string>;
   onToggleReadMore: (reviewId: string) => void;
-  onCommentClick: (reviewId: string) => void;
+  onCommentClick?: (reviewId: string) => void; // Make this optional
   onLikeClick?: (reviewId: string) => void;
   onMediaClick?: (url: string) => void;
+  navigateToReviewsPage?: boolean; // Add this prop
 }
 
 const ReviewItem = ({
@@ -37,8 +39,10 @@ const ReviewItem = ({
   onToggleReadMore,
   onCommentClick,
   onLikeClick,
-  onMediaClick = (url) => window.open(url, '_blank')
+  onMediaClick = (url) => window.open(url, '_blank'),
+  navigateToReviewsPage = true // Default to true
 }: ReviewItemProps) => {
+  const navigate = useNavigate(); // Add this hook
   const {
     id,
     user_name,
@@ -50,6 +54,21 @@ const ReviewItem = ({
     likeCount = 0,
     commentCount = 0,
   } = review;
+
+  const handleCommentClick = (reviewId: string) => {
+    if (navigateToReviewsPage) {
+      // Navigate to reviews page with the review ID as state
+      navigate('/reviews', { 
+        state: { 
+          selectedReviewId: reviewId,
+          scrollToReview: reviewId 
+        } 
+      });
+    } else {
+      // Use the original onCommentClick function if provided
+      onCommentClick?.(reviewId);
+    }
+  };
 
   return (
     <div 
@@ -182,10 +201,10 @@ const ReviewItem = ({
           />
           {likeCount > 0 ? likeCount : 'Like'}
         </button>
-        
+
         {/* Right side: Comments button */}
         <button
-          onClick={() => onCommentClick(id)}
+          onClick={() => handleCommentClick(id)}
           className="text-sm text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-1.5"
           style={{
             background: 'none',
