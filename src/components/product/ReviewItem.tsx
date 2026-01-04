@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Play, Heart } from 'lucide-react';
+import { Star, Play, Heart, Share2, MessageCircle } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/hooks/customer-reviews.hooks";
 import { useNavigate } from 'react-router-dom'; // Add this import
@@ -26,19 +26,25 @@ export interface Review {
 interface ReviewItemProps {
   review: Review;
   expandedReviews: Set<string>;
+  expandedReplies?: Set<string>;
   onToggleReadMore: (reviewId: string) => void;
-  onCommentClick?: (reviewId: string) => void; // Make this optional
-  onLikeClick?: (reviewId: string) => void;
-  onMediaClick?: (url: string) => void;
+  onToggleShowMoreReplies?: (reviewId: string) => void;
+  onCommentClick?: (reviewId: string) => void;
+  onShareClick?: (reviewId: string) => void;
+  onLikeReply?: (replyId: string, reviewId: string) => void;
+  onReplyToReply?: (replyId: string, reviewId: string, userName: string) => void;
 }
 
 const ReviewItem = ({
   review,
   expandedReviews,
+  expandedReplies,
   onToggleReadMore,
+  onToggleShowMoreReplies,
   onCommentClick,
-  onLikeClick,
-  onMediaClick = (url) => window.open(url, '_blank'),
+  onShareClick,
+  onLikeReply,
+  onReplyToReply,
 }: ReviewItemProps) => {
   const navigate = useNavigate(); // Add this hook
   const {
@@ -54,7 +60,7 @@ const ReviewItem = ({
   } = review;
 
   const handleCommentClick = (reviewId: string) => {
-    // Navigate to reviews page with the review ID as URL parameter
+    // Navigate to the reviews page with this review ID
     navigate(`/reviews/${reviewId}`);
     
     // Also call the original onCommentClick if provided
@@ -143,13 +149,13 @@ const ReviewItem = ({
                     alt={item.alt}
                     className="w-28 h-28 object-cover cursor-pointer hover:opacity-90 transition-opacity"
                     style={{ borderRadius: '0' }}
-                    onClick={() => onMediaClick(item.url)}
+                    onClick={() => window.open(item.url, '_blank')}
                   />
                 ) : item.type === 'video' ? (
                   <div
                     className="w-28 h-28 relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden"
                     style={{ borderRadius: '0' }}
-                    onClick={() => onMediaClick(item.url)}
+                    onClick={() => window.open(item.url, '_blank')}
                   >
                     <img
                       src={item.thumbnail}
@@ -174,7 +180,7 @@ const ReviewItem = ({
       <div className="flex items-center justify-between pt-3 border-t border-gray-200">
         {/* Left side: Like button */}
         <button
-          onClick={() => onLikeClick?.(id)}
+          onClick={() => console.log('Like clicked for review:', id)}
           className="text-sm text-gray-600 hover:text-red-600 transition-colors flex items-center gap-1.5"
           style={{
             background: 'none',
@@ -191,6 +197,22 @@ const ReviewItem = ({
             strokeWidth="2"
           />
           {likeCount > 0 ? likeCount : 'Like'}
+        </button>
+
+        {/* Middle: Share button */}
+        <button
+          onClick={() => onShareClick?.(id)}
+          className="text-sm text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-1.5"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            font: 'inherit'
+          }}
+        >
+          <Share2 className="w-4 h-4" />
+          Share
         </button>
 
         {/* Right side: Comments button */}
