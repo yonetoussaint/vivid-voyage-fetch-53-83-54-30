@@ -114,7 +114,7 @@ const ReviewsPage: React.FC = () => {
           {/* Back Button - Left */}
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
           >
             <ArrowLeft className="w-6 h-6 text-gray-900 stroke-2" />
           </button>
@@ -127,7 +127,7 @@ const ReviewsPage: React.FC = () => {
           </div>
           
           {/* Search Icon - Right */}
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <button className="p-1 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center">
             <Search className="w-6 h-6 text-gray-900 stroke-2" />
           </button>
         </div>
@@ -177,7 +177,7 @@ const ReviewsPage: React.FC = () => {
                         })}</span>
                       </div>
                     </div>
-                    <button className="p-1.5 hover:bg-gray-100 rounded-full">
+                    <button className="p-1 hover:bg-gray-100 rounded-full">
                       <MoreVertical className="w-4 h-4 text-gray-500" />
                     </button>
                   </div>
