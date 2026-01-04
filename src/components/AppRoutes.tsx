@@ -9,11 +9,12 @@ import MallPage from "@/pages/MallPage";
 import Wallet from "@/pages/Wallet";
 import Messages from "@/pages/Messages";
 import { ChatPage } from "@/pages/Messages";
-import  GasStationSystem  from "@/pages/EasyPlus";
+import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import ProductDetail from "@/pages/ProductDetail";
 import ProductCommentsPage from "@/pages/ProductCommentsPage";
 import Index from "@/pages/Index";
+import ReviewsPage from "@/components/product/ReviewsPage"; // Add this import
 
 export function AppRoutes() {
   return (
@@ -35,13 +36,20 @@ export function AppRoutes() {
         }
       />
 
+      {/* Reviews Page - OUTSIDE MainLayout for unrestricted scrolling */}
+      <Route
+        path="reviews"
+        element={
+          <ReviewsPage />
+        }
+      />
 
- <Route
-          path="easy"
-          element={
-            <GasStationSystem />
-          }
-        />
+      <Route
+        path="easy"
+        element={
+          <GasStationSystem />
+        }
+      />
 
       {/* All other routes - INSIDE MainLayout */}
       <Route path="/" element={<MainLayout />}>
@@ -57,8 +65,6 @@ export function AppRoutes() {
             <Index />
           }
         />
-
-       
 
         <Route
           path="wallet"
