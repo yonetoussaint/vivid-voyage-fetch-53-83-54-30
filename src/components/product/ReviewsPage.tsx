@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ReviewItem, { Review } from './ReviewItem';
 import { mockReviews, mockComments, Comment } from './mockReviewsData';
-import { ArrowLeft, MessageCircle, Send, Heart, Star, MoreVertical, ThumbsUp, Flag } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Send, Heart, Star, MoreVertical, ThumbsUp, Flag, Smile } from 'lucide-react';
 
 const ReviewsPage: React.FC = () => {
   const { reviewId } = useParams<{ reviewId: string }>();
@@ -83,9 +83,9 @@ const ReviewsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header - Fixed at top */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+      <div className="sticky top-0 z-20 bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
             <button
@@ -104,8 +104,8 @@ const ReviewsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-3xl mx-auto">
+      {/* Main Content - Takes remaining space */}
+      <div className="flex-1 max-w-3xl mx-auto w-full overflow-y-auto">
         {/* Selected Review - Edge to edge */}
         <div className="bg-white">
           {/* Review Header */}
@@ -227,7 +227,7 @@ const ReviewsPage: React.FC = () => {
         </div>
 
         {/* Comments List - Edge to edge */}
-        <div className="bg-white divide-y divide-gray-100">
+        <div className="bg-white divide-y divide-gray-100 pb-20"> {/* Added padding at bottom */}
           {reviewComments.length > 0 ? (
             reviewComments.map((comment) => (
               <div key={comment.id} className="px-4 py-3 hover:bg-gray-50">
@@ -265,34 +265,41 @@ const ReviewsPage: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
 
-        {/* Add Comment Form - Fixed at bottom */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200">
-          <div className="p-3">
+      {/* Add Comment Form - Fixed at bottom (Facebook style) */}
+      <div className="sticky bottom-0 z-10 bg-white border-t border-gray-200">
+        <div className="max-w-3xl mx-auto">
+          <div className="px-4 py-3">
             <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Write a comment..."
-                className="flex-1 px-4 py-2 text-sm bg-gray-100 rounded-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAddComment();
-                  }
-                }}
-              />
+              <div className="flex-1 bg-gray-100 rounded-full flex items-center">
+                <button className="p-2.5 pl-4 text-gray-500 hover:text-gray-700">
+                  <Smile className="w-5 h-5" />
+                </button>
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Write a comment..."
+                  className="flex-1 px-1 py-2.5 text-sm bg-transparent border-none focus:outline-none focus:ring-0 placeholder-gray-500"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAddComment();
+                    }
+                  }}
+                />
+              </div>
               <button
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
-                className={`p-2 rounded-full ${
+                className={`p-2.5 rounded-full transition-colors ${
                   newComment.trim()
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-5 h-5" />
               </button>
             </div>
           </div>
