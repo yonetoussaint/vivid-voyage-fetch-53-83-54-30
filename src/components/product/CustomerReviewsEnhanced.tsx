@@ -1,14 +1,15 @@
+// components/product/CustomerReviews.tsx
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import ErrorBoundary from './ErrorBoundary';
 import CustomerReviewsSkeleton from './CustomerReviewsSkeleton';
-import { useCustomerReviews } from "@/hooks/customer-reviews.hooks";
+import { useMockReviews } from "@/hooks/useMockReviews"; // Changed to useMockReviews
 import ReviewsSummary from '@/components/product/ReviewsSummary';
 import ReviewItem, { Review } from '@/components/product/ReviewItem';
 import ReplyBar from '@/components/product/ReplyBar';
 
 interface CustomerReviewsProps {
-  productId: string;
+  productId?: string; // Make optional since we're using mock data
   limit?: number;
 }
 
@@ -35,7 +36,7 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
 
     finalReviews,
     summaryStats
-  } = useCustomerReviews({ productId, limit });
+  } = useMockReviews({ productId, limit }); // Use the mock hook
 
   // Get only the first 2 reviews to display
   const displayedReviews = finalReviews.slice(0, 2);
@@ -64,11 +65,12 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
   return (
     <ErrorBoundary>
       <div className="w-full bg-white">
+        {/* Pass summaryStats to ReviewsSummary if it uses them */}
         <ReviewsSummary />
 
         <div className="py-4">
           {/* Container with 1px gap between cards */}
-          <div className="space-y-2"> {/* Changed from space-y-4 to space-y-px */}
+          <div className="space-y-2">
             {finalReviews.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground" style={{ color: '#666' }}>
