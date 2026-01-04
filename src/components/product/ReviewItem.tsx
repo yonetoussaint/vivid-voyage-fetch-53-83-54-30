@@ -1,8 +1,8 @@
 import React from 'react';
-import { Star, Play, Heart, Share2, MessageCircle } from 'lucide-react';
+import { Play, Heart, Share2 } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/hooks/customer-reviews.hooks";
-import { useNavigate } from 'react-router-dom'; // Add this import
+import { useNavigate } from 'react-router-dom';
 
 export interface MediaItem {
   type: 'image' | 'video';
@@ -14,7 +14,6 @@ export interface MediaItem {
 export interface Review {
   id: string;
   user_name?: string;
-  rating?: number;
   comment?: string;
   created_at: string;
   verified_purchase?: boolean;
@@ -46,11 +45,10 @@ const ReviewItem = ({
   onLikeReply,
   onReplyToReply,
 }: ReviewItemProps) => {
-  const navigate = useNavigate(); // Add this hook
+  const navigate = useNavigate();
   const {
     id,
     user_name,
-    rating = 0,
     comment = '',
     created_at,
     verified_purchase,
@@ -60,10 +58,7 @@ const ReviewItem = ({
   } = review;
 
   const handleCommentClick = (reviewId: string) => {
-    // Navigate to the reviews page with this review ID
     navigate(`/reviews/${reviewId}`);
-    
-    // Also call the original onCommentClick if provided
     onCommentClick?.(reviewId);
   };
 
@@ -104,16 +99,7 @@ const ReviewItem = ({
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600 mt-0.5">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-3.5 h-3.5 ${star <= rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
-                  />
-                ))}
-              </div>
-              <span>•</span>
+            <div className="text-sm text-gray-600 mt-0.5">
               <span>{formatDate(created_at)}</span>
             </div>
           </div>
