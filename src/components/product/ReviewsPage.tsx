@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ReviewItem, { Review } from './ReviewItem';
 import { mockReviews, mockComments, Comment } from './mockReviewsData';
@@ -8,6 +8,10 @@ const ReviewsPage: React.FC = () => {
   const { reviewId } = useParams<{ reviewId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const headerRef = useRef<HTMLDivElement>(null);
+  const commentBarRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [commentBarHeight, setCommentBarHeight] = useState(0);
 
   const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set());
   const [newComment, setNewComment] = useState<string>('');
@@ -22,6 +26,23 @@ const ReviewsPage: React.FC = () => {
   const reviewComments = reviewId
     ? comments.filter(comment => comment.reviewId === reviewId)
     : [];
+
+  // Measure header and comment bar heights
+  useEffect(() => {
+    const updateHeights = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight);
+      }
+      if (commentBarRef.current) {
+        setCommentBarHeight(commentBarRef.current.offsetHeight);
+      }
+    };
+
+    updateHeights();
+    window.addEventListener('resize', updateHeights);
+    
+    return () => window.removeEventListener('resize', updateHeights);
+  }, []);
 
   // If no reviewId in URL but we're coming from a specific review, extract from state
   useEffect(() => {
@@ -85,7 +106,10 @@ const ReviewsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header - Fixed at top */}
-      <div className="fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200">
+      <div 
+        ref={headerRef}
+        className="fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200"
+      >
         <div className="flex items-center justify-between p-2">
           {/* Back Button - Left */}
           <button
@@ -109,39 +133,54 @@ const ReviewsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content - Offset for fixed header and footer */}
-      <div className="pt-16 pb-20"> {/* pt-16 for header, pb-20 for comment bar */}
+      {/* Main Content - Offset dynamically for fixed header and footer */}
+      <div 
+        style={{ 
+          paddingTop: `${headerHeight}px`,
+          paddingBottom: `${commentBarHeight}px`
+        }}
+      >
         <div className="max-w-3xl mx-auto">
           {/* Selected Review - Edge to edge */}
           <div className="bg-white">
-            {/* Review Header - Modified to show less info since it's in the header now */}
-            <div className="p-4 pt-0">
-              <div className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-4 h-4 ${star <= (selectedReview.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                        />
-                      ))}
+            {/* Review Header */}
+            <div className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-full bg-gray-200">
+                  {selectedReview.user_name?.charAt(0) || 'U'}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-gray-900">{selectedReview.user_name || 'Anonymous'}</span>
+                        {selectedReview.verified_purchase && (
+                          <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">
+                            ✓ Verified
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-3.5 h-3.5 ${star <= (selectedReview.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                            />
+                          ))}
+                        </div>
+                        <span>•</span>
+                        <span>{new Date(selectedReview.created_at).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}</span>
+                      </div>
                     </div>
-                    <span>•</span>
-                    <span>{new Date(selectedReview.created_at).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}</span>
-                    {selectedReview.verified_purchase && (
-                      <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">
-                        ✓ Verified
-                      </span>
-                    )}
+                    <button className="p-1.5 hover:bg-gray-100 rounded-full">
+                      <MoreVertical className="w-4 h-4 text-gray-500" />
+                    </button>
                   </div>
-                  <button className="p-1.5 hover:bg-gray-100 rounded-full">
-                    <MoreVertical className="w-4 h-4 text-gray-500" />
-                  </button>
                 </div>
               </div>
 
@@ -265,7 +304,10 @@ const ReviewsPage: React.FC = () => {
       </div>
 
       {/* Add Comment Form - Fixed at bottom (Facebook style) */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200">
+      <div 
+        ref={commentBarRef}
+        className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200"
+      >
         <div className="max-w-3xl mx-auto">
           <div className="px-4 py-3">
             <div className="flex items-center gap-2">
