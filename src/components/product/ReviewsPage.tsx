@@ -83,9 +83,9 @@ const ReviewsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       {/* Header - Fixed at top */}
-      <div className="sticky top-0 z-20 bg-white border-b border-gray-200">
+      <div className="fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
             <button
@@ -104,171 +104,173 @@ const ReviewsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content - Takes remaining space */}
-      <div className="flex-1 max-w-3xl mx-auto w-full overflow-y-auto">
-        {/* Selected Review - Edge to edge */}
-        <div className="bg-white">
-          {/* Review Header */}
-          <div className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-full bg-gray-200">
-                {selectedReview.user_name?.charAt(0) || 'U'}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-gray-900">{selectedReview.user_name || 'Anonymous'}</span>
-                      {selectedReview.verified_purchase && (
-                        <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">
-                          ✓ Verified
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-3.5 h-3.5 ${star <= (selectedReview.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                          />
-                        ))}
-                      </div>
-                      <span>•</span>
-                      <span>{new Date(selectedReview.created_at).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}</span>
-                    </div>
-                  </div>
-                  <button className="p-1.5 hover:bg-gray-100 rounded-full">
-                    <MoreVertical className="w-4 h-4 text-gray-500" />
-                  </button>
+      {/* Main Content - Offset for fixed header and footer */}
+      <div className="pt-14 pb-20"> {/* pt-14 for header, pb-20 for comment bar */}
+        <div className="max-w-3xl mx-auto">
+          {/* Selected Review - Edge to edge */}
+          <div className="bg-white">
+            {/* Review Header */}
+            <div className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-full bg-gray-200">
+                  {selectedReview.user_name?.charAt(0) || 'U'}
                 </div>
-              </div>
-            </div>
-
-            {/* Review Content */}
-            <div className="mt-3">
-              <p className="text-gray-900">{selectedReview.comment}</p>
-
-              {/* Media */}
-              {selectedReview.media && selectedReview.media.length > 0 && (
-                <div className="mt-3">
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {selectedReview.media.map((item, index) => (
-                      <div key={index} className="flex-shrink-0">
-                        {item.type === 'image' ? (
-                          <img
-                            src={item.url}
-                            alt={item.alt}
-                            className="w-40 h-40 rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => handleMediaClick(item.url)}
-                          />
-                        ) : (
-                          <div
-                            className="w-40 h-40 rounded-lg relative cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => handleMediaClick(item.url)}
-                          >
-                            <img
-                              src={item.thumbnail}
-                              alt={item.alt}
-                              className="w-full h-full rounded-lg object-cover"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-lg">
-                              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z" />
-                              </svg>
-                            </div>
-                          </div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-gray-900">{selectedReview.user_name || 'Anonymous'}</span>
+                        {selectedReview.verified_purchase && (
+                          <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">
+                            ✓ Verified
+                          </span>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Stats */}
-              <div className="mt-4 pt-3 border-t border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <button
-                      onClick={() => handleLikeClick(selectedReview.id)}
-                      className="flex items-center gap-1.5 hover:text-blue-600 transition-colors"
-                    >
-                      <ThumbsUp className="w-4 h-4" />
-                      {selectedReview.likeCount || 0}
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-3.5 h-3.5 ${star <= (selectedReview.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                            />
+                          ))}
+                        </div>
+                        <span>•</span>
+                        <span>{new Date(selectedReview.created_at).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}</span>
+                      </div>
+                    </div>
+                    <button className="p-1.5 hover:bg-gray-100 rounded-full">
+                      <MoreVertical className="w-4 h-4 text-gray-500" />
                     </button>
-                    <button className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
-                      <MessageCircle className="w-4 h-4" />
-                      {reviewComments.length}
-                    </button>
                   </div>
-                  <button className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
-                    <Flag className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Comments Count */}
-          <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">
-                Comments ({reviewComments.length})
-              </h3>
-              <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                Most relevant
-              </button>
-            </div>
-          </div>
-        </div>
+              {/* Review Content */}
+              <div className="mt-3">
+                <p className="text-gray-900">{selectedReview.comment}</p>
 
-        {/* Comments List - Edge to edge */}
-        <div className="bg-white divide-y divide-gray-100 pb-20"> {/* Added padding at bottom */}
-          {reviewComments.length > 0 ? (
-            reviewComments.map((comment) => (
-              <div key={comment.id} className="px-4 py-3 hover:bg-gray-50">
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center text-xs font-semibold rounded-full bg-gray-200">
-                    {comment.user_name.charAt(0)}
+                {/* Media */}
+                {selectedReview.media && selectedReview.media.length > 0 && (
+                  <div className="mt-3">
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {selectedReview.media.map((item, index) => (
+                        <div key={index} className="flex-shrink-0">
+                          {item.type === 'image' ? (
+                            <img
+                              src={item.url}
+                              alt={item.alt}
+                              className="w-40 h-40 rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => handleMediaClick(item.url)}
+                            />
+                          ) : (
+                            <div
+                              className="w-40 h-40 rounded-lg relative cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => handleMediaClick(item.url)}
+                            >
+                              <img
+                                src={item.thumbnail}
+                                alt={item.alt}
+                                className="w-full h-full rounded-lg object-cover"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-lg">
+                                <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-semibold text-gray-900 truncate block">{comment.user_name}</span>
-                        <p className="text-gray-800 mt-1">{comment.comment}</p>
-                      </div>
-                      <button className="p-1 hover:bg-gray-100 rounded-full ml-2">
-                        <MoreVertical className="w-4 h-4 text-gray-400" />
+                )}
+
+                {/* Stats */}
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <button
+                        onClick={() => handleLikeClick(selectedReview.id)}
+                        className="flex items-center gap-1.5 hover:text-blue-600 transition-colors"
+                      >
+                        <ThumbsUp className="w-4 h-4" />
+                        {selectedReview.likeCount || 0}
+                      </button>
+                      <button className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
+                        <MessageCircle className="w-4 h-4" />
+                        {reviewComments.length}
                       </button>
                     </div>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                      <span>{new Date(comment.created_at).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric'
-                      })}</span>
-                      <button className="hover:text-blue-600">Like</button>
-                      <button className="hover:text-blue-600">Reply</button>
-                    </div>
+                    <button className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                      <Flag className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="px-4 py-12 text-center">
-              <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No comments yet.</p>
-              <p className="text-sm text-gray-400 mt-1">Be the first to comment on this review!</p>
             </div>
-          )}
+
+            {/* Comments Count */}
+            <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900">
+                  Comments ({reviewComments.length})
+                </h3>
+                <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                  Most relevant
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Comments List - Edge to edge */}
+          <div className="bg-white divide-y divide-gray-100">
+            {reviewComments.length > 0 ? (
+              reviewComments.map((comment) => (
+                <div key={comment.id} className="px-4 py-3 hover:bg-gray-50">
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 flex items-center justify-center text-xs font-semibold rounded-full bg-gray-200">
+                      {comment.user_name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-1">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-semibold text-gray-900 truncate block">{comment.user_name}</span>
+                          <p className="text-gray-800 mt-1">{comment.comment}</p>
+                        </div>
+                        <button className="p-1 hover:bg-gray-100 rounded-full ml-2">
+                          <MoreVertical className="w-4 h-4 text-gray-400" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                        <span>{new Date(comment.created_at).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric'
+                        })}</span>
+                        <button className="hover:text-blue-600">Like</button>
+                        <button className="hover:text-blue-600">Reply</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-12 text-center">
+                <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No comments yet.</p>
+                <p className="text-sm text-gray-400 mt-1">Be the first to comment on this review!</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Add Comment Form - Fixed at bottom (Facebook style) */}
-      <div className="sticky bottom-0 z-10 bg-white border-t border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200">
         <div className="max-w-3xl mx-auto">
           <div className="px-4 py-3">
             <div className="flex items-center gap-2">
