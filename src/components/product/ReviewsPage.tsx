@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ReviewItem, { Review } from './ReviewItem';
 import { mockReviews, mockComments, Comment } from './mockReviewsData';
-import { ArrowLeft, MessageCircle, Send, Heart, Star } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Send, Heart, Star, MoreVertical, ThumbsUp, Flag } from 'lucide-react';
 
 const ReviewsPage: React.FC = () => {
   const { reviewId } = useParams<{ reviewId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set());
   const [newComment, setNewComment] = useState<string>('');
   const [comments, setComments] = useState<Comment[]>(mockComments);
@@ -84,90 +84,100 @@ const ReviewsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto p-4">
-        {/* Header */}
-        <div className="mb-6 pt-4">
-          <div className="flex items-center gap-4 mb-6">
+      {/* Header - Fixed at top */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+        <div className="max-w-3xl mx-auto px-4 py-3">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-gray-700" />
             </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Review Details</h1>
-              <p className="text-gray-600 mt-1">
-                Review by {selectedReview.user_name || 'Anonymous'}
+            <div className="flex-1">
+              <h1 className="text-lg font-semibold text-gray-900">Review Comments</h1>
+              <p className="text-xs text-gray-500">
+                {reviewComments.length} comment{reviewComments.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Selected Review */}
-        <div className="mb-8">
-          <div className="bg-white border border-gray-200 mb-6">
-            {/* Review Header */}
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 flex items-center justify-center text-lg font-semibold rounded-full bg-gray-200">
-                    {selectedReview.user_name?.charAt(0) || 'U'}
-                  </div>
+      {/* Main Content */}
+      <div className="max-w-3xl mx-auto">
+        {/* Selected Review - Edge to edge */}
+        <div className="bg-white">
+          {/* Review Header */}
+          <div className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-full bg-gray-200">
+                {selectedReview.user_name?.charAt(0) || 'U'}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">{selectedReview.user_name || 'Anonymous'}</span>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-gray-900">{selectedReview.user_name || 'Anonymous'}</span>
                       {selectedReview.verified_purchase && (
-                        <span className="text-xs px-2 py-0.5 bg-green-100 text-green-800">
-                          Verified Purchase
+                        <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">
+                          ✓ Verified
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-0.5">
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
                       <div className="flex">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`w-4 h-4 ${star <= (selectedReview.rating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+                            className={`w-3.5 h-3.5 ${star <= (selectedReview.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
                           />
                         ))}
                       </div>
                       <span>•</span>
-                      <span>{new Date(selectedReview.created_at).toLocaleDateString()}</span>
+                      <span>{new Date(selectedReview.created_at).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}</span>
                     </div>
                   </div>
+                  <button className="p-1.5 hover:bg-gray-100 rounded-full">
+                    <MoreVertical className="w-4 h-4 text-gray-500" />
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Review Content */}
-            <div className="p-4">
-              <p className="text-gray-800 mb-4">{selectedReview.comment}</p>
-              
+            <div className="mt-3">
+              <p className="text-gray-900">{selectedReview.comment}</p>
+
               {/* Media */}
               {selectedReview.media && selectedReview.media.length > 0 && (
-                <div className="mb-4">
-                  <div className="flex gap-2 overflow-x-auto pb-2">
+                <div className="mt-3">
+                  <div className="flex gap-2 overflow-x-auto pb-1">
                     {selectedReview.media.map((item, index) => (
                       <div key={index} className="flex-shrink-0">
                         {item.type === 'image' ? (
                           <img
                             src={item.url}
                             alt={item.alt}
-                            className="w-32 h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                            className="w-40 h-40 rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
                             onClick={() => handleMediaClick(item.url)}
                           />
                         ) : (
                           <div
-                            className="w-32 h-32 relative cursor-pointer hover:opacity-90 transition-opacity"
+                            className="w-40 h-40 rounded-lg relative cursor-pointer hover:opacity-90 transition-opacity"
                             onClick={() => handleMediaClick(item.url)}
                           >
                             <img
                               src={item.thumbnail}
                               alt={item.alt}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full rounded-lg object-cover"
                             />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-lg">
+                              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M8 5v14l11-7z" />
                               </svg>
                             </div>
@@ -180,102 +190,111 @@ const ReviewsPage: React.FC = () => {
               )}
 
               {/* Stats */}
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <button
-                  onClick={() => handleLikeClick(selectedReview.id)}
-                  className="flex items-center gap-1.5 hover:text-red-600 transition-colors"
-                >
-                  <Heart className="w-4 h-4" fill="none" stroke="currentColor" />
-                  {selectedReview.likeCount || 0} likes
-                </button>
-                <div className="flex items-center gap-1.5">
-                  <MessageCircle className="w-4 h-4" />
-                  {reviewComments.length} comments
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <button
+                      onClick={() => handleLikeClick(selectedReview.id)}
+                      className="flex items-center gap-1.5 hover:text-blue-600 transition-colors"
+                    >
+                      <ThumbsUp className="w-4 h-4" />
+                      {selectedReview.likeCount || 0}
+                    </button>
+                    <button className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
+                      <MessageCircle className="w-4 h-4" />
+                      {reviewComments.length}
+                    </button>
+                  </div>
+                  <button className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                    <Flag className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Comments Section */}
-          <div className="bg-white border border-gray-200">
-            {/* Comments Header */}
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5" />
-                  Comments ({reviewComments.length})
-                </h3>
-              </div>
+          {/* Comments Count */}
+          <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900">
+                Comments ({reviewComments.length})
+              </h3>
+              <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                Most relevant
+              </button>
             </div>
+          </div>
+        </div>
 
-            {/* Comments List */}
-            <div className="divide-y divide-gray-100">
-              {reviewComments.length > 0 ? (
-                reviewComments.map((comment) => (
-                  <div key={comment.id} className="p-4 hover:bg-gray-50">
-                    <div className="flex gap-3">
-                      <div className="w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-full bg-gray-200">
-                        {comment.user_name.charAt(0)}
+        {/* Comments List - Edge to edge */}
+        <div className="bg-white divide-y divide-gray-100">
+          {reviewComments.length > 0 ? (
+            reviewComments.map((comment) => (
+              <div key={comment.id} className="px-4 py-3 hover:bg-gray-50">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center text-xs font-semibold rounded-full bg-gray-200">
+                    {comment.user_name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="flex-1 min-w-0">
+                        <span className="font-semibold text-gray-900 truncate block">{comment.user_name}</span>
+                        <p className="text-gray-800 mt-1">{comment.comment}</p>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-gray-900">{comment.user_name}</span>
-                          <span className="text-xs text-gray-500">
-                            {new Date(comment.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="text-gray-700">{comment.comment}</p>
-                      </div>
+                      <button className="p-1 hover:bg-gray-100 rounded-full ml-2">
+                        <MoreVertical className="w-4 h-4 text-gray-400" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                      <span>{new Date(comment.created_at).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric'
+                      })}</span>
+                      <button className="hover:text-blue-600">Like</button>
+                      <button className="hover:text-blue-600">Reply</button>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="p-8 text-center">
-                  <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No comments yet. Be the first to comment!</p>
                 </div>
-              )}
-            </div>
-
-            {/* Add Comment Form */}
-            <div className="p-4 border-t border-gray-200">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  className="flex-1 px-4 py-2 text-sm border border-gray-300 focus:outline-none focus:border-blue-500"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleAddComment();
-                    }
-                  }}
-                />
-                <button
-                  onClick={handleAddComment}
-                  disabled={!newComment.trim()}
-                  className={`px-4 py-2 flex items-center gap-1.5 text-sm ${
-                    newComment.trim()
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  <Send className="w-4 h-4" />
-                  Post
-                </button>
               </div>
+            ))
+          ) : (
+            <div className="px-4 py-12 text-center">
+              <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No comments yet.</p>
+              <p className="text-sm text-gray-400 mt-1">Be the first to comment on this review!</p>
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Back to All Reviews Link */}
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => navigate('/reviews')}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-            >
-              ← View all reviews
-            </button>
+        {/* Add Comment Form - Fixed at bottom */}
+        <div className="sticky bottom-0 bg-white border-t border-gray-200">
+          <div className="p-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Write a comment..."
+                className="flex-1 px-4 py-2 text-sm bg-gray-100 rounded-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddComment();
+                  }
+                }}
+              />
+              <button
+                onClick={handleAddComment}
+                disabled={!newComment.trim()}
+                className={`p-2 rounded-full ${
+                  newComment.trim()
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
