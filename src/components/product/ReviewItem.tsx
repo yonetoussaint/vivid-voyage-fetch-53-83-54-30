@@ -74,7 +74,7 @@ const ReviewItem = ({
     >
       {/* Review Header */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-1">
           <div 
             className="w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-full" 
             style={{ 
@@ -84,31 +84,33 @@ const ReviewItem = ({
           >
             {user_name?.charAt(0) || 'U'}
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="font-medium text-gray-900">{user_name || 'Anonymous'}</span>
-              {verified_purchase && (
-                <CheckCircle className="w-4 h-4 text-green-600" />
-              )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-0.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-medium text-gray-900 truncate">{user_name || 'Anonymous'}</span>
+                {verified_purchase && (
+                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                )}
+              </div>
+              {/* Follow Button */}
+              <button
+                className="text-sm px-3 py-1 border border-gray-300 hover:bg-gray-50 transition-colors flex-shrink-0 ml-2"
+                style={{
+                  borderRadius: '4px',
+                  background: 'none',
+                  color: '#333',
+                  fontWeight: '500',
+                  minWidth: '80px'
+                }}
+              >
+                Follow
+              </button>
             </div>
             <div className="text-sm text-gray-600">
               <span>{formatDate(created_at)}</span>
             </div>
           </div>
         </div>
-        {/* Follow Button */}
-        <button
-          className="text-sm px-3 py-1.5 border border-gray-300 hover:bg-gray-50 transition-colors"
-          style={{
-            borderRadius: '4px',
-            background: 'none',
-            color: '#333',
-            fontWeight: '500',
-            minWidth: '80px'
-          }}
-        >
-          Follow
-        </button>
       </div>
 
       {/* Review Comment */}
