@@ -23,7 +23,60 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
 
   return (
     <>
-      {/* Statistiques Rapides - Mobile Optimized */}
+      {/* Daily Summary Card - Exactly matching ReportView */}
+      <div className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-xl p-4 shadow-xl mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Calculator size={20} className="text-white" />
+            <h2 className="text-lg font-bold">Résumé {shift}</h2>
+          </div>
+          <div className="text-right">
+            <p className="text-xs opacity-90">Shift</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="bg-white bg-opacity-15 rounded-lg p-3">
+            <div className="flex items-center gap-1 mb-1">
+              <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+              <p className="text-xs font-medium opacity-90">Essence</p>
+            </div>
+            <p className="text-lg font-bold">{formaterGallons(totaux.totalGallonsEssence)} gal</p>
+            <p className="text-[10px] opacity-80 mt-1">
+              {formaterArgent(totaux.ventesEssence)} HTG
+            </p>
+          </div>
+          
+          <div className="bg-white bg-opacity-15 rounded-lg p-3">
+            <div className="flex items-center gap-1 mb-1">
+              <div className="w-2 h-2 rounded-full bg-amber-300"></div>
+              <p className="text-xs font-medium opacity-90">Diesel</p>
+            </div>
+            <p className="text-lg font-bold">{formaterGallons(totaux.totalGallonsDiesel)} gal</p>
+            <p className="text-[10px] opacity-80 mt-1">
+              {formaterArgent(totaux.ventesDiesel)} HTG
+            </p>
+          </div>
+        </div>
+        
+        {/* Daily Quick Stats */}
+        <div className="grid grid-cols-3 gap-1 text-center">
+          <div className="bg-white bg-opacity-10 rounded p-1">
+            <p className="text-[10px] opacity-90">Pompes</p>
+            <p className="text-xs font-bold">5</p>
+          </div>
+          <div className="bg-white bg-opacity-10 rounded p-1">
+            <p className="text-[10px] opacity-90">Vendeurs</p>
+            <p className="text-xs font-bold">--</p>
+          </div>
+          <div className="bg-white bg-opacity-10 rounded p-1">
+            <p className="text-[10px] opacity-90">Pistolets</p>
+            <p className="text-xs font-bold">21</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistiques Rapides */}
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl p-3 shadow-lg">
           <div className="flex items-center gap-1 mb-1">
@@ -43,7 +96,7 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
         </div>
       </div>
 
-      {/* TOTAL GALLONS CARD - Add this below the essence/diesel cards */}
+      {/* TOTAL GALLONS CARD */}
       <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-3 shadow-lg mb-3">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
@@ -86,7 +139,7 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
         </div>
 
         <div className="space-y-2">
-          {/* Main Total Sales - Most Prominent */}
+          {/* Main Total Sales */}
           <div className="bg-white bg-opacity-15 rounded-lg p-3 border border-white border-opacity-20">
             <p className="text-xs opacity-90 mb-1">VENTES BRUTES (Essence + Diesel)</p>
             <div className="flex items-end justify-between">
@@ -95,7 +148,7 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
             </div>
           </div>
 
-          {/* USD Adjustment - Less Prominent */}
+          {/* USD Adjustment */}
           <div className="bg-white bg-opacity-10 rounded-lg p-2">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-1">
@@ -112,7 +165,6 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
 
           {/* Final Adjusted Total - ROUNDED */}
           <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3 relative overflow-hidden">
-            {/* Decorative corner */}
             <div className="absolute top-0 right-0 w-16 h-16 bg-white bg-opacity-10 rounded-full -translate-y-8 translate-x-8"></div>
 
             <div className="flex items-center justify-between mb-2 relative z-10">
@@ -131,7 +183,6 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
             </div>
 
             <div className="relative z-10">
-              {/* Main rounded amount with HTG */}
               <div className="mb-1">
                 <div className="flex items-end justify-between">
                   <p className="text-2xl sm:text-3xl font-bold">{formaterCaisse(totaux.totalAjuste)}</p>
@@ -139,7 +190,6 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
                 </div>
               </div>
 
-              {/* Valeur arrondie label with adjustment on far right */}
               <div className="flex items-center justify-between pt-2">
                 <p className="text-xs opacity-80">Valeur arrondie</p>
                 {hasAdjustment && (
@@ -158,7 +208,7 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
         </div>
       </div>
 
-      {/* Quick Summary Row - Mobile Optimized */}
+      {/* Quick Summary Row */}
       <div className="grid grid-cols-2 gap-2 mb-2">
         <div className="bg-slate-800 text-white rounded-lg p-2">
           <p className="text-[10px] opacity-90 mb-0.5">USD Sales</p>
