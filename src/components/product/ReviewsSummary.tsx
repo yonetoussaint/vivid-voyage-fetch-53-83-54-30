@@ -7,7 +7,9 @@ import {
   Star, // For Rating
   Image, // For Media Type
   Smartphone, // For Device Type
-  BadgeCheck, // For Verified Purchase
+  BadgeCheck,
+Calendar,
+MessageSquare,
   DollarSign // For Price Range
 } from 'lucide-react';
 import FilterTabs, { FilterTab, ActiveFilter } from '@/components/FilterTabs'; // Adjust the import path as needed
@@ -75,80 +77,90 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
 }) => {
   // Filter tabs state with icons
   const [filterTabs, setFilterTabs] = useState<FilterTab[]>([
-    {
-      id: 'sortBy',
-      label: 'Sort by',
-      type: 'dropdown',
-      value: 'mostRelevant',
-      icon: ArrowUpDown, // Added icon
-      options: [
-        { label: 'Most Relevant', value: 'mostRelevant' },
-        { label: 'Most Recent', value: 'mostRecent' },
-        { label: 'Highest Rated', value: 'highestRated' },
-        { label: 'Lowest Rated', value: 'lowestRated' },
-      ]
-    },
-    {
-      id: 'rating',
-      label: 'Rating',
-      type: 'dropdown',
-      value: null,
-      icon: Star, // Added icon
-      options: [
-        { label: '5 Stars', value: 5 },
-        { label: '4 Stars', value: 4 },
-        { label: '3 Stars', value: 3 },
-        { label: '2 Stars', value: 2 },
-        { label: '1 Star', value: 1 },
-      ]
-    },
-    {
-      id: 'mediaType',
-      label: 'Media Type',
-      type: 'dropdown',
-      value: null,
-      icon: Image, // Added icon
-      options: [
-        { label: 'All Media', value: 'all' },
-        { label: 'With Photos', value: 'photos' },
-        { label: 'With Videos', value: 'videos' },
-      ]
-    },
-    {
-      id: 'deviceType',
-      label: 'Device Type',
-      type: 'dropdown',
-      value: null,
-      icon: Smartphone, // Added icon
-      options: [
-        { label: 'All Devices', value: 'all' },
-        { label: 'iPhone', value: 'iphone' },
-        { label: 'iPad', value: 'ipad' },
-        { label: 'Android', value: 'android' },
-      ]
-    },
-    {
-      id: 'verifiedPurchase',
-      label: 'Verified Purchase',
-      type: 'checkbox',
-      value: false,
-      icon: BadgeCheck // Added icon
-    },
-    {
-      id: 'priceRange',
-      label: 'Price Range',
-      type: 'dropdown',
-      value: null,
-      icon: DollarSign, // Added icon
-      options: [
-        { label: 'All Prices', value: null },
-        { label: '$0 - $100', value: { min: 0, max: 100 } },
-        { label: '$100 - $500', value: { min: 100, max: 500 } },
-        { label: '$500 - $1000', value: { min: 500, max: 1000 } },
-        { label: '$1000+', value: { min: 1000, max: 10000 } },
-      ]
-    }
-  ]);
+  {
+    id: 'sortBy',
+    label: 'Sort by',
+    type: 'dropdown',
+    value: 'mostRelevant',
+    icon: ArrowUpDown,
+    options: [
+      { label: 'Most Relevant', value: 'mostRelevant' },
+      { label: 'Most Recent', value: 'mostRecent' },
+      { label: 'Highest Rated', value: 'highestRated' },
+      { label: 'Lowest Rated', value: 'lowestRated' },
+    ]
+  },
+  {
+    id: 'rating',
+    label: 'Rating',
+    type: 'dropdown',
+    value: null,
+    icon: Star,
+    options: [
+      { label: '5 Stars', value: 5 },
+      { label: '4 Stars', value: 4 },
+      { label: '3 Stars', value: 3 },
+      { label: '2 Stars', value: 2 },
+      { label: '1 Star', value: 1 },
+    ]
+  },
+  {
+    id: 'timePeriod',
+    label: 'Time Period',
+    type: 'dropdown',
+    value: null,
+    icon: Calendar,
+    options: [
+      { label: 'All Time', value: 'all' },
+      { label: 'Last Week', value: 'week' },
+      { label: 'Last Month', value: 'month' },
+      { label: 'Last 3 Months', value: 'quarter' },
+      { label: 'Last Year', value: 'year' },
+    ]
+  },
+  {
+    id: 'mediaType',
+    label: 'Media Type',
+    type: 'dropdown',
+    value: null,
+    icon: Image,
+    options: [
+      { label: 'All Media', value: 'all' },
+      { label: 'With Photos', value: 'photos' },
+      { label: 'With Videos', value: 'videos' },
+    ]
+  },
+  {
+    id: 'verifiedPurchase',
+    label: 'Verified Purchase',
+    type: 'checkbox',
+    value: false,
+    icon: BadgeCheck
+  },
+  {
+    id: 'withResponse',
+    label: 'With Seller Response',
+    type: 'checkbox',
+    value: false,
+    icon: MessageSquare,
+    description: 'Show only reviews with seller replies'
+  },
+  {
+    id: 'priceRange',
+    label: 'Price Range',
+    type: 'dropdown',
+    value: null,
+    icon: DollarSign,
+    options: [
+      { label: 'All Prices', value: null },
+      { label: '0 - 1,000 G', value: { min: 0, max: 1000 } },
+      { label: '1,000 - 5,000 G', value: { min: 1000, max: 5000 } },
+      { label: '5,000 - 10,000 G', value: { min: 5000, max: 10000 } },
+      { label: '10,000 - 50,000 G', value: { min: 10000, max: 50000 } },
+      { label: '50,000+ G', value: { min: 50000, max: 1000000 } },
+    ]
+  }
+]);
 
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
 
