@@ -36,11 +36,13 @@ interface AliExpressHeaderProps {
 const ThreeDotsMenu = ({
   onShareClick,
   onReportClick,
-  isScrolled
+  displayProgress,
+  showSearchBarInProductDetail
 }: {
   onShareClick?: () => void;
   onReportClick?: () => void;
-  isScrolled?: boolean;
+  displayProgress: number;
+  showSearchBarInProductDetail: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -70,21 +72,30 @@ const ThreeDotsMenu = ({
 
   return (
     <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
-        style={{
-          backgroundColor: isScrolled ? 'transparent' : 'rgba(0, 0, 0, 0.1)'
-        }}
+      <div 
+        className="rounded-full transition-all duration-700 hover-scale"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
       >
-        <MoreHorizontal
-          size={20}
-          className="transition-all duration-700"
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
           style={{
-            color: isScrolled ? 'rgba(75, 85, 99, 0.9)' : 'rgba(255, 255, 255, 0.9)'
+            backgroundColor: showSearchBarInProductDetail ? 'transparent' : undefined
           }}
-        />
-      </button>
+        >
+          <MoreHorizontal
+            size={20}
+            className="transition-all duration-700"
+            style={{
+              color: showSearchBarInProductDetail
+                ? `rgba(75, 85, 99, 0.9)`
+                : displayProgress > 0.5 
+                  ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                  : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+            }}
+          />
+        </button>
+      </div>
 
       {isOpen && (
         <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-fade-in">
@@ -108,13 +119,15 @@ const ThreeDotsMenu = ({
 const FavoriteButton = ({
   isFavorite,
   onClick,
-  count,
-  isScrolled
+  displayProgress,
+  likeCount,
+  showSearchBarInProductDetail
 }: {
   isFavorite: boolean;
   onClick?: () => void;
-  count?: number;
-  isScrolled?: boolean;
+  displayProgress: number;
+  likeCount?: number;
+  showSearchBarInProductDetail: boolean;
 }) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -125,31 +138,65 @@ const FavoriteButton = ({
   };
 
   const buttonStyle = {
-    backgroundColor: isScrolled ? 'transparent' : 'rgba(0, 0, 0, 0.1)',
-    color: isScrolled ? 'rgba(75, 85, 99, 0.9)' : 'rgba(255, 255, 255, 0.9)'
+    backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})`,
   };
 
   const iconStyle = {
-    color: isFavorite ? '#f97316' : buttonStyle.color,
+    color: isFavorite ? '#f97316' : 
+      showSearchBarInProductDetail 
+        ? 'rgba(75, 85, 99, 0.9)' 
+        : displayProgress > 0.5 
+          ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+          : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`,
     fill: isFavorite ? '#f97316' : 'none',
     transition: 'all 0.3s ease'
   };
 
-  return (
-    <div className="rounded-full transition-all duration-700 hover-scale">
+  const textStyle = {
+    color: isFavorite ? '#f97316' : 
+      displayProgress > 0.5 
+        ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+        : `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`,
+    opacity: showSearchBarInProductDetail ? 0 : 1 - (displayProgress / 0.7)
+  };
+
+  // When scrolled to search bar mode
+  if (showSearchBarInProductDetail) {
+    return (
       <button
         onClick={handleClick}
-        className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700"
-        style={buttonStyle}
+        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
       >
         <Heart
           size={20}
           className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
           style={iconStyle}
         />
-        {!isScrolled && count !== undefined && (
-          <span className="text-xs font-medium" style={{ color: buttonStyle.color }}>
-            {count}
+      </button>
+    );
+  }
+
+  // When showing with count (not scrolled)
+  return (
+    <div 
+      className="rounded-full transition-all duration-700 hover-scale"
+      style={buttonStyle}
+    >
+      <button
+        onClick={handleClick}
+        className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700"
+      >
+        <Heart
+          size={20}
+          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+          style={iconStyle}
+        />
+        {likeCount !== undefined && (
+          <span 
+            className="text-xs font-medium transition-all duration-700 ease-out"
+            style={textStyle}
+          >
+            {likeCount}
           </span>
         )}
       </button>
@@ -203,11 +250,31 @@ export default function AliExpressHeader({
 
   const handleClearSearch = () => setSearchQuery('');
 
+  // Get seller text styles based on scroll progress
+  const getSellerContainerStyle = () => ({
+    backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})`,
+  });
+
+  const getSellerTextStyle = () => ({
+    color: displayProgress > 0.5 
+      ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+      : `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
+  });
+
+  // Format follower count
+  const formatFollowerCount = (count?: number) => {
+    if (!count) return '';
+    return count > 1000 
+      ? `${(count / 1000).toFixed(1)}k` 
+      : count.toString();
+  };
+
   // Render Home Mode Header
   if (mode === 'home' && !hideSearchBar) {
     return (
       <header className="fixed top-0 w-full z-40 bg-white">
-        <div className="flex items-center justify-between px-2 py-2">
+        {/* Search Bar */}
+        <div className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white" style={{ height: '36px' }}>
           <div className="flex-1 relative max-w-full mx-auto">
             <form onSubmit={handleSearchSubmit}>
               <div className="relative">
@@ -216,32 +283,36 @@ export default function AliExpressHeader({
                   placeholder="Search on AliExpress"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 bg-gray-100 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-1.5 pl-4 bg-gray-100 border-0 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                  {/* Search icon would go here */}
-                </div>
-                
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
                   {searchQuery.trim() ? (
                     <button
                       type="button"
                       onClick={handleClearSearch}
-                      className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                      className="p-1 hover:bg-gray-100 transition-colors rounded-full"
                     >
                       <X className="h-4 w-4 text-gray-600" />
                     </button>
                   ) : (
                     <>
-                      <button type="button" className="p-1">
-                        <Camera className="h-6 w-6 text-gray-900" />
+                      <button 
+                        type="button" 
+                        className="p-1 transition-colors hover:bg-gray-100 rounded-full"
+                      >
+                        <Camera className="h-5 w-5 text-gray-900" strokeWidth={1.5} />
                       </button>
-                      <button type="button" className="flex items-center space-x-1 px-2 py-1 rounded-full hover:bg-gray-200 transition-colors">
-                        <MapPin className="h-3.5 w-3.5 text-gray-500" />
-                        <span className="text-sm max-w-[80px] truncate">{selectedCity}</span>
-                        <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
-                      </button>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          className="flex items-center space-x-1 px-1.5 py-0.5 hover:bg-gray-100 transition-colors rounded-full"
+                        >
+                          <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+                          <span className="text-xs max-w-[60px] truncate">{selectedCity}</span>
+                          <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+                        </button>
+                      </div>
                     </>
                   )}
                 </div>
@@ -250,8 +321,9 @@ export default function AliExpressHeader({
           </div>
         </div>
 
+        {/* Category Tabs */}
         {showCategoryTabs && (
-          <div className="relative overflow-hidden">
+          <div className="relative overflow-hidden bg-white">
             <CategoryTabs 
               activeTab={activeTabId}
               setActiveTab={onCustomTabChange}
@@ -262,6 +334,7 @@ export default function AliExpressHeader({
                 { id: 'fashion', name: 'Fashion' },
                 { id: 'electronics', name: 'Electronics' },
               ]}
+              isSearchOverlayActive={false}
             />
           </div>
         )}
@@ -271,32 +344,58 @@ export default function AliExpressHeader({
 
   // Render Product Detail Mode Header
   if (mode === 'product-detail') {
-    const isScrolled = showSearchBarInProductDetail;
-
     return (
       <header className="fixed top-0 w-full z-40" style={getHeaderStyle()}>
         <div className="py-2 px-3 w-full">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
+          <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
             {/* Left Section - Back Button + Seller Info */}
             <div className="flex items-center flex-shrink-0">
               <button 
                 onClick={onBackClick}
-                className="h-8 w-8 rounded-full flex items-center justify-center p-1 hover:bg-gray-100 transition-all duration-700"
+                className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
                 style={{
-                  backgroundColor: isScrolled ? 'transparent' : 'rgba(0, 0, 0, 0.1)'
+                  backgroundColor: showSearchBarInProductDetail 
+                    ? 'transparent' 
+                    : `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})`
                 }}
               >
                 {inPanel ? (
-                  <X size={24} className="transition-all duration-700" />
+                  <X
+                    size={24}
+                    strokeWidth={2}
+                    className="transition-all duration-700"
+                    style={{
+                      color: showSearchBarInProductDetail
+                        ? 'rgba(75, 85, 99, 0.9)'
+                        : displayProgress > 0.5 
+                          ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                          : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+                    }}
+                  />
                 ) : (
-                  <ChevronLeft size={24} className="transition-all duration-700" />
+                  <ChevronLeft
+                    size={24}
+                    strokeWidth={2}
+                    className="transition-all duration-700"
+                    style={{
+                      color: showSearchBarInProductDetail
+                        ? 'rgba(75, 85, 99, 0.9)'
+                        : displayProgress > 0.5 
+                          ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                          : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+                    }}
+                  />
                 )}
               </button>
 
-              {!isScrolled && productData?.sellers && (
-                <button className="ml-2 rounded-full bg-black/10 hover-scale">
-                  <div className="flex items-center gap-1.5 px-2.5 h-8 rounded-full">
-                    <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden">
+              {/* Seller Info - Shows when not scrolled to search bar */}
+              {!showSearchBarInProductDetail && productData?.sellers && (
+                <div 
+                  className="ml-2 rounded-full transition-all duration-700 flex-shrink-0 hover-scale"
+                  style={getSellerContainerStyle()}
+                >
+                  <button className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700">
+                    <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
                       <img 
                         src={productData.sellers.image_url || "https://picsum.photos/100/100?random=1"}
                         alt={productData.sellers.name}
@@ -306,24 +405,26 @@ export default function AliExpressHeader({
                         }}
                       />
                     </div>
-                    <span className="text-xs font-medium text-white">
+                    <span 
+                      className="text-xs font-medium transition-all duration-700"
+                      style={getSellerTextStyle()}
+                    >
                       {productData.sellers.name}
                     </span>
                     {productData.sellers.verified && <VerificationBadge />}
-                    <span className="text-xs font-medium text-white/80">
-                      {productData.sellers.followers_count 
-                        ? productData.sellers.followers_count > 1000 
-                          ? `${(productData.sellers.followers_count / 1000).toFixed(1)}k` 
-                          : productData.sellers.followers_count
-                        : ''}
+                    <span 
+                      className="text-xs font-medium transition-all duration-700"
+                      style={getSellerTextStyle()}
+                    >
+                      {formatFollowerCount(productData.sellers.followers_count)}
                     </span>
-                  </div>
-                </button>
+                  </button>
+                </div>
               )}
             </div>
 
             {/* Middle Section - Search Bar when scrolled */}
-            {isScrolled && (
+            {showSearchBarInProductDetail && (
               <div className="flex-1 px-2">
                 <div className="relative max-w-full">
                   <form onSubmit={handleSearchSubmit}>
@@ -333,14 +434,14 @@ export default function AliExpressHeader({
                         placeholder="Search on AliExpress"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-1.5 pl-4 bg-gray-100 border-0 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       {searchQuery.trim() && (
-                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
                           <button
                             type="button"
                             onClick={handleClearSearch}
-                            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                            className="p-1 hover:bg-gray-100 transition-colors rounded-full"
                           >
                             <X className="h-4 w-4 text-gray-600" />
                           </button>
@@ -357,14 +458,16 @@ export default function AliExpressHeader({
               <FavoriteButton
                 isFavorite={isFavorite}
                 onClick={onFavoriteClick}
-                count={productData?.favorite_count}
-                isScrolled={isScrolled}
+                displayProgress={displayProgress}
+                likeCount={productData?.favorite_count}
+                showSearchBarInProductDetail={showSearchBarInProductDetail}
               />
               
               <ThreeDotsMenu
                 onShareClick={onShareClick}
                 onReportClick={onReportClick}
-                isScrolled={isScrolled}
+                displayProgress={displayProgress}
+                showSearchBarInProductDetail={showSearchBarInProductDetail}
               />
             </div>
           </div>
