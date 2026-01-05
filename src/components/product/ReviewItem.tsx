@@ -28,7 +28,7 @@ interface ReviewItemProps {
   expandedReviews: Set<string>;
   expandedReplies?: Set<string>;
   onToggleReadMore: (reviewId: string) => void;
-  onToggleShowMoreReplies?: (reviewId: string) => void;
+  onToggleShowReplies?: (reviewId: string) => void;
   onCommentClick?: (reviewId: string) => void;
   onShareClick?: (reviewId: string) => void;
   onLikeReply?: (replyId: string, reviewId: string) => void;
@@ -41,7 +41,7 @@ const ReviewItem = ({
   expandedReviews,
   expandedReplies,
   onToggleReadMore,
-  onToggleShowMoreReplies,
+  onToggleShowReplies,
   onCommentClick,
   onShareClick,
   onLikeReply,
@@ -51,7 +51,7 @@ const ReviewItem = ({
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
-  
+
   const {
     id,
     user_name,
@@ -133,7 +133,7 @@ const ReviewItem = ({
   };
 
   return (
-    <div className="bg-white border-b border-gray-100 p-2 hover:bg-gray-50 transition-colors">
+    <div className="bg-white border-b border-gray-100 p-2 transition-colors">
       {/* Review Header */}
       <div className="flex gap-2 mb-2">
         <div 
@@ -141,7 +141,7 @@ const ReviewItem = ({
         >
           {getInitials(user_name)}
         </div>
-        
+
         <div className="flex-1 min-w-0 flex items-center justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ const ReviewItem = ({
               {formatDate(created_at)}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 flex-shrink-0 ml-2">
             <button className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
               Follow
@@ -168,7 +168,7 @@ const ReviewItem = ({
               >
                 <MoreHorizontal className="w-5 h-5" />
               </button>
-              
+
               {showMenu && (
                 <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
                   <button
