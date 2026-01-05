@@ -122,7 +122,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
 
         {/* Only show GalleryThumbnails when there are multiple images/videos */}
         {galleryImages && galleryImages.length > 1 && (
-          <div className="mt-2">
+          <div className="">
             <GalleryThumbnails
               images={galleryImages}
               currentIndex={currentGalleryIndex}
