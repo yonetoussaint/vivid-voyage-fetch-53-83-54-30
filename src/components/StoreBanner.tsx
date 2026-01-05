@@ -9,7 +9,7 @@ export default function StoreBanner() {
       <div className="flex items-center gap-2.5">
         {/* Logo */}
         <div className="flex-shrink-0">
-          <div className="w-11 h-11 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-full flex items-center justify-center">
+          <div className="w-11 h-11 bg-white border border-gray-200 flex items-center justify-center">
             <div className="text-center leading-none">
               <div className="text-blue-700 font-bold text-[10px]">PHILIPS</div>
               <div className="text-blue-600 font-semibold text-[8px] mt-0.5">AVENT</div>
