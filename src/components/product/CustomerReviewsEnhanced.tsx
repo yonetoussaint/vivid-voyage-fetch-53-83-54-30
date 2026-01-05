@@ -68,7 +68,7 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
         {/* Pass summaryStats to ReviewsSummary if it uses them */}
         <ReviewsSummary />
 
-        <div className="py-4">
+        <div className="py-2">
           {/* Container with 1px gap between cards */}
           <div className="space-y-2">
             {finalReviews.length === 0 ? (
