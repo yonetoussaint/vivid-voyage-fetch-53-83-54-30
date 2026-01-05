@@ -1,14 +1,31 @@
 // components/home/AliExpressHeader.tsx
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import CategoryTabs from './header/CategoryTabs';
 import { X, Camera, MapPin, ChevronDown, ChevronLeft, MoreHorizontal, Share2, Flag, Heart } from 'lucide-react';
+import {
+  useHeaderSearch,
+  useHeaderScroll,
+  useHeaderLocation,
+  useHeaderTabs,
+  useHeaderActionButtons,
+  useHeaderActionButton,
+  useHeaderBackground,
+  useHeaderSearchBar,
+  useHeaderIcon,
+  useHeaderRightIcons
+} from '@/hooks/header.hooks';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
   showCategoryTabs?: boolean;
   customTabs?: Array<{ id: string; name: string; path?: string }>;
   onCustomTabChange?: (tabId: string) => void;
+
   cityName?: string;
+  locationOptions?: Array<{ id: string; name: string }>;
+  onLocationChange?: (locationId: string) => void;
+  onOpenLocationsPanel?: () => void;
+
   mode?: 'home' | 'product-detail';
   scrollY?: number;
   productData?: {
@@ -20,9 +37,187 @@ interface AliExpressHeaderProps {
   onReportClick?: () => void;
   isFavorite?: boolean;
   inPanel?: boolean;
+  actionButtons?: Array<{
+    Icon: React.ComponentType<any>;
+    onClick?: () => void;
+    active?: boolean;
+    activeColor?: string;
+    count?: number;
+  }>;
   hideSearchBar?: boolean;
   onSearchSubmit?: (query: string) => void;
 }
+
+// Inline Header Action Button Component
+const HeaderActionButton = ({ 
+  Icon, 
+  active = false, 
+  onClick, 
+  progress, 
+  activeColor = '#f97316',
+  badge,
+  fillWhenActive = true,
+  transform = '',
+  likeCount,
+  shareCount,
+  scrolled = false
+}: {
+  Icon: React.ComponentType<any>;
+  active?: boolean;
+  onClick?: () => void;
+  progress: number;
+  activeColor?: string;
+  badge?: number;
+  fillWhenActive?: boolean;
+  transform?: string;
+  likeCount?: number;
+  shareCount?: number;
+  scrolled?: boolean;
+}) => {
+  const {
+    isAnimating,
+    iconProps,
+    count,
+    shouldShowHorizontalLayout,
+    shouldShowFadingCount,
+    shouldShowCompactButton,
+    transitionProgress,
+    handleClick,
+    getIconStyle,
+    expandedThreshold,
+    fadingThreshold
+  } = useHeaderActionButton({
+    Icon,
+    active,
+    onClick,
+    activeColor,
+    fillWhenActive,
+    progress,
+    likeCount,
+    shareCount,
+    scrolled,
+    badge
+  });
+
+  const iconStyle = getIconStyle();
+
+  // When scrolled, show simple button without background
+  if (scrolled) {
+    return (
+      <button
+        onClick={handleClick}
+        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
+      >
+        <Icon
+          size={20}
+          {...iconProps}
+          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+          style={iconStyle}
+        />
+        {badge && (
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
+            {badge}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  // Show horizontal layout with count in non-scroll state
+  if (shouldShowHorizontalLayout) {
+    return (
+      <div 
+        className="rounded-full transition-all duration-700 hover-scale"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+      >
+        <button
+          onClick={handleClick}
+          className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
+        >
+          <Icon
+            size={20}
+            {...iconProps}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+            style={iconStyle}
+          />
+          <span 
+            className="text-xs font-medium transition-all duration-700 ease-out animate-fade-in"
+            style={{
+              color: active ? activeColor : `rgba(255, 255, 255, ${0.95 - (progress * 0.2)})`,
+              opacity: 1 - (progress / expandedThreshold),
+            }}
+          >
+            {count}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  // Transitional state - fading count while shrinking
+  if (shouldShowFadingCount) {
+    return (
+      <div 
+        className="rounded-full transition-all duration-700"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+      >
+        <button
+          onClick={handleClick}
+          className="flex items-center h-8 px-3 rounded-full transition-all duration-700 relative"
+          style={{
+            gap: `${6 - (transitionProgress * 6)}px`,
+          }}
+        >
+          <Icon
+            size={20}
+            {...iconProps}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+            style={iconStyle}
+          />
+          <span 
+            className="text-xs font-medium transition-all duration-700"
+            style={{
+              color: active ? activeColor : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`,
+              opacity: 1 - transitionProgress,
+              transform: `scaleX(${1 - transitionProgress})`,
+              transformOrigin: 'left center',
+              width: `${20 * (1 - transitionProgress)}px`,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {count}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  // Compact circular button state (for transition before scrolled)
+  return (
+    <div 
+      className="rounded-full transition-all duration-700"
+      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+    >
+      <button
+        onClick={handleClick}
+        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
+      >
+        <Icon
+          size={20}
+          {...iconProps}
+          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+          style={iconStyle}
+        />
+        {badge && (
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
+            {badge}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+};
 
 // Three Dots Menu Component
 const ThreeDotsMenu = ({
@@ -36,13 +231,13 @@ const ThreeDotsMenu = ({
   displayProgress: number;
   showSearchBarInProductDetail: boolean;
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        setIsMenuOpen(false);
       }
     };
 
@@ -50,134 +245,81 @@ const ThreeDotsMenu = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleMenuItemClick = (callback?: () => void) => {
-    setIsOpen(false);
-    callback?.();
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
-  const menuItems = [
-    { icon: Share2, label: 'Share', onClick: onShareClick },
-    { icon: Flag, label: 'Report', onClick: onReportClick },
-    { label: 'Save', onClick: () => {} },
-    { label: 'Follow', onClick: () => {} },
-  ];
+  const handleShareClick = () => {
+    setIsMenuOpen(false);
+    onShareClick?.();
+  };
+
+  const handleReportClick = () => {
+    setIsMenuOpen(false);
+    onReportClick?.();
+  };
 
   return (
     <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700"
-        style={{
-          backgroundColor: showSearchBarInProductDetail 
-            ? 'transparent' 
-            : `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})`
-        }}
+      {/* Three Dots Button */}
+      <div 
+        className="rounded-full transition-all duration-700 hover-scale"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
       >
-        <MoreHorizontal
-          size={20}
-          className="transition-all duration-700"
+        <button
+          onClick={toggleMenu}
+          className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
           style={{
-            color: showSearchBarInProductDetail
-              ? `rgba(75, 85, 99, 0.9)`
-              : displayProgress > 0.5 
-                ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
-                : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
-          }}
-        />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-fade-in">
-          {menuItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => handleMenuItemClick(item.onClick)}
-              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              {item.icon && <item.icon className="h-4 w-4 mr-3" />}
-              <span className={item.icon ? '' : 'ml-7'}>{item.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Favorite Button Component
-const FavoriteButton = ({
-  isFavorite,
-  onClick,
-  count,
-  displayProgress,
-  showSearchBarInProductDetail
-}: {
-  isFavorite: boolean;
-  onClick?: () => void;
-  count?: number;
-  displayProgress: number;
-  showSearchBarInProductDetail: boolean;
-}) => {
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  const handleClick = () => {
-    setIsAnimating(true);
-    onClick?.();
-    setTimeout(() => setIsAnimating(false), 600);
-  };
-
-  const iconStyle = {
-    color: isFavorite ? '#f97316' : 
-      showSearchBarInProductDetail
-        ? `rgba(75, 85, 99, 0.9)`
-        : displayProgress > 0.5 
-          ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
-          : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`,
-    fill: isFavorite ? '#f97316' : 'none',
-    transition: 'all 0.3s ease'
-  };
-
-  // When scrolled, show simple button without background
-  if (showSearchBarInProductDetail) {
-    return (
-      <button
-        onClick={handleClick}
-        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
-      >
-        <Heart
-          size={20}
-          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-          style={iconStyle}
-        />
-      </button>
-    );
-  }
-
-  // Show horizontal layout with count in non-scroll state
-  return (
-    <div 
-      className="rounded-full transition-all duration-700 hover-scale"
-      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
-    >
-      <button
-        onClick={handleClick}
-        className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700"
-      >
-        <Heart
-          size={20}
-          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-          style={iconStyle}
-        />
-        <span 
-          className="text-xs font-medium transition-all duration-700 ease-out animate-fade-in"
-          style={{
-            color: isFavorite ? '#f97316' : `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`,
-            opacity: 1 - (displayProgress / 0.6),
+            backgroundColor: showSearchBarInProductDetail ? 'transparent' : undefined
           }}
         >
-          {count}
-        </span>
-      </button>
+          <MoreHorizontal
+            size={20}
+            className="transition-all duration-700"
+            style={{
+              color: showSearchBarInProductDetail
+                ? `rgba(75, 85, 99, 0.9)`
+                : displayProgress > 0.5 
+                  ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                  : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+            }}
+          />
+        </button>
+      </div>
+
+      {/* Dropdown Menu */}
+      {isMenuOpen && (
+        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-fade-in">
+          <button
+            onClick={handleShareClick}
+            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Share2 className="h-4 w-4 mr-3" />
+            Share
+          </button>
+          <button
+            onClick={handleReportClick}
+            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Flag className="h-4 w-4 mr-3" />
+            Report
+          </button>
+          {/* Add more menu items as needed */}
+          <div className="border-t border-gray-100 my-1"></div>
+          <button
+            onClick={() => setIsMenuOpen(false)}
+            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span className="ml-7">Save</span>
+          </button>
+          <button
+            onClick={() => setIsMenuOpen(false)}
+            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span className="ml-7">Follow</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -188,6 +330,8 @@ export default function AliExpressHeader({
   customTabs,
   onCustomTabChange,
   cityName = 'New York',
+  onLocationChange,
+  onOpenLocationsPanel,
   mode = 'home',
   scrollY = 0,
   productData,
@@ -197,204 +341,436 @@ export default function AliExpressHeader({
   onReportClick,
   isFavorite = false,
   inPanel = false,
+  actionButtons = [],
   hideSearchBar = false,
   onSearchSubmit,
 }: AliExpressHeaderProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCity] = useState(cityName);
-  const displayProgress = Math.min(scrollY / 100, 1);
-  const showSearchBarInProductDetail = displayProgress > 0.6;
+  const {
+    displayProgress,
+    showSearchBarInProductDetail
+  } = useHeaderScroll(mode, scrollY);
 
-  // Calculate header background
-  const getHeaderStyle = () => {
-    if (mode === 'home') return { backgroundColor: 'white' };
-    
-    if (displayProgress > 0.5) {
-      return {
-        backgroundColor: `rgba(255, 255, 255, ${displayProgress})`,
-        backdropFilter: `blur(${displayProgress * 4}px)`
-      };
-    }
-    
-    return {
-      background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 100%)'
-    };
-  };
+  const {
+    activeTab,
+    tabsToShow,
+    categoryTabsKey,
+    handleTabChange
+  } = useHeaderTabs(activeTabId, customTabs, onCustomTabChange);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearchSubmit?.(searchQuery);
-  };
+  const {
+    searchQuery,
+    placeholder,
+    handleSubmit,
+    handleClearSearch,
+    handleInputChange,
+    handleFocus
+  } = useHeaderSearch('', onSearchSubmit);
 
-  const handleClearSearch = () => setSearchQuery('');
+  const {
+    selectedCity,
+    locationDropdownRef,
+    handleLocationClick
+  } = useHeaderLocation(cityName, onLocationChange, onOpenLocationsPanel);
 
-  // Render Home Mode Header
-  if (mode === 'home' && !hideSearchBar) {
-    return (
-      <header className="fixed top-0 w-full z-40 bg-white">
-        <div className="flex items-center justify-between px-2" style={{ height: '36px' }}>
-          <div className="flex-1 relative max-w-full mx-auto">
-            <form onSubmit={handleSearchSubmit}>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search on AliExpress"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 pl-3 pr-24 bg-gray-100 border-none rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                
-                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-                  {searchQuery.trim() ? (
-                    <button
-                      type="button"
-                      onClick={handleClearSearch}
-                      className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                    >
-                      <X className="h-4 w-4 text-gray-600" />
-                    </button>
-                  ) : (
-                    <>
-                      <button 
-                        type="button" 
-                        className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                      >
-                        <Camera className="h-5 w-5 text-gray-900 font-bold stroke-[1.5]" />
-                      </button>
-                      <button 
-                        type="button" 
-                        className="flex items-center space-x-1 px-2 py-1 rounded-full hover:bg-gray-200 transition-colors"
-                      >
-                        <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
-                        <span className="text-sm max-w-[80px] truncate">{selectedCity}</span>
-                        <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
+  const { getHeaderStyle } = useHeaderBackground({ mode, displayProgress });
+  const { getInputClassName } = useHeaderSearchBar({
+    searchQuery,
+    placeholder,
+    handleSubmit,
+    handleInputChange,
+    handleFocus,
+    handleClearSearch
+  });
+  const { IconComponent, iconStrokeWidth } = useHeaderIcon({ Icon: inPanel ? X : ChevronLeft, inPanel });
+  const {
+    handleCameraClick,
+    getLocationButtonClassName
+  } = useHeaderRightIcons({
+    searchQuery,
+    handleClearSearch,
+    selectedCity,
+    locationDropdownRef,
+    handleLocationClick
+  });
 
-        {showCategoryTabs && (
-          <div className="relative overflow-hidden">
-            <CategoryTabs 
-              activeTab={activeTabId}
-              setActiveTab={onCustomTabChange}
-              categories={customTabs || [
-                { id: 'recommendations', name: 'Recommendations' },
-                { id: 'new', name: 'New' },
-                { id: 'hot', name: 'Hot' },
-                { id: 'fashion', name: 'Fashion' },
-                { id: 'electronics', name: 'Electronics' },
-              ]}
-            />
-          </div>
-        )}
-      </header>
-    );
-  }
+  return (
+    <header 
+      className="fixed top-0 w-full z-40" 
+      style={getHeaderStyle()}
+    >
+      {/* Header content based on mode */}
+      {mode === 'home' && !hideSearchBar ? (
+        <HomeHeader 
+          searchQuery={searchQuery}
+          placeholder={placeholder}
+          handleSubmit={handleSubmit}
+          handleInputChange={handleInputChange}
+          handleFocus={handleFocus}
+          handleClearSearch={handleClearSearch}
+          selectedCity={selectedCity}
+          locationDropdownRef={locationDropdownRef}
+          handleLocationClick={handleLocationClick}
+          getInputClassName={getInputClassName}
+          handleCameraClick={handleCameraClick}
+          getLocationButtonClassName={getLocationButtonClassName}
+        />
+      ) : mode === 'product-detail' ? (
+        <ProductDetailHeader
+          displayProgress={displayProgress}
+          showSearchBarInProductDetail={showSearchBarInProductDetail}
+          onBackClick={onBackClick}
+          onFavoriteClick={onFavoriteClick}
+          onShareClick={onShareClick}
+          onReportClick={onReportClick}
+          isFavorite={isFavorite}
+          inPanel={inPanel}
+          IconComponent={IconComponent}
+          iconStrokeWidth={iconStrokeWidth}
+          searchQuery={searchQuery}
+          placeholder={placeholder}
+          getInputClassName={getInputClassName}
+          handleSubmit={handleSubmit}
+          handleInputChange={handleInputChange}
+          handleFocus={handleFocus}
+          handleClearSearch={handleClearSearch}
+          productData={productData}
+        />
+      ) : null}
 
-  // Render Product Detail Mode Header
-  if (mode === 'product-detail') {
-    return (
-      <header className="fixed top-0 w-full z-40" style={getHeaderStyle()}>
-        <div className="py-2 px-3 w-full">
-          <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
-            {/* Left Section - Back Button */}
-            <div className="flex items-center flex-shrink-0">
-              <button 
-                onClick={onBackClick}
-                className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
-                style={{
-                  backgroundColor: showSearchBarInProductDetail 
-                    ? 'transparent' 
-                    : `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})`
-                }}
-              >
-                {inPanel ? (
-                  <X
-                    size={24}
-                    strokeWidth={2}
-                    className="transition-all duration-700"
-                    style={{
-                      color: showSearchBarInProductDetail
-                        ? `rgba(75, 85, 99, 0.9)`
-                        : displayProgress > 0.5 
-                          ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
-                          : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
-                    }}
-                  />
-                ) : (
-                  <ChevronLeft
-                    size={24}
-                    strokeWidth={2}
-                    className="transition-all duration-700"
-                    style={{
-                      color: showSearchBarInProductDetail
-                        ? `rgba(75, 85, 99, 0.9)`
-                        : displayProgress > 0.5 
-                          ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
-                          : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
-                    }}
-                  />
-                )}
-              </button>
-            </div>
-
-            {/* Middle Section - Search Bar when scrolled */}
-            {showSearchBarInProductDetail && (
-              <div className="flex-1 px-2">
-                <div className="relative max-w-full">
-                  <form onSubmit={handleSearchSubmit}>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Search on AliExpress"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-4 py-2 pr-10 bg-gray-100 border-none rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      {searchQuery.trim() && (
-                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                          <button
-                            type="button"
-                            onClick={handleClearSearch}
-                            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                          >
-                            <X className="h-4 w-4 text-gray-600" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Right Section - Action Buttons */}
-            <div className="flex gap-1 flex-shrink-0">
-              <FavoriteButton
-                isFavorite={isFavorite}
-                onClick={onFavoriteClick}
-                count={productData?.favorite_count}
-                displayProgress={displayProgress}
-                showSearchBarInProductDetail={showSearchBarInProductDetail}
-              />
-              
-              <ThreeDotsMenu
-                onShareClick={onShareClick}
-                onReportClick={onReportClick}
-                displayProgress={displayProgress}
-                showSearchBarInProductDetail={showSearchBarInProductDetail}
-              />
-            </div>
-          </div>
-        </div>
-      </header>
-    );
-  }
-
-  return null;
+      {/* Optional Category Tabs Below Header */}
+      {mode === 'home' && showCategoryTabs && (
+        <CategoryTabsSection
+          categoryTabsKey={categoryTabsKey}
+          activeTab={activeTab}
+          handleTabChange={handleTabChange}
+          tabsToShow={tabsToShow}
+        />
+      )}
+    </header>
+  );
 }
+
+// Sub-components for better organization
+const HomeHeader = ({
+  searchQuery,
+  placeholder,
+  handleSubmit,
+  handleInputChange,
+  handleFocus,
+  handleClearSearch,
+  selectedCity,
+  locationDropdownRef,
+  handleLocationClick,
+  getInputClassName,
+  handleCameraClick,
+  getLocationButtonClassName
+}: {
+  searchQuery: string;
+  placeholder: string;
+  handleSubmit: (e: React.FormEvent) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFocus: () => void;
+  handleClearSearch: () => void;
+  selectedCity: string;
+  locationDropdownRef: React.RefObject<HTMLDivElement>;
+  handleLocationClick: () => void;
+  getInputClassName: () => string;
+  handleCameraClick: () => void;
+  getLocationButtonClassName: () => string;
+}) => (
+  <div className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white" style={{ height: '36px' }}>
+    <div className="flex-1 relative max-w-full mx-auto">
+      <form onSubmit={handleSubmit}>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder={placeholder}
+            value={searchQuery}
+            onChange={handleInputChange}
+            onFocus={handleFocus}
+            className={getInputClassName()}
+          />
+          <RightIcons
+            searchQuery={searchQuery}
+            handleClearSearch={handleClearSearch}
+            selectedCity={selectedCity}
+            locationDropdownRef={locationDropdownRef}
+            handleLocationClick={handleLocationClick}
+            handleCameraClick={handleCameraClick}
+            getLocationButtonClassName={getLocationButtonClassName}
+          />
+        </div>
+      </form>
+    </div>
+  </div>
+);
+
+const RightIcons = ({
+  searchQuery,
+  handleClearSearch,
+  selectedCity,
+  locationDropdownRef,
+  handleLocationClick,
+  handleCameraClick,
+  getLocationButtonClassName
+}: {
+  searchQuery: string;
+  handleClearSearch: () => void;
+  selectedCity: string;
+  locationDropdownRef: React.RefObject<HTMLDivElement>;
+  handleLocationClick: () => void;
+  handleCameraClick: () => void;
+  getLocationButtonClassName: () => string;
+}) => (
+  <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+    {searchQuery.trim() ? (
+      <button
+        type="button"
+        onClick={handleClearSearch}
+        className="p-1 hover:bg-gray-100 transition-colors"
+      >
+        <X className="h-4 w-4 text-gray-600" />
+      </button>
+    ) : (
+      <>
+        <button
+          type="button"
+          className="p-1 transition-colors"
+          onClick={handleCameraClick}
+        >
+          <Camera className="h-6 w-6 text-gray-900 font-bold stroke-[1.5]" />
+        </button>
+        <div className="relative" ref={locationDropdownRef}>
+          <button
+            type="button"
+            onClick={handleLocationClick}
+            className={getLocationButtonClassName()}
+          >
+            <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+            <span className="max-w-[80px] truncate">{selectedCity}</span>
+            <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+          </button>
+        </div>
+      </>
+    )}
+  </div>
+);
+
+const ProductDetailHeader = ({
+  displayProgress,
+  showSearchBarInProductDetail,
+  onBackClick,
+  onFavoriteClick,
+  onShareClick,
+  onReportClick,
+  isFavorite,
+  inPanel,
+  IconComponent,
+  iconStrokeWidth,
+  searchQuery,
+  placeholder,
+  getInputClassName,
+  handleSubmit,
+  handleInputChange,
+  handleFocus,
+  handleClearSearch,
+  productData
+}: {
+  displayProgress: number;
+  showSearchBarInProductDetail: boolean;
+  onBackClick?: () => void;
+  onFavoriteClick?: () => void;
+  onShareClick?: () => void;
+  onReportClick?: () => void;
+  isFavorite: boolean;
+  inPanel: boolean;
+  IconComponent: React.ComponentType<any>;
+  iconStrokeWidth: number;
+  searchQuery: string;
+  placeholder: string;
+  getInputClassName: () => string;
+  handleSubmit: (e: React.FormEvent) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFocus: () => void;
+  handleClearSearch: () => void;
+  productData?: any;
+}) => (
+  <div className="py-2 px-3 w-full">
+    <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
+      <LeftSection
+        displayProgress={displayProgress}
+        showSearchBarInProductDetail={showSearchBarInProductDetail}
+        onBackClick={onBackClick}
+        IconComponent={IconComponent}
+        iconStrokeWidth={iconStrokeWidth}
+      />
+      {showSearchBarInProductDetail && (
+        <SearchBarSection
+          searchQuery={searchQuery}
+          placeholder={placeholder}
+          getInputClassName={getInputClassName}
+          handleSubmit={handleSubmit}
+          handleInputChange={handleInputChange}
+          handleFocus={handleFocus}
+          handleClearSearch={handleClearSearch}
+        />
+      )}
+      <ActionButtonsSection
+        displayProgress={displayProgress}
+        showSearchBarInProductDetail={showSearchBarInProductDetail}
+        onFavoriteClick={onFavoriteClick}
+        onShareClick={onShareClick}
+        onReportClick={onReportClick}
+        isFavorite={isFavorite}
+        productData={productData}
+      />
+    </div>
+  </div>
+);
+
+const LeftSection = ({
+  displayProgress,
+  showSearchBarInProductDetail,
+  onBackClick,
+  IconComponent,
+  iconStrokeWidth
+}: {
+  displayProgress: number;
+  showSearchBarInProductDetail: boolean;
+  onBackClick?: () => void;
+  IconComponent: React.ComponentType<any>;
+  iconStrokeWidth: number;
+}) => (
+  <div className="flex items-center flex-shrink-0">
+    <button 
+      className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
+      onClick={onBackClick}
+      style={{
+        backgroundColor: showSearchBarInProductDetail 
+          ? 'transparent' 
+          : `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})`
+      }}
+    >
+      <IconComponent
+        size={24}
+        strokeWidth={iconStrokeWidth}
+        className="transition-all duration-700"
+        style={{
+          color: showSearchBarInProductDetail
+            ? `rgba(75, 85, 99, 0.9)`
+            : displayProgress > 0.5 
+              ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+              : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+        }}
+      />
+    </button>
+  </div>
+);
+
+const SearchBarSection = ({
+  searchQuery,
+  placeholder,
+  getInputClassName,
+  handleSubmit,
+  handleInputChange,
+  handleFocus,
+  handleClearSearch
+}: {
+  searchQuery: string;
+  placeholder: string;
+  getInputClassName: () => string;
+  handleSubmit: (e: React.FormEvent) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFocus: () => void;
+  handleClearSearch: () => void;
+}) => (
+  <div className="flex-1 px-2">
+    <div className="relative max-w-full">
+      <form onSubmit={handleSubmit}>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder={placeholder}
+            value={searchQuery}
+            onChange={handleInputChange}
+            onFocus={handleFocus}
+            className={getInputClassName()}
+          />
+          <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
+            {searchQuery.trim() && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="p-1 hover:bg-gray-100 transition-colors"
+              >
+                <X className="h-4 w-4 text-gray-600" />
+              </button>
+            )}
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+);
+
+const ActionButtonsSection = ({
+  displayProgress,
+  showSearchBarInProductDetail,
+  onFavoriteClick,
+  onShareClick,
+  onReportClick,
+  isFavorite,
+  productData
+}: {
+  displayProgress: number;
+  showSearchBarInProductDetail: boolean;
+  onFavoriteClick?: () => void;
+  onShareClick?: () => void;
+  onReportClick?: () => void;
+  isFavorite: boolean;
+  productData?: any;
+}) => (
+  <div className="flex gap-1 flex-shrink-0">
+    {/* Favorite/Like Button */}
+    <HeaderActionButton
+      Icon={Heart}
+      active={isFavorite}
+      onClick={onFavoriteClick}
+      progress={displayProgress}
+      activeColor="#f97316"
+      likeCount={productData?.favorite_count || 0}
+      scrolled={showSearchBarInProductDetail}
+    />
+    
+    {/* Three Dots Menu */}
+    <ThreeDotsMenu
+      onShareClick={onShareClick}
+      onReportClick={onReportClick}
+      displayProgress={displayProgress}
+      showSearchBarInProductDetail={showSearchBarInProductDetail}
+    />
+  </div>
+);
+
+const CategoryTabsSection = ({
+  categoryTabsKey,
+  activeTab,
+  handleTabChange,
+  tabsToShow
+}: {
+  categoryTabsKey: string;
+  activeTab: string;
+  handleTabChange: (tabId: string) => void;
+  tabsToShow: Array<any>;
+}) => (
+  <div className="relative overflow-hidden">
+    <CategoryTabs 
+      key={categoryTabsKey}
+      progress={1}
+      activeTab={activeTab}
+      setActiveTab={handleTabChange}
+      categories={tabsToShow}
+      isSearchOverlayActive={false}
+    />
+  </div>
+);
