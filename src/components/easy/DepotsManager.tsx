@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DollarSign, User, Plus, Minus, Globe } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
@@ -8,23 +8,31 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
   // Function to convert USD to HTG
   const convertirUSDversHTG = (montantUSD) => {
-    return montantUSD * TAUX_DE_CHANGE;
+    return (parseFloat(montantUSD) || 0) * TAUX_DE_CHANGE;
+  };
+
+  // Helper function to get deposit amount in HTG
+  const getMontantHTG = (depot) => {
+    if (!depot) return 0;
+    
+    if (typeof depot === 'object' && depot.devise === 'USD') {
+      return convertirUSDversHTG(depot.montant);
+    }
+    
+    return parseFloat(depot) || 0;
   };
 
   return (
     <div className="space-y-4">
       {/* Exchange Rate Banner */}
-      <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl p-4 shadow-lg">
-        <div className="flex items-center justify-center gap-3">
-          <Globe size={20} />
+      <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl p-3 shadow-lg">
+        <div className="flex items-center justify-center gap-2">
+          <Globe size={18} />
           <div className="text-center">
-            <div className="font-bold text-lg">Taux de Change Fixe</div>
+            <div className="font-bold">Taux de Change</div>
             <div className="text-sm opacity-90">1 USD = {TAUX_DE_CHANGE} HTG</div>
           </div>
-          <Globe size={20} />
-        </div>
-        <div className="text-center text-sm mt-2 bg-white bg-opacity-20 rounded-lg p-2">
-          💡 Les dépôts en USD seront automatiquement convertis à {TAUX_DE_CHANGE} HTG
+          <Globe size={18} />
         </div>
       </div>
 
@@ -44,10 +52,9 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
           ) : (
             vendeurs.map(vendeur => {
               const depots = depotsActuels[vendeur] || [];
-              const depotsValides = depots.filter(depot => depot !== '');
-              const totalDepot = depotsValides.reduce((sum, depot) => sum + (parseFloat(depot) || 0), 0);
+              const totalDepotHTG = depots.reduce((sum, depot) => sum + getMontantHTG(depot), 0);
               const donneesVendeur = totauxVendeurs[vendeur];
-              const especesAttendues = donneesVendeur ? (donneesVendeur.ventesTotales - totalDepot) : 0;
+              const especesAttendues = donneesVendeur ? (donneesVendeur.ventesTotales - totalDepotHTG) : 0;
 
               return (
                 <div key={vendeur} className="bg-white bg-opacity-15 rounded-lg p-3 space-y-3">
@@ -78,7 +85,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm opacity-90">Total Dépôts</span>
-                      <span className="font-bold">{formaterArgent(totalDepot)} HTG</span>
+                      <span className="font-bold">{formaterArgent(totalDepotHTG)} HTG</span>
                     </div>
                   </div>
 
@@ -96,7 +103,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                         </button>
                         <button
                           onClick={() => {
-                            // Add a deposit in HTG but mark it as originating from USD
+                            // Add USD deposit placeholder
                             ajouterDepot(vendeur, 'USD');
                           }}
                           className="bg-green-500 text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition"
@@ -114,49 +121,38 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                     ) : (
                       <div className="space-y-2">
                         {depots.map((depot, index) => {
-                          const depotData = typeof depot === 'object' ? depot : { montant: depot, devise: 'HTG' };
-                          const montantHTG = depotData.devise === 'USD' 
-                            ? convertirUSDversHTG(parseFloat(depotData.montant) || 0)
-                            : parseFloat(depotData.montant) || 0;
-
+                          const isUSD = typeof depot === 'object' && depot.devise === 'USD';
+                          const montant = isUSD ? depot.montant : depot;
+                          
                           return (
                             <div key={index} className="flex items-center gap-2">
-                              <div className="flex-1">
-                                <div className="flex items-center bg-white bg-opacity-20 rounded-lg overflow-hidden mb-1">
-                                  <input
-                                    type="number"
-                                    step="0.01"
-                                    value={depotData.montant}
-                                    onChange={(e) => {
-                                      const nouvelleValeur = e.target.value;
-                                      if (depotData.devise === 'USD') {
-                                        // For USD, convert to HTG and update
-                                        const montantConverti = convertirUSDversHTG(parseFloat(nouvelleValeur) || 0);
-                                        mettreAJourDepot(vendeur, index, { 
-                                          montant: nouvelleValeur, 
-                                          devise: 'USD',
-                                          montantHTG: montantConverti
-                                        });
-                                      } else {
-                                        mettreAJourDepot(vendeur, index, nouvelleValeur);
-                                      }
-                                    }}
-                                    placeholder="Montant"
-                                    className="flex-1 px-3 py-2 bg-transparent text-white text-right font-semibold placeholder-white placeholder-opacity-50"
-                                  />
-                                  <span className="px-2 py-2 font-bold text-sm min-w-[60px] text-center">
-                                    {depotData.devise === 'USD' ? 'USD' : 'HTG'}
-                                  </span>
-                                </div>
-                                {depotData.devise === 'USD' && (
-                                  <div className="text-xs text-right opacity-75">
-                                    = {formaterArgent(montantHTG)} HTG
-                                  </div>
-                                )}
+                              <div className="flex-1 flex items-center bg-white bg-opacity-20 rounded-lg overflow-hidden">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={montant}
+                                  onChange={(e) => {
+                                    if (isUSD) {
+                                      mettreAJourDepot(vendeur, index, {
+                                        montant: e.target.value,
+                                        devise: 'USD'
+                                      });
+                                    } else {
+                                      mettreAJourDepot(vendeur, index, e.target.value);
+                                    }
+                                  }}
+                                  placeholder="Montant"
+                                  className="flex-1 px-3 py-2 bg-transparent text-white text-right font-semibold placeholder-white placeholder-opacity-50 min-w-0"
+                                />
+                                <span className={`px-3 py-2 font-bold text-sm min-w-[70px] text-center ${
+                                  isUSD ? 'bg-green-500 bg-opacity-30' : ''
+                                }`}>
+                                  {isUSD ? 'USD' : 'HTG'}
+                                </span>
                               </div>
                               <button
                                 onClick={() => supprimerDepot(vendeur, index)}
-                                className="bg-red-500 text-white p-2 rounded-lg font-bold active:scale-95 transition"
+                                className="bg-red-500 text-white p-2 rounded-lg font-bold active:scale-95 transition shrink-0"
                                 aria-label={`Supprimer dépôt ${index + 1}`}
                               >
                                 <Minus size={16} />
@@ -169,29 +165,30 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                   </div>
 
                   {/* Résumé Dépôts */}
-                  {depotsValides.length > 0 && (
+                  {depots.length > 0 && (
                     <div className="pt-3 border-t border-white border-opacity-30">
                       <div className="flex flex-col gap-1">
                         <div className="text-xs opacity-90">Dépôts individuels (en HTG):</div>
                         <div className="flex flex-wrap gap-1">
                           {depots.map((depot, idx) => {
-                            const depotData = typeof depot === 'object' ? depot : { montant: depot, devise: 'HTG' };
-                            const montantFinal = depotData.devise === 'USD'
-                              ? convertirUSDversHTG(parseFloat(depotData.montant) || 0)
-                              : parseFloat(depotData.montant) || 0;
-
+                            const montantHTG = getMontantHTG(depot);
+                            const isUSD = typeof depot === 'object' && depot.devise === 'USD';
+                            const montantOriginal = isUSD ? depot.montant : depot;
+                            
                             return (
                               <div 
                                 key={idx} 
-                                className={`bg-opacity-20 px-2 py-1 rounded text-xs flex items-center gap-1 ${
-                                  depotData.devise === 'USD' ? 'bg-green-500' : 'bg-white'
+                                className={`px-2 py-1 rounded text-xs flex items-center gap-1 ${
+                                  isUSD 
+                                    ? 'bg-green-500 bg-opacity-30 text-green-100' 
+                                    : 'bg-white bg-opacity-20'
                                 }`}
                               >
-                                <span>{idx + 1}.</span>
-                                <span>{formaterArgent(montantFinal)} HTG</span>
-                                {depotData.devise === 'USD' && (
+                                <span className="font-bold">{idx + 1}.</span>
+                                <span>{formaterArgent(montantHTG)}</span>
+                                {isUSD && (
                                   <span className="text-xs opacity-75 ml-1">
-                                    ({parseFloat(depotData.montant) || 0} USD)
+                                    ({parseFloat(montantOriginal) || 0} USD)
                                   </span>
                                 )}
                               </div>
