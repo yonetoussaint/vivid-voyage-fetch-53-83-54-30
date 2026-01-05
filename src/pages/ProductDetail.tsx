@@ -13,7 +13,7 @@ import ProductDetailInfo from "@/components/product/ProductDetailInfo";
 import ProductDetailLoading from "@/components/product/ProductDetailLoading";
 import CustomerReviews from "@/components/product/CustomerReviewsEnhanced";
 import ReviewsGallery from "@/components/product/ReviewsGallery";
-import ReviewTypingBar from "@/components/product/ReviewTypingBar"; // Import the new component
+import ReviewTypingBar from "@/components/product/ReviewTypingBar";
 import { useProductDetail } from "@/hooks/product-detail.hooks";
 
 interface ProductDetailProps {
@@ -120,13 +120,16 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
           />
         </div>
 
-        <div className="mt-2">
-          <GalleryThumbnails
-            images={galleryImages}
-            currentIndex={currentGalleryIndex}
-            onThumbnailClick={handleThumbnailClick}
-          />
-        </div>
+        {/* Only show GalleryThumbnails when there are multiple images/videos */}
+        {galleryImages && galleryImages.length > 1 && (
+          <div className="mt-2">
+            <GalleryThumbnails
+              images={galleryImages}
+              currentIndex={currentGalleryIndex}
+              onThumbnailClick={handleThumbnailClick}
+            />
+          </div>
+        )}
 
         <div className="mt-2">
           <ProductDetailInfo
