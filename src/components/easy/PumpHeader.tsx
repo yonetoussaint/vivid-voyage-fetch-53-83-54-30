@@ -1,5 +1,5 @@
-import React from 'react';
-import { User, DollarSign, Fuel } from 'lucide-react';
+import React, { useState } from 'react';
+import { User, DollarSign, Fuel, Calculator, TrendingUp, TrendingDown } from 'lucide-react';
 import { formaterArgent, formaterGallons, formaterCaisse } from '@/utils/formatters';
 import { getCouleurPompe, calculerTotalPompe } from '@/utils/helpers';
 
@@ -22,6 +22,16 @@ const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectati
 
   // Determine if rounded up or down
   const isRoundedUp = adjustment > 0;
+
+  // State for cash received and change calculation
+  const [cashRecu, setCashRecu] = useState('');
+  
+  // Parse cash received value
+  const cashRecuValue = parseFloat(cashRecu) || 0;
+  const totalAjusteValue = parseFloat(totalPompe?.ventesTotales || 0);
+  const changeNeeded = cashRecuValue - totalAjusteValue;
+  const shouldGiveChange = changeNeeded > 0;
+  const isShort = changeNeeded < 0;
 
   return (
     <div className="w-full space-y-3">
@@ -111,6 +121,103 @@ const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectati
         </div>
       </div>
 
+      {/* Two Total Sales Cards for Essence and Diesel - BEFORE main total sales card */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-3 shadow-lg">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+            <p className="text-xs font-medium opacity-90">Ventes Essence</p>
+          </div>
+          <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterArgent(totalPompe?.ventesEssence || 0)}</p>
+          <p className="text-[10px] opacity-90">HTG</p>
+        </div>
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-3 shadow-lg">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-amber-300"></div>
+            <p className="text-xs font-medium opacity-90">Ventes Diesel</p>
+          </div>
+          <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterArgent(totalPompe?.ventesDiesel || 0)}</p>
+          <p className="text-[10px] opacity-90">HTG</p>
+        </div>
+      </div>
+
+      {/* CASH RECEIVED INPUT CARD */}
+      <div className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white rounded-xl p-4 shadow-lg mb-3">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+            <DollarSign size={16} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-bold">CAISSE REÇUE</p>
+            <p className="text-[10px] opacity-80">Argent donné par le vendeur</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {/* Input field for cash received */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-white font-bold">HTG</span>
+            </div>
+            <input
+              type="number"
+              value={cashRecu}
+              onChange={(e) => setCashRecu(e.target.value)}
+              placeholder="0.00"
+              className="w-full pl-14 pr-4 py-3 text-lg font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-2 focus:ring-white focus:border-white"
+            />
+          </div>
+
+          {/* Change calculation */}
+          {cashRecu && (
+            <div className="bg-white bg-opacity-10 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <Calculator size={14} className="text-white" />
+                  <p className="text-xs opacity-90">Total à payer:</p>
+                </div>
+                <p className="text-sm font-bold">{formaterArgent(totalAjusteValue)} HTG</p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <DollarSign size={14} className="text-white" />
+                  <p className="text-xs opacity-90">Argent reçu:</p>
+                </div>
+                <p className="text-sm font-bold">{formaterArgent(cashRecuValue)} HTG</p>
+              </div>
+
+              {/* Change display */}
+              <div className={`pt-2 border-t border-white border-opacity-20 ${shouldGiveChange ? 'text-green-300' : isShort ? 'text-red-300' : 'text-white'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    {shouldGiveChange ? (
+                      <TrendingUp size={14} className="text-green-300" />
+                    ) : isShort ? (
+                      <TrendingDown size={14} className="text-red-300" />
+                    ) : (
+                      <DollarSign size={14} className="text-white" />
+                    )}
+                    <p className="text-sm font-bold">
+                      {shouldGiveChange ? 'À rendre:' : isShort ? 'Manquant:' : 'Exact'}
+                    </p>
+                  </div>
+                  <p className={`text-lg font-bold ${shouldGiveChange ? 'text-green-300' : isShort ? 'text-red-300' : 'text-white'}`}>
+                    {formaterArgent(Math.abs(changeNeeded))} HTG
+                  </p>
+                </div>
+                {shouldGiveChange && (
+                  <p className="text-[10px] opacity-80 mt-1">À donner en monnaie au vendeur</p>
+                )}
+                {isShort && (
+                  <p className="text-[10px] opacity-80 mt-1">Le vendeur doit donner plus d'argent</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* TOTAL SALES - Most Prominent Card */}
       <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl p-4 shadow-xl mb-3">
         <div className="flex items-center justify-between mb-2">
@@ -178,26 +285,6 @@ const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectati
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Two Total Sales Cards for Essence and Diesel - AFTER total sales card */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-3 shadow-lg">
-          <div className="flex items-center gap-1 mb-1">
-            <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
-            <p className="text-xs font-medium opacity-90">Ventes Essence</p>
-          </div>
-          <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterArgent(totalPompe?.ventesEssence || 0)}</p>
-          <p className="text-[10px] opacity-90">HTG</p>
-        </div>
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-3 shadow-lg">
-          <div className="flex items-center gap-1 mb-1">
-            <div className="w-2 h-2 rounded-full bg-amber-300"></div>
-            <p className="text-xs font-medium opacity-90">Ventes Diesel</p>
-          </div>
-          <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterArgent(totalPompe?.ventesDiesel || 0)}</p>
-          <p className="text-[10px] opacity-90">HTG</p>
         </div>
       </div>
 
