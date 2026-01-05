@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Heart, MessageCircle, CheckCircle, MoreHorizontal } from 'lucide-react';
+import { Play, Heart, MessageCircle, CheckCircle, MoreHorizontal, Star } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/hooks/customer-reviews.hooks";
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,7 @@ export interface Review {
   media?: MediaItem[];
   likeCount?: number;
   commentCount?: number;
+  rating?: number; // Optional rating from 1-5
 }
 
 interface ReviewItemProps {
@@ -60,6 +61,7 @@ const ReviewItem = ({
     media = [],
     likeCount = 0,
     commentCount = 0,
+    rating,
   } = review;
 
   const getInitials = (name?: string) => {
@@ -85,6 +87,22 @@ const ReviewItem = ({
     ];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
+  };
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className="w-4 h-4"
+            fill={star <= rating ? '#FBBF24' : 'none'}
+            stroke={star <= rating ? '#FBBF24' : '#D1D5DB'}
+            strokeWidth="1.5"
+          />
+        ))}
+      </div>
+    );
   };
 
   // Close menu when clicking outside
@@ -134,6 +152,11 @@ const ReviewItem = ({
                 <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
               )}
             </div>
+            {rating && (
+              <div className="mt-1">
+                {renderStars(rating)}
+              </div>
+            )}
             <div className="text-xs text-gray-500 mt-0.5">
               {formatDate(created_at)}
             </div>
