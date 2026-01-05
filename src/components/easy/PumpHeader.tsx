@@ -57,170 +57,159 @@ const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectati
         )}
       </div>
 
-      {/* All Cards Section - Inside a Card Container */}
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-xl p-4 shadow-xl">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-blue-500 bg-opacity-20 flex items-center justify-center">
-            <DollarSign size={18} className="text-blue-300" />
+      {/* All Cards Section */}
+      
+      {/* Statistiques Rapides - Gallons */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl p-3 shadow-lg">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+            <p className="text-xs font-medium opacity-90">Essence ({pompe})</p>
+          </div>
+          <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterGallons(totalPompe?.gallonsEssence || 0)}</p>
+          <p className="text-[10px] opacity-90">gallons</p>
+        </div>
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-xl p-3 shadow-lg">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-amber-300"></div>
+            <p className="text-xs font-medium opacity-90">Diesel ({pompe})</p>
+          </div>
+          <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterGallons(totalPompe?.gallonsDiesel || 0)}</p>
+          <p className="text-[10px] opacity-90">gallons</p>
+        </div>
+      </div>
+
+      {/* TOTAL GALLONS CARD */}
+      <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-3 shadow-lg mb-3">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+            <Fuel size={16} className="text-white" />
           </div>
           <div>
-            <h3 className="text-base font-bold">Récapitulatif {pompe}</h3>
-            <p className="text-xs text-gray-300">Shift {shift}</p>
+            <p className="text-sm font-bold">TOTAL GALLONS ({pompe})</p>
+            <p className="text-[10px] opacity-80">Essence + Diesel</p>
           </div>
         </div>
-
-        {/* Statistiques Rapides - Gallons */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl p-3 shadow-lg">
-            <div className="flex items-center gap-1 mb-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
-              <p className="text-xs font-medium opacity-90">Essence ({pompe})</p>
-            </div>
-            <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterGallons(totalPompe?.gallonsEssence || 0)}</p>
-            <p className="text-[10px] opacity-90">gallons</p>
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-2xl sm:text-3xl font-bold mb-0.5">{formaterGallons((totalPompe?.gallonsEssence || 0) + (totalPompe?.gallonsDiesel || 0))}</p>
+            <p className="text-[10px] opacity-90">gallons totaux</p>
           </div>
-          <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-xl p-3 shadow-lg">
-            <div className="flex items-center gap-1 mb-1">
-              <div className="w-2 h-2 rounded-full bg-amber-300"></div>
-              <p className="text-xs font-medium opacity-90">Diesel ({pompe})</p>
-            </div>
-            <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterGallons(totalPompe?.gallonsDiesel || 0)}</p>
-            <p className="text-[10px] opacity-90">gallons</p>
-          </div>
-        </div>
-
-        {/* TOTAL GALLONS CARD */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-3 shadow-lg mb-3">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-              <Fuel size={16} className="text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold">TOTAL GALLONS ({pompe})</p>
-              <p className="text-[10px] opacity-80">Essence + Diesel</p>
-            </div>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-2xl sm:text-3xl font-bold mb-0.5">{formaterGallons((totalPompe?.gallonsEssence || 0) + (totalPompe?.gallonsDiesel || 0))}</p>
-              <p className="text-[10px] opacity-90">gallons totaux</p>
-            </div>
-            <div className="text-right">
-              <div className="text-xs opacity-80 mb-1">Détail:</div>
-              <div className="text-xs opacity-90">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
-                  <span>Essence: {formaterGallons(totalPompe?.gallonsEssence || 0)}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-amber-300"></div>
-                  <span>Diesel: {formaterGallons(totalPompe?.gallonsDiesel || 0)}</span>
-                </div>
+          <div className="text-right">
+            <div className="text-xs opacity-80 mb-1">Détail:</div>
+            <div className="text-xs opacity-90">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+                <span>Essence: {formaterGallons(totalPompe?.gallonsEssence || 0)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-amber-300"></div>
+                <span>Diesel: {formaterGallons(totalPompe?.gallonsDiesel || 0)}</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* TOTAL SALES - Most Prominent Card */}
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl p-4 shadow-xl mb-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-white bg-opacity-80"></div>
-              <p className="text-sm font-bold">TOTAL VENTES ({pompe})</p>
-            </div>
-            <div className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full font-bold">
-              Final
+      {/* TOTAL SALES - Most Prominent Card */}
+      <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl p-4 shadow-xl mb-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-white bg-opacity-80"></div>
+            <p className="text-sm font-bold">TOTAL VENTES ({pompe})</p>
+          </div>
+          <div className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full font-bold">
+            Final
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {/* Main Total Sales - Most Prominent */}
+          <div className="bg-white bg-opacity-15 rounded-lg p-3 border border-white border-opacity-20">
+            <p className="text-xs opacity-90 mb-1">VENTES BRUTES (Essence + Diesel)</p>
+            <div className="flex items-end justify-between">
+              <p className="text-2xl sm:text-3xl font-bold tracking-tight">{formaterArgent(totalPompe?.ventesTotales || 0)}</p>
+              <span className="text-sm font-medium opacity-90">HTG</span>
             </div>
           </div>
 
-          <div className="space-y-2">
-            {/* Main Total Sales - Most Prominent */}
-            <div className="bg-white bg-opacity-15 rounded-lg p-3 border border-white border-opacity-20">
-              <p className="text-xs opacity-90 mb-1">VENTES BRUTES (Essence + Diesel)</p>
-              <div className="flex items-end justify-between">
-                <p className="text-2xl sm:text-3xl font-bold tracking-tight">{formaterArgent(totalPompe?.ventesTotales || 0)}</p>
-                <span className="text-sm font-medium opacity-90">HTG</span>
+          {/* Final Adjusted Total - ROUNDED */}
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3 relative overflow-hidden">
+            {/* Decorative corner */}
+            <div className="absolute top-0 right-0 w-16 h-16 bg-white bg-opacity-10 rounded-full -translate-y-8 translate-x-8"></div>
+
+            <div className="flex items-center justify-between mb-2 relative z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                  <DollarSign size={16} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">TOTAL AJUSTÉ (CAISSE)</p>
+                  <p className="text-[10px] opacity-80">Arrondi au 0 ou 5 le plus proche</p>
+                </div>
+              </div>
+              <div className="bg-white bg-opacity-25 px-3 py-1 rounded-full">
+                <p className="text-xs font-bold">FINAL</p>
               </div>
             </div>
 
-            {/* Final Adjusted Total - ROUNDED */}
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3 relative overflow-hidden">
-              {/* Decorative corner */}
-              <div className="absolute top-0 right-0 w-16 h-16 bg-white bg-opacity-10 rounded-full -translate-y-8 translate-x-8"></div>
+            <div className="relative z-10">
+              {/* Main rounded amount with HTG */}
+              <div className="mb-1">
+                <div className="flex items-end justify-between">
+                  <p className="text-2xl sm:text-3xl font-bold">{formaterCaisse(totalPompe?.ventesTotales || 0)}</p>
+                  <span className="text-xl font-bold ml-2">HTG</span>
+                </div>
+              </div>
 
-              <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                    <DollarSign size={16} className="text-white" />
+              {/* Valeur arrondie label with adjustment on far right */}
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-xs opacity-80">Valeur arrondie</p>
+                {hasAdjustment && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs opacity-80">Écart:</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      isRoundedUp ? 'bg-amber-500' : 'bg-blue-500'
+                    }`}>
+                      {isRoundedUp ? `+${adjustment.toFixed(2)}` : `${adjustment.toFixed(2)}`}
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-sm font-bold">TOTAL AJUSTÉ (CAISSE)</p>
-                    <p className="text-[10px] opacity-80">Arrondi au 0 ou 5 le plus proche</p>
-                  </div>
-                </div>
-                <div className="bg-white bg-opacity-25 px-3 py-1 rounded-full">
-                  <p className="text-xs font-bold">FINAL</p>
-                </div>
-              </div>
-
-              <div className="relative z-10">
-                {/* Main rounded amount with HTG */}
-                <div className="mb-1">
-                  <div className="flex items-end justify-between">
-                    <p className="text-2xl sm:text-3xl font-bold">{formaterCaisse(totalPompe?.ventesTotales || 0)}</p>
-                    <span className="text-xl font-bold ml-2">HTG</span>
-                  </div>
-                </div>
-
-                {/* Valeur arrondie label with adjustment on far right */}
-                <div className="flex items-center justify-between pt-2">
-                  <p className="text-xs opacity-80">Valeur arrondie</p>
-                  {hasAdjustment && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs opacity-80">Écart:</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        isRoundedUp ? 'bg-amber-500' : 'bg-blue-500'
-                      }`}>
-                        {isRoundedUp ? `+${adjustment.toFixed(2)}` : `${adjustment.toFixed(2)}`}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Two Total Sales Cards for Essence and Diesel - AFTER total sales card */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-3 shadow-lg">
-            <div className="flex items-center gap-1 mb-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
-              <p className="text-xs font-medium opacity-90">Ventes Essence</p>
-            </div>
-            <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterArgent(totalPompe?.ventesEssence || 0)}</p>
-            <p className="text-[10px] opacity-90">HTG</p>
+      {/* Two Total Sales Cards for Essence and Diesel - AFTER total sales card */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-3 shadow-lg">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+            <p className="text-xs font-medium opacity-90">Ventes Essence</p>
           </div>
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-3 shadow-lg">
-            <div className="flex items-center gap-1 mb-1">
-              <div className="w-2 h-2 rounded-full bg-amber-300"></div>
-              <p className="text-xs font-medium opacity-90">Ventes Diesel</p>
-            </div>
-            <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterArgent(totalPompe?.ventesDiesel || 0)}</p>
-            <p className="text-[10px] opacity-90">HTG</p>
-          </div>
+          <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterArgent(totalPompe?.ventesEssence || 0)}</p>
+          <p className="text-[10px] opacity-90">HTG</p>
         </div>
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-3 shadow-lg">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-amber-300"></div>
+            <p className="text-xs font-medium opacity-90">Ventes Diesel</p>
+          </div>
+          <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterArgent(totalPompe?.ventesDiesel || 0)}</p>
+          <p className="text-[10px] opacity-90">HTG</p>
+        </div>
+      </div>
 
-        {/* Quick Summary Row - Mobile Optimized */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-slate-700 text-white rounded-lg p-2">
-            <p className="text-[10px] opacity-90 mb-0.5">Gallons Essence</p>
-            <p className="text-sm font-bold">{formaterGallons(totalPompe?.gallonsEssence || 0)}</p>
-          </div>
-          <div className="bg-slate-700 text-white rounded-lg p-2">
-            <p className="text-[10px] opacity-90 mb-0.5">Gallons Diesel</p>
-            <p className="text-sm font-bold">{formaterGallons(totalPompe?.gallonsDiesel || 0)}</p>
-          </div>
+      {/* Quick Summary Row - Mobile Optimized */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-slate-800 text-white rounded-lg p-2">
+          <p className="text-[10px] opacity-90 mb-0.5">Gallons Essence</p>
+          <p className="text-sm font-bold">{formaterGallons(totalPompe?.gallonsEssence || 0)}</p>
+        </div>
+        <div className="bg-slate-800 text-white rounded-lg p-2">
+          <p className="text-[10px] opacity-90 mb-0.5">Gallons Diesel</p>
+          <p className="text-sm font-bold">{formaterGallons(totalPompe?.gallonsDiesel || 0)}</p>
         </div>
       </div>
     </div>
