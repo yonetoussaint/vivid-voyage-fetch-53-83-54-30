@@ -8,13 +8,23 @@ export default function StoreBanner() {
     <div className="w-full max-w-md mx-auto bg-white p-2">
       <div className="flex items-center gap-2.5">
         {/* Logo */}
-        <div className="flex-shrink-0">
+        <div className="relative flex-shrink-0">
           <div className="w-11 h-11 bg-white border border-gray-200 flex items-center justify-center">
             <div className="text-center leading-none">
               <div className="text-blue-700 font-bold text-[10px]">PHILIPS</div>
               <div className="text-blue-600 font-semibold text-[8px] mt-0.5">AVENT</div>
             </div>
           </div>
+          <button 
+            onClick={() => setIsFollowing(!isFollowing)}
+            className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white ${
+              isFollowing 
+                ? 'bg-gray-500' 
+                : 'bg-red-600'
+            }`}
+          >
+            {isFollowing ? '✓' : '+'}
+          </button>
         </div>
 
         {/* Store Details */}
@@ -35,19 +45,9 @@ export default function StoreBanner() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-1.5">
+        <div className="flex">
           <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap h-8">
-            Visit
-          </button>
-          <button 
-            onClick={() => setIsFollowing(!isFollowing)}
-            className={`px-2.5 py-1.5 rounded text-xs font-semibold whitespace-nowrap border h-8 ${
-              isFollowing 
-                ? 'bg-gray-100 border-gray-300 text-gray-700' 
-                : 'bg-white border-red-600 text-red-600'
-            }`}
-          >
-            {isFollowing ? '✓' : '+'}
+            Visit Store
           </button>
         </div>
       </div>
