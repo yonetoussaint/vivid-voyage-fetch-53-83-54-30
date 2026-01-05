@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, TrendingUp, TrendingDown, ArrowUpRight, Calculator } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, ArrowUpRight, Calculator, Fuel } from 'lucide-react';
 import { formaterArgent, formaterGallons, formaterCaisse, formaterCaisseHTG } from '@/utils/formatters';
 
 const StatsCards = ({ shift, totaux, tauxUSD }) => {
@@ -10,13 +10,16 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
   const exactValue = parseFloat(totaux.totalAjuste);
   // Remove apostrophes for parsing
   const roundedValue = parseFloat(totalAjusteArrondi.replace(/'/g, ''));
-  
+
   // Calculate EXACT adjustment (with decimals)
   const adjustment = roundedValue - exactValue;
   const hasAdjustment = Math.abs(adjustment) > 0;
-  
+
   // Determine if rounded up or down
   const isRoundedUp = adjustment > 0;
+
+  // Calculate total gallons (essence + diesel)
+  const totalGallons = (parseFloat(totaux.totalGallonsEssence || 0) + parseFloat(totaux.totalGallonsDiesel || 0)).toFixed(2);
 
   return (
     <>
@@ -37,6 +40,38 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
           </div>
           <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterGallons(totaux.totalGallonsDiesel)}</p>
           <p className="text-[10px] opacity-90">gallons</p>
+        </div>
+      </div>
+
+      {/* TOTAL GALLONS CARD - Add this below the essence/diesel cards */}
+      <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-3 shadow-lg mb-3">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+            <Fuel size={16} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-bold">TOTAL GALLONS ({shift})</p>
+            <p className="text-[10px] opacity-80">Essence + Diesel</p>
+          </div>
+        </div>
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-2xl sm:text-3xl font-bold mb-0.5">{formaterGallons(totalGallons)}</p>
+            <p className="text-[10px] opacity-90">gallons totaux</p>
+          </div>
+          <div className="text-right">
+            <div className="text-xs opacity-80 mb-1">Détail:</div>
+            <div className="text-xs opacity-90">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+                <span>Essence: {formaterGallons(totaux.totalGallonsEssence)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-amber-300"></div>
+                <span>Diesel: {formaterGallons(totaux.totalGallonsDiesel)}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
