@@ -3,7 +3,15 @@ import { User, DollarSign, Fuel, Calculator, TrendingUp, TrendingDown } from 'lu
 import { formaterArgent, formaterGallons, formaterCaisse } from '@/utils/formatters';
 import { getCouleurPompe, calculerTotalPompe } from '@/utils/helpers';
 
-const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectationVendeur, prix }) => {
+const PumpHeader = ({ 
+  pompe, 
+  shift, 
+  donneesPompe, 
+  vendeurs, 
+  mettreAJourAffectationVendeur, 
+  prix,
+  vendeurDepots = {} // Pass deposits data from parent
+}) => {
   const totalPompe = calculerTotalPompe(donneesPompe, prix);
   const numeroPompe = parseInt(pompe.replace('P', ''));
   const vendeurActuel = donneesPompe._vendeur || '';
@@ -26,12 +34,21 @@ const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectati
   // Use the ROUNDED adjusted total for cash calculations
   const totalAjustePourCaisse = roundedValue;
 
+  // Calculate deposits for current seller if exists
+  const sellerDeposits = vendeurActuel ? vendeurDepots[vendeurActuel] || [] : [];
+  const totalDeposits = sellerDeposits.reduce((sum, depot) => sum + (parseFloat(depot) || 0), 0);
+  
+  // Calculate expected cash = Rounded Total - Total Deposits
+  const especesAttendues = totalAjustePourCaisse - totalDeposits;
+
   // State for cash received and change calculation
   const [cashRecu, setCashRecu] = useState('');
   
   // Parse cash received value
   const cashRecuValue = parseFloat(cashRecu) || 0;
-  const changeNeeded = cashRecuValue - totalAjustePourCaisse;
+  
+  // Calculate change based on expected cash vs cash received
+  const changeNeeded = cashRecuValue - especesAttendues;
   const shouldGiveChange = changeNeeded > 0;
   const isShort = changeNeeded < 0;
 
@@ -226,6 +243,31 @@ const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectati
         </div>
 
         <div className="space-y-3">
+          {/* Deposits Summary */}
+          {vendeurActuel && totalDeposits > 0 && (
+            <div className="bg-white bg-opacity-10 rounded-lg p-3 mb-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1">
+                  <Calculator size={14} className="text-white" />
+                  <p className="text-xs opacity-90">Dépôts effectués:</p>
+                </div>
+                <p className="text-sm font-bold">{formaterArgent(totalDeposits)} HTG</p>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <DollarSign size={14} className="text-white" />
+                  <p className="text-xs opacity-90">Espèces attendues:</p>
+                </div>
+                <p className={`text-sm font-bold ${especesAttendues > 0 ? 'text-green-300' : especesAttendues < 0 ? 'text-red-300' : 'text-white'}`}>
+                  {formaterArgent(especesAttendues)} HTG
+                </p>
+              </div>
+              <p className="text-[10px] opacity-70 mt-1">
+                (Total ajusté {formaterArgent(totalAjustePourCaisse)} HTG - Dépôts {formaterArgent(totalDeposits)} HTG)
+              </p>
+            </div>
+          )}
+
           {/* Input field for cash received */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -246,9 +288,9 @@ const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectati
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   <Calculator size={14} className="text-white" />
-                  <p className="text-xs opacity-90">Total ajusté à payer:</p>
+                  <p className="text-xs opacity-90">Espèces à payer:</p>
                 </div>
-                <p className="text-sm font-bold">{formaterArgent(totalAjustePourCaisse)} HTG</p>
+                <p className="text-sm font-bold">{formaterArgent(especesAttendues)} HTG</p>
               </div>
 
               <div className="flex items-center justify-between">
