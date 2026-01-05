@@ -179,26 +179,26 @@ const SystemeStationService = () => {
           />
         );
       case 'pumps':
-      default:
-        return (
-          <PumpInputView
-            shift={shift}
-            pompeEtendue={pompeEtendue}
-            setPompeEtendue={setPompeEtendue}
-            pompes={pompes}
-            toutesDonnees={toutesDonnees}
-            vendeurs={vendeurs}
-            totaux={totaux}
-            tauxUSD={tauxUSD}
-            mettreAJourLecture={mettreAJourLecture}
-            mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
-            prix={prix}
-            calculerGallons={calculerGallons}
-            obtenirLecturesCourantes={obtenirLecturesCourantes}
-          />
-        );
-    }
-  };
+default:
+  return (
+    <PumpInputView
+      shift={shift}
+      pompeEtendue={pompeEtendue}
+      setPompeEtendue={setPompeEtendue}
+      pompes={pompes}
+      toutesDonnees={toutesDonnees}
+      vendeurs={vendeurs}
+      totaux={totaux}
+      tauxUSD={tauxUSD}
+      mettreAJourLecture={mettreAJourLecture}
+      mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
+      prix={prix}
+      calculerGallons={calculerGallons}
+      obtenirLecturesCourantes={obtenirLecturesCourantes}
+      // ADD THIS LINE - pass the deposits data
+      tousDepots={tousDepots}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pb-20">
