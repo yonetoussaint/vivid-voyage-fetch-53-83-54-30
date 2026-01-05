@@ -139,43 +139,44 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           const montantHTG = getMontantHTG(depot);
                           
                           return (
-                            <div key={index} className="flex items-center gap-2">
-                              <div className="flex-1">
-                                <div className="flex items-center bg-white bg-opacity-20 rounded-lg overflow-hidden mb-1">
+                            <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                              {/* Input container */}
+                              <div className="flex-1 w-full">
+                                <div className="flex items-center bg-white bg-opacity-20 rounded-lg overflow-hidden">
                                   <input
                                     type="number"
                                     step="0.01"
                                     value={displayValue}
                                     onChange={(e) => {
                                       if (isUSD) {
-                                        // For USD deposits, send object with USD amount
                                         mettreAJourDepot(vendeur, index, {
                                           montant: e.target.value,
                                           devise: 'USD'
                                         });
                                       } else {
-                                        // For HTG deposits, send string value
                                         mettreAJourDepot(vendeur, index, e.target.value);
                                       }
                                     }}
                                     placeholder="Montant"
-                                    className="flex-1 px-3 py-2 bg-transparent text-white text-right font-semibold placeholder-white placeholder-opacity-50 min-w-0"
+                                    className="flex-1 w-0 px-3 py-2 bg-transparent text-white text-right font-semibold placeholder-white placeholder-opacity-50 focus:outline-none"
                                   />
-                                  <span className={`px-3 py-2 font-bold text-sm min-w-[70px] text-center ${
+                                  <span className={`px-3 py-2 font-bold text-sm w-20 text-center ${
                                     isUSD ? 'bg-green-500 bg-opacity-50' : ''
                                   }`}>
                                     {isUSD ? 'USD' : 'HTG'}
                                   </span>
                                 </div>
                                 {isUSD && (
-                                  <div className="text-xs text-right opacity-75 mr-2">
+                                  <div className="text-xs text-right opacity-75 mt-1">
                                     = {formaterArgent(montantHTG)} HTG
                                   </div>
                                 )}
                               </div>
+                              
+                              {/* Delete button - always visible */}
                               <button
                                 onClick={() => supprimerDepot(vendeur, index)}
-                                className="bg-red-500 text-white p-2 rounded-lg font-bold active:scale-95 transition shrink-0"
+                                className="bg-red-500 text-white p-2 rounded-lg font-bold active:scale-95 transition self-end sm:self-center"
                                 aria-label={`Supprimer dépôt ${index + 1}`}
                               >
                                 <Minus size={16} />
