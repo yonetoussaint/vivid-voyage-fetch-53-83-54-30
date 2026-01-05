@@ -16,9 +16,13 @@ const PumpInputView = ({
   tauxUSD, 
   mettreAJourLecture, 
   mettreAJourAffectationVendeur, 
-  prix 
+  prix,
+  tousDepots // ADD THIS PROP
 }) => {
   const lecturesCourantes = toutesDonnees[shift];
+
+  // Get deposits for the current shift
+  const depotsActuels = tousDepots[shift] || {};
 
   return (
     <div className="space-y-3">
@@ -47,6 +51,8 @@ const PumpInputView = ({
               vendeurs={vendeurs}
               mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
               prix={prix}
+              // PASS THE DEPOSITS DATA HERE
+              vendeurDepots={depotsActuels}
             />
 
             <PumpPistolets
