@@ -39,28 +39,28 @@ export const useStationData = (date, shift) => {
   // Parser l'input gallons pour max 3 décimales
   const parserInputGallons = (valeur) => {
     if (!valeur && valeur !== 0) return '';
-    
+
     // Convert to string if it's a number
     const valeurStr = String(valeur);
-    
+
     // Remove non-numeric characters except decimal point and minus sign
     const valeurPropre = valeurStr.replace(/[^\d.-]/g, '');
-    
+
     // Handle empty result
     if (valeurPropre === '' || valeurPropre === '-') return valeurPropre;
-    
+
     const parties = valeurPropre.split('.');
-    
+
     // If there are multiple decimal points, keep only the first one
     if (parties.length > 2) {
       return parties[0] + '.' + parties.slice(1).join('');
     }
-    
+
     // Limit to 3 decimal places
     if (parties[1] && parties[1].length > 3) {
       return parties[0] + '.' + parties[1].substring(0, 3);
     }
-    
+
     return valeurPropre;
   };
 
@@ -105,7 +105,7 @@ export const useStationData = (date, shift) => {
 
   const mettreAJourPropane = useCallback((champ, valeur) => {
     const valeurParse = parserInputGallons(valeur);
-    
+
     setPropaneDonnees(prev => ({
       ...prev,
       [shift]: {
@@ -128,24 +128,55 @@ export const useStationData = (date, shift) => {
     }));
   }, [shift]);
 
+  // FIXED: Handle both HTG and USD deposits
   const mettreAJourDepot = useCallback((nomVendeur, index, valeur) => {
     setTousDepots(prev => {
       const nouveauxDepots = { ...prev };
       if (!nouveauxDepots[shift][nomVendeur]) {
         nouveauxDepots[shift][nomVendeur] = [];
       }
-      nouveauxDepots[shift][nomVendeur][index] = valeur === '' ? '' : parseFloat(valeur) || 0;
+      
+      // Handle both string values (HTG) and object values (USD)
+      if (typeof valeur === 'object' && valeur.devise === 'USD') {
+        // For USD deposits, store the object
+        nouveauxDepots[shift][nomVendeur][index] = {
+          montant: valeur.montant === '' ? '' : parseFloat(valeur.montant) || 0,
+          devise: 'USD'
+        };
+      } else if (typeof valeur === 'object' && valeur.montantHTG !== undefined) {
+        // Handle the case where montantHTG is provided
+        nouveauxDepots[shift][nomVendeur][index] = {
+          montant: valeur.montant === '' ? '' : parseFloat(valeur.montant) || 0,
+          devise: 'USD',
+          montantHTG: valeur.montantHTG
+        };
+      } else {
+        // For HTG deposits, store string/number
+        nouveauxDepots[shift][nomVendeur][index] = valeur === '' ? '' : parseFloat(valeur) || 0;
+      }
+      
       return nouveauxDepots;
     });
   }, [shift]);
 
-  const ajouterDepot = useCallback((nomVendeur) => {
+  // FIXED: Add deposit with currency type
+  const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
     setTousDepots(prev => {
       const nouveauxDepots = { ...prev };
       if (!nouveauxDepots[shift][nomVendeur]) {
         nouveauxDepots[shift][nomVendeur] = [];
       }
-      nouveauxDepots[shift][nomVendeur].push('');
+      
+      // Add empty deposit based on currency type
+      if (typeDevise === 'USD') {
+        nouveauxDepots[shift][nomVendeur].push({
+          montant: '',
+          devise: 'USD'
+        });
+      } else {
+        nouveauxDepots[shift][nomVendeur].push('');
+      }
+      
       return nouveauxDepots;
     });
   }, [shift]);
@@ -304,13 +335,13 @@ export const useStationData = (date, shift) => {
     totalUSD: parseFloat((totauxAM.totalUSD + totauxPM.totalUSD).toFixed(2)),
     totalHTGenUSD: parseFloat((totauxAM.totalHTGenUSD + totauxPM.totalHTGenUSD).toFixed(2)),
   };
-  
+
   // Total brut WITHOUT propane
   totauxQuotidiens.totalBrut = parseFloat((
     totauxQuotidiens.ventesEssence + 
     totauxQuotidiens.ventesDiesel 
   ).toFixed(2));
-  
+
   // Total ajusté WITHOUT propane
   totauxQuotidiens.totalAjuste = parseFloat((
     totauxQuotidiens.totalBrut - 
@@ -325,10 +356,10 @@ export const useStationData = (date, shift) => {
     tousDepots,
     ventesUSD,
     nouveauVendeur,
-    
+
     // Setters
     setNouveauVendeur,
-    
+
     // Fonctions
     reinitialiserShift,
     reinitialiserJour,
@@ -346,7 +377,7 @@ export const useStationData = (date, shift) => {
     getNombreAffectations,
     calculerGallons,
     obtenirLecturesCourantes,
-    
+
     // Calculs
     totaux,
     totauxVendeurs,
@@ -354,7 +385,7 @@ export const useStationData = (date, shift) => {
     totauxAM,
     totauxPM,
     totauxQuotidiens,
-    
+
     // Constantes
     prix,
     tauxUSD,
