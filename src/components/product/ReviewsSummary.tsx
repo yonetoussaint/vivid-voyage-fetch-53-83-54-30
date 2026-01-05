@@ -313,7 +313,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
       </div>
 
       {/* Filter Tabs Section at the Bottom */}
-      <div className="pt-2">
+      <div className="">
         <FilterTabs
           tabs={filterTabs}
           activeFilters={activeFilters}
