@@ -153,7 +153,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
             showSectionHeader={true}
             showCountdown={false}
             showTitleChevron={false}
-            maxProducts={20}
+            maxProducts={100}
             viewAllLink={`/seller/${product?.sellers?.id}`}
             viewAllText="View More"
           />
