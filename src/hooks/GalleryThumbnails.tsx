@@ -86,7 +86,7 @@ const GalleryThumbnails: React.FC<GalleryThumbnailsProps> = ({
     <div className="relative w-full overflow-hidden">
       <div 
         ref={scrollContainerRef}
-        className="flex overflow-x-auto scrollbar-hide gap-1.5 py-1 px-2"
+        className="flex overflow-x-auto scrollbar-hide gap-1.5 px-2"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none'
