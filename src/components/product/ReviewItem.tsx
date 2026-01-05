@@ -152,11 +152,6 @@ const ReviewItem = ({
                 <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
               )}
             </div>
-            {rating && (
-              <div className="mt-1">
-                {renderStars(rating)}
-              </div>
-            )}
             <div className="text-xs text-gray-500 mt-0.5">
               {formatDate(created_at)}
             </div>
@@ -263,27 +258,36 @@ const ReviewItem = ({
       )}
 
       {/* Engagement Section */}
-      <div className="flex items-center gap-8 pt-2">
-        <button
-          onClick={() => console.log('Like clicked for review:', id)}
-          className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium"
-        >
-          <Heart
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          {likeCount > 0 && <span>{likeCount}</span>}
-        </button>
+      <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center gap-8">
+          <button
+            onClick={() => console.log('Like clicked for review:', id)}
+            className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium"
+          >
+            <Heart
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            {likeCount > 0 && <span>{likeCount}</span>}
+          </button>
 
-        <button
-          onClick={() => handleCommentClick(id)}
-          className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium"
-        >
-          <MessageCircle className="w-5 h-5" />
-          {commentCount > 0 && <span>{commentCount}</span>}
-        </button>
+          <button
+            onClick={() => handleCommentClick(id)}
+            className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium"
+          >
+            <MessageCircle className="w-5 h-5" />
+            {commentCount > 0 && <span>{commentCount}</span>}
+          </button>
+        </div>
+
+        {/* Rating on the right */}
+        {rating && (
+          <div className="flex-shrink-0">
+            {renderStars(rating)}
+          </div>
+        )}
       </div>
     </div>
   );
