@@ -1,5 +1,5 @@
 // components/home/AliExpressHeader.tsx
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import CategoryTabs from './header/CategoryTabs';
 import { X, Camera, MapPin, ChevronDown, ChevronLeft, MoreHorizontal, Share2, Flag, Heart } from 'lucide-react';
 import {
@@ -7,7 +7,6 @@ import {
   useHeaderScroll,
   useHeaderLocation,
   useHeaderTabs,
-  useHeaderActionButtons,
   useHeaderActionButton,
   useHeaderBackground,
   useHeaderSearchBar,
@@ -232,7 +231,7 @@ const ThreeDotsMenu = ({
   showSearchBarInProductDetail: boolean;
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = React.useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -379,7 +378,8 @@ export default function AliExpressHeader({
     handleSubmit,
     handleInputChange,
     handleFocus,
-    handleClearSearch
+    handleClearSearch,
+    flatBorders: true // Add flat borders for search bar
   });
   const { IconComponent, iconStrokeWidth } = useHeaderIcon({ Icon: inPanel ? X : ChevronLeft, inPanel });
   const {
@@ -390,7 +390,8 @@ export default function AliExpressHeader({
     handleClearSearch,
     selectedCity,
     locationDropdownRef,
-    handleLocationClick
+    handleLocationClick,
+    flatBorders: true // Add flat borders for location button
   });
 
   return (
