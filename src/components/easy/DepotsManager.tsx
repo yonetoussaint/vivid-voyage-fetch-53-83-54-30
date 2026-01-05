@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DollarSign, User, Plus, Minus, Globe } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
@@ -20,6 +20,28 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }
     
     return parseFloat(depot) || 0;
+  };
+
+  // Helper function to get the display value for input
+  const getDisplayValue = (depot) => {
+    if (!depot) return '';
+    
+    if (typeof depot === 'object' && depot.devise === 'USD') {
+      return depot.montant || '';
+    }
+    
+    return depot || '';
+  };
+
+  // Function to handle adding deposit
+  const handleAjouterDepot = (vendeur, devise = 'HTG') => {
+    if (devise === 'USD') {
+      // Add USD deposit with empty amount
+      ajouterDepot(vendeur, { montant: '', devise: 'USD' });
+    } else {
+      // Add HTG deposit (simple string)
+      ajouterDepot(vendeur, '');
+    }
   };
 
   return (
@@ -95,17 +117,14 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       <span className="text-sm font-semibold">Entrées Dépôts</span>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => ajouterDepot(vendeur)}
+                          onClick={() => handleAjouterDepot(vendeur, 'HTG')}
                           className="bg-white text-indigo-600 px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition"
                         >
                           <Plus size={14} />
                           HTG
                         </button>
                         <button
-                          onClick={() => {
-                            // Add USD deposit placeholder
-                            ajouterDepot(vendeur, 'USD');
-                          }}
+                          onClick={() => handleAjouterDepot(vendeur, 'USD')}
                           className="bg-green-500 text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition"
                         >
                           <Plus size={14} />
@@ -122,7 +141,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       <div className="space-y-2">
                         {depots.map((depot, index) => {
                           const isUSD = typeof depot === 'object' && depot.devise === 'USD';
-                          const montant = isUSD ? depot.montant : depot;
+                          const displayValue = getDisplayValue(depot);
                           
                           return (
                             <div key={index} className="flex items-center gap-2">
@@ -130,7 +149,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                 <input
                                   type="number"
                                   step="0.01"
-                                  value={montant}
+                                  value={displayValue}
                                   onChange={(e) => {
                                     if (isUSD) {
                                       mettreAJourDepot(vendeur, index, {
@@ -150,6 +169,11 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                   {isUSD ? 'USD' : 'HTG'}
                                 </span>
                               </div>
+                              {isUSD && (
+                                <div className="text-xs text-right opacity-75 mr-2">
+                                  = {formaterArgent(convertirUSDversHTG(displayValue))} HTG
+                                </div>
+                              )}
                               <button
                                 onClick={() => supprimerDepot(vendeur, index)}
                                 className="bg-red-500 text-white p-2 rounded-lg font-bold active:scale-95 transition shrink-0"
@@ -185,7 +209,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                 }`}
                               >
                                 <span className="font-bold">{idx + 1}.</span>
-                                <span>{formaterArgent(montantHTG)}</span>
+                                <span>{formaterArgent(montantHTG)} HTG</span>
                                 {isUSD && (
                                   <span className="text-xs opacity-75 ml-1">
                                     ({parseFloat(montantOriginal) || 0} USD)
