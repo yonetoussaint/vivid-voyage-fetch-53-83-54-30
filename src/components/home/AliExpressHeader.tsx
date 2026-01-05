@@ -7,7 +7,6 @@ import {
   useHeaderScroll,
   useHeaderLocation,
   useHeaderTabs,
-  useHeaderActionButton,
   useHeaderBackground,
   useHeaderSearchBar,
   useHeaderIcon,
@@ -47,172 +46,56 @@ interface AliExpressHeaderProps {
   onSearchSubmit?: (query: string) => void;
 }
 
-// Inline Header Action Button Component
-const HeaderActionButton = ({ 
-  Icon, 
-  active = false, 
-  onClick, 
-  progress, 
-  activeColor = '#f97316',
-  badge,
-  fillWhenActive = true,
-  transform = '',
-  likeCount,
-  shareCount,
-  scrolled = false
+// Clean Heart Button Component
+const HeartButton = ({
+  active = false,
+  onClick,
+  displayProgress,
+  showSearchBarInProductDetail
 }: {
-  Icon: React.ComponentType<any>;
   active?: boolean;
   onClick?: () => void;
-  progress: number;
-  activeColor?: string;
-  badge?: number;
-  fillWhenActive?: boolean;
-  transform?: string;
-  likeCount?: number;
-  shareCount?: number;
-  scrolled?: boolean;
+  displayProgress: number;
+  showSearchBarInProductDetail: boolean;
 }) => {
-  const {
-    isAnimating,
-    iconProps,
-    count,
-    shouldShowHorizontalLayout,
-    shouldShowFadingCount,
-    shouldShowCompactButton,
-    transitionProgress,
-    handleClick,
-    getIconStyle,
-    expandedThreshold,
-    fadingThreshold
-  } = useHeaderActionButton({
-    Icon,
-    active,
-    onClick,
-    activeColor,
-    fillWhenActive,
-    progress,
-    likeCount,
-    shareCount,
-    scrolled,
-    badge
-  });
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const iconStyle = getIconStyle();
+  const handleClick = () => {
+    setIsAnimating(true);
+    onClick?.();
+    
+    // Reset animation after it completes
+    setTimeout(() => setIsAnimating(false), 700);
+  };
 
-  // When scrolled, show simple button without background
-  if (scrolled) {
-    return (
-      <button
-        onClick={handleClick}
-        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
-      >
-        <Icon
-          size={20}
-          {...iconProps}
-          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-          style={iconStyle}
-        />
-        {badge && (
-          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
-            {badge}
-          </span>
-        )}
-      </button>
-    );
-  }
-
-  // Show horizontal layout with count in non-scroll state
-  if (shouldShowHorizontalLayout) {
-    return (
-      <div 
-        className="rounded-full transition-all duration-700 hover-scale"
-        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
-      >
-        <button
-          onClick={handleClick}
-          className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
-        >
-          <Icon
-            size={20}
-            {...iconProps}
-            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-            style={iconStyle}
-          />
-          <span 
-            className="text-xs font-medium transition-all duration-700 ease-out animate-fade-in"
-            style={{
-              color: active ? activeColor : `rgba(255, 255, 255, ${0.95 - (progress * 0.2)})`,
-              opacity: 1 - (progress / expandedThreshold),
-            }}
-          >
-            {count}
-          </span>
-        </button>
-      </div>
-    );
-  }
-
-  // Transitional state - fading count while shrinking
-  if (shouldShowFadingCount) {
-    return (
-      <div 
-        className="rounded-full transition-all duration-700"
-        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
-      >
-        <button
-          onClick={handleClick}
-          className="flex items-center h-8 px-3 rounded-full transition-all duration-700 relative"
-          style={{
-            gap: `${6 - (transitionProgress * 6)}px`,
-          }}
-        >
-          <Icon
-            size={20}
-            {...iconProps}
-            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-            style={iconStyle}
-          />
-          <span 
-            className="text-xs font-medium transition-all duration-700"
-            style={{
-              color: active ? activeColor : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`,
-              opacity: 1 - transitionProgress,
-              transform: `scaleX(${1 - transitionProgress})`,
-              transformOrigin: 'left center',
-              width: `${20 * (1 - transitionProgress)}px`,
-              overflow: 'hidden',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {count}
-          </span>
-        </button>
-      </div>
-    );
-  }
-
-  // Compact circular button state (for transition before scrolled)
   return (
     <div 
-      className="rounded-full transition-all duration-700"
-      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+      className="rounded-full transition-all duration-700 hover-scale"
+      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
     >
       <button
         onClick={handleClick}
         className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
+        style={{
+          backgroundColor: showSearchBarInProductDetail ? 'transparent' : undefined
+        }}
       >
-        <Icon
+        <Heart
           size={20}
-          {...iconProps}
           className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-          style={iconStyle}
+          style={{
+            color: showSearchBarInProductDetail
+              ? active 
+                ? '#f97316'  // Orange when active in scrolled state
+                : `rgba(75, 85, 99, 0.9)`
+              : active
+                ? '#f97316'  // Orange when active
+                : displayProgress > 0.5 
+                  ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                  : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`,
+            fill: active ? '#f97316' : 'transparent'
+          }}
         />
-        {badge && (
-          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
-            {badge}
-          </span>
-        )}
       </button>
     </div>
   );
@@ -379,7 +262,7 @@ export default function AliExpressHeader({
     handleInputChange,
     handleFocus,
     handleClearSearch,
-    flatBorders: true // Add flat borders for search bar
+    flatBorders: true
   });
   const { IconComponent, iconStrokeWidth } = useHeaderIcon({ Icon: inPanel ? X : ChevronLeft, inPanel });
   const {
@@ -391,7 +274,7 @@ export default function AliExpressHeader({
     selectedCity,
     locationDropdownRef,
     handleLocationClick,
-    flatBorders: true // Add flat borders for location button
+    flatBorders: true
   });
 
   return (
@@ -434,7 +317,6 @@ export default function AliExpressHeader({
           handleInputChange={handleInputChange}
           handleFocus={handleFocus}
           handleClearSearch={handleClearSearch}
-          productData={productData}
         />
       ) : null}
 
@@ -575,7 +457,6 @@ const ProductDetailHeader = ({
   handleInputChange,
   handleFocus,
   handleClearSearch,
-  productData
 }: {
   displayProgress: number;
   showSearchBarInProductDetail: boolean;
@@ -594,7 +475,6 @@ const ProductDetailHeader = ({
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFocus: () => void;
   handleClearSearch: () => void;
-  productData?: any;
 }) => (
   <div className="py-2 px-3 w-full">
     <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
@@ -623,7 +503,6 @@ const ProductDetailHeader = ({
         onShareClick={onShareClick}
         onReportClick={onReportClick}
         isFavorite={isFavorite}
-        productData={productData}
       />
     </div>
   </div>
@@ -721,7 +600,6 @@ const ActionButtonsSection = ({
   onShareClick,
   onReportClick,
   isFavorite,
-  productData
 }: {
   displayProgress: number;
   showSearchBarInProductDetail: boolean;
@@ -729,18 +607,14 @@ const ActionButtonsSection = ({
   onShareClick?: () => void;
   onReportClick?: () => void;
   isFavorite: boolean;
-  productData?: any;
 }) => (
   <div className="flex gap-1 flex-shrink-0">
-    {/* Favorite/Like Button */}
-    <HeaderActionButton
-      Icon={Heart}
+    {/* Clean Heart Button */}
+    <HeartButton
       active={isFavorite}
       onClick={onFavoriteClick}
-      progress={displayProgress}
-      activeColor="#f97316"
-      likeCount={productData?.favorite_count || 0}
-      scrolled={showSearchBarInProductDetail}
+      displayProgress={displayProgress}
+      showSearchBarInProductDetail={showSearchBarInProductDetail}
     />
     
     {/* Three Dots Menu */}
