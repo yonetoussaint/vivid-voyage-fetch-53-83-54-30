@@ -1,3 +1,5 @@
+
+
 // Helper function to add apostrophe separators for thousands
 const ajouterApostrophes = (str) => {
   // Remove any existing separators first
@@ -7,68 +9,52 @@ const ajouterApostrophes = (str) => {
   return cleanStr.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
 };
 
-// Helper function to format decimal numbers, removing trailing zeros after 3 decimal places
-const formaterDecimal = (num, maxDecimalPlaces = 3) => {
-  if (num === null || num === undefined || isNaN(num)) return '0';
+// Helper function to format decimal numbers with 2 decimal places
+const formaterDecimal = (num, decimalPlaces = 2) => {
+  if (num === null || num === undefined || isNaN(num)) return `0.${'0'.repeat(decimalPlaces)}`;
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
-  if (isNaN(nombre)) return '0';
+  if (isNaN(nombre)) return `0.${'0'.repeat(decimalPlaces)}`;
 
-  // Convert to string with enough decimal places
-  const str = nombre.toFixed(maxDecimalPlaces);
-  
-  // Remove trailing zeros and the decimal point if all zeros
-  return str.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '');
+  return nombre.toFixed(decimalPlaces);
 };
 
-// Formater nombre pour gallons - 3 décimales mais on enlève les zéros à la fin
+// Formater nombre avec 3 décimales pour gallons
 export const formaterGallons = (num) => {
-  if (num === null || num === undefined || isNaN(num)) return '0';
+  if (num === null || num === undefined || isNaN(num)) return '0.000';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
-  if (isNaN(nombre)) return '0';
+  if (isNaN(nombre)) return '0.000';
 
-  // Format with max 3 decimal places
-  const str = nombre.toFixed(3);
-  
-  // Remove trailing zeros and the decimal point if all zeros
-  const formattedDecimal = str.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '');
-  
-  // Split into parts
-  const parts = formattedDecimal.split('.');
+  // Format with 3 decimal places
+  const formatted = nombre.toFixed(3);
+  const parts = formatted.split('.');
   const integerPart = parts[0];
-  const decimalPart = parts[1] || '';
-  
+  const decimalPart = parts[1];
+
   // Add apostrophe separators for thousands
   const formattedInteger = ajouterApostrophes(integerPart);
-  
-  // Return with decimal part only if it exists
-  return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+
+  return `${formattedInteger}.${decimalPart}`;
 };
 
-// Formater nombre pour argent - 2 décimales mais on enlève les zéros à la fin
+// Formater nombre avec 2 décimales pour argent
 export const formaterArgent = (num) => {
-  if (num === null || num === undefined || isNaN(num)) return '0';
+  if (num === null || num === undefined || isNaN(num)) return '0.00';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
-  if (isNaN(nombre)) return '0';
+  if (isNaN(nombre)) return '0.00';
 
-  // Format with max 2 decimal places
-  const str = nombre.toFixed(2);
-  
-  // Remove trailing zeros and the decimal point if all zeros
-  const formattedDecimal = str.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '');
-  
-  // Split into parts
-  const parts = formattedDecimal.split('.');
+  // Format with 2 decimal places
+  const formatted = nombre.toFixed(2);
+  const parts = formatted.split('.');
   const integerPart = parts[0];
-  const decimalPart = parts[1] || '';
-  
+  const decimalPart = parts[1];
+
   // Add apostrophe separators for thousands
   const formattedInteger = ajouterApostrophes(integerPart);
-  
-  // Return with decimal part only if it exists
-  return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+
+  return `${formattedInteger}.${decimalPart}`;
 };
 
-// Format avec apostrophes pour les grands nombres (pas de décimales)
+// Format avec apostrophes pour les grands nombres
 export const formaterNombre = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
@@ -141,14 +127,3 @@ export const formaterArgentHTGSansDecimales = (num) => {
 
   return `${formatted} HTG`;
 };
-
-// Exemples d'utilisation et résultats attendus:
-console.log(formaterGallons(1234.567)); // "1'234.567"
-console.log(formaterGallons(1234.000)); // "1'234" (pas de .000)
-console.log(formaterGallons(1234.500)); // "1'234.5" (pas de .500)
-console.log(formaterGallons(1234.050)); // "1'234.05" (pas de .050)
-
-console.log(formaterArgent(1234.50));  // "1'234.5"
-console.log(formaterArgent(1234.00));  // "1'234" (pas de .00)
-console.log(formaterArgent(1234.30));  // "1'234.3"
-console.log(formaterArgent(1234.03));  // "1'234.03"
