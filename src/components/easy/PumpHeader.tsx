@@ -55,23 +55,6 @@ const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectati
         </div>
         
         <div className="space-y-3">
-          {/* TOTAL SALES - BIG AND BOLD */}
-          <div className="bg-white bg-opacity-15 rounded-xl p-4 border-2 border-white border-opacity-20">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
-                <p className="text-base font-bold">VENTES BRUTES TOTALES</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs opacity-80">Essence + Diesel</p>
-              </div>
-            </div>
-            <div className="flex items-end justify-between">
-              <p className="text-3xl sm:text-4xl font-bold tracking-tight">{formaterArgent(totalPompe?.ventesTotales || 0)}</p>
-              <span className="text-xl font-medium">HTG</span>
-            </div>
-          </div>
-          
           {/* Fuel Breakdown */}
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white bg-opacity-10 rounded-lg p-3">
@@ -130,16 +113,16 @@ const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectati
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <TrendingUp size={18} className="text-white" />
-                <p className="text-lg font-bold">RÉCAPITULATIF FINAL</p>
+                <p className="text-lg font-bold">TOTAL VENTES {pompe}</p>
               </div>
               <div className="bg-white bg-opacity-25 px-3 py-1 rounded-full">
-                <p className="text-xs font-bold">{pompe}</p>
+                <p className="text-xs font-bold">FINAL</p>
               </div>
             </div>
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-xs opacity-90 mb-0.5">Ventes Totales {pompe}</p>
-                <p className="text-2xl sm:text-3xl font-bold">{formaterArgent(totalPompe?.ventesTotales || 0)}</p>
+                <p className="text-xs opacity-90 mb-0.5">Ventes Brutes Total</p>
+                <p className="text-3xl sm:text-4xl font-bold tracking-tight">{formaterArgent(totalPompe?.ventesTotales || 0)}</p>
               </div>
               <span className="text-xl font-bold">HTG</span>
             </div>
