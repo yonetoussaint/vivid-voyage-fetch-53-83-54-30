@@ -2,13 +2,12 @@
 import { useState, useEffect } from 'react';
 import CategoryTabs from './header/CategoryTabs';
 import { VerificationBadge } from '@/components/shared/VerificationBadge';
-import { X, Camera, MapPin, ChevronDown, ChevronLeft } from 'lucide-react';
+import { X, Camera, MapPin, ChevronDown, ChevronLeft, MoreHorizontal, Share2, Flag } from 'lucide-react';
 import {
   useHeaderSearch,
   useHeaderScroll,
   useHeaderLocation,
   useHeaderTabs,
-  useHeaderSearchList,
   useHeaderActionButtons,
   useHeaderActionButton,
   useSellerInfo,
@@ -23,11 +22,6 @@ interface AliExpressHeaderProps {
   showCategoryTabs?: boolean;
   customTabs?: Array<{ id: string; name: string; path?: string }>;
   onCustomTabChange?: (tabId: string) => void;
-
-  showSearchList?: boolean;
-  searchListItems?: Array<{ term: string; trend?: 'hot' | 'trending-up' | 'trending-down' | 'popular' }> | string[];
-  onSearchItemClick?: (searchTerm: string) => void;
-  flatBorders?: boolean;
 
   cityName?: string;
   locationOptions?: Array<{ id: string; name: string }>;
@@ -49,6 +43,7 @@ interface AliExpressHeaderProps {
   onBackClick?: () => void;
   onFavoriteClick?: () => void;
   onShareClick?: () => void;
+  onReportClick?: () => void;
   isFavorite?: boolean;
   inPanel?: boolean;
   actionButtons?: Array<{
@@ -233,15 +228,116 @@ const HeaderActionButton = ({
   );
 };
 
+// Three Dots Menu Component
+const ThreeDotsMenu = ({
+  onShareClick,
+  onReportClick,
+  displayProgress,
+  showSearchBarInProductDetail
+}: {
+  onShareClick?: () => void;
+  onReportClick?: () => void;
+  displayProgress: number;
+  showSearchBarInProductDetail: boolean;
+}) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleShareClick = () => {
+    setIsMenuOpen(false);
+    onShareClick?.();
+  };
+
+  const handleReportClick = () => {
+    setIsMenuOpen(false);
+    onReportClick?.();
+  };
+
+  return (
+    <div className="relative" ref={menuRef}>
+      {/* Three Dots Button */}
+      <div 
+        className="rounded-full transition-all duration-700 hover-scale"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+      >
+        <button
+          onClick={toggleMenu}
+          className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
+          style={{
+            backgroundColor: showSearchBarInProductDetail ? 'transparent' : undefined
+          }}
+        >
+          <MoreHorizontal
+            size={20}
+            className="transition-all duration-700"
+            style={{
+              color: showSearchBarInProductDetail
+                ? `rgba(75, 85, 99, 0.9)`
+                : displayProgress > 0.5 
+                  ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                  : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+            }}
+          />
+        </button>
+      </div>
+
+      {/* Dropdown Menu */}
+      {isMenuOpen && (
+        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-fade-in">
+          <button
+            onClick={handleShareClick}
+            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Share2 className="h-4 w-4 mr-3" />
+            Share
+          </button>
+          <button
+            onClick={handleReportClick}
+            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Flag className="h-4 w-4 mr-3" />
+            Report
+          </button>
+          {/* Add more menu items as needed */}
+          <div className="border-t border-gray-100 my-1"></div>
+          <button
+            onClick={() => setIsMenuOpen(false)}
+            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span className="ml-7">Save</span>
+          </button>
+          <button
+            onClick={() => setIsMenuOpen(false)}
+            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span className="ml-7">Follow</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function AliExpressHeader({
   activeTabId = 'recommendations',
   showCategoryTabs = true,
   customTabs,
   onCustomTabChange,
-  showSearchList = false,
-  searchListItems,
-  onSearchItemClick,
-  flatBorders = true,
   cityName = 'New York',
   onLocationChange,
   onOpenLocationsPanel,
@@ -251,6 +347,7 @@ export default function AliExpressHeader({
   onBackClick,
   onFavoriteClick,
   onShareClick,
+  onReportClick,
   isFavorite = false,
   inPanel = false,
   actionButtons = [],
@@ -285,13 +382,6 @@ export default function AliExpressHeader({
   } = useHeaderLocation(cityName, onLocationChange, onOpenLocationsPanel);
 
   const {
-    searchItemsToShow,
-    searchListRef,
-    getTrendIcon,
-    handleSearchItemClick
-  } = useHeaderSearchList(searchListItems, onSearchItemClick);
-
-  const {
     defaultActionButtons
   } = useHeaderActionButtons({
     mode,
@@ -306,7 +396,6 @@ export default function AliExpressHeader({
   const { getInputClassName } = useHeaderSearchBar({
     searchQuery,
     placeholder,
-    flatBorders,
     handleSubmit,
     handleInputChange,
     handleFocus,
@@ -333,8 +422,7 @@ export default function AliExpressHeader({
     handleClearSearch,
     selectedCity,
     locationDropdownRef,
-    handleLocationClick,
-    flatBorders
+    handleLocationClick
   });
 
   return (
@@ -347,7 +435,6 @@ export default function AliExpressHeader({
         <HomeHeader 
           searchQuery={searchQuery}
           placeholder={placeholder}
-          flatBorders={flatBorders}
           handleSubmit={handleSubmit}
           handleInputChange={handleInputChange}
           handleFocus={handleFocus}
@@ -365,6 +452,10 @@ export default function AliExpressHeader({
           showSearchBarInProductDetail={showSearchBarInProductDetail}
           productData={productData}
           onBackClick={onBackClick}
+          onFavoriteClick={onFavoriteClick}
+          onShareClick={onShareClick}
+          onReportClick={onReportClick}
+          isFavorite={isFavorite}
           inPanel={inPanel}
           IconComponent={IconComponent}
           iconStrokeWidth={iconStrokeWidth}
@@ -385,23 +476,15 @@ export default function AliExpressHeader({
         />
       ) : null}
 
-      {/* Optional Element Below Header */}
-      {mode === 'home' && showCategoryTabs ? (
+      {/* Optional Category Tabs Below Header */}
+      {mode === 'home' && showCategoryTabs && (
         <CategoryTabsSection
           categoryTabsKey={categoryTabsKey}
           activeTab={activeTab}
           handleTabChange={handleTabChange}
           tabsToShow={tabsToShow}
         />
-      ) : mode === 'home' && showSearchList ? (
-        <SearchListSection
-          searchListRef={searchListRef}
-          searchItemsToShow={searchItemsToShow}
-          getTrendIcon={getTrendIcon}
-          handleSearchItemClick={handleSearchItemClick}
-          flatBorders={flatBorders}
-        />
-      ) : null}
+      )}
     </header>
   );
 }
@@ -410,7 +493,6 @@ export default function AliExpressHeader({
 const HomeHeader = ({
   searchQuery,
   placeholder,
-  flatBorders,
   handleSubmit,
   handleInputChange,
   handleFocus,
@@ -424,7 +506,6 @@ const HomeHeader = ({
 }: {
   searchQuery: string;
   placeholder: string;
-  flatBorders: boolean;
   handleSubmit: (e: React.FormEvent) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFocus: () => void;
@@ -519,6 +600,10 @@ const ProductDetailHeader = ({
   showSearchBarInProductDetail,
   productData,
   onBackClick,
+  onFavoriteClick,
+  onShareClick,
+  onReportClick,
+  isFavorite,
   inPanel,
   IconComponent,
   iconStrokeWidth,
@@ -541,6 +626,10 @@ const ProductDetailHeader = ({
   showSearchBarInProductDetail: boolean;
   productData?: any;
   onBackClick?: () => void;
+  onFavoriteClick?: () => void;
+  onShareClick?: () => void;
+  onReportClick?: () => void;
+  isFavorite: boolean;
   inPanel: boolean;
   IconComponent: React.ComponentType<any>;
   iconStrokeWidth: number;
@@ -587,9 +676,13 @@ const ProductDetailHeader = ({
         />
       )}
       <ActionButtonsSection
-        defaultActionButtons={defaultActionButtons}
         displayProgress={displayProgress}
         showSearchBarInProductDetail={showSearchBarInProductDetail}
+        onFavoriteClick={onFavoriteClick}
+        onShareClick={onShareClick}
+        onReportClick={onReportClick}
+        isFavorite={isFavorite}
+        productData={productData}
       />
     </div>
   </div>
@@ -757,27 +850,41 @@ const SearchBarSection = ({
 );
 
 const ActionButtonsSection = ({
-  defaultActionButtons,
   displayProgress,
-  showSearchBarInProductDetail
+  showSearchBarInProductDetail,
+  onFavoriteClick,
+  onShareClick,
+  onReportClick,
+  isFavorite,
+  productData
 }: {
-  defaultActionButtons: Array<any>;
   displayProgress: number;
   showSearchBarInProductDetail: boolean;
+  onFavoriteClick?: () => void;
+  onShareClick?: () => void;
+  onReportClick?: () => void;
+  isFavorite: boolean;
+  productData?: any;
 }) => (
   <div className="flex gap-1 flex-shrink-0">
-    {defaultActionButtons.map((button, index) => (
-      <HeaderActionButton
-        key={index}
-        Icon={button.Icon}
-        active={button.active}
-        onClick={button.onClick}
-        progress={displayProgress}
-        activeColor={button.activeColor}
-        likeCount={button.count}
-        scrolled={showSearchBarInProductDetail}
-      />
-    ))}
+    {/* Favorite/Like Button */}
+    <HeaderActionButton
+      Icon={Heart}
+      active={isFavorite}
+      onClick={onFavoriteClick}
+      progress={displayProgress}
+      activeColor="#f97316"
+      likeCount={productData?.favorite_count || 0}
+      scrolled={showSearchBarInProductDetail}
+    />
+    
+    {/* Three Dots Menu */}
+    <ThreeDotsMenu
+      onShareClick={onShareClick}
+      onReportClick={onReportClick}
+      displayProgress={displayProgress}
+      showSearchBarInProductDetail={showSearchBarInProductDetail}
+    />
   </div>
 );
 
@@ -801,58 +908,5 @@ const CategoryTabsSection = ({
       categories={tabsToShow}
       isSearchOverlayActive={false}
     />
-  </div>
-);
-
-const SearchListSection = ({
-  searchListRef,
-  searchItemsToShow,
-  getTrendIcon,
-  handleSearchItemClick,
-  flatBorders
-}: {
-  searchListRef: React.RefObject<HTMLDivElement>;
-  searchItemsToShow: Array<any>;
-  getTrendIcon: (trend: string) => JSX.Element;
-  handleSearchItemClick: (term: string) => void;
-  flatBorders: boolean;
-}) => (
-  <div className="bg-white">
-    <div 
-      ref={searchListRef}
-      className="relative overflow-x-auto scrollbar-hide"
-      style={{ 
-        WebkitOverflowScrolling: 'touch',
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none'
-      }}
-    >
-      <div className="flex px-2 py-1 space-x-2 min-w-max">
-        {searchItemsToShow.map((item, index) => (
-          <button
-            key={index}
-            onClick={() => handleSearchItemClick(item.term)}
-            className={`
-              flex items-center justify-center
-              px-3 py-1
-              text-xs font-medium
-              whitespace-nowrap
-              transition-all duration-200
-              ${flatBorders ? 'rounded-none' : 'rounded-full'}
-              bg-gray-100
-              text-gray-700
-              hover:bg-gray-200
-              hover:text-gray-900
-              active:bg-gray-300
-              focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1
-            `}
-          >
-            {getTrendIcon(item.trend || 'popular')}
-            {item.term}
-          </button>
-        ))}
-      </div>
-      <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none" />
-    </div>
   </div>
 );
