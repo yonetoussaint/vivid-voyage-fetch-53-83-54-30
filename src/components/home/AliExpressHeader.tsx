@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import CategoryTabs from './header/CategoryTabs';
 import { VerificationBadge } from '@/components/shared/VerificationBadge';
-import { X, Camera, MapPin, ChevronDown, ChevronLeft, MoreHorizontal, Share2, Flag } from 'lucide-react';
+import { X,Heart, Camera, MapPin, ChevronDown, ChevronLeft, MoreHorizontal, Share2, Flag } from 'lucide-react';
 import {
   useHeaderSearch,
   useHeaderScroll,
