@@ -3,6 +3,15 @@ import { Star, CheckCircle, Shield, Trophy, Truck } from 'lucide-react';
 
 export default function StoreBanner() {
   const [isFollowing, setIsFollowing] = React.useState(false);
+  const [showSuccess, setShowSuccess] = React.useState(false);
+
+  const handleFollow = () => {
+    setShowSuccess(true);
+    setTimeout(() => {
+      setIsFollowing(true);
+      setShowSuccess(false);
+    }, 600);
+  };
 
   return (
     <div className="w-full max-w-md mx-auto bg-white p-2">
@@ -15,16 +24,24 @@ export default function StoreBanner() {
               <div className="text-blue-600 font-semibold text-[8px] mt-0.5">AVENT</div>
             </div>
           </div>
-          <button 
-            onClick={() => setIsFollowing(!isFollowing)}
-            className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white ${
-              isFollowing 
-                ? 'bg-gray-500' 
-                : 'bg-red-600'
-            }`}
-          >
-            {isFollowing ? '✓' : '+'}
-          </button>
+          {!isFollowing && !showSuccess && (
+            <button 
+              onClick={handleFollow}
+              className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white bg-red-600 hover:bg-red-700 transition-all"
+            >
+              +
+            </button>
+          )}
+          {showSuccess && (
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white bg-green-500 animate-ping">
+              ✓
+            </div>
+          )}
+          {showSuccess && (
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white bg-green-500">
+              ✓
+            </div>
+          )}
         </div>
 
         {/* Store Details */}
