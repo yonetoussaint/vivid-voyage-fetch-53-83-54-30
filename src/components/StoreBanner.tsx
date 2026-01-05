@@ -5,7 +5,7 @@ export default function StoreBanner() {
   const [isFollowing, setIsFollowing] = React.useState(false);
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white p-3">
+    <div className="w-full max-w-md mx-auto bg-white p-2">
       <div className="flex items-center gap-2.5">
         {/* Logo */}
         <div className="flex-shrink-0">
