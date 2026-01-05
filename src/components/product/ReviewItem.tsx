@@ -115,9 +115,9 @@ const ReviewItem = ({
   };
 
   return (
-    <div className="bg-white border-b border-gray-100 p-5 hover:bg-gray-50 transition-colors">
+    <div className="bg-white border-b border-gray-100 p-2 hover:bg-gray-50 transition-colors">
       {/* Review Header */}
-      <div className="flex gap-3 mb-3">
+      <div className="flex gap-2 mb-2">
         <div 
           className={`w-10 h-10 flex items-center justify-center text-white text-sm font-semibold rounded-full flex-shrink-0 ${getAvatarColor(user_name)}`}
         >
@@ -139,8 +139,8 @@ const ReviewItem = ({
             </div>
           </div>
           
-          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-            <button className="px-4 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+            <button className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
               Follow
             </button>
             <div className="relative" ref={menuRef}>
@@ -186,7 +186,7 @@ const ReviewItem = ({
       </div>
 
       {/* Review Comment */}
-      <div className="text-gray-800 leading-relaxed mb-3 text-[15px]">
+      <div className="text-gray-800 leading-relaxed mb-2 text-[15px]">
         <span>
           {expandedReviews.has(id) ? comment : truncateText(comment)}
           {comment.length > 120 && (
@@ -202,7 +202,7 @@ const ReviewItem = ({
 
       {/* Media Section */}
       {media.length > 0 && (
-        <div className="mb-3">
+        <div className="mb-2">
           <div className="flex gap-2 overflow-x-auto pb-2">
             {media.map((item, index) => (
               <div key={index} className="flex-shrink-0 relative">
