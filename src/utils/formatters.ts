@@ -1,4 +1,3 @@
-
 // Helper function to add apostrophe separators for thousands
 const ajouterApostrophes = (str) => {
   // Remove any existing separators first
@@ -17,16 +16,15 @@ const formaterDecimal = (num, decimalPlaces = 2) => {
   return nombre.toFixed(decimalPlaces);
 };
 
-// Formater nombre avec 3 décimales pour gallons
-// Formater nombre avec 3 décimales pour gallons - TRUNCATE, don't round
+// Formater nombre avec 3 décimales pour gallons - WITH PROPER ROUNDING
 export const formaterGallons = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0.000';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
   if (isNaN(nombre)) return '0.000';
 
-  // Truncate to 3 decimal places without rounding
-  const truncated = Math.floor(nombre * 1000) / 1000;
-  const formatted = truncated.toFixed(3);
+  // Round to 3 decimal places (using Number.EPSILON to handle floating point precision issues)
+  const rounded = Math.round((nombre + Number.EPSILON) * 1000) / 1000;
+  const formatted = rounded.toFixed(3);
   const parts = formatted.split('.');
   const integerPart = parts[0];
   const decimalPart = parts[1];
@@ -68,7 +66,6 @@ export const formaterNombre = (num) => {
   return ajouterApostrophes(rounded.toString());
 };
 
-// Formater pour la caisse - arrondir au multiple de 5 le plus proche
 // Formater pour la caisse - arrondir selon la règle: 1-5→5, 6-9→10
 // Formater pour la caisse - ALWAYS ROUND UP to the nearest 10
 // Formater pour la caisse - ALWAYS round UP, then apply 1-5→5, 6-9→10 rule
@@ -80,12 +77,12 @@ export const formaterCaisse = (num) => {
 
   // Step 1: ALWAYS round UP to remove all decimals
   const roundedUp = Math.ceil(nombre);
-  
+
   // Step 2: Apply rounding rules to the rounded-up integer
   const lastDigit = roundedUp % 10;
-  
+
   let result;
-  
+
   if (lastDigit >= 1 && lastDigit <= 5) {
     // For numbers ending in 1-5: round to nearest 5
     result = Math.floor(roundedUp / 10) * 10 + 5;
