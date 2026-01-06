@@ -160,13 +160,6 @@ export const useStationData = (date, shift) => {
           montant: valeur.montant === '' ? '' : parseFloat(valeur.montant) || 0,
           devise: 'USD'
         };
-      } else if (typeof valeur === 'object' && valeur.montantHTG !== undefined) {
-        // Handle the case where montantHTG is provided
-        nouveauxDepots[shift][nomVendeur][index] = {
-          montant: valeur.montant === '' ? '' : parseFloat(valeur.montant) || 0,
-          devise: 'USD',
-          montantHTG: valeur.montantHTG
-        };
       } else {
         // For HTG deposits, store string/number
         nouveauxDepots[shift][nomVendeur][index] = valeur === '' ? '' : parseFloat(valeur) || 0;
@@ -327,8 +320,9 @@ export const useStationData = (date, shift) => {
     prixPropane
   );
 
-  // Line 159 in useStationData:
-const totauxVendeurs = calculerTotauxVendeurs(vendeurs, toutesDonnees, tousDepots, prix, tauxUSD);
+  // FIXED: Pass tauxUSD to calculerTotauxVendeurs function
+  const totauxVendeurs = calculerTotauxVendeurs(vendeurs, toutesDonnees, tousDepots, prix, tauxUSD);
+  const totauxVendeursCourants = totauxVendeurs[shift];
 
   // Calculer totaux par shift
   const totauxAM = calculerTotaux(
