@@ -143,7 +143,7 @@ export default function Portfolio() {
         <h2 className="text-[clamp(2.5rem,5vw,4rem)] mb-16 font-extrabold tracking-[-2px]">
           Selected <span className="text-[#00ff88]">Projects</span>
         </h2>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-8">
           {projects.map((project, index) => (
             <div
               key={index}
