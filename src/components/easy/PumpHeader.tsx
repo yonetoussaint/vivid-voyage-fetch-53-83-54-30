@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, DollarSign, Fuel, Calculator, TrendingUp, TrendingDown, Flame } from 'lucide-react';
 import { formaterArgent, formaterGallons, formaterCaisse } from '@/utils/formatters';
 import { getCouleurPompe, calculerTotalPompe } from '@/utils/helpers';
@@ -11,6 +11,7 @@ const PumpHeader = ({
   mettreAJourAffectationVendeur, 
   prix,
   vendeurDepots = {}, // Pass deposits data from parent
+  tauxUSD = 132, // ADD THIS: exchange rate for USD deposits
   // New prop for propane mode
   isPropane = false,
   propaneData = null,
@@ -18,12 +19,12 @@ const PumpHeader = ({
 }) => {
   // Calculate totals based on mode
   let totalPompe, gallonsEssence, gallonsDiesel, ventesEssence, ventesDiesel, ventesTotales, productIcon;
-  
+
   if (isPropane) {
     // Calculate propane totals
     const gallonsPropane = (parseFloat(propaneData?.fin) || 0) - (parseFloat(propaneData?.debut) || 0);
     ventesTotales = gallonsPropane * prixPropane;
-    
+
     totalPompe = {
       gallonsEssence: 0,
       gallonsDiesel: 0,
@@ -31,7 +32,7 @@ const PumpHeader = ({
       ventesDiesel: 0,
       ventesTotales: ventesTotales
     };
-    
+
     gallonsEssence = 0;
     gallonsDiesel = gallonsPropane; // Show propane gallons in diesel column for consistency
     ventesEssence = 0;
@@ -70,20 +71,33 @@ const PumpHeader = ({
   const vendeurActuel = isPropane 
     ? (propaneData?._vendeur || donneesPompe?._vendeur || '') 
     : (donneesPompe?._vendeur || '');
-  
-  // Calculate deposits for current seller
+
+  // Calculate deposits for current seller - FIXED to handle both HTG and USD
   const sellerDeposits = vendeurActuel ? vendeurDepots[vendeurActuel] || [] : [];
-  const totalDeposits = sellerDeposits.reduce((sum, depot) => sum + (parseFloat(depot) || 0), 0);
   
+  // FIXED: Calculate total deposits including USD deposits converted to HTG
+  const totalDeposits = sellerDeposits.reduce((sum, depot) => {
+    if (!depot) return sum;
+    
+    if (typeof depot === 'object' && depot.devise === 'USD') {
+      // Convert USD to HTG
+      const montantUSD = parseFloat(depot.montant) || 0;
+      return sum + (montantUSD * tauxUSD);
+    } else {
+      // HTG deposit
+      return sum + (parseFloat(depot) || 0);
+    }
+  }, 0);
+
   // Calculate expected cash = Rounded Total - Total Deposits
   const especesAttendues = totalAjustePourCaisse - totalDeposits;
 
   // State for cash received and change calculation
   const [cashRecu, setCashRecu] = useState('');
-  
+
   // Parse cash received value
   const cashRecuValue = parseFloat(cashRecu) || 0;
-  
+
   // Calculate change based on expected cash vs cash received
   const changeNeeded = cashRecuValue - especesAttendues;
   const shouldGiveChange = changeNeeded > 0;
@@ -157,6 +171,27 @@ const PumpHeader = ({
     }
   };
 
+  // FIXED: Format deposits for display with currency info
+  const formatDepositDisplay = (depot) => {
+    if (!depot) return '';
+    
+    if (typeof depot === 'object' && depot.devise === 'USD') {
+      const montantUSD = parseFloat(depot.montant) || 0;
+      const montantHTG = montantUSD * tauxUSD;
+      return `${montantUSD} USD (${formaterArgent(montantHTG)} HTG)`;
+    } else {
+      const montantHTG = parseFloat(depot) || 0;
+      return `${formaterArgent(montantHTG)} HTG`;
+    }
+  };
+
+  // Get deposit breakdown for display
+  const depositBreakdown = sellerDeposits.map((depot, index) => ({
+    id: index + 1,
+    display: formatDepositDisplay(depot),
+    isUSD: typeof depot === 'object' && depot.devise === 'USD'
+  }));
+
   return (
     <div className="w-full space-y-3">
       {/* Vendor Assignment Card - Now shows for BOTH pumps and propane */}
@@ -212,10 +247,10 @@ const PumpHeader = ({
             {isPropane ? `${prixPropane} HTG` : formaterGallons(gallonsEssence)}
           </p>
           <p className="text-[10px] opacity-90">
-            {isPropane ? 'par gallon' : 'gallons'}
+            {isPropanae ? 'par gallon' : 'gallons'}
           </p>
         </div>
-        
+
         <div className={`rounded-xl p-3 shadow-lg ${
           isPropane 
             ? 'bg-gradient-to-br from-orange-500 to-red-500' 
@@ -423,28 +458,46 @@ const PumpHeader = ({
         </div>
 
         <div className="space-y-3">
-          {/* Deposits Summary */}
-          {vendeurActuel && totalDeposits > 0 && (
-            <div className="bg-white bg-opacity-10 rounded-lg p-3 mb-2">
-              <div className="flex items-center justify-between mb-2">
+          {/* Deposits Summary - IMPROVED with currency info */}
+          {vendeurActuel && sellerDeposits.length > 0 && (
+            <div className="bg-white bg-opacity-10 rounded-lg p-3 mb-2 space-y-2">
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1">
                   <Calculator size={14} className="text-white" />
                   <p className="text-xs opacity-90">Dépôts effectués:</p>
                 </div>
                 <p className="text-sm font-bold">{formaterArgent(totalDeposits)} HTG</p>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  <DollarSign size={14} className="text-white" />
-                  <p className="text-xs opacity-90">Espèces attendues:</p>
+              
+              {/* Deposit breakdown */}
+              <div className="space-y-1">
+                {depositBreakdown.map((deposit) => (
+                  <div key={deposit.id} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1">
+                      <div className={`w-2 h-2 rounded-full ${
+                        deposit.isUSD ? 'bg-green-400' : 'bg-blue-400'
+                      }`}></div>
+                      <span className="opacity-80">Dépôt {deposit.id}:</span>
+                    </div>
+                    <span className="font-medium opacity-90">{deposit.display}</span>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="pt-2 border-t border-white border-opacity-20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <DollarSign size={14} className="text-white" />
+                    <p className="text-xs opacity-90">Espèces attendues:</p>
+                  </div>
+                  <p className={`text-sm font-bold ${especesAttendues > 0 ? 'text-green-300' : especesAttendues < 0 ? 'text-red-300' : 'text-white'}`}>
+                    {formaterArgent(especesAttendues)} HTG
+                  </p>
                 </div>
-                <p className={`text-sm font-bold ${especesAttendues > 0 ? 'text-green-300' : especesAttendues < 0 ? 'text-red-300' : 'text-white'}`}>
-                  {formaterArgent(especesAttendues)} HTG
+                <p className="text-[10px] opacity-70 mt-1 text-right">
+                  (Total ajusté {formaterArgent(totalAjustePourCaisse)} HTG - Dépôts {formaterArgent(totalDeposits)} HTG)
                 </p>
               </div>
-              <p className="text-[10px] opacity-70 mt-1">
-                (Total ajusté {formaterArgent(totalAjustePourCaisse)} HTG - Dépôts {formaterArgent(totalDeposits)} HTG)
-              </p>
             </div>
           )}
 
