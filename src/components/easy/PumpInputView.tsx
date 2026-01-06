@@ -17,7 +17,8 @@ const PumpInputView = ({
   mettreAJourLecture, 
   mettreAJourAffectationVendeur, 
   prix,
-  tousDepots // ADD THIS PROP
+  tousDepots,
+  showPropane // ADD THIS PROP
 }) => {
   const lecturesCourantes = toutesDonnees[shift];
 
@@ -36,10 +37,11 @@ const PumpInputView = ({
         pompes={pompes}
         pompeEtendue={pompeEtendue}
         setPompeEtendue={setPompeEtendue}
+        showPropane={showPropane} // Pass the prop
       />
 
-      {/* Pistolets pour Pompe Sélectionnée */}
-      {Object.entries(lecturesCourantes).map(([pompe, donneesPompe]) => {
+      {/* Only show pump pistolets if we're on a pump tab, not propane */}
+      {pompeEtendue !== 'propane' && Object.entries(lecturesCourantes).map(([pompe, donneesPompe]) => {
         if (pompe !== pompeEtendue) return null;
 
         return (
