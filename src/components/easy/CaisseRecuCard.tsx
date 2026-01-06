@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, Coins } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
@@ -17,83 +17,82 @@ const CaisseRecuCard = ({
   const shouldGiveChange = changeNeeded > 0;
   const isShort = changeNeeded < 0;
 
-  // Common Haitian Gourde denominations (in HTG)
+  // Haitian Gourde denominations
   const denominations = [1000, 500, 250, 100, 50, 25, 10, 5, 1];
   
-  // Function to calculate change breakdown
-  const calculateChangeBreakdown = (amount) => {
-    let remaining = Math.round(amount); // Round to avoid floating point issues
-    const breakdown = [];
+  // AI-like function to generate all optimal change combinations
+  const generateChangeCombinations = useMemo(() => {
+    if (!shouldGiveChange || changeNeeded <= 0) return [];
     
-    for (const denom of denominations) {
-      if (remaining >= denom) {
-        const count = Math.floor(remaining / denom);
-        remaining -= count * denom;
+    const amount = Math.round(changeNeeded);
+    const combinations = [];
+    
+    // Helper function to generate combinations recursively
+    const findCombinations = (remaining, currentCombo, startIndex, maxCombinations = 10) => {
+      if (remaining === 0) {
+        // Format and add the combination
+        const formattedCombo = currentCombo
+          .filter(item => item.count > 0)
+          .map(item => ({
+            denomination: item.denomination,
+            count: item.count,
+            total: item.denomination * item.count
+          }))
+          .sort((a, b) => b.denomination - a.denomination);
         
-        if (count > 0) {
-          breakdown.push({
-            denomination: denom,
-            count: count,
-            total: count * denom
+        // Only add if not duplicate
+        const comboKey = formattedCombo.map(c => `${c.count}x${c.denomination}`).join('-');
+        if (!combinations.some(c => c.key === comboKey)) {
+          combinations.push({
+            key: comboKey,
+            breakdown: formattedCombo,
+            totalNotes: formattedCombo.reduce((sum, item) => sum + item.count, 0),
+            hasLargeNotes: formattedCombo.some(item => item.denomination >= 500)
           });
+          
+          // Stop if we have enough combinations
+          if (combinations.length >= maxCombinations) {
+            return true;
+          }
         }
+        return false;
       }
-    }
-    
-    return breakdown;
-  };
-
-  // Get multiple optimal breakdowns (different combinations)
-  const getChangeBreakdowns = (amount) => {
-    const baseBreakdown = calculateChangeBreakdown(amount);
-    const breakdowns = [baseBreakdown];
-    
-    // Generate alternative breakdowns for larger amounts
-    if (amount >= 1000) {
-      // Alternative 1: Prefer 500 HTG notes when possible
-      let altAmount = amount;
-      const altBreakdown = [];
       
-      // Count 1000 HTG notes
-      const thousandCount = Math.floor(altAmount / 1000);
-      altAmount -= thousandCount * 1000;
+      if (remaining < 0 || startIndex >= denominations.length) {
+        return false;
+      }
       
-      // Convert some 1000s to 500s if possible
-      if (thousandCount > 0) {
-        const thousandsToConvert = Math.min(thousandCount, Math.floor(altAmount / 500));
-        if (thousandsToConvert > 0) {
-          altBreakdown.push({
-            denomination: 500,
-            count: thousandsToConvert * 2,
-            total: thousandsToConvert * 1000
-          });
-          altAmount += thousandsToConvert * 500; // Add back the 500 portion
-        }
+      const denom = denominations[startIndex];
+      const maxCount = Math.floor(remaining / denom);
+      
+      // Try different counts for this denomination (from max down to 0)
+      for (let count = maxCount; count >= 0; count--) {
+        const newRemaining = remaining - (count * denom);
+        const newCombo = [...currentCombo, { denomination: denom, count }];
         
-        // Add remaining 1000s
-        if (thousandCount - thousandsToConvert > 0) {
-          altBreakdown.push({
-            denomination: 1000,
-            count: thousandCount - thousandsToConvert,
-            total: (thousandCount - thousandsToConvert) * 1000
-          });
+        // Limit recursion depth for performance
+        if (findCombinations(newRemaining, newCombo, startIndex + 1, maxCombinations)) {
+          return true;
         }
       }
       
-      // Add remaining amount using standard breakdown
-      const remainingBreakdown = calculateChangeBreakdown(altAmount);
-      const combinedBreakdown = [...altBreakdown, ...remainingBreakdown]
-        .sort((a, b) => b.denomination - a.denomination);
-      
-      if (combinedBreakdown.length > 0 && JSON.stringify(combinedBreakdown) !== JSON.stringify(baseBreakdown)) {
-        breakdowns.push(combinedBreakdown);
-      }
-    }
+      return false;
+    };
     
-    return breakdowns;
-  };
-
-  const changeBreakdowns = shouldGiveChange ? getChangeBreakdowns(changeNeeded) : [];
+    // Generate combinations
+    findCombinations(amount, [], 0, 8); // Limit to 8 combinations for performance
+    
+    // Sort combinations: prefer fewer notes, then larger denominations
+    return combinations.sort((a, b) => {
+      if (a.totalNotes !== b.totalNotes) {
+        return a.totalNotes - b.totalNotes; // Fewer notes first
+      }
+      // If same number of notes, prefer larger denominations
+      const aMaxDenom = Math.max(...a.breakdown.map(d => d.denomination));
+      const bMaxDenom = Math.max(...b.breakdown.map(d => d.denomination));
+      return bMaxDenom - aMaxDenom;
+    }).slice(0, 4); // Show top 4 combinations
+  }, [changeNeeded, shouldGiveChange]);
 
   const formatDepositDisplay = (depot) => {
     if (!depot) return '';
@@ -223,7 +222,7 @@ const CaisseRecuCard = ({
         />
       </div>
 
-      {/* Change calculation with breakdown */}
+      {/* Change calculation with AI-powered breakdown */}
       {cashRecu && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-2">
           {/* Change summary */}
@@ -249,50 +248,93 @@ const CaisseRecuCard = ({
             </p>
           </div>
 
-          {/* Change breakdown for giving change */}
-          {shouldGiveChange && changeBreakdowns.length > 0 && (
+          {/* AI-powered change breakdown */}
+          {shouldGiveChange && generateChangeCombinations.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-1 mt-1">
                 <Coins size={10} className="text-green-300" />
-                <p className="text-xs font-bold text-green-300">Suggestions de monnaie:</p>
+                <p className="text-xs font-bold text-green-300">Combinaisons possibles:</p>
               </div>
               
-              {changeBreakdowns.map((breakdown, index) => (
-                <div key={index} className="bg-green-500 bg-opacity-10 rounded p-2 border border-green-400 border-opacity-20">
-                  {index === 0 && (
-                    <p className="text-[10px] text-green-300 opacity-90 mb-1 text-center">
-                      Option {index + 1} (recommandée)
-                    </p>
-                  )}
-                  <div className="grid grid-cols-2 gap-1">
-                    {breakdown.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-                          <span className="opacity-90">
-                            {item.count} × {formaterArgent(item.denomination)}
-                          </span>
+              {/* Compact grid of options */}
+              <div className="grid grid-cols-2 gap-2">
+                {generateChangeCombinations.map((combo, index) => (
+                  <div 
+                    key={combo.key} 
+                    className={`bg-green-500 bg-opacity-10 rounded-lg p-1.5 border ${
+                      index === 0 
+                        ? 'border-green-400 border-opacity-40 bg-green-500 bg-opacity-15' 
+                        : 'border-green-400 border-opacity-20'
+                    }`}
+                  >
+                    {index === 0 && (
+                      <div className="absolute -top-1 -right-1">
+                        <div className="bg-green-500 text-[8px] px-1 py-0.5 rounded-full">
+                          ★
                         </div>
-                        <span className="font-bold text-green-300">
-                          {formaterArgent(item.total)}
-                        </span>
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-1 pt-1 border-t border-green-400 border-opacity-20">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="opacity-90">Total:</span>
-                      <span className="font-bold text-green-300">
-                        {formaterArgent(breakdown.reduce((sum, item) => sum + item.total, 0))} HTG
+                    )}
+                    
+                    {/* Combo header */}
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[9px] font-bold text-green-300">
+                        Option {index + 1}
+                      </span>
+                      <span className="text-[8px] opacity-70">
+                        {combo.totalNotes} {combo.totalNotes === 1 ? 'billet' : 'billets'}
                       </span>
                     </div>
+                    
+                    {/* Combo breakdown - simplified display */}
+                    <div className="space-y-0.5">
+                      {combo.breakdown.slice(0, 3).map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center">
+                          <span className="text-[9px] opacity-90">
+                            {item.count} × {formaterArgent(item.denomination)}
+                          </span>
+                          <span className="text-[9px] font-bold text-green-300">
+                            {formaterArgent(item.total)}
+                          </span>
+                        </div>
+                      ))}
+                      
+                      {/* Show "..." if more items */}
+                      {combo.breakdown.length > 3 && (
+                        <div className="text-center">
+                          <span className="text-[8px] opacity-60">+{combo.breakdown.length - 3} plus</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Total */}
+                    <div className="mt-1 pt-0.5 border-t border-green-400 border-opacity-20">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[9px] opacity-80">Total:</span>
+                        <span className="text-[10px] font-bold text-green-300">
+                          {formaterArgent(combo.breakdown.reduce((sum, item) => sum + item.total, 0))}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Quick tips */}
+              <div className="bg-green-500 bg-opacity-5 rounded p-1.5 border border-green-400 border-opacity-10">
+                <p className="text-[9px] text-center text-green-300 font-bold mb-0.5">
+                  💡 Conseils rapides
+                </p>
+                <div className="grid grid-cols-2 gap-1 text-[8px] opacity-80">
+                  <div className="flex items-center gap-0.5">
+                    <div className="w-1 h-1 rounded-full bg-green-400"></div>
+                    <span>Option 1 = Moins de billets</span>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    <div className="w-1 h-1 rounded-full bg-blue-400"></div>
+                    <span>Choisissez selon votre caisse</span>
                   </div>
                 </div>
-              ))}
-              
-              <p className="text-[9px] text-center opacity-70 text-green-300 mt-1">
-                Sélectionnez l'option la plus pratique selon vos billets disponibles
-              </p>
+              </div>
             </div>
           )}
 
