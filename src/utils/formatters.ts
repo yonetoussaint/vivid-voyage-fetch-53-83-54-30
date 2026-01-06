@@ -18,13 +18,15 @@ const formaterDecimal = (num, decimalPlaces = 2) => {
 };
 
 // Formater nombre avec 3 décimales pour gallons
+// Formater nombre avec 3 décimales pour gallons - TRUNCATE, don't round
 export const formaterGallons = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0.000';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
   if (isNaN(nombre)) return '0.000';
 
-  // Format with 3 decimal places
-  const formatted = nombre.toFixed(3);
+  // Truncate to 3 decimal places without rounding
+  const truncated = Math.floor(nombre * 1000) / 1000;
+  const formatted = truncated.toFixed(3);
   const parts = formatted.split('.');
   const integerPart = parts[0];
   const decimalPart = parts[1];
