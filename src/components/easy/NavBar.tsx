@@ -1,15 +1,15 @@
 import React from 'react';
-import { FileText, Trash2, Fuel, Users, DollarSign, Globe, Database, Flame } from 'lucide-react';
+import { FileText, Trash2, Fuel, Users, DollarSign, Globe, Database } from 'lucide-react';
 
 const Navbar = ({ date, setDate, shift, setShift, activeView, onViewChange, onResetShift, onResetDay }) => {
   const navItems = [
     { id: 'pumps', label: 'Données', icon: FileText, color: 'bg-white text-blue-600' },
-{ id: 'stock', label: 'Stock', icon: Database, color: 'bg-teal-500 text-white' },
+    { id: 'stock', label: 'Stock', icon: Database, color: 'bg-teal-500 text-white' },
     { id: 'report', label: 'Rapport', icon: FileText, color: 'bg-white text-blue-600' },
     { id: 'vendeurs', label: 'Vendeurs', icon: Users, color: 'bg-purple-500 text-white' },
     { id: 'depots', label: 'Dépôts', icon: DollarSign, color: 'bg-green-500 text-white' },
     { id: 'usd', label: 'USD', icon: Globe, color: 'bg-amber-500 text-white' },
-    { id: 'propane', label: 'Propane', icon: Flame, color: 'bg-red-500 text-white' },
+    // Removed propane from here
     { id: 'resetShift', label: `Reset ${shift}`, icon: Trash2, color: 'bg-orange-500 text-white', onClick: onResetShift },
     { id: 'resetDay', label: 'Reset Jour', icon: Trash2, color: 'bg-red-500 text-white', onClick: onResetDay }
   ];
