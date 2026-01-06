@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, Coins, Sparkles } from 'lucide-react';
+import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, Coins, Sparkles, AlertCircle } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const CaisseRecuCard = ({
@@ -20,19 +20,26 @@ const CaisseRecuCard = ({
   // Realistic Haitian Gourde denominations (no 1 gourde - smallest is 5 gourdes)
   const denominations = [1000, 500, 250, 100, 50, 25, 10, 5];
   
-  // Smart change combination algorithm
+  // Function to check if amount can be exactly made with denominations
+  const canMakeExactChange = (amount) => {
+    const roundedAmount = Math.round(amount);
+    return roundedAmount % 5 === 0; // Must be multiple of 5
+  };
+
+  // Smart change combination algorithm - only exact matches
   const generateChangeCombinations = useMemo(() => {
     if (!shouldGiveChange || changeNeeded <= 0) return [];
     
     const amount = Math.round(changeNeeded);
     const combinations = [];
     
-    // Since we don't have 1 gourde, we need to handle amounts that aren't multiples of 5
-    // Round to nearest 5 gourdes for practical change giving
-    const roundedAmount = Math.round(amount / 5) * 5;
+    // Check if exact change is possible
+    if (!canMakeExactChange(amount)) {
+      return []; // Cannot make exact change
+    }
     
-    // Helper function to generate combinations recursively
-    const findCombinations = (remaining, currentCombo, startIndex, maxDepth = 4) => {
+    // Helper function to generate exact combinations recursively
+    const findExactCombinations = (remaining, currentCombo, startIndex, maxDepth = 4) => {
       if (remaining === 0) {
         // Format and add the combination
         const formattedCombo = currentCombo
@@ -51,17 +58,23 @@ const CaisseRecuCard = ({
             key: comboKey,
             breakdown: formattedCombo,
             totalNotes: formattedCombo.reduce((sum, item) => sum + item.count, 0),
-            rounded: remaining !== amount // Track if this is a rounded combination
+            isExact: true
           });
         }
         return;
       }
       
-      if (startIndex >= denominations.length || maxDepth === 0) {
+      if (remaining < 0 || startIndex >= denominations.length || maxDepth === 0) {
         return;
       }
       
       const denom = denominations[startIndex];
+      if (denom > remaining) {
+        // Skip this denomination, try smaller ones
+        findExactCombinations(remaining, currentCombo, startIndex + 1, maxDepth - 1);
+        return;
+      }
+      
       const maxCount = Math.floor(remaining / denom);
       
       // Limit to reasonable number of coins/bills of same denomination (max 10)
@@ -71,20 +84,15 @@ const CaisseRecuCard = ({
         const newRemaining = remaining - (count * denom);
         const newCombo = [...currentCombo, { denomination: denom, count }];
         
-        findCombinations(newRemaining, newCombo, startIndex + 1, maxDepth - 1);
+        findExactCombinations(newRemaining, newCombo, startIndex + 1, maxDepth - 1);
         
         // Limit total combinations for performance
-        if (combinations.length >= 20) return;
+        if (combinations.length >= 15) return;
       }
     };
     
-    // Generate combinations for rounded amount
-    findCombinations(roundedAmount, [], 0, 4);
-    
-    // Also generate for original amount with 5 gourde as minimum
-    if (roundedAmount !== amount) {
-      findCombinations(amount, [], 0, 4);
-    }
+    // Generate only exact combinations
+    findExactCombinations(amount, [], 0, 4);
     
     // Remove duplicates and sort
     const uniqueCombinations = [];
@@ -103,10 +111,6 @@ const CaisseRecuCard = ({
         // First by total notes
         if (a.totalNotes !== b.totalNotes) {
           return a.totalNotes - b.totalNotes;
-        }
-        // Then by whether it uses rounded amount (prefer exact)
-        if (a.rounded !== b.rounded) {
-          return a.rounded ? 1 : -1;
         }
         // Then by largest denomination
         const aMax = Math.max(...a.breakdown.map(d => d.denomination));
@@ -134,6 +138,11 @@ const CaisseRecuCard = ({
     display: formatDepositDisplay(depot),
     isUSD: typeof depot === 'object' && depot.devise === 'USD'
   }));
+
+  // Check if exact change is possible
+  const exactChangePossible = canMakeExactChange(changeNeeded);
+  const remainder = changeNeeded % 5;
+  const mustAcceptRemainder = shouldGiveChange && remainder !== 0;
 
   return (
     <div className={`rounded-xl p-3 shadow-lg mb-3 ${
@@ -270,22 +279,43 @@ const CaisseRecuCard = ({
             </p>
           </div>
 
-          {/* Realistic change breakdown */}
-          {shouldGiveChange && generateChangeCombinations.length > 0 && (
+          {/* Warning if cannot give exact change */}
+          {mustAcceptRemainder && (
+            <div className="bg-amber-500 bg-opacity-20 rounded-lg p-2 border border-amber-400 border-opacity-30">
+              <div className="flex items-start gap-1.5">
+                <AlertCircle size={12} className="text-amber-300 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-amber-300 mb-0.5">
+                    Attention: Monnaie exacte impossible
+                  </p>
+                  <p className="text-[10px] opacity-90 leading-tight">
+                    Le vendeur doit accepter de recevoir {formaterArgent(changeNeeded - remainder)} HTG 
+                    au lieu de {formaterArgent(changeNeeded)} HTG.
+                    <span className="block mt-0.5 font-bold">
+                      Reste à abandonner: {formaterArgent(remainder)} HTG
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Exact change combinations - only shown if possible */}
+          {shouldGiveChange && exactChangePossible && generateChangeCombinations.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-1 mb-2">
                 <Sparkles size={10} className="text-green-300" />
-                <p className="text-xs font-bold text-green-300">Combinaisons de monnaie:</p>
+                <p className="text-xs font-bold text-green-300">Combinaisons exactes:</p>
               </div>
               
-              {/* Note about denominations */}
+              {/* Denomination info */}
               <div className="bg-blue-500 bg-opacity-10 rounded p-1.5 border border-blue-400 border-opacity-20 mb-2">
                 <p className="text-[9px] text-center text-blue-300">
-                  <span className="font-bold">Note:</span> Plus petit billet/monnaie = 5 HTG
+                  Plus petit billet/monnaie = 5 HTG
                 </p>
               </div>
               
-              {/* Single column of options */}
+              {/* Single column of exact combinations */}
               <div className="space-y-2">
                 {generateChangeCombinations.map((combo, index) => (
                   <div 
@@ -350,7 +380,7 @@ const CaisseRecuCard = ({
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
                           <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          <span className="text-xs font-bold text-green-300">Total:</span>
+                          <span className="text-xs font-bold text-green-300">Total exact:</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-sm font-bold text-green-300">
@@ -375,11 +405,38 @@ const CaisseRecuCard = ({
                     • L'<span className="text-green-300 font-bold">Option 1</span> utilise le moins de billets/monnaie
                   </p>
                   <p className="text-[9px] opacity-80 leading-tight">
-                    • Les montants sont arrondis au multiple de 5 HTG le plus proche
+                    • Seules les combinaisons exactes sont affichées
                   </p>
                   <p className="text-[9px] opacity-80 leading-tight">
-                    • Privilégiez les billets de 500 HTG et 1000 HTG pour les gros montants
+                    • Le vendeur doit accepter les restes non-divisibles par 5 HTG
                   </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* No exact change possible */}
+          {shouldGiveChange && !exactChangePossible && generateChangeCombinations.length === 0 && (
+            <div className="space-y-2">
+              <div className="bg-amber-500 bg-opacity-20 rounded-lg p-3 border border-amber-400 border-opacity-30">
+                <div className="flex items-start gap-2">
+                  <AlertCircle size={14} className="text-amber-300 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-amber-300 mb-1">
+                      Aucune combinaison exacte possible
+                    </p>
+                    <p className="text-[10px] opacity-90 leading-tight mb-2">
+                      Le montant {formaterArgent(changeNeeded)} HTG n'est pas divisible par 5 HTG.
+                    </p>
+                    <div className="bg-amber-500 bg-opacity-30 rounded p-1.5">
+                      <p className="text-[10px] font-bold text-amber-200 text-center">
+                        Le vendeur doit accepter: {formaterArgent(changeNeeded - remainder)} HTG
+                      </p>
+                      <p className="text-[9px] opacity-80 text-center mt-0.5">
+                        Reste abandonné: {formaterArgent(remainder)} HTG
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
