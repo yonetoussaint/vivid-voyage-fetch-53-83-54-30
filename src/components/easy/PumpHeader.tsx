@@ -228,28 +228,27 @@ const PumpHeader = ({
         )}
       </div>
 
-      {/* Statistiques Rapides - Adjust for propane */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className={`rounded-xl p-3 shadow-lg ${
-          isPropane 
-            ? 'bg-gradient-to-br from-red-500 to-orange-500' 
-            : 'bg-gradient-to-br from-emerald-500 to-emerald-600'
-        } text-white`}>
-          <div className="flex items-center gap-1 mb-1">
-            <div className={`w-2 h-2 rounded-full ${
-              isPropane ? 'bg-red-300' : 'bg-emerald-300'
-            }`}></div>
-            <p className="text-xs font-medium opacity-90">
-              {isPropane ? 'Prix Propane' : `Essence (${pompe})`}
-            </p>
-          </div>
-          <p className="text-lg sm:text-xl font-bold mb-0.5">
-            {isPropane ? `${prixPropane} HTG` : formaterGallons(gallonsEssence)}
-          </p>
-          <p className="text-[10px] opacity-90">
-            {isPropanae ? 'par gallon' : 'gallons'}
-          </p>
-        </div>
+      {/* In the "Statistiques Rapides" section of PumpHeader.js */}
+<div className={`rounded-xl p-3 shadow-lg ${
+  isPropane 
+    ? 'bg-gradient-to-br from-red-500 to-orange-500' 
+    : 'bg-gradient-to-br from-emerald-500 to-emerald-600'
+} text-white`}>
+  <div className="flex items-center gap-1 mb-1">
+    <div className={`w-2 h-2 rounded-full ${
+      isPropane ? 'bg-red-300' : 'bg-emerald-300'
+    }`}></div>
+    <p className="text-xs font-medium opacity-90">
+      {isPropane ? 'Prix Propane' : `Essence (${pompe})`}
+    </p>
+  </div>
+  <p className="text-lg sm:text-xl font-bold mb-0.5">
+    {isPropane ? `${prixPropane} HTG` : formaterGallons(gallonsEssence)}
+  </p>
+  <p className="text-[10px] opacity-90">
+    {isPropane ? 'par gallon' : 'gallons'}  {/* FIXED THIS LINE */}
+  </p>
+</div>
 
         <div className={`rounded-xl p-3 shadow-lg ${
           isPropane 
