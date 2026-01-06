@@ -5,17 +5,14 @@ import VendeursManager from '@/components/easy/VendeursManager';
 import DepotsManager from '@/components/easy/DepotsManager';
 import USDManager from '@/components/easy/USDManager';
 import StockRestant from '@/components/easy/StockRestant';
-import PropaneManager from '@/components/easy/PropaneManager';
 import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
 import { useStationData } from '@/hooks/useStationData';
-import { Flame } from 'lucide-react';
-import { formaterArgent } from '@/utils/formatters';
 
 const SystemeStationService = () => {
   const [shift, setShift] = useState('AM');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [activeView, setActiveView] = useState('pumps'); // pumps, stock, report, vendeurs, depots, usd, propane
+  const [activeView, setActiveView] = useState('pumps'); // pumps, stock, report, vendeurs, depots, usd
   const [pompeEtendue, setPompeEtendue] = useState('P1');
 
   const {
@@ -55,9 +52,6 @@ const SystemeStationService = () => {
 
   const pompes = ['P1', 'P2', 'P3', 'P4', 'P5'];
 
-  // Get current propane data for the shift
-  const propaneDonneesCourantes = propaneDonnees[shift] || { debut: '', fin: '' };
-
   // Fonction pour changer de vue
   const handleViewChange = (view) => {
     setActiveView(view);
@@ -66,20 +60,18 @@ const SystemeStationService = () => {
     }
   };
 
-  // Handle pump/propane tab selection
+  // Handle pump/propane tab selection - ONLY for pump selector tabs
   const handlePompeSelection = (selection) => {
-    if (selection === 'propane') {
-      setActiveView('propane');
-      setPompeEtendue('propane');
-    } else {
-      setActiveView('pumps');
-      setPompeEtendue(selection);
-    }
+    setActiveView('pumps'); // Always set to 'pumps' view when using pump selector
+    setPompeEtendue(selection);
   };
 
   // Fonctions de réinitialisation
   const handleReinitialiserShift = () => {
     reinitialiserShift(shift);
+    if (activeView === 'pumps') {
+      setPompeEtendue('P1');
+    }
   };
 
   const handleReinitialiserJour = () => {
@@ -136,42 +128,6 @@ const SystemeStationService = () => {
             tauxUSD={tauxUSD}
           />
         );
-      case 'propane':
-        return (
-          <div className="space-y-4">
-            <PropaneManager
-              shift={shift}
-              propaneDonnees={propaneDonneesCourantes}
-              mettreAJourPropane={mettreAJourPropane}
-              prixPropane={prixPropane}
-            />
-            {/* Separate propane report card */}
-            <div className="bg-gradient-to-br from-red-500 to-orange-600 text-white rounded-xl p-4 shadow-xl">
-              <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-                <Flame size={20} />
-                Rapport Propane - Shift {shift}
-              </h3>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <p className="text-xs opacity-90">Total Gallons</p>
-                    <p className="text-xl font-bold">{totaux.propaneGallons.toFixed(3)}</p>
-                  </div>
-                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                    <p className="text-xs opacity-90">Prix/Gallon</p>
-                    <p className="text-xl font-bold">{prixPropane} HTG</p>
-                  </div>
-                </div>
-                <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold">Total Ventes Propane:</span>
-                    <span className="text-2xl font-bold">{formaterArgent(totaux.propaneVentes)} HTG</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
       case 'report':
         return (
           <ReportView
@@ -207,9 +163,11 @@ const SystemeStationService = () => {
             prix={prix}
             calculerGallons={calculerGallons}
             obtenirLecturesCourantes={obtenirLecturesCourantes}
-            // Pass showPropane prop to enable propane tab
+            // Pass propane data
+            propaneDonnees={propaneDonnees}
+            mettreAJourPropane={mettreAJourPropane}
+            prixPropane={prixPropane}
             showPropane={true}
-            // ADD THIS LINE - pass the deposits data
             tousDepots={tousDepots}
           />
         );
