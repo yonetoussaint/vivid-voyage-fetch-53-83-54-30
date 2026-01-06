@@ -51,7 +51,8 @@ export default function Portfolio() {
     {
       title: 'Easy+ Gaz',
       description: 'Project management application built for operational efficiency, streamlining workflow and team collaboration.',
-      tags: ['React', 'JavaScript', 'MongoDB']
+      tags: ['React', 'JavaScript', 'MongoDB'],
+      link: 'https://mimaht.com/easy'
     },
     {
       title: 'Open Source Contributions',
