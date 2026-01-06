@@ -36,7 +36,7 @@ const PumpHeader = ({
     gallonsDiesel = gallonsPropane; // Show propane gallons in diesel column for consistency
     ventesEssence = 0;
     ventesDiesel = ventesTotales; // Show propane sales in diesel sales column
-    productIcon = <Flame size={20} className="text-orange-300" />;
+    productIcon = <Flame size={20} className="text-white" />;
   } else {
     // Calculate pump totals (original logic)
     totalPompe = calculerTotalPompe(donneesPompe, prix);
@@ -66,28 +66,14 @@ const PumpHeader = ({
   // Use the ROUNDED adjusted total for cash calculations
   const totalAjustePourCaisse = roundedValue;
 
-  // For propane, we don't have a specific vendeur
-  const vendeurActuel = isPropane ? '' : (donneesPompe?._vendeur || '');
+  // Get vendeur - For propane, check if we have vendeur in propaneData
+  const vendeurActuel = isPropane 
+    ? (propaneData?._vendeur || donneesPompe?._vendeur || '') 
+    : (donneesPompe?._vendeur || '');
   
-  // Calculate deposits
-  let sellerDeposits = [];
-  let totalDeposits = 0;
-  
-  if (isPropane) {
-    // For propane, show ALL deposits for the shift
-    Object.values(vendeurDepots).forEach(depot => {
-      if (Array.isArray(depot)) {
-        sellerDeposits = [...sellerDeposits, ...depot];
-      } else {
-        sellerDeposits.push(depot);
-      }
-    });
-    totalDeposits = sellerDeposits.reduce((sum, depot) => sum + (parseFloat(depot) || 0), 0);
-  } else if (vendeurActuel) {
-    // For pumps, show deposits for specific vendeur
-    sellerDeposits = vendeurDepots[vendeurActuel] || [];
-    totalDeposits = sellerDeposits.reduce((sum, depot) => sum + (parseFloat(depot) || 0), 0);
-  }
+  // Calculate deposits for current seller
+  const sellerDeposits = vendeurActuel ? vendeurDepots[vendeurActuel] || [] : [];
+  const totalDeposits = sellerDeposits.reduce((sum, depot) => sum + (parseFloat(depot) || 0), 0);
   
   // Calculate expected cash = Rounded Total - Total Deposits
   const especesAttendues = totalAjustePourCaisse - totalDeposits;
@@ -111,6 +97,38 @@ const PumpHeader = ({
     return 'bg-gradient-to-br from-indigo-600 to-purple-600';
   };
 
+  // Vendor card color based on mode
+  const getVendorCardColor = () => {
+    if (isPropane) {
+      return 'bg-gradient-to-br from-red-50 to-orange-50 border-red-200';
+    }
+    return 'bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-200';
+  };
+
+  // Vendor icon color based on mode
+  const getVendorIconColor = () => {
+    if (isPropane) {
+      return 'text-red-600';
+    }
+    return 'text-indigo-600';
+  };
+
+  // Vendor badge color based on mode
+  const getVendorBadgeColor = () => {
+    if (isPropane) {
+      return 'bg-red-100 text-red-700';
+    }
+    return 'bg-indigo-100 text-indigo-700';
+  };
+
+  // Vendor confirmation color based on mode
+  const getVendorConfirmationColor = () => {
+    if (isPropane) {
+      return 'bg-gradient-to-r from-red-500 to-orange-500';
+    }
+    return 'bg-gradient-to-r from-indigo-500 to-blue-500';
+  };
+
   // Product label based on mode
   const getProductLabel = () => {
     if (isPropane) {
@@ -127,41 +145,53 @@ const PumpHeader = ({
     return 'TOTAL GALLONS';
   };
 
+  // Handle vendeur change for propane
+  const handleVendeurChange = (newVendeurId) => {
+    if (isPropane) {
+      // For propane, we need a special handler
+      // Since propane doesn't use donneesPompe, we need to call a different function
+      // We'll pass it through props
+      mettreAJourAffectationVendeur('propane', newVendeurId);
+    } else {
+      mettreAJourAffectationVendeur(pompe, newVendeurId);
+    }
+  };
+
   return (
     <div className="w-full space-y-3">
-      {/* Vendor Assignment Card - Only show for pumps, not propane */}
-      {!isPropane && (
-        <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-4 border-2 border-indigo-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="bg-indigo-100 p-2 rounded-lg">
-              <User size={20} className="text-indigo-600" />
-            </div>
-            <h4 className="text-base font-bold text-gray-800 flex-1">
-              Vendeur assigné
-            </h4>
-            <div className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">
-              {pompe}
-            </div>
+      {/* Vendor Assignment Card - Now shows for BOTH pumps and propane */}
+      <div className={`rounded-xl p-4 border-2 shadow-sm ${getVendorCardColor()}`}>
+        <div className="flex items-center gap-2 mb-3">
+          <div className={`p-2 rounded-lg ${isPropane ? 'bg-red-100' : 'bg-indigo-100'}`}>
+            <User size={20} className={getVendorIconColor()} />
           </div>
-
-          <select
-            value={vendeurActuel}
-            onChange={(e) => mettreAJourAffectationVendeur(pompe, e.target.value)}
-            className="w-full px-4 py-3.5 text-base font-semibold border-2 border-indigo-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm transition-all mb-2"
-          >
-            <option value="">Sélectionner un vendeur</option>
-            {vendeurs.map(vendeur => (
-              <option key={vendeur} value={vendeur}>{vendeur}</option>
-            ))}
-          </select>
-
-          {vendeurActuel && (
-            <div className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white px-4 py-3 rounded-xl font-bold text-sm text-center shadow-md">
-              ✓ {vendeurActuel}
-            </div>
-          )}
+          <h4 className="text-base font-bold text-gray-800 flex-1">
+            Vendeur assigné
+          </h4>
+          <div className={`text-xs px-2 py-1 rounded-full font-medium ${getVendorBadgeColor()}`}>
+            {isPropane ? 'Propane' : pompe}
+          </div>
         </div>
-      )}
+
+        <select
+          value={vendeurActuel}
+          onChange={(e) => handleVendeurChange(e.target.value)}
+          className={`w-full px-4 py-3.5 text-base font-semibold border-2 rounded-xl focus:ring-2 focus:border-indigo-500 bg-white shadow-sm transition-all mb-2 ${
+            isPropane ? 'border-red-300 focus:ring-red-500' : 'border-indigo-300 focus:ring-indigo-500'
+          }`}
+        >
+          <option value="">Sélectionner un vendeur</option>
+          {vendeurs.map(vendeur => (
+            <option key={vendeur} value={vendeur}>{vendeur}</option>
+          ))}
+        </select>
+
+        {vendeurActuel && (
+          <div className={`text-white px-4 py-3 rounded-xl font-bold text-sm text-center shadow-md ${getVendorConfirmationColor()}`}>
+            ✓ {vendeurActuel}
+          </div>
+        )}
+      </div>
 
       {/* Statistiques Rapides - Adjust for propane */}
       <div className="grid grid-cols-2 gap-2 mb-3">
@@ -216,7 +246,7 @@ const PumpHeader = ({
       } text-white`}>
         <div className="flex items-center gap-2 mb-2">
           <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-            {isPropane ? <Flame size={16} className="text-white" /> : productIcon}
+            {productIcon}
           </div>
           <div>
             <p className="text-sm font-bold">{getGallonsLabel()}</p>
@@ -387,21 +417,19 @@ const PumpHeader = ({
           <div>
             <p className="text-sm font-bold">CAISSE REÇUE</p>
             <p className="text-[10px] opacity-80">
-              {isPropane ? 'Argent total reçu pour propane' : 'Argent donné par le vendeur'}
+              {isPropane ? 'Argent reçu pour propane' : 'Argent donné par le vendeur'}
             </p>
           </div>
         </div>
 
         <div className="space-y-3">
           {/* Deposits Summary */}
-          {(totalDeposits > 0 || isPropane) && (
+          {vendeurActuel && totalDeposits > 0 && (
             <div className="bg-white bg-opacity-10 rounded-lg p-3 mb-2">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1">
                   <Calculator size={14} className="text-white" />
-                  <p className="text-xs opacity-90">
-                    {isPropane ? 'Dépôts shift (tous vendeurs):' : 'Dépôts effectués:'}
-                  </p>
+                  <p className="text-xs opacity-90">Dépôts effectués:</p>
                 </div>
                 <p className="text-sm font-bold">{formaterArgent(totalDeposits)} HTG</p>
               </div>
