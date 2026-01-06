@@ -68,39 +68,22 @@ export const formaterNombre = (num) => {
 
 // Formater pour la caisse - arrondir au multiple de 5 le plus proche
 // Formater pour la caisse - arrondir selon la règle: 1-5→5, 6-9→10
+// Formater pour la caisse - ALWAYS ROUND UP to the nearest 10
 export const formaterCaisse = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
 
   if (isNaN(nombre)) return '0';
 
-  // Récupérer le dernier chiffre
-  const dernierChiffre = Math.abs(nombre) % 10;
+  // ALWAYS round UP to the nearest 10
+  // Examples: 19.001 → 20, 19.999 → 20, 20 → 20
+  // Math.ceil(nombre / 10) * 10 always gives next multiple of 10
+  const rounded = Math.ceil(nombre / 10) * 10;
 
-  let rounded;
-
-  if (dernierChiffre >= 1 && dernierChiffre <= 5) {
-    // Pour 1-5: arrondir à 5
-    // Ex: 1,2,3,4,5 → 5
-    // Ex: 11,12,13,14,15 → 15
-    // Ex: 21,22,23,24,25 → 25
-    rounded = Math.floor(nombre / 10) * 10 + 5;
-  } else if (dernierChiffre >= 6 && dernierChiffre <= 9 || dernierChiffre === 0) {
-    // Pour 6-9: arrondir à 10 (dizaine suivante)
-    // Pour 0: garder la dizaine actuelle
-    // Ex: 6,7,8,9 → 10
-    // Ex: 16,17,18,19 → 20
-    // Ex: 10,20,30 → 10,20,30 (pas de changement)
-    rounded = Math.ceil(nombre / 10) * 10;
-  } else {
-    // Cas par défaut (ne devrait pas arriver)
-    rounded = Math.round(nombre / 5) * 5;
-  }
-
-  // S'assurer que c'est un entier (pas de décimales)
+  // Ensure it's an integer (no decimals)
   const result = Math.round(rounded);
 
-  // Ajouter des apostrophes pour les milliers
+  // Add apostrophe separators for thousands
   return ajouterApostrophes(result.toString());
 };
 
