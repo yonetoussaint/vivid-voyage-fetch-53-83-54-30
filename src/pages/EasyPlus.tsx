@@ -66,6 +66,17 @@ const SystemeStationService = () => {
     }
   };
 
+  // Handle pump/propane tab selection
+  const handlePompeSelection = (selection) => {
+    if (selection === 'propane') {
+      setActiveView('propane');
+      setPompeEtendue('propane');
+    } else {
+      setActiveView('pumps');
+      setPompeEtendue(selection);
+    }
+  };
+
   // Fonctions de réinitialisation
   const handleReinitialiserShift = () => {
     reinitialiserShift(shift);
@@ -74,6 +85,7 @@ const SystemeStationService = () => {
   const handleReinitialiserJour = () => {
     reinitialiserJour();
     setActiveView('pumps');
+    setPompeEtendue('P1');
   };
 
   // Rendu conditionnel selon la vue active
@@ -184,7 +196,7 @@ const SystemeStationService = () => {
           <PumpInputView
             shift={shift}
             pompeEtendue={pompeEtendue}
-            setPompeEtendue={setPompeEtendue}
+            setPompeEtendue={handlePompeSelection}
             pompes={pompes}
             toutesDonnees={toutesDonnees}
             vendeurs={vendeurs}
@@ -195,6 +207,8 @@ const SystemeStationService = () => {
             prix={prix}
             calculerGallons={calculerGallons}
             obtenirLecturesCourantes={obtenirLecturesCourantes}
+            // Pass showPropane prop to enable propane tab
+            showPropane={true}
             // ADD THIS LINE - pass the deposits data
             tousDepots={tousDepots}
           />
