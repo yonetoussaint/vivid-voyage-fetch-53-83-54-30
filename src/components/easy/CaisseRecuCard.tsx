@@ -17,18 +17,22 @@ const CaisseRecuCard = ({
   const shouldGiveChange = changeNeeded > 0;
   const isShort = changeNeeded < 0;
 
-  // Haitian Gourde denominations
-  const denominations = [1000, 500, 250, 100, 50, 25, 10, 5, 1];
+  // Realistic Haitian Gourde denominations (no 1 gourde - smallest is 5 gourdes)
+  const denominations = [1000, 500, 250, 100, 50, 25, 10, 5];
   
-  // AI-like function to generate all optimal change combinations
+  // Smart change combination algorithm
   const generateChangeCombinations = useMemo(() => {
     if (!shouldGiveChange || changeNeeded <= 0) return [];
     
     const amount = Math.round(changeNeeded);
     const combinations = [];
     
+    // Since we don't have 1 gourde, we need to handle amounts that aren't multiples of 5
+    // Round to nearest 5 gourdes for practical change giving
+    const roundedAmount = Math.round(amount / 5) * 5;
+    
     // Helper function to generate combinations recursively
-    const findCombinations = (remaining, currentCombo, startIndex, maxCombinations = 10) => {
+    const findCombinations = (remaining, currentCombo, startIndex, maxDepth = 4) => {
       if (remaining === 0) {
         // Format and add the combination
         const formattedCombo = currentCombo
@@ -47,51 +51,69 @@ const CaisseRecuCard = ({
             key: comboKey,
             breakdown: formattedCombo,
             totalNotes: formattedCombo.reduce((sum, item) => sum + item.count, 0),
-            hasLargeNotes: formattedCombo.some(item => item.denomination >= 500)
+            rounded: remaining !== amount // Track if this is a rounded combination
           });
-          
-          // Stop if we have enough combinations
-          if (combinations.length >= maxCombinations) {
-            return true;
-          }
         }
-        return false;
+        return;
       }
       
-      if (remaining < 0 || startIndex >= denominations.length) {
-        return false;
+      if (startIndex >= denominations.length || maxDepth === 0) {
+        return;
       }
       
       const denom = denominations[startIndex];
       const maxCount = Math.floor(remaining / denom);
       
-      // Try different counts for this denomination (from max down to 0)
-      for (let count = maxCount; count >= 0; count--) {
+      // Limit to reasonable number of coins/bills of same denomination (max 10)
+      const actualMaxCount = Math.min(maxCount, 10);
+      
+      for (let count = actualMaxCount; count >= 0; count--) {
         const newRemaining = remaining - (count * denom);
         const newCombo = [...currentCombo, { denomination: denom, count }];
         
-        // Limit recursion depth for performance
-        if (findCombinations(newRemaining, newCombo, startIndex + 1, maxCombinations)) {
-          return true;
-        }
+        findCombinations(newRemaining, newCombo, startIndex + 1, maxDepth - 1);
+        
+        // Limit total combinations for performance
+        if (combinations.length >= 20) return;
       }
-      
-      return false;
     };
     
-    // Generate combinations
-    findCombinations(amount, [], 0, 6); // Limit to 6 combinations
+    // Generate combinations for rounded amount
+    findCombinations(roundedAmount, [], 0, 4);
     
-    // Sort combinations: prefer fewer notes, then larger denominations
-    return combinations.sort((a, b) => {
-      if (a.totalNotes !== b.totalNotes) {
-        return a.totalNotes - b.totalNotes; // Fewer notes first
+    // Also generate for original amount with 5 gourde as minimum
+    if (roundedAmount !== amount) {
+      findCombinations(amount, [], 0, 4);
+    }
+    
+    // Remove duplicates and sort
+    const uniqueCombinations = [];
+    const seen = new Set();
+    
+    combinations.forEach(combo => {
+      if (!seen.has(combo.key)) {
+        seen.add(combo.key);
+        uniqueCombinations.push(combo);
       }
-      // If same number of notes, prefer larger denominations
-      const aMaxDenom = Math.max(...a.breakdown.map(d => d.denomination));
-      const bMaxDenom = Math.max(...b.breakdown.map(d => d.denomination));
-      return bMaxDenom - aMaxDenom;
-    }).slice(0, 4); // Show top 4 combinations
+    });
+    
+    // Sort by: fewest notes, then larger denominations
+    return uniqueCombinations
+      .sort((a, b) => {
+        // First by total notes
+        if (a.totalNotes !== b.totalNotes) {
+          return a.totalNotes - b.totalNotes;
+        }
+        // Then by whether it uses rounded amount (prefer exact)
+        if (a.rounded !== b.rounded) {
+          return a.rounded ? 1 : -1;
+        }
+        // Then by largest denomination
+        const aMax = Math.max(...a.breakdown.map(d => d.denomination));
+        const bMax = Math.max(...b.breakdown.map(d => d.denomination));
+        return bMax - aMax;
+      })
+      .slice(0, 4); // Show top 4 combinations
   }, [changeNeeded, shouldGiveChange]);
 
   const formatDepositDisplay = (depot) => {
@@ -222,7 +244,7 @@ const CaisseRecuCard = ({
         />
       </div>
 
-      {/* Change calculation with AI-powered breakdown */}
+      {/* Change calculation with realistic denominations */}
       {cashRecu && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-3">
           {/* Change summary */}
@@ -248,7 +270,7 @@ const CaisseRecuCard = ({
             </p>
           </div>
 
-          {/* AI-powered change breakdown - Single Column */}
+          {/* Realistic change breakdown */}
           {shouldGiveChange && generateChangeCombinations.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-1 mb-2">
@@ -256,7 +278,14 @@ const CaisseRecuCard = ({
                 <p className="text-xs font-bold text-green-300">Combinaisons de monnaie:</p>
               </div>
               
-              {/* Single column of options - each showing complete breakdown */}
+              {/* Note about denominations */}
+              <div className="bg-blue-500 bg-opacity-10 rounded p-1.5 border border-blue-400 border-opacity-20 mb-2">
+                <p className="text-[9px] text-center text-blue-300">
+                  <span className="font-bold">Note:</span> Plus petit billet/monnaie = 5 HTG
+                </p>
+              </div>
+              
+              {/* Single column of options */}
               <div className="space-y-2">
                 {generateChangeCombinations.map((combo, index) => (
                   <div 
@@ -271,10 +300,10 @@ const CaisseRecuCard = ({
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         {index === 0 && (
-                          <div className="flex items-center gap-0.5">
+                          <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
                             <span className="text-xs font-bold text-green-300">
-                              Option {index + 1} - Recommandée
+                              Option {index + 1} - Optimale
                             </span>
                           </div>
                         )}
@@ -287,17 +316,21 @@ const CaisseRecuCard = ({
                       <div className="flex items-center gap-1">
                         <Coins size={10} className="text-green-300 opacity-70" />
                         <span className="text-[10px] opacity-80">
-                          {combo.totalNotes} {combo.totalNotes === 1 ? 'billet' : 'billets'}
+                          {combo.totalNotes} pièce{combo.totalNotes !== 1 ? 's' : ''}
                         </span>
                       </div>
                     </div>
                     
-                    {/* Complete breakdown - All items shown */}
+                    {/* Complete breakdown */}
                     <div className="space-y-1.5 mb-2">
                       {combo.breakdown.map((item, idx) => (
                         <div key={idx} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-green-400 opacity-80"></div>
+                            <div className={`w-2 h-2 rounded-full ${
+                              item.denomination >= 500 ? 'bg-green-500' : 
+                              item.denomination >= 100 ? 'bg-green-400' : 
+                              'bg-green-300'
+                            }`}></div>
                             <span className="text-xs opacity-90">
                               {item.count} × {formaterArgent(item.denomination)} HTG
                             </span>
@@ -312,7 +345,7 @@ const CaisseRecuCard = ({
                       ))}
                     </div>
                     
-                    {/* Total with separator */}
+                    {/* Total */}
                     <div className="pt-2 border-t border-green-400 border-opacity-20">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
@@ -331,16 +364,23 @@ const CaisseRecuCard = ({
                 ))}
               </div>
               
-              {/* Tips */}
+              {/* Practical tips */}
               <div className="bg-green-500 bg-opacity-5 rounded p-2 border border-green-400 border-opacity-10">
                 <div className="flex items-center gap-1 mb-1">
                   <Sparkles size={9} className="text-green-300" />
-                  <p className="text-[10px] font-bold text-green-300">Conseil:</p>
+                  <p className="text-[10px] font-bold text-green-300">Conseils pratiques:</p>
                 </div>
-                <p className="text-[9px] opacity-80 leading-tight">
-                  L'<span className="text-green-300 font-bold">Option 1</span> utilise le moins de billets. 
-                  Choisissez l'option selon les billets disponibles dans votre caisse.
-                </p>
+                <div className="space-y-1">
+                  <p className="text-[9px] opacity-80 leading-tight">
+                    • L'<span className="text-green-300 font-bold">Option 1</span> utilise le moins de billets/monnaie
+                  </p>
+                  <p className="text-[9px] opacity-80 leading-tight">
+                    • Les montants sont arrondis au multiple de 5 HTG le plus proche
+                  </p>
+                  <p className="text-[9px] opacity-80 leading-tight">
+                    • Privilégiez les billets de 500 HTG et 1000 HTG pour les gros montants
+                  </p>
+                </div>
               </div>
             </div>
           )}
