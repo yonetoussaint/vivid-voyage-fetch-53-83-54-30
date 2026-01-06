@@ -145,48 +145,44 @@ const CaisseRecuCard = ({
         />
       </div>
 
-      {/* Change calculation */}
+      {/* Change calculation - Simplified without redundant cards */}
       {cashRecu && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-1.5">
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-white bg-opacity-5 rounded p-1.5">
-              <p className="opacity-80 mb-0.5">À payer</p>
-              <p className="font-bold">{formaterArgent(especesAttendues)}</p>
-            </div>
-            <div className="bg-white bg-opacity-5 rounded p-1.5">
-              <p className="opacity-80 mb-0.5">Reçu</p>
-              <p className="font-bold">{formaterArgent(cashRecuValue)}</p>
-            </div>
+          <div className="text-xs text-center mb-1 opacity-80">
+            Entré: <span className="font-bold">{formaterArgent(cashRecuValue)} HTG</span>
           </div>
-
+          
           {/* Change display */}
           <div className={`pt-1.5 border-t border-white border-opacity-20 ${
-            shouldGiveChange ? 'text-green-300' : isShort ? 'text-red-300' : 'text-white'
+            shouldGiveChange ? 'text-green-300' : isShort ? 'text-red-300' : 'text-emerald-300'
           }`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
                 {shouldGiveChange ? (
-                  <TrendingUp size={12} className="text-green-300" />
+                  <TrendingUp size={12} />
                 ) : isShort ? (
-                  <TrendingDown size={12} className="text-red-300" />
+                  <TrendingDown size={12} />
                 ) : (
-                  <DollarSign size={12} className="text-white" />
+                  <DollarSign size={12} />
                 )}
                 <p className="text-xs font-bold">
                   {shouldGiveChange ? 'À rendre:' : isShort ? 'Manquant:' : 'Exact'}
                 </p>
               </div>
               <p className={`text-sm font-bold ${
-                shouldGiveChange ? 'text-green-300' : isShort ? 'text-red-300' : 'text-white'
+                shouldGiveChange ? 'text-green-300' : isShort ? 'text-red-300' : 'text-emerald-300'
               }`}>
                 {formaterArgent(Math.abs(changeNeeded))} HTG
               </p>
             </div>
             {shouldGiveChange && (
-              <p className="text-[9px] opacity-80 mt-0.5">À donner en monnaie</p>
+              <p className="text-[9px] opacity-80 mt-0.5 text-center">À donner en monnaie</p>
             )}
             {isShort && (
-              <p className="text-[9px] opacity-80 mt-0.5">Doit donner plus d'argent</p>
+              <p className="text-[9px] opacity-80 mt-0.5 text-center">Doit donner plus d'argent</p>
+            )}
+            {!shouldGiveChange && !isShort && (
+              <p className="text-[9px] opacity-80 mt-0.5 text-center">Montant exact</p>
             )}
           </div>
         </div>
