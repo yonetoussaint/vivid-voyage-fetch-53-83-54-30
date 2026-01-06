@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt } from 'lucide-react';
+import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const CaisseRecuCard = ({
@@ -44,7 +44,7 @@ const CaisseRecuCard = ({
     } text-white`}>
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
             {isPropane ? <Receipt size={18} /> : <Wallet size={18} />}
@@ -64,15 +64,70 @@ const CaisseRecuCard = ({
         )}
       </div>
 
-      {/* Deposits Section - Collapsible-like display */}
+      {/* Prominent Standalone Totals */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {/* Total Deposits Card */}
+        <div className="bg-white bg-opacity-15 rounded-xl p-3 border border-white border-opacity-20">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+              <Layers size={14} className="text-white" />
+            </div>
+            <div>
+              <p className="text-xs opacity-80">Total Dépôts</p>
+            </div>
+          </div>
+          <p className="text-xl font-bold text-center">{formaterArgent(totalDeposits)}</p>
+          <p className="text-[10px] opacity-80 text-center mt-1">HTG</p>
+        </div>
+
+        {/* Expected Cash Card */}
+        <div className={`rounded-xl p-3 border ${
+          especesAttendues > 0 
+            ? 'bg-green-500 bg-opacity-20 border-green-400 border-opacity-30' 
+            : especesAttendues < 0 
+            ? 'bg-red-500 bg-opacity-20 border-red-400 border-opacity-30'
+            : 'bg-white bg-opacity-15 border-white border-opacity-20'
+        }`}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              especesAttendues > 0 
+                ? 'bg-green-400 bg-opacity-30' 
+                : especesAttendues < 0 
+                ? 'bg-red-400 bg-opacity-30'
+                : 'bg-white bg-opacity-20'
+            }`}>
+              <Target size={14} className={
+                especesAttendues > 0 
+                  ? 'text-green-300' 
+                  : especesAttendues < 0 
+                  ? 'text-red-300'
+                  : 'text-white'
+              } />
+            </div>
+            <div>
+              <p className="text-xs opacity-80">Espèces Attendues</p>
+            </div>
+          </div>
+          <p className={`text-xl font-bold text-center ${
+            especesAttendues > 0 
+              ? 'text-green-300' 
+              : especesAttendues < 0 
+              ? 'text-red-300'
+              : 'text-white'
+          }`}>
+            {formaterArgent(especesAttendues)}
+          </p>
+          <p className="text-[10px] opacity-80 text-center mt-1">HTG</p>
+        </div>
+      </div>
+
+      {/* Deposits Breakdown - Only show if there are deposits */}
       {sellerDeposits.length > 0 && (
         <div className="bg-white bg-opacity-10 rounded-xl p-3 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Calculator size={16} />
-              <span className="text-sm font-medium">Dépôts effectués</span>
-            </div>
-            <span className="font-bold text-sm">{formaterArgent(totalDeposits)} HTG</span>
+          <div className="flex items-center gap-2 mb-3">
+            <Calculator size={16} />
+            <span className="text-sm font-medium">Détail des dépôts</span>
+            <span className="text-xs opacity-70 ml-auto">({sellerDeposits.length})</span>
           </div>
 
           <div className="space-y-2">
@@ -85,18 +140,6 @@ const CaisseRecuCard = ({
                 <span className="font-medium text-right break-all ml-2">{deposit.display}</span>
               </div>
             ))}
-          </div>
-
-          <div className="mt-3 pt-3 border-t border-white border-opacity-20">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DollarSign size={16} />
-                <span className="text-sm">Espèces attendues</span>
-              </div>
-              <span className={`font-bold text-sm ${especesAttendues > 0 ? 'text-green-300' : especesAttendues < 0 ? 'text-red-300' : ''}`}>
-                {formaterArgent(especesAttendues)} HTG
-              </span>
-            </div>
           </div>
         </div>
       )}
@@ -128,13 +171,15 @@ const CaisseRecuCard = ({
       {cashRecu && (
         <div className="bg-white bg-opacity-10 rounded-xl p-4 animate-fadeIn">
           <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
+            <div className="text-center p-2 bg-white bg-opacity-5 rounded-lg">
               <p className="text-xs opacity-80 mb-1">À payer</p>
-              <p className="font-bold text-sm">{formaterArgent(especesAttendues)} HTG</p>
+              <p className="font-bold text-lg">{formaterArgent(especesAttendues)}</p>
+              <p className="text-[10px] opacity-70 mt-1">HTG</p>
             </div>
-            <div>
+            <div className="text-center p-2 bg-white bg-opacity-5 rounded-lg">
               <p className="text-xs opacity-80 mb-1">Reçu</p>
-              <p className="font-bold text-sm">{formaterArgent(cashRecuValue)} HTG</p>
+              <p className="font-bold text-lg">{formaterArgent(cashRecuValue)}</p>
+              <p className="text-[10px] opacity-70 mt-1">HTG</p>
             </div>
           </div>
 
@@ -152,11 +197,14 @@ const CaisseRecuCard = ({
                   {shouldGiveChange ? 'À rendre' : isShort ? 'Manquant' : 'Exact'}
                 </span>
               </div>
-              <span className="text-xl font-bold">
-                {formaterArgent(Math.abs(changeNeeded))} HTG
-              </span>
+              <div className="text-right">
+                <p className="text-2xl font-bold">
+                  {formaterArgent(Math.abs(changeNeeded))}
+                </p>
+                <p className="text-xs opacity-70">HTG</p>
+              </div>
             </div>
-            <p className="text-xs opacity-90 mt-1">
+            <p className="text-xs opacity-90 mt-2 text-center">
               {shouldGiveChange ? 'À donner en monnaie' : 
                isShort ? 'Doit donner plus d\'argent' : 
                'Montant exact reçu'}
