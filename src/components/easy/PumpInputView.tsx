@@ -49,20 +49,21 @@ const PumpInputView = ({
       {pompeEtendue === 'propane' ? (
         <>
           {/* PumpHeader for Propane mode */}
-         <PumpHeader
-  pompe="Propane"
-  shift={shift}
-  isPropane={true}
-  propaneData={propaneDonneesCourantes}
-  prixPropane={prixPropane}
-  vendeurs={vendeurs}
-  vendeurDepots={depotsActuels}
-  // Pass the vendeur assignment function
-  mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
-  // Pass dummy data for unused props
-  donneesPompe={{}}
-  prix={prix}
-/>
+          <PumpHeader
+            pompe="Propane"
+            shift={shift}
+            isPropane={true}
+            propaneData={propaneDonneesCourantes}
+            prixPropane={prixPropane}
+            vendeurs={vendeurs}
+            vendeurDepots={depotsActuels}
+            tauxUSD={tauxUSD} // ADD THIS: Pass exchange rate
+            // Pass the vendeur assignment function
+            mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
+            // Pass dummy data for unused props
+            donneesPompe={{}}
+            prix={prix}
+          />
 
           {/* Your existing PropaneManager component */}
           <PropaneManager
@@ -87,6 +88,7 @@ const PumpInputView = ({
                 mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
                 prix={prix}
                 vendeurDepots={depotsActuels}
+                tauxUSD={tauxUSD} // ADD THIS: Pass exchange rate
               />
 
               <PumpPistolets
