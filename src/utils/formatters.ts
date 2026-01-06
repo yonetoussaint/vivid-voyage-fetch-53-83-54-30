@@ -1,5 +1,3 @@
-
-
 // Helper function to add apostrophe separators for thousands
 const ajouterApostrophes = (str) => {
   // Remove any existing separators first
@@ -9,23 +7,62 @@ const ajouterApostrophes = (str) => {
   return cleanStr.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
 };
 
-// Helper function to format decimal numbers with 2 decimal places
-const formaterDecimal = (num, decimalPlaces = 2) => {
+// Helper function to apply the formaterCaisse logic to any number
+const appliquerRegleCaisse = (num) => {
+  if (num === null || num === undefined || isNaN(num)) return 0;
+  const nombre = typeof num === 'string' ? parseFloat(num) : num;
+  if (isNaN(nombre)) return 0;
+
+  // Get integer part and last digit
+  const entier = Math.floor(nombre);
+  const dernierChiffre = Math.abs(entier) % 10;
+  const hasDecimal = nombre > entier;
+
+  let rounded;
+
+  if (dernierChiffre >= 1 && dernierChiffre <= 5) {
+    // 1-5: make it end with 5
+    rounded = Math.floor(nombre / 10) * 10 + 5;
+  } else if (dernierChiffre >= 6 && dernierChiffre <= 9) {
+    // 6-9: round up to next ten
+    rounded = Math.ceil(nombre / 10) * 10;
+  } else {
+    // Last digit is 0
+    if (hasDecimal) {
+      // Has decimal part: add 5
+      rounded = nombre + 5;
+    } else {
+      // No decimal part: keep as is
+      rounded = nombre;
+    }
+  }
+
+  return rounded;
+};
+
+// Helper function to format decimal numbers with formaterCaisse logic
+const formaterDecimalCaisse = (num, decimalPlaces = 2) => {
   if (num === null || num === undefined || isNaN(num)) return `0.${'0'.repeat(decimalPlaces)}`;
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
   if (isNaN(nombre)) return `0.${'0'.repeat(decimalPlaces)}`;
 
-  return nombre.toFixed(decimalPlaces);
+  // Apply the formaterCaisse rule
+  const rounded = appliquerRegleCaisse(nombre);
+  
+  return rounded.toFixed(decimalPlaces);
 };
 
-// Formater nombre avec 3 décimales pour gallons
+// Formater nombre avec 3 décimales - using formaterCaisse logic
 export const formaterGallons = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0.000';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
   if (isNaN(nombre)) return '0.000';
 
+  // Apply the formaterCaisse rule
+  const rounded = appliquerRegleCaisse(nombre);
+  
   // Format with 3 decimal places
-  const formatted = nombre.toFixed(3);
+  const formatted = rounded.toFixed(3);
   const parts = formatted.split('.');
   const integerPart = parts[0];
   const decimalPart = parts[1];
@@ -36,14 +73,17 @@ export const formaterGallons = (num) => {
   return `${formattedInteger}.${decimalPart}`;
 };
 
-// Formater nombre avec 2 décimales pour argent
+// Formater nombre avec 2 décimales - using formaterCaisse logic
 export const formaterArgent = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0.00';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
   if (isNaN(nombre)) return '0.00';
 
+  // Apply the formaterCaisse rule
+  const rounded = appliquerRegleCaisse(nombre);
+  
   // Format with 2 decimal places
-  const formatted = nombre.toFixed(2);
+  const formatted = rounded.toFixed(2);
   const parts = formatted.split('.');
   const integerPart = parts[0];
   const decimalPart = parts[1];
@@ -54,97 +94,83 @@ export const formaterArgent = (num) => {
   return `${formattedInteger}.${decimalPart}`;
 };
 
-// Format avec apostrophes pour les grands nombres
+// Format avec apostrophes - using formaterCaisse logic
 export const formaterNombre = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
   if (isNaN(nombre)) return '0';
 
-  // Arrondir à l'entier le plus proche
-  const rounded = Math.round(nombre);
+  // Apply the formaterCaisse rule
+  const rounded = appliquerRegleCaisse(nombre);
+  
+  // Round to integer
+  const result = Math.round(rounded);
 
   // Add apostrophe separators for thousands
-  return ajouterApostrophes(rounded.toString());
+  return ajouterApostrophes(result.toString());
 };
 
-// Formater pour la caisse - arrondir au multiple de 5 le plus proche
-// Formater pour la caisse - arrondir selon la règle: 1-5→5, 6-9→10
+// Original formaterCaisse logic - main reference
 export const formaterCaisse = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
-  
   if (isNaN(nombre)) return '0';
+
+  // Apply the formaterCaisse rule
+  const rounded = appliquerRegleCaisse(nombre);
   
-  // Récupérer le dernier chiffre
-  const dernierChiffre = Math.abs(nombre) % 10;
-  
-  let rounded;
-  
-  if (dernierChiffre >= 1 && dernierChiffre <= 5) {
-    // Pour 1-5: arrondir à 5
-    // Ex: 1,2,3,4,5 → 5
-    // Ex: 11,12,13,14,15 → 15
-    // Ex: 21,22,23,24,25 → 25
-    rounded = Math.floor(nombre / 10) * 10 + 5;
-  } else if (dernierChiffre >= 6 && dernierChiffre <= 9 || dernierChiffre === 0) {
-    // Pour 6-9: arrondir à 10 (dizaine suivante)
-    // Pour 0: garder la dizaine actuelle
-    // Ex: 6,7,8,9 → 10
-    // Ex: 16,17,18,19 → 20
-    // Ex: 10,20,30 → 10,20,30 (pas de changement)
-    rounded = Math.ceil(nombre / 10) * 10;
-  } else {
-    // Cas par défaut (ne devrait pas arriver)
-    rounded = Math.round(nombre / 5) * 5;
-  }
-  
-  // S'assurer que c'est un entier (pas de décimales)
+  // Round to integer
   const result = Math.round(rounded);
-  
-  // Ajouter des apostrophes pour les milliers
+
+  // Add apostrophe separators for thousands
   return ajouterApostrophes(result.toString());
 };
 
-// Alternative: arrondir TOUJOURS AU PLUS HAUT à la dizaine la plus proche
+// formaterCaisseDizaine now uses the SAME logic as formaterCaisse
 export const formaterCaisseDizaine = (num) => {
-  if (num === null || num === undefined || isNaN(num)) return '0';
-  const nombre = typeof num === 'string' ? parseFloat(num) : num;
-
-  if (isNaN(nombre)) return '0';
-
-  // TOUJOURS arrondir AU PLUS HAUT à la dizaine la plus proche
-  const rounded = Math.ceil(nombre / 10) * 10;
-
-  // S'assurer que c'est un entier (pas de décimales)
-  const result = Math.round(rounded);
-
-  // Ajouter des apostrophes pour les milliers
-  return ajouterApostrophes(result.toString());
+  return formaterCaisse(num); // Same logic!
 };
 
-// Formater pour affichage caisse avec symbole HTG
+// Formater pour affichage caisse avec symbole HTG - using formaterCaisse logic
 export const formaterCaisseHTG = (num) => {
   const valeur = formaterCaisse(num);
   return `${valeur} HTG`;
 };
 
-// Formater pour affichage caisse avec symbole HTG et apostrophes
+// Formater pour affichage caisse avec symbole HTG et apostrophes - using formaterCaisse logic
 export const formaterArgentHTG = (num) => {
   const valeur = formaterArgent(num);
   return `${valeur} HTG`;
 };
 
-// Formater pour affichage caisse avec symbole HTG (sans décimales)
+// Formater pour affichage caisse avec symbole HTG (sans décimales) - using formaterCaisse logic
 export const formaterArgentHTGSansDecimales = (num) => {
-  if (num === null || num === undefined || isNaN(num)) return '0 HTG';
-  const nombre = typeof num === 'string' ? parseFloat(num) : num;
-  if (isNaN(nombre)) return '0 HTG';
+  const valeur = formaterNombre(num); // Uses formaterCaisse logic
+  return `${valeur} HTG`;
+};
 
-  // Arrondir à l'entier le plus proche
-  const rounded = Math.round(nombre);
+// Formater pour affichage caisse avec symbole HTG - using formaterCaisse logic
+export const formaterCaisseHTGDizaine = (num) => {
+  const valeur = formaterCaisse(num); // Same logic!
+  return `${valeur} HTG`;
+};
 
-  // Add apostrophe separators for thousands
-  const formatted = ajouterApostrophes(rounded.toString());
-
-  return `${formatted} HTG`;
+// Test function to verify all formatters give same rounded result
+export const testerFormatters = (num) => {
+  const nombre = parseFloat(num);
+  const rounded = appliquerRegleCaisse(nombre);
+  
+  return {
+    original: nombre,
+    roundedValue: rounded,
+    formaterGallons: formaterGallons(num),
+    formaterArgent: formaterArgent(num),
+    formaterNombre: formaterNombre(num),
+    formaterCaisse: formaterCaisse(num),
+    formaterCaisseDizaine: formaterCaisseDizaine(num),
+    formaterCaisseHTG: formaterCaisseHTG(num),
+    formaterArgentHTG: formaterArgentHTG(num),
+    formaterArgentHTGSansDecimales: formaterArgentHTGSansDecimales(num),
+    formaterCaisseHTGDizaine: formaterCaisseHTGDizaine(num),
+  };
 };
