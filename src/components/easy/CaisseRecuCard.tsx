@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, Coins } from 'lucide-react';
+import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, Coins, Sparkles } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const CaisseRecuCard = ({
@@ -80,7 +80,7 @@ const CaisseRecuCard = ({
     };
     
     // Generate combinations
-    findCombinations(amount, [], 0, 8); // Limit to 8 combinations for performance
+    findCombinations(amount, [], 0, 6); // Limit to 6 combinations
     
     // Sort combinations: prefer fewer notes, then larger denominations
     return combinations.sort((a, b) => {
@@ -224,9 +224,9 @@ const CaisseRecuCard = ({
 
       {/* Change calculation with AI-powered breakdown */}
       {cashRecu && (
-        <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-2">
+        <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-3">
           {/* Change summary */}
-          <div className={`flex items-center justify-between pb-1.5 border-b border-white border-opacity-20 ${
+          <div className={`flex items-center justify-between pb-2 border-b border-white border-opacity-20 ${
             shouldGiveChange ? 'text-green-300' : isShort ? 'text-red-300' : 'text-emerald-300'
           }`}>
             <div className="flex items-center gap-1">
@@ -248,92 +248,99 @@ const CaisseRecuCard = ({
             </p>
           </div>
 
-          {/* AI-powered change breakdown */}
+          {/* AI-powered change breakdown - Single Column */}
           {shouldGiveChange && generateChangeCombinations.length > 0 && (
             <div className="space-y-2">
-              <div className="flex items-center gap-1 mt-1">
-                <Coins size={10} className="text-green-300" />
-                <p className="text-xs font-bold text-green-300">Combinaisons possibles:</p>
+              <div className="flex items-center gap-1 mb-2">
+                <Sparkles size={10} className="text-green-300" />
+                <p className="text-xs font-bold text-green-300">Combinaisons de monnaie:</p>
               </div>
               
-              {/* Compact grid of options */}
-              <div className="grid grid-cols-2 gap-2">
+              {/* Single column of options - each showing complete breakdown */}
+              <div className="space-y-2">
                 {generateChangeCombinations.map((combo, index) => (
                   <div 
                     key={combo.key} 
-                    className={`bg-green-500 bg-opacity-10 rounded-lg p-1.5 border ${
+                    className={`bg-green-500 bg-opacity-10 rounded-lg p-2 border ${
                       index === 0 
-                        ? 'border-green-400 border-opacity-40 bg-green-500 bg-opacity-15' 
+                        ? 'border-green-400 border-opacity-40 bg-green-500 bg-opacity-15 shadow-sm' 
                         : 'border-green-400 border-opacity-20'
                     }`}
                   >
-                    {index === 0 && (
-                      <div className="absolute -top-1 -right-1">
-                        <div className="bg-green-500 text-[8px] px-1 py-0.5 rounded-full">
-                          ★
-                        </div>
+                    {/* Option header */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {index === 0 && (
+                          <div className="flex items-center gap-0.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
+                            <span className="text-xs font-bold text-green-300">
+                              Option {index + 1} - Recommandée
+                            </span>
+                          </div>
+                        )}
+                        {index !== 0 && (
+                          <span className="text-xs font-medium text-green-300 opacity-90">
+                            Option {index + 1}
+                          </span>
+                        )}
                       </div>
-                    )}
-                    
-                    {/* Combo header */}
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[9px] font-bold text-green-300">
-                        Option {index + 1}
-                      </span>
-                      <span className="text-[8px] opacity-70">
-                        {combo.totalNotes} {combo.totalNotes === 1 ? 'billet' : 'billets'}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <Coins size={10} className="text-green-300 opacity-70" />
+                        <span className="text-[10px] opacity-80">
+                          {combo.totalNotes} {combo.totalNotes === 1 ? 'billet' : 'billets'}
+                        </span>
+                      </div>
                     </div>
                     
-                    {/* Combo breakdown - simplified display */}
-                    <div className="space-y-0.5">
-                      {combo.breakdown.slice(0, 3).map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-center">
-                          <span className="text-[9px] opacity-90">
-                            {item.count} × {formaterArgent(item.denomination)}
-                          </span>
-                          <span className="text-[9px] font-bold text-green-300">
-                            {formaterArgent(item.total)}
-                          </span>
+                    {/* Complete breakdown - All items shown */}
+                    <div className="space-y-1.5 mb-2">
+                      {combo.breakdown.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-400 opacity-80"></div>
+                            <span className="text-xs opacity-90">
+                              {item.count} × {formaterArgent(item.denomination)} HTG
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium opacity-70">=</span>
+                            <span className="text-xs font-bold text-green-300">
+                              {formaterArgent(item.total)} HTG
+                            </span>
+                          </div>
                         </div>
                       ))}
-                      
-                      {/* Show "..." if more items */}
-                      {combo.breakdown.length > 3 && (
-                        <div className="text-center">
-                          <span className="text-[8px] opacity-60">+{combo.breakdown.length - 3} plus</span>
-                        </div>
-                      )}
                     </div>
                     
-                    {/* Total */}
-                    <div className="mt-1 pt-0.5 border-t border-green-400 border-opacity-20">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[9px] opacity-80">Total:</span>
-                        <span className="text-[10px] font-bold text-green-300">
-                          {formaterArgent(combo.breakdown.reduce((sum, item) => sum + item.total, 0))}
-                        </span>
+                    {/* Total with separator */}
+                    <div className="pt-2 border-t border-green-400 border-opacity-20">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          <span className="text-xs font-bold text-green-300">Total:</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-bold text-green-300">
+                            {formaterArgent(combo.breakdown.reduce((sum, item) => sum + item.total, 0))}
+                          </span>
+                          <span className="text-[10px] opacity-70">HTG</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
               
-              {/* Quick tips */}
-              <div className="bg-green-500 bg-opacity-5 rounded p-1.5 border border-green-400 border-opacity-10">
-                <p className="text-[9px] text-center text-green-300 font-bold mb-0.5">
-                  💡 Conseils rapides
-                </p>
-                <div className="grid grid-cols-2 gap-1 text-[8px] opacity-80">
-                  <div className="flex items-center gap-0.5">
-                    <div className="w-1 h-1 rounded-full bg-green-400"></div>
-                    <span>Option 1 = Moins de billets</span>
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    <div className="w-1 h-1 rounded-full bg-blue-400"></div>
-                    <span>Choisissez selon votre caisse</span>
-                  </div>
+              {/* Tips */}
+              <div className="bg-green-500 bg-opacity-5 rounded p-2 border border-green-400 border-opacity-10">
+                <div className="flex items-center gap-1 mb-1">
+                  <Sparkles size={9} className="text-green-300" />
+                  <p className="text-[10px] font-bold text-green-300">Conseil:</p>
                 </div>
+                <p className="text-[9px] opacity-80 leading-tight">
+                  L'<span className="text-green-300 font-bold">Option 1</span> utilise le moins de billets. 
+                  Choisissez l'option selon les billets disponibles dans votre caisse.
+                </p>
               </div>
             </div>
           )}
