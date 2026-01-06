@@ -52,7 +52,7 @@ export const calculerTotaux = (donneesShift, propaneShift, usdShift, prix, tauxU
 };
 
 // Calculer totaux vendeurs (no propane in vendeur totals)
-export const calculerTotauxVendeurs = (vendeurs, toutesDonnees, tousDepots, prix) => {
+export const calculerTotauxVendeurs = (vendeurs, toutesDonnees, tousDepots, prix, tauxUSD = 132) => {
   const totauxVendeurs = { AM: {}, PM: {} };
 
   // Initialiser tous les vendeurs
@@ -83,9 +83,9 @@ export const calculerTotauxVendeurs = (vendeurs, toutesDonnees, tousDepots, prix
 
         // Mettre à jour les totaux
         updateVendeurTotals(totauxVendeurs[shiftKey][vendeur]);
-        
+
         // Calculer dépôts
-        updateDepotsForVendeur(totauxVendeurs, shiftKey, vendeur, tousDepots);
+        updateDepotsForVendeur(totauxVendeurs, shiftKey, vendeur, tousDepots, tauxUSD);
       }
     });
   });
@@ -102,15 +102,49 @@ const updateVendeurTotals = (donneesVendeur) => {
   donneesVendeur.ventesTotales = parseFloat((donneesVendeur.ventesEssence + donneesVendeur.ventesDiesel).toFixed(2));
 };
 
-// Mettre à jour les dépôts du vendeur
-const updateDepotsForVendeur = (totauxVendeurs, shiftKey, vendeur, tousDepots) => {
-  const depots = (tousDepots[shiftKey]?.[vendeur] || []).filter(depot => depot !== '');
-  const depotsValides = depots.map(depot => parseFloat(depot) || 0);
-  const totalDepot = depotsValides.reduce((sum, depot) => sum + depot, 0);
+// Mettre à jour les dépôts du vendeur - FIXED
+const updateDepotsForVendeur = (totauxVendeurs, shiftKey, vendeur, tousDepots, tauxUSD = 132) => {
+  const depots = (tousDepots[shiftKey]?.[vendeur] || []);
+  const depotsValides = depots.filter(depot => {
+    if (!depot) return false;
+    if (typeof depot === 'object' && depot.devise === 'USD') {
+      return depot.montant !== '' && depot.montant !== null && depot.montant !== undefined;
+    }
+    return depot !== '' && depot !== null && depot !== undefined;
+  });
+
+  // Calculate total deposits in HTG
+  const totalDepot = depotsValides.reduce((sum, depot) => {
+    if (typeof depot === 'object' && depot.devise === 'USD') {
+      // Convert USD to HTG
+      const montantUSD = parseFloat(depot.montant) || 0;
+      return sum + (montantUSD * tauxUSD);
+    } else {
+      // HTG deposit
+      return sum + (parseFloat(depot) || 0);
+    }
+  }, 0);
+
+  // Store deposit details for display
+  const depotsDetails = depotsValides.map(depot => {
+    if (typeof depot === 'object' && depot.devise === 'USD') {
+      return {
+        montant: parseFloat(depot.montant) || 0,
+        devise: 'USD',
+        montantHTG: (parseFloat(depot.montant) || 0) * tauxUSD
+      };
+    } else {
+      return {
+        montant: parseFloat(depot) || 0,
+        devise: 'HTG',
+        montantHTG: parseFloat(depot) || 0
+      };
+    }
+  });
 
   const donneesVendeur = totauxVendeurs[shiftKey][vendeur];
   donneesVendeur.depot = parseFloat(totalDepot.toFixed(2));
-  donneesVendeur.depots = depotsValides;
+  donneesVendeur.depots = depotsDetails;
   donneesVendeur.especesAttendues = parseFloat((donneesVendeur.ventesTotales - donneesVendeur.depot).toFixed(2));
 };
 
