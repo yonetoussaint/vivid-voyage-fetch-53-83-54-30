@@ -14,28 +14,40 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   // Helper function to get deposit amount in HTG
   const getMontantHTG = (depot) => {
     if (!depot) return 0;
-    
+
     if (typeof depot === 'object' && depot.devise === 'USD') {
       return convertirUSDversHTG(depot.montant);
     }
-    
+
+    // Always return a number for HTG deposits
     return parseFloat(depot) || 0;
   };
 
   // Helper function to get the display value for input
   const getDisplayValue = (depot) => {
     if (!depot) return '';
-    
+
     if (typeof depot === 'object' && depot.devise === 'USD') {
-      return depot.montant || '';
+      return depot.montant !== undefined ? depot.montant.toString() : '';
     }
-    
-    return depot || '';
+
+    return depot !== undefined ? depot.toString() : '';
   };
 
   // Check if deposit is in USD
   const isUSDDepot = (depot) => {
     return typeof depot === 'object' && depot.devise === 'USD';
+  };
+
+  // Helper to get original deposit amount (not converted)
+  const getOriginalDepotAmount = (depot) => {
+    if (!depot) return 0;
+    
+    if (typeof depot === 'object' && depot.devise === 'USD') {
+      return parseFloat(depot.montant) || 0;
+    }
+    
+    return parseFloat(depot) || 0;
   };
 
   return (
@@ -67,10 +79,13 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
             </div>
           ) : (
             vendeurs.map(vendeur => {
-              const depots = depotsActuels[vendeur] || [];
-              const totalDepotHTG = depots.reduce((sum, depot) => sum + getMontantHTG(depot), 0);
+              // Get vendor data from totauxVendeurs which now includes proper deposit calculations
               const donneesVendeur = totauxVendeurs[vendeur];
-              const especesAttendues = donneesVendeur ? (donneesVendeur.ventesTotales - totalDepotHTG) : 0;
+              const totalDepotHTG = donneesVendeur?.depot || 0;
+              const especesAttendues = donneesVendeur ? donneesVendeur.especesAttendues : 0;
+              
+              // Get actual deposits array for editing
+              const depots = depotsActuels[vendeur] || [];
 
               return (
                 <div key={vendeur} className="bg-white bg-opacity-15 rounded-lg p-3 space-y-3">
@@ -137,7 +152,8 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           const isUSD = isUSDDepot(depot);
                           const displayValue = getDisplayValue(depot);
                           const montantHTG = getMontantHTG(depot);
-                          
+                          const montantOriginal = getOriginalDepotAmount(depot);
+
                           return (
                             <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                               {/* Input container */}
@@ -172,7 +188,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                   </div>
                                 )}
                               </div>
-                              
+
                               {/* Delete button - always visible */}
                               <button
                                 onClick={() => supprimerDepot(vendeur, index)}
@@ -197,8 +213,8 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           {depots.map((depot, idx) => {
                             const montantHTG = getMontantHTG(depot);
                             const isUSD = isUSDDepot(depot);
-                            const montantOriginal = isUSD ? depot.montant : depot;
-                            
+                            const montantOriginal = getOriginalDepotAmount(depot);
+
                             return (
                               <div 
                                 key={idx} 
@@ -212,7 +228,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                 <span>{formaterArgent(montantHTG)} HTG</span>
                                 {isUSD && (
                                   <span className="text-xs opacity-75 ml-1">
-                                    ({parseFloat(montantOriginal) || 0} USD)
+                                    ({formaterArgent(montantOriginal)} USD)
                                   </span>
                                 )}
                               </div>
