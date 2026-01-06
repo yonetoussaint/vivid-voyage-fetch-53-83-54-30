@@ -12,7 +12,7 @@ import { useStationData } from '@/hooks/useStationData';
 const SystemeStationService = () => {
   const [shift, setShift] = useState('AM');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [activeView, setActiveView] = useState('pumps'); // pumps, stock, report, vendeurs, depots, usd
+  const [activeView, setActiveView] = useState('pumps');
   const [pompeEtendue, setPompeEtendue] = useState('P1');
 
   const {
@@ -60,9 +60,9 @@ const SystemeStationService = () => {
     }
   };
 
-  // Handle pump/propane tab selection - ONLY for pump selector tabs
+  // Handle pump/propane tab selection
   const handlePompeSelection = (selection) => {
-    setActiveView('pumps'); // Always set to 'pumps' view when using pump selector
+    setActiveView('pumps'); // Always stay in pumps view
     setPompeEtendue(selection);
   };
 
