@@ -20,26 +20,23 @@ const CaisseRecuCard = ({
   // Realistic Haitian Gourde denominations (no 1 gourde - smallest is 5 gourdes)
   const denominations = [1000, 500, 250, 100, 50, 25, 10, 5];
   
-  // Function to check if amount can be exactly made with denominations
-  const canMakeExactChange = (amount) => {
-    const roundedAmount = Math.round(amount);
-    return roundedAmount % 5 === 0; // Must be multiple of 5
+  // Function to get the maximum amount we can give with denominations (round down to nearest 5)
+  const getMaximumGivableAmount = (amount) => {
+    const remainder = amount % 5;
+    return amount - remainder; // Round down to nearest multiple of 5
   };
 
-  // Smart change combination algorithm - only exact matches
+  // Smart change combination algorithm - always show combinations
   const generateChangeCombinations = useMemo(() => {
     if (!shouldGiveChange || changeNeeded <= 0) return [];
     
     const amount = Math.round(changeNeeded);
+    const givableAmount = getMaximumGivableAmount(amount);
+    const remainder = amount - givableAmount;
     const combinations = [];
     
-    // Check if exact change is possible
-    if (!canMakeExactChange(amount)) {
-      return []; // Cannot make exact change
-    }
-    
-    // Helper function to generate exact combinations recursively
-    const findExactCombinations = (remaining, currentCombo, startIndex, maxDepth = 4) => {
+    // Helper function to generate combinations recursively
+    const findCombinations = (remaining, currentCombo, startIndex, maxDepth = 4) => {
       if (remaining === 0) {
         // Format and add the combination
         const formattedCombo = currentCombo
@@ -58,7 +55,9 @@ const CaisseRecuCard = ({
             key: comboKey,
             breakdown: formattedCombo,
             totalNotes: formattedCombo.reduce((sum, item) => sum + item.count, 0),
-            isExact: true
+            totalAmount: formattedCombo.reduce((sum, item) => sum + item.total, 0),
+            remainder: remainder,
+            isExact: remainder === 0
           });
         }
         return;
@@ -71,7 +70,7 @@ const CaisseRecuCard = ({
       const denom = denominations[startIndex];
       if (denom > remaining) {
         // Skip this denomination, try smaller ones
-        findExactCombinations(remaining, currentCombo, startIndex + 1, maxDepth - 1);
+        findCombinations(remaining, currentCombo, startIndex + 1, maxDepth - 1);
         return;
       }
       
@@ -84,15 +83,15 @@ const CaisseRecuCard = ({
         const newRemaining = remaining - (count * denom);
         const newCombo = [...currentCombo, { denomination: denom, count }];
         
-        findExactCombinations(newRemaining, newCombo, startIndex + 1, maxDepth - 1);
+        findCombinations(newRemaining, newCombo, startIndex + 1, maxDepth - 1);
         
         // Limit total combinations for performance
         if (combinations.length >= 15) return;
       }
     };
     
-    // Generate only exact combinations
-    findExactCombinations(amount, [], 0, 4);
+    // Generate combinations for givable amount
+    findCombinations(givableAmount, [], 0, 4);
     
     // Remove duplicates and sort
     const uniqueCombinations = [];
@@ -139,10 +138,10 @@ const CaisseRecuCard = ({
     isUSD: typeof depot === 'object' && depot.devise === 'USD'
   }));
 
-  // Check if exact change is possible
-  const exactChangePossible = canMakeExactChange(changeNeeded);
-  const remainder = changeNeeded % 5;
-  const mustAcceptRemainder = shouldGiveChange && remainder !== 0;
+  // Calculate givable amount and remainder
+  const givableAmount = getMaximumGivableAmount(changeNeeded);
+  const remainder = changeNeeded - givableAmount;
+  const hasRemainder = remainder > 0;
 
   return (
     <div className={`rounded-xl p-3 shadow-lg mb-3 ${
@@ -253,7 +252,7 @@ const CaisseRecuCard = ({
         />
       </div>
 
-      {/* Change calculation with realistic denominations */}
+      {/* Change calculation */}
       {cashRecu && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-3">
           {/* Change summary */}
@@ -279,20 +278,19 @@ const CaisseRecuCard = ({
             </p>
           </div>
 
-          {/* Warning if cannot give exact change */}
-          {mustAcceptRemainder && (
+          {/* Warning if has remainder */}
+          {shouldGiveChange && hasRemainder && (
             <div className="bg-amber-500 bg-opacity-20 rounded-lg p-2 border border-amber-400 border-opacity-30">
               <div className="flex items-start gap-1.5">
                 <AlertCircle size={12} className="text-amber-300 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-xs font-bold text-amber-300 mb-0.5">
-                    Attention: Monnaie exacte impossible
+                    Note: Reste à abandonner
                   </p>
                   <p className="text-[10px] opacity-90 leading-tight">
-                    Le vendeur doit accepter de recevoir {formaterArgent(changeNeeded - remainder)} HTG 
-                    au lieu de {formaterArgent(changeNeeded)} HTG.
-                    <span className="block mt-0.5 font-bold">
-                      Reste à abandonner: {formaterArgent(remainder)} HTG
+                    Avec des billets/monnaie de 5 HTG minimum, on ne peut rendre que {formaterArgent(givableAmount)} HTG.
+                    <span className="block mt-0.5 font-bold text-amber-200">
+                      Le vendeur doit abandonner: {formaterArgent(remainder)} HTG
                     </span>
                   </p>
                 </div>
@@ -300,12 +298,12 @@ const CaisseRecuCard = ({
             </div>
           )}
 
-          {/* Exact change combinations - only shown if possible */}
-          {shouldGiveChange && exactChangePossible && generateChangeCombinations.length > 0 && (
+          {/* Change combinations - ALWAYS shown when change is needed */}
+          {shouldGiveChange && generateChangeCombinations.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-1 mb-2">
                 <Sparkles size={10} className="text-green-300" />
-                <p className="text-xs font-bold text-green-300">Combinaisons exactes:</p>
+                <p className="text-xs font-bold text-green-300">Combinaisons possibles:</p>
               </div>
               
               {/* Denomination info */}
@@ -315,15 +313,15 @@ const CaisseRecuCard = ({
                 </p>
               </div>
               
-              {/* Single column of exact combinations */}
+              {/* Single column of combinations */}
               <div className="space-y-2">
                 {generateChangeCombinations.map((combo, index) => (
                   <div 
                     key={combo.key} 
-                    className={`bg-green-500 bg-opacity-10 rounded-lg p-2 border ${
+                    className={`rounded-lg p-2 border ${
                       index === 0 
                         ? 'border-green-400 border-opacity-40 bg-green-500 bg-opacity-15 shadow-sm' 
-                        : 'border-green-400 border-opacity-20'
+                        : 'border-green-400 border-opacity-20 bg-green-500 bg-opacity-10'
                     }`}
                   >
                     {/* Option header */}
@@ -375,19 +373,41 @@ const CaisseRecuCard = ({
                       ))}
                     </div>
                     
-                    {/* Total */}
+                    {/* Total and remainder info */}
                     <div className="pt-2 border-t border-green-400 border-opacity-20">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          <span className="text-xs font-bold text-green-300">Total exact:</span>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span className="text-xs font-bold text-green-300">Total donné:</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm font-bold text-green-300">
+                              {formaterArgent(combo.totalAmount)}
+                            </span>
+                            <span className="text-[10px] opacity-70">HTG</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm font-bold text-green-300">
-                            {formaterArgent(combo.breakdown.reduce((sum, item) => sum + item.total, 0))}
-                          </span>
-                          <span className="text-[10px] opacity-70">HTG</span>
-                        </div>
+                        
+                        {/* Show remainder if any */}
+                        {combo.remainder > 0 && (
+                          <div className="flex items-center justify-between pt-1 border-t border-amber-400 border-opacity-20">
+                            <div className="flex items-center gap-1">
+                              <AlertCircle size={10} className="text-amber-300" />
+                              <span className="text-[10px] text-amber-300">Reste abandonné:</span>
+                            </div>
+                            <span className="text-[11px] font-bold text-amber-300">
+                              {formaterArgent(combo.remainder)} HTG
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* Original total for context */}
+                        {combo.remainder > 0 && (
+                          <div className="text-[9px] opacity-70 text-center pt-0.5">
+                            Sur {formaterArgent(combo.totalAmount + combo.remainder)} HTG demandés
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -405,44 +425,17 @@ const CaisseRecuCard = ({
                     • L'<span className="text-green-300 font-bold">Option 1</span> utilise le moins de billets/monnaie
                   </p>
                   <p className="text-[9px] opacity-80 leading-tight">
-                    • Seules les combinaisons exactes sont affichées
+                    • Seuls les billets de 5 HTG et plus sont utilisés
                   </p>
                   <p className="text-[9px] opacity-80 leading-tight">
-                    • Le vendeur doit accepter les restes non-divisibles par 5 HTG
+                    • Les restes inférieurs à 5 HTG sont abandonnés par le vendeur
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* No exact change possible */}
-          {shouldGiveChange && !exactChangePossible && generateChangeCombinations.length === 0 && (
-            <div className="space-y-2">
-              <div className="bg-amber-500 bg-opacity-20 rounded-lg p-3 border border-amber-400 border-opacity-30">
-                <div className="flex items-start gap-2">
-                  <AlertCircle size={14} className="text-amber-300 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-bold text-amber-300 mb-1">
-                      Aucune combinaison exacte possible
-                    </p>
-                    <p className="text-[10px] opacity-90 leading-tight mb-2">
-                      Le montant {formaterArgent(changeNeeded)} HTG n'est pas divisible par 5 HTG.
-                    </p>
-                    <div className="bg-amber-500 bg-opacity-30 rounded p-1.5">
-                      <p className="text-[10px] font-bold text-amber-200 text-center">
-                        Le vendeur doit accepter: {formaterArgent(changeNeeded - remainder)} HTG
-                      </p>
-                      <p className="text-[9px] opacity-80 text-center mt-0.5">
-                        Reste abandonné: {formaterArgent(remainder)} HTG
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Messages for other cases */}
+          {/* No change needed */}
           {!shouldGiveChange && (
             <div className="text-center pt-1">
               {isShort ? (
