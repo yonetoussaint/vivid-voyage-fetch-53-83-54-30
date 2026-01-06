@@ -98,9 +98,6 @@ const CaisseRecuCard = ({
                   {formaterArgent(especesAttendues)} HTG
                 </p>
               </div>
-              <p className="text-[10px] opacity-70 mt-1 text-right">
-                (Total ajusté {formaterArgent(totalAjustePourCaisse)} HTG - Dépôts {formaterArgent(totalDeposits)} HTG)
-              </p>
             </div>
           </div>
         )}
