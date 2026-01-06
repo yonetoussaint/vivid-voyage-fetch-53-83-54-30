@@ -11,6 +11,7 @@ import Messages from "@/pages/Messages";
 import { ChatPage } from "@/pages/Messages";
 import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
+import Portfolio from "@/pages/Portfolio.tsx";
 import ProductDetail from "@/pages/ProductDetail";
 import ProductCommentsPage from "@/pages/ProductCommentsPage";
 import Index from "@/pages/Index";
