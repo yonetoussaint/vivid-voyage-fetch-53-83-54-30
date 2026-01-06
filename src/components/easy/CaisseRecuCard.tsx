@@ -26,7 +26,7 @@ const CaisseRecuCard = ({
     return amount - remainder; // Round down to nearest multiple of 5
   };
 
-  // Simple greedy algorithm that always works
+  // Generate 4 different combination strategies
   const generateChangeCombinations = useMemo(() => {
     if (!shouldGiveChange || changeNeeded <= 0) return [];
     
@@ -42,49 +42,107 @@ const CaisseRecuCard = ({
         totalNotes: 0,
         totalAmount: 0,
         remainder: remainder,
-        isExact: false
+        isExact: false,
+        strategyName: "Aucun billet possible"
       }];
     }
     
     const combinations = [];
     
-    // Generate 3 different combination strategies
-    const strategies = [
-      // Strategy 1: Greedy algorithm (most common approach)
-      (amount) => {
-        let remaining = amount;
-        const breakdown = [];
-        for (const denom of denominations) {
-          if (remaining >= denom) {
-            const count = Math.floor(remaining / denom);
-            remaining -= count * denom;
-            if (count > 0) {
-              breakdown.push({ denomination: denom, count, total: denom * count });
-            }
+    // Strategy 1: Classic greedy algorithm (fewest bills)
+    const strategy1 = (amt) => {
+      let remaining = amt;
+      const breakdown = [];
+      for (const denom of denominations) {
+        if (remaining >= denom) {
+          const count = Math.floor(remaining / denom);
+          remaining -= count * denom;
+          if (count > 0) {
+            breakdown.push({ denomination: denom, count, total: denom * count });
           }
         }
-        return breakdown;
-      },
+      }
+      return { breakdown, strategyName: "Classique (moins de billets)" };
+    };
+    
+    // Strategy 2: Prefer 500 HTG bills over 1000 HTG
+    const strategy2 = (amt) => {
+      let remaining = amt;
+      const breakdown = [];
       
-      // Strategy 2: Prefer larger bills but try to use fewer total pieces
-      (amount) => {
-        let remaining = amount;
-        const breakdown = [];
+      // Convert 1000s to 500s when possible
+      if (remaining >= 1000) {
+        const thousandCount = Math.floor(remaining / 1000);
+        // Convert as many 1000s to pairs of 500s as possible
+        const convertableThousands = Math.floor(thousandCount);
+        const remainingThousands = thousandCount - convertableThousands;
         
-        // First try with 1000 and 500 notes
-        for (const denom of [1000, 500, 250, 100]) {
-          if (remaining >= denom) {
-            const count = Math.floor(remaining / denom);
-            // If using this denomination would leave a small remainder, adjust
-            const remainderAfter = remaining - (count * denom);
-            if (remainderAfter > 0 && remainderAfter < 25) {
-              // Try with one less of this denomination
-              const adjustedCount = Math.max(0, count - 1);
-              remaining -= adjustedCount * denom;
-              if (adjustedCount > 0) {
-                breakdown.push({ denomination: denom, count: adjustedCount, total: denom * adjustedCount });
-              }
-            } else {
+        if (convertableThousands > 0) {
+          const fiveHundredCount = convertableThousands * 2;
+          breakdown.push({ 
+            denomination: 500, 
+            count: fiveHundredCount, 
+            total: convertableThousands * 1000 
+          });
+          remaining -= convertableThousands * 1000;
+        }
+        
+        if (remainingThousands > 0) {
+          breakdown.push({ 
+            denomination: 1000, 
+            count: remainingThousands, 
+            total: remainingThousands * 1000 
+          });
+          remaining -= remainingThousands * 1000;
+        }
+      }
+      
+      // Use greedy for the rest
+      for (const denom of [500, 250, 100, 50, 25, 10, 5]) {
+        if (denom === 500) continue; // Skip 500 as we already handled it
+        if (remaining >= denom) {
+          const count = Math.floor(remaining / denom);
+          remaining -= count * denom;
+          if (count > 0) {
+            breakdown.push({ denomination: denom, count, total: denom * count });
+          }
+        }
+      }
+      
+      return { breakdown, strategyName: "Préfère billets de 500" };
+    };
+    
+    // Strategy 3: Avoid small coins, use larger bills when possible
+    const strategy3 = (amt) => {
+      let remaining = amt;
+      const breakdown = [];
+      
+      // First pass: use only bills >= 100 HTG
+      for (const denom of [1000, 500, 250, 100]) {
+        if (remaining >= denom) {
+          const count = Math.floor(remaining / denom);
+          remaining -= count * denom;
+          if (count > 0) {
+            breakdown.push({ denomination: denom, count, total: denom * count });
+          }
+        }
+      }
+      
+      // Second pass: if we have small remainder, try to adjust
+      if (remaining > 0 && remaining < 100) {
+        // Try to use one less large bill to accommodate smaller bills
+        if (breakdown.length > 0) {
+          const lastBill = breakdown[breakdown.length - 1];
+          const newRemaining = remaining + lastBill.denomination;
+          
+          // Remove the last bill
+          breakdown.pop();
+          remaining = newRemaining;
+          
+          // Now try with all denominations
+          for (const denom of [100, 50, 25, 10, 5]) {
+            if (remaining >= denom) {
+              const count = Math.floor(remaining / denom);
               remaining -= count * denom;
               if (count > 0) {
                 breakdown.push({ denomination: denom, count, total: denom * count });
@@ -92,8 +150,8 @@ const CaisseRecuCard = ({
             }
           }
         }
-        
-        // Fill remaining with smaller denominations
+      } else {
+        // Use smaller denominations for remaining
         for (const denom of [50, 25, 10, 5]) {
           if (remaining >= denom) {
             const count = Math.floor(remaining / denom);
@@ -103,43 +161,48 @@ const CaisseRecuCard = ({
             }
           }
         }
-        
-        return breakdown;
-      },
+      }
       
-      // Strategy 3: Prefer more smaller bills for flexibility
-      (amount) => {
-        let remaining = amount;
-        const breakdown = [];
-        
-        // Avoid 1000 notes if possible, use 500s instead
-        if (remaining >= 1000) {
-          const thousandCount = Math.floor(remaining / 1000);
-          // Convert half of 1000s to 500s if possible
-          const thousandsToConvert = Math.floor(thousandCount / 2);
-          const remainingThousands = thousandCount - thousandsToConvert;
-          
-          if (thousandsToConvert > 0) {
-            breakdown.push({ 
-              denomination: 500, 
-              count: thousandsToConvert * 2, 
-              total: thousandsToConvert * 1000 
-            });
-            remaining -= thousandsToConvert * 1000;
+      return { breakdown, strategyName: "Évite petite monnaie" };
+    };
+    
+    // Strategy 4: Balanced approach (mix of large and medium bills)
+    const strategy4 = (amt) => {
+      let remaining = amt;
+      const breakdown = [];
+      
+      // Use 1000s only if amount is large
+      if (remaining >= 2000) {
+        const thousandCount = Math.min(2, Math.floor(remaining / 1000));
+        if (thousandCount > 0) {
+          breakdown.push({ 
+            denomination: 1000, 
+            count: thousandCount, 
+            total: thousandCount * 1000 
+          });
+          remaining -= thousandCount * 1000;
+        }
+      }
+      
+      // Prefer 250 and 500 bills for the rest
+      for (const denom of [500, 250, 100, 50, 25, 10, 5]) {
+        if (remaining >= denom) {
+          // For medium bills, don't use too many
+          let maxCount = Math.floor(remaining / denom);
+          if (denom <= 100) {
+            maxCount = Math.min(maxCount, 4); // Limit medium bills
           }
           
-          if (remainingThousands > 0) {
-            breakdown.push({ 
-              denomination: 1000, 
-              count: remainingThousands, 
-              total: remainingThousands * 1000 
-            });
-            remaining -= remainingThousands * 1000;
+          if (maxCount > 0) {
+            breakdown.push({ denomination: denom, count: maxCount, total: denom * maxCount });
+            remaining -= denom * maxCount;
           }
         }
-        
-        // Use greedy for the rest
-        for (const denom of [500, 250, 100, 50, 25, 10, 5]) {
+      }
+      
+      // If we still have remainder, use smaller denominations
+      if (remaining > 0) {
+        for (const denom of [10, 5]) {
           if (remaining >= denom) {
             const count = Math.floor(remaining / denom);
             remaining -= count * denom;
@@ -148,23 +211,26 @@ const CaisseRecuCard = ({
             }
           }
         }
-        
-        return breakdown;
       }
-    ];
-    
-    // Generate combinations using different strategies
-    strategies.forEach((strategy, index) => {
-      const breakdown = strategy(givableAmount);
       
-      // Calculate total from breakdown
+      return { breakdown, strategyName: "Approche équilibrée" };
+    };
+    
+    // Apply all 4 strategies
+    const strategies = [strategy1, strategy2, strategy3, strategy4];
+    
+    strategies.forEach((strategy, index) => {
+      const result = strategy(givableAmount);
+      const breakdown = result.breakdown;
+      
+      // Calculate totals
       const totalAmount = breakdown.reduce((sum, item) => sum + item.total, 0);
       const totalNotes = breakdown.reduce((sum, item) => sum + item.count, 0);
       
-      // Create a unique key for this combination
+      // Create unique key
       const comboKey = breakdown.map(item => `${item.count}x${item.denomination}`).join('-') || `empty-${index}`;
       
-      // Only add if we haven't seen this exact combination
+      // Only add if unique
       if (!combinations.some(c => c.key === comboKey)) {
         combinations.push({
           key: comboKey,
@@ -173,31 +239,29 @@ const CaisseRecuCard = ({
           totalAmount,
           remainder,
           isExact: remainder === 0,
+          strategyName: result.strategyName,
           strategyIndex: index
         });
       }
     });
     
-    // Ensure we have at least one combination (even if empty)
-    if (combinations.length === 0) {
+    // Ensure we have 4 combinations (duplicate if necessary)
+    while (combinations.length < 4 && combinations.length > 0) {
+      const lastCombo = combinations[combinations.length - 1];
       combinations.push({
-        key: 'fallback',
-        breakdown: [],
-        totalNotes: 0,
-        totalAmount: 0,
-        remainder,
-        isExact: false,
-        strategyIndex: 0
+        ...lastCombo,
+        key: `${lastCombo.key}-copy-${combinations.length}`,
+        strategyName: `${lastCombo.strategyName} (variante)`
       });
     }
     
-    // Sort by: fewest notes first, then by strategy order
+    // Sort by: fewest notes first, then strategy order
     return combinations.sort((a, b) => {
       if (a.totalNotes !== b.totalNotes) {
         return a.totalNotes - b.totalNotes;
       }
       return a.strategyIndex - b.strategyIndex;
-    }).slice(0, 3); // Show top 3 combinations
+    }).slice(0, 4); // Always show exactly 4 combinations
   }, [changeNeeded, shouldGiveChange]);
 
   const formatDepositDisplay = (depot) => {
@@ -379,22 +443,22 @@ const CaisseRecuCard = ({
             </div>
           )}
 
-          {/* Change combinations - ALWAYS shown when change is needed */}
+          {/* Change combinations - ALWAYS 4 combinations */}
           {shouldGiveChange && generateChangeCombinations.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-1 mb-2">
                 <Sparkles size={10} className="text-green-300" />
-                <p className="text-xs font-bold text-green-300">Combinaisons possibles:</p>
+                <p className="text-xs font-bold text-green-300">4 Combinaisons possibles:</p>
               </div>
               
               {/* Denomination info */}
               <div className="bg-blue-500 bg-opacity-10 rounded p-1.5 border border-blue-400 border-opacity-20 mb-2">
                 <p className="text-[9px] text-center text-blue-300">
-                  Plus petit billet/monnaie = 5 HTG
+                  Plus petit billet/monnaie = 5 HTG • Montant utilisable: {formaterArgent(givableAmount)} HTG
                 </p>
               </div>
               
-              {/* Single column of combinations */}
+              {/* Single column of 4 combinations */}
               <div className="space-y-2">
                 {generateChangeCombinations.map((combo, index) => (
                   <div 
@@ -402,35 +466,43 @@ const CaisseRecuCard = ({
                     className={`rounded-lg p-2 border ${
                       index === 0 
                         ? 'border-green-400 border-opacity-40 bg-green-500 bg-opacity-15 shadow-sm' 
-                        : 'border-green-400 border-opacity-20 bg-green-500 bg-opacity-10'
+                        : index === 1
+                        ? 'border-blue-400 border-opacity-40 bg-blue-500 bg-opacity-10'
+                        : index === 2
+                        ? 'border-purple-400 border-opacity-40 bg-purple-500 bg-opacity-10'
+                        : 'border-amber-400 border-opacity-40 bg-amber-500 bg-opacity-10'
                     }`}
                   >
-                    {/* Option header */}
+                    {/* Option header with strategy name */}
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        {index === 0 && (
-                          <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
-                            <span className="text-xs font-bold text-green-300">
-                              Option {index + 1} - Optimale
-                            </span>
-                          </div>
-                        )}
-                        {index !== 0 && (
-                          <span className="text-xs font-medium text-green-300 opacity-90">
+                        <div className={`w-2 h-2 rounded-full ${
+                          index === 0 ? 'bg-yellow-400' :
+                          index === 1 ? 'bg-blue-400' :
+                          index === 2 ? 'bg-purple-400' : 'bg-amber-400'
+                        }`}></div>
+                        <div>
+                          <p className="text-xs font-bold text-green-300">
                             Option {index + 1}
-                          </span>
-                        )}
+                          </p>
+                          <p className="text-[9px] opacity-80 mt-0.5">
+                            {combo.strategyName}
+                          </p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Coins size={10} className="text-green-300 opacity-70" />
+                        <Coins size={10} className={
+                          index === 0 ? 'text-green-300' :
+                          index === 1 ? 'text-blue-300' :
+                          index === 2 ? 'text-purple-300' : 'text-amber-300'
+                        } />
                         <span className="text-[10px] opacity-80">
                           {combo.totalNotes} pièce{combo.totalNotes !== 1 ? 's' : ''}
                         </span>
                       </div>
                     </div>
                     
-                    {/* Complete breakdown - show even if empty */}
+                    {/* Complete breakdown */}
                     {combo.breakdown.length > 0 ? (
                       <>
                         <div className="space-y-1.5 mb-2">
@@ -457,7 +529,7 @@ const CaisseRecuCard = ({
                         </div>
                         
                         {/* Total and remainder info */}
-                        <div className="pt-2 border-t border-green-400 border-opacity-20">
+                        <div className="pt-2 border-t border-white border-opacity-20">
                           <div className="space-y-1">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1">
@@ -484,18 +556,11 @@ const CaisseRecuCard = ({
                                 </span>
                               </div>
                             )}
-                            
-                            {/* Original total for context */}
-                            {combo.remainder > 0 && (
-                              <div className="text-[9px] opacity-70 text-center pt-0.5">
-                                Sur {formaterArgent(combo.totalAmount + combo.remainder)} HTG demandés
-                              </div>
-                            )}
                           </div>
                         </div>
                       </>
                     ) : (
-                      // Show empty state if no breakdown (amount < 5)
+                      // Show empty state
                       <div className="text-center py-3">
                         <p className="text-xs text-amber-300 font-bold mb-1">
                           Aucun billet/monnaie possible
@@ -503,13 +568,6 @@ const CaisseRecuCard = ({
                         <p className="text-[10px] opacity-80">
                           Le montant est inférieur à 5 HTG
                         </p>
-                        {combo.remainder > 0 && (
-                          <div className="mt-2 pt-2 border-t border-amber-400 border-opacity-20">
-                            <p className="text-[10px] text-amber-300 font-bold">
-                              Total abandonné: {formaterArgent(combo.remainder)} HTG
-                            </p>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
@@ -520,18 +578,25 @@ const CaisseRecuCard = ({
               <div className="bg-green-500 bg-opacity-5 rounded p-2 border border-green-400 border-opacity-10">
                 <div className="flex items-center gap-1 mb-1">
                   <Sparkles size={9} className="text-green-300" />
-                  <p className="text-[10px] font-bold text-green-300">Conseils pratiques:</p>
+                  <p className="text-[10px] font-bold text-green-300">Guide des options:</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[9px] opacity-80 leading-tight">
-                    • L'<span className="text-green-300 font-bold">Option 1</span> est généralement la plus efficace
-                  </p>
-                  <p className="text-[9px] opacity-80 leading-tight">
-                    • Les options 2 et 3 offrent des alternatives selon vos billets disponibles
-                  </p>
-                  <p className="text-[9px] opacity-80 leading-tight">
-                    • Les montants inférieurs à 5 HTG sont entièrement abandonnés
-                  </p>
+                <div className="grid grid-cols-2 gap-1 text-[9px]">
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
+                    <span className="opacity-80">Option 1: Moins de billets</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                    <span className="opacity-80">Option 2: Plus de 500 HTG</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400"></div>
+                    <span className="opacity-80">Option 3: Moins de petite monnaie</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                    <span className="opacity-80">Option 4: Mix équilibré</span>
+                  </div>
                 </div>
               </div>
             </div>
