@@ -69,19 +69,28 @@ export const formaterNombre = (num) => {
 // Formater pour la caisse - arrondir au multiple de 5 le plus proche
 // Formater pour la caisse - arrondir selon la règle: 1-5→5, 6-9→10
 // Formater pour la caisse - ALWAYS ROUND UP to the nearest 10
+// Formater pour la caisse - ALWAYS round UP, then apply 1-5→5, 6-9→10 rule
 export const formaterCaisse = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
 
   if (isNaN(nombre)) return '0';
 
-  // ALWAYS round UP to the nearest 10
-  // Examples: 19.001 → 20, 19.999 → 20, 20 → 20
-  // Math.ceil(nombre / 10) * 10 always gives next multiple of 10
-  const rounded = Math.ceil(nombre / 10) * 10;
-
-  // Ensure it's an integer (no decimals)
-  const result = Math.round(rounded);
+  // Step 1: ALWAYS round UP to remove all decimals
+  const roundedUp = Math.ceil(nombre);
+  
+  // Step 2: Apply rounding rules to the rounded-up integer
+  const lastDigit = roundedUp % 10;
+  
+  let result;
+  
+  if (lastDigit >= 1 && lastDigit <= 5) {
+    // For numbers ending in 1-5: round to nearest 5
+    result = Math.floor(roundedUp / 10) * 10 + 5;
+  } else {
+    // For numbers ending in 0,6,7,8,9: round to next 10
+    result = Math.ceil(roundedUp / 10) * 10;
+  }
 
   // Add apostrophe separators for thousands
   return ajouterApostrophes(result.toString());
