@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, Coins, Sparkles, AlertCircle } from 'lucide-react';
+import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, Coins, Sparkles, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const CaisseRecuCard = ({
@@ -12,28 +12,71 @@ const CaisseRecuCard = ({
   tauxUSD = 132
 }) => {
   const [cashRecu, setCashRecu] = useState('');
-  const cashRecuValue = parseFloat(cashRecu) || 0;
-  const changeNeeded = cashRecuValue - especesAttendues;
+  const [cashSequences, setCashSequences] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+  
+  // Calculate total cash received from all sequences
+  const totalCashRecu = useMemo(() => {
+    return cashSequences.reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
+  }, [cashSequences]);
+  
+  const changeNeeded = totalCashRecu - especesAttendues;
   const shouldGiveChange = changeNeeded > 0;
   const isShort = changeNeeded < 0;
 
   // Realistic Haitian Gourde denominations (no 1 gourde - smallest is 5 gourdes)
   const denominations = [1000, 500, 250, 100, 50, 25, 10, 5];
-  
+
   // Function to get the maximum amount we can give with denominations (round down to nearest 5)
   const getMaximumGivableAmount = (amount) => {
     const remainder = amount % 5;
     return amount - remainder; // Round down to nearest multiple of 5
   };
 
+  // Handle adding a new cash sequence
+  const handleAddSequence = () => {
+    const amount = parseFloat(inputValue);
+    if (!isNaN(amount) && amount > 0) {
+      const newSequence = {
+        id: Date.now(),
+        amount: amount,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setCashSequences(prev => [...prev, newSequence]);
+      setInputValue('');
+    }
+  };
+
+  // Handle removing a sequence
+  const handleRemoveSequence = (id) => {
+    setCashSequences(prev => prev.filter(seq => seq.id !== id));
+  };
+
+  // Handle clearing all sequences
+  const handleClearAll = () => {
+    setCashSequences([]);
+  };
+
+  // Handle input change
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+  };
+
+  // Handle Enter key press
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleAddSequence();
+    }
+  };
+
   // Generate 4 truly different combination strategies
   const generateChangeCombinations = useMemo(() => {
     if (!shouldGiveChange || changeNeeded <= 0) return [];
-    
+
     const amount = Math.round(changeNeeded);
     const givableAmount = getMaximumGivableAmount(amount);
     const remainder = amount - givableAmount;
-    
+
     if (givableAmount === 0) {
       // If amount is less than 5, we can't give any change
       return [
@@ -75,9 +118,9 @@ const CaisseRecuCard = ({
         }
       ];
     }
-    
+
     const combinations = [];
-    
+
     // Helper: Standard greedy algorithm
     const greedyAlgorithm = (amt, denoms) => {
       let remaining = amt;
@@ -93,7 +136,7 @@ const CaisseRecuCard = ({
       }
       return breakdown;
     };
-    
+
     // Strategy 1: Classic greedy (fewest bills, largest denominations first)
     const strategy1 = (amt) => {
       const breakdown = greedyAlgorithm(amt, denominations);
@@ -103,12 +146,12 @@ const CaisseRecuCard = ({
         description: "Utilise les plus gros billets d'abord"
       };
     };
-    
+
     // Strategy 2: Prefer 500 HTG bills, avoid 1000 HTG when possible
     const strategy2 = (amt) => {
       let remaining = amt;
       const breakdown = [];
-      
+
       // Avoid 1000 HTG bills - use 500 HTG instead
       if (remaining >= 1000) {
         const possible1000s = Math.floor(remaining / 1000);
@@ -123,7 +166,7 @@ const CaisseRecuCard = ({
           remaining -= possible1000s * 1000;
         }
       }
-      
+
       // Use greedy for the rest with adjusted denominations
       const remainingDenoms = [500, 250, 100, 50, 25, 10, 5];
       for (const denom of remainingDenoms) {
@@ -135,24 +178,24 @@ const CaisseRecuCard = ({
           }
         }
       }
-      
+
       return { 
         breakdown, 
         strategyName: "Préfère billets de 500",
         description: "Évite les billets de 1000 HTG"
       };
     };
-    
+
     // Strategy 3: Use more smaller bills, avoid large bills for small amounts
     const strategy3 = (amt) => {
       let remaining = amt;
       const breakdown = [];
-      
+
       // For amounts < 500, don't use 1000 or 500 bills
       const adjustedDenoms = amt < 500 
         ? [250, 100, 50, 25, 10, 5]  // Skip 1000 and 500 for small amounts
         : [1000, 500, 250, 100, 50, 25, 10, 5];
-      
+
       // Use greedy but with preference for smaller bills
       for (const denom of adjustedDenoms) {
         if (remaining >= denom) {
@@ -168,7 +211,7 @@ const CaisseRecuCard = ({
           }
         }
       }
-      
+
       // Fill any remaining with smallest denominations
       if (remaining > 0) {
         for (const denom of [10, 5]) {
@@ -181,19 +224,19 @@ const CaisseRecuCard = ({
           }
         }
       }
-      
+
       return { 
         breakdown, 
         strategyName: "Plus de petits billets",
         description: "Privilégie les billets moyens et petits"
       };
     };
-    
+
     // Strategy 4: Balanced mix - use equal distribution of bill sizes
     const strategy4 = (amt) => {
       let remaining = amt;
       const breakdown = [];
-      
+
       // Calculate target bill counts based on amount
       if (amt >= 1000) {
         // For large amounts, use 1-2 of each large denomination
@@ -209,7 +252,7 @@ const CaisseRecuCard = ({
           }
         }
       }
-      
+
       // Use medium bills (100, 50)
       const mediumBills = [100, 50];
       for (const denom of mediumBills) {
@@ -222,7 +265,7 @@ const CaisseRecuCard = ({
           }
         }
       }
-      
+
       // Use small bills for remainder
       if (remaining > 0) {
         const smallBills = [25, 10, 5];
@@ -236,22 +279,22 @@ const CaisseRecuCard = ({
           }
         }
       }
-      
+
       return { 
         breakdown, 
         strategyName: "Mix équilibré",
         description: "Répartit sur différentes tailles"
       };
     };
-    
+
     // Strategy 5: Alternative - use only certain bill sizes
     const strategy5 = (amt) => {
       let remaining = amt;
       const breakdown = [];
-      
+
       // Try to use only 250, 100, 50 bills when possible
       const preferredBills = [250, 100, 50, 25, 10, 5];
-      
+
       for (const denom of preferredBills) {
         if (remaining >= denom) {
           const count = Math.floor(remaining / denom);
@@ -261,32 +304,32 @@ const CaisseRecuCard = ({
           }
         }
       }
-      
+
       return { 
         breakdown, 
         strategyName: "Billets standards",
         description: "Utilise 250, 100, 50 HTG principalement"
       };
     };
-    
+
     // Apply the 4 best strategies (we have 5, will pick the most different 4)
     const allStrategies = [strategy1, strategy2, strategy3, strategy4, strategy5];
     const results = allStrategies.map(strat => strat(givableAmount));
-    
+
     // Pick the 4 most different combinations
     const selectedCombinations = [];
     const seenPatterns = new Set();
-    
+
     for (const result of results) {
       const patternKey = result.breakdown.map(item => `${item.denomination}:${item.count}`).join('|');
-      
+
       if (!seenPatterns.has(patternKey) && selectedCombinations.length < 4) {
         seenPatterns.add(patternKey);
-        
+
         // Calculate totals
         const totalAmount = result.breakdown.reduce((sum, item) => sum + item.total, 0);
         const totalNotes = result.breakdown.reduce((sum, item) => sum + item.count, 0);
-        
+
         selectedCombinations.push({
           key: `combo-${selectedCombinations.length + 1}`,
           breakdown: result.breakdown,
@@ -300,12 +343,12 @@ const CaisseRecuCard = ({
         });
       }
     }
-    
+
     // If we still don't have 4 unique combinations, create variations
     while (selectedCombinations.length < 4) {
       const baseCombo = selectedCombinations[selectedCombinations.length - 1] || selectedCombinations[0];
       const variationIndex = selectedCombinations.length;
-      
+
       // Create a variation by adjusting one denomination
       let variationBreakdown = [...baseCombo.breakdown];
       if (variationBreakdown.length > 0) {
@@ -318,7 +361,7 @@ const CaisseRecuCard = ({
             count: firstBill.count - 1,
             total: (firstBill.count - 1) * firstBill.denomination
           };
-          
+
           // Add equivalent in smaller bills
           const remainingValue = firstBill.denomination;
           // Find smaller denominations to add
@@ -339,10 +382,10 @@ const CaisseRecuCard = ({
           }
         }
       }
-      
+
       const totalAmount = variationBreakdown.reduce((sum, item) => sum + item.total, 0);
       const totalNotes = variationBreakdown.reduce((sum, item) => sum + item.count, 0);
-      
+
       selectedCombinations.push({
         key: `variation-${variationIndex}`,
         breakdown: variationBreakdown,
@@ -355,7 +398,7 @@ const CaisseRecuCard = ({
         strategyIndex: variationIndex
       });
     }
-    
+
     // Sort by: fewest notes first, then strategy order
     return selectedCombinations.sort((a, b) => {
       if (a.totalNotes !== b.totalNotes) {
@@ -395,7 +438,7 @@ const CaisseRecuCard = ({
         ? 'bg-gradient-to-br from-orange-500 to-red-500' 
         : 'bg-gradient-to-br from-blue-500 to-indigo-500'
     } text-white`}>
-      
+
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
         <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
@@ -484,22 +527,114 @@ const CaisseRecuCard = ({
         </div>
       </div>
 
-      {/* Input field for cash received */}
-      <div className="relative mb-2">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <span className="text-white font-bold text-xs">HTG</span>
+      {/* Cash Sequences Section */}
+      <div className="mb-3">
+        {/* Total Cash Received Summary */}
+        {cashSequences.length > 0 && (
+          <div className="bg-green-500 bg-opacity-20 rounded-lg p-2 mb-2 border border-green-400 border-opacity-30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <DollarSign size={12} className="text-green-300" />
+                <p className="text-xs font-bold text-green-300">Total reçu:</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-green-300">{formaterArgent(totalCashRecu)} HTG</p>
+                <button
+                  onClick={handleClearAll}
+                  className="p-1 hover:bg-red-500 hover:bg-opacity-30 rounded text-red-300 hover:text-red-200 transition-colors"
+                  title="Effacer toutes les séquences"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
+            <p className="text-[10px] opacity-80 mt-1 text-green-300">
+              {cashSequences.length} séquence{cashSequences.length !== 1 ? 's' : ''} ajoutée{cashSequences.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        )}
+
+        {/* Cash Sequences List */}
+        {cashSequences.length > 0 && (
+          <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2 max-h-32 overflow-y-auto">
+            <div className="space-y-1">
+              {cashSequences.map((sequence, index) => (
+                <div key={sequence.id} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                    <span className="opacity-80">Séquence {index + 1}:</span>
+                    <span className="text-[10px] opacity-60">{sequence.timestamp}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium opacity-90 text-green-300">
+                      {formaterArgent(sequence.amount)} HTG
+                    </span>
+                    <button
+                      onClick={() => handleRemoveSequence(sequence.id)}
+                      className="p-0.5 hover:bg-red-500 hover:bg-opacity-30 rounded text-red-300 hover:text-red-200 transition-colors"
+                      title="Retirer cette séquence"
+                    >
+                      <Trash2 size={10} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Input field for adding cash sequences */}
+        <div className="relative mb-2">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-white font-bold text-xs">HTG</span>
+          </div>
+          <input
+            type="number"
+            value={inputValue}
+            onChange={handleInputChange}
+            onKeyPress={handleKeyPress}
+            placeholder="Ajouter un montant..."
+            className="w-full pl-12 pr-20 py-2.5 text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
+          />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-1">
+            <button
+              onClick={handleAddSequence}
+              disabled={!inputValue || parseFloat(inputValue) <= 0}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 ${
+                inputValue && parseFloat(inputValue) > 0
+                  ? 'bg-green-500 hover:bg-green-600 text-white'
+                  : 'bg-gray-400 bg-opacity-30 text-gray-300 cursor-not-allowed'
+              } transition-colors`}
+            >
+              <Plus size={12} />
+              Ajouter
+            </button>
+          </div>
         </div>
-        <input
-          type="number"
-          value={cashRecu}
-          onChange={(e) => setCashRecu(e.target.value)}
-          placeholder="0.00"
-          className="w-full pl-12 pr-3 py-2.5 text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
-        />
+        
+        {/* Quick add buttons */}
+        <div className="grid grid-cols-4 gap-1 mb-2">
+          {[100, 250, 500, 1000].map((amount) => (
+            <button
+              key={amount}
+              onClick={() => {
+                setInputValue(amount.toString());
+                // Auto-add after setting value
+                setTimeout(() => {
+                  const button = document.querySelector('button[type="button"]');
+                  if (button) button.click();
+                }, 50);
+              }}
+              className="px-2 py-1.5 text-xs font-medium bg-white bg-opacity-10 hover:bg-opacity-20 rounded border border-white border-opacity-20 transition-colors"
+            >
+              +{amount}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Change calculation */}
-      {cashRecu && (
+      {cashSequences.length > 0 && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-3">
           {/* Change summary */}
           <div className={`flex items-center justify-between pb-2 border-b border-white border-opacity-20 ${
@@ -551,14 +686,14 @@ const CaisseRecuCard = ({
                 <Sparkles size={10} className="text-green-300" />
                 <p className="text-xs font-bold text-green-300">4 Combinaisons différentes:</p>
               </div>
-              
+
               {/* Denomination info */}
               <div className="bg-blue-500 bg-opacity-10 rounded p-1.5 border border-blue-400 border-opacity-20 mb-2">
                 <p className="text-[9px] text-center text-blue-300">
                   Plus petit billet/monnaie = 5 HTG • Montant utilisable: {formaterArgent(givableAmount)} HTG
                 </p>
               </div>
-              
+
               {/* Single column of 4 truly different combinations */}
               <div className="space-y-2">
                 {generateChangeCombinations.map((combo, index) => (
@@ -598,7 +733,7 @@ const CaisseRecuCard = ({
                         {combo.description}
                       </p>
                     </div>
-                    
+
                     {/* Complete breakdown */}
                     {combo.breakdown.length > 0 ? (
                       <>
@@ -624,7 +759,7 @@ const CaisseRecuCard = ({
                             </div>
                           ))}
                         </div>
-                        
+
                         {/* Total and remainder info */}
                         <div className="pt-2 border-t border-white border-opacity-20">
                           <div className="space-y-1">
@@ -640,7 +775,7 @@ const CaisseRecuCard = ({
                                 <span className="text-[10px] opacity-70">HTG</span>
                               </div>
                             </div>
-                            
+
                             {/* Show remainder if any */}
                             {combo.remainder > 0 && (
                               <div className="flex items-center justify-between pt-1 border-t border-amber-400 border-opacity-20">
@@ -675,7 +810,7 @@ const CaisseRecuCard = ({
                   </div>
                 ))}
               </div>
-              
+
               {/* Strategy comparison */}
               <div className="bg-green-500 bg-opacity-5 rounded p-2 border border-green-400 border-opacity-10">
                 <div className="flex items-center gap-1 mb-1">
@@ -724,6 +859,18 @@ const CaisseRecuCard = ({
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Instructions */}
+      {cashSequences.length === 0 && (
+        <div className="bg-white bg-opacity-5 rounded-lg p-2 text-center">
+          <p className="text-[10px] opacity-70">
+            Entrez les montants séquentiellement lorsque le vendeur donne l'argent
+          </p>
+          <p className="text-[9px] opacity-50 mt-0.5">
+            Ex: 500 + 250 + 100 = 850 HTG
+          </p>
         </div>
       )}
 
