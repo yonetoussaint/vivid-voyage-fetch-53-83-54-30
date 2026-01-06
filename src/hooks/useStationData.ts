@@ -73,9 +73,13 @@ export const useStationData = (date, shift) => {
           count++;
         }
       });
+      // Also count propane assignments
+      if (propaneDonnees[shiftKey] && propaneDonnees[shiftKey]._vendeur === nomVendeur) {
+        count++;
+      }
     });
     return count;
-  }, [toutesDonnees]);
+  }, [toutesDonnees, propaneDonnees]);
 
   // Calculer gallons
   const calculerGallons = useCallback((debut, fin) => {
@@ -115,17 +119,30 @@ export const useStationData = (date, shift) => {
     }));
   }, [shift]);
 
+  // UPDATED: Handle both pump and propane vendeur assignment
   const mettreAJourAffectationVendeur = useCallback((pompe, nomVendeur) => {
-    setToutesDonnees(prev => ({
-      ...prev,
-      [shift]: {
-        ...prev[shift],
-        [pompe]: {
-          ...prev[shift][pompe],
+    if (pompe === 'propane') {
+      // Handle propane vendeur assignment
+      setPropaneDonnees(prev => ({
+        ...prev,
+        [shift]: {
+          ...prev[shift],
           _vendeur: nomVendeur
         }
-      }
-    }));
+      }));
+    } else {
+      // Original logic for pumps
+      setToutesDonnees(prev => ({
+        ...prev,
+        [shift]: {
+          ...prev[shift],
+          [pompe]: {
+            ...prev[shift][pompe],
+            _vendeur: nomVendeur
+          }
+        }
+      }));
+    }
   }, [shift]);
 
   // FIXED: Handle both HTG and USD deposits
@@ -135,7 +152,7 @@ export const useStationData = (date, shift) => {
       if (!nouveauxDepots[shift][nomVendeur]) {
         nouveauxDepots[shift][nomVendeur] = [];
       }
-      
+
       // Handle both string values (HTG) and object values (USD)
       if (typeof valeur === 'object' && valeur.devise === 'USD') {
         // For USD deposits, store the object
@@ -154,7 +171,7 @@ export const useStationData = (date, shift) => {
         // For HTG deposits, store string/number
         nouveauxDepots[shift][nomVendeur][index] = valeur === '' ? '' : parseFloat(valeur) || 0;
       }
-      
+
       return nouveauxDepots;
     });
   }, [shift]);
@@ -166,7 +183,7 @@ export const useStationData = (date, shift) => {
       if (!nouveauxDepots[shift][nomVendeur]) {
         nouveauxDepots[shift][nomVendeur] = [];
       }
-      
+
       // Add empty deposit based on currency type
       if (typeDevise === 'USD') {
         nouveauxDepots[shift][nomVendeur].push({
@@ -176,7 +193,7 @@ export const useStationData = (date, shift) => {
       } else {
         nouveauxDepots[shift][nomVendeur].push('');
       }
-      
+
       return nouveauxDepots;
     });
   }, [shift]);
@@ -239,6 +256,15 @@ export const useStationData = (date, shift) => {
       });
       setToutesDonnees(donneesMAJ);
 
+      // Retirer vendeur du propane
+      const propaneMAJ = { ...propaneDonnees };
+      Object.keys(propaneMAJ).forEach(shiftKey => {
+        if (propaneMAJ[shiftKey] && propaneMAJ[shiftKey]._vendeur === nomVendeur) {
+          propaneMAJ[shiftKey]._vendeur = '';
+        }
+      });
+      setPropaneDonnees(propaneMAJ);
+
       // Retirer dépôts du vendeur
       const depotsMAJ = { ...tousDepots };
       Object.keys(depotsMAJ).forEach(shiftKey => {
@@ -248,7 +274,7 @@ export const useStationData = (date, shift) => {
       });
       setTousDepots(depotsMAJ);
     }
-  }, [toutesDonnees, tousDepots]);
+  }, [toutesDonnees, propaneDonnees, tousDepots]);
 
   // Fonctions de réinitialisation
   const reinitialiserShift = useCallback((currentShift) => {
