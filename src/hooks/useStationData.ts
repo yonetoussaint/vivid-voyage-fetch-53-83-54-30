@@ -327,9 +327,8 @@ export const useStationData = (date, shift) => {
     prixPropane
   );
 
-  // Calculer totaux vendeurs
-  const totauxVendeurs = calculerTotauxVendeurs(vendeurs, toutesDonnees, tousDepots, prix);
-  const totauxVendeursCourants = totauxVendeurs[shift];
+  // Line 159 in useStationData:
+const totauxVendeurs = calculerTotauxVendeurs(vendeurs, toutesDonnees, tousDepots, prix, tauxUSD);
 
   // Calculer totaux par shift
   const totauxAM = calculerTotaux(
