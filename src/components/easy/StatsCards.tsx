@@ -19,7 +19,8 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
   const isRoundedUp = adjustment > 0;
 
   // Calculate total gallons (essence + diesel)
-  const totalGallons = (parseFloat(totaux.totalGallonsEssence || 0) + parseFloat(totaux.totalGallonsDiesel || 0)).toFixed(2);
+// Calculate total gallons (essence + diesel) as a NUMBER
+const totalGallons = parseFloat(totaux.totalGallonsEssence || 0) + parseFloat(totaux.totalGallonsDiesel || 0);
 
   return (
     <>
