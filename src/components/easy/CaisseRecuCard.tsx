@@ -26,7 +26,7 @@ const CaisseRecuCard = ({
     return amount - remainder; // Round down to nearest multiple of 5
   };
 
-  // Generate 4 different combination strategies
+  // Generate 4 truly different combination strategies
   const generateChangeCombinations = useMemo(() => {
     if (!shouldGiveChange || changeNeeded <= 0) return [];
     
@@ -36,24 +36,53 @@ const CaisseRecuCard = ({
     
     if (givableAmount === 0) {
       // If amount is less than 5, we can't give any change
-      return [{
-        key: 'no-change',
-        breakdown: [],
-        totalNotes: 0,
-        totalAmount: 0,
-        remainder: remainder,
-        isExact: false,
-        strategyName: "Aucun billet possible"
-      }];
+      return [
+        {
+          key: 'no-change-1',
+          breakdown: [],
+          totalNotes: 0,
+          totalAmount: 0,
+          remainder: remainder,
+          isExact: false,
+          strategyName: "Aucun billet possible"
+        },
+        {
+          key: 'no-change-2',
+          breakdown: [],
+          totalNotes: 0,
+          totalAmount: 0,
+          remainder: remainder,
+          isExact: false,
+          strategyName: "Montant < 5 HTG"
+        },
+        {
+          key: 'no-change-3',
+          breakdown: [],
+          totalNotes: 0,
+          totalAmount: 0,
+          remainder: remainder,
+          isExact: false,
+          strategyName: "Trop petit"
+        },
+        {
+          key: 'no-change-4',
+          breakdown: [],
+          totalNotes: 0,
+          totalAmount: 0,
+          remainder: remainder,
+          isExact: false,
+          strategyName: "Rien à donner"
+        }
+      ];
     }
     
     const combinations = [];
     
-    // Strategy 1: Classic greedy algorithm (fewest bills)
-    const strategy1 = (amt) => {
+    // Helper: Standard greedy algorithm
+    const greedyAlgorithm = (amt, denoms) => {
       let remaining = amt;
       const breakdown = [];
-      for (const denom of denominations) {
+      for (const denom of denoms) {
         if (remaining >= denom) {
           const count = Math.floor(remaining / denom);
           remaining -= count * denom;
@@ -62,44 +91,42 @@ const CaisseRecuCard = ({
           }
         }
       }
-      return { breakdown, strategyName: "Classique (moins de billets)" };
+      return breakdown;
     };
     
-    // Strategy 2: Prefer 500 HTG bills over 1000 HTG
+    // Strategy 1: Classic greedy (fewest bills, largest denominations first)
+    const strategy1 = (amt) => {
+      const breakdown = greedyAlgorithm(amt, denominations);
+      return { 
+        breakdown, 
+        strategyName: "Classique (moins de billets)",
+        description: "Utilise les plus gros billets d'abord"
+      };
+    };
+    
+    // Strategy 2: Prefer 500 HTG bills, avoid 1000 HTG when possible
     const strategy2 = (amt) => {
       let remaining = amt;
       const breakdown = [];
       
-      // Convert 1000s to 500s when possible
+      // Avoid 1000 HTG bills - use 500 HTG instead
       if (remaining >= 1000) {
-        const thousandCount = Math.floor(remaining / 1000);
-        // Convert as many 1000s to pairs of 500s as possible
-        const convertableThousands = Math.floor(thousandCount);
-        const remainingThousands = thousandCount - convertableThousands;
-        
-        if (convertableThousands > 0) {
-          const fiveHundredCount = convertableThousands * 2;
+        const possible1000s = Math.floor(remaining / 1000);
+        // Convert each 1000 to two 500s
+        const fiveHundredCount = possible1000s * 2;
+        if (fiveHundredCount > 0) {
           breakdown.push({ 
             denomination: 500, 
             count: fiveHundredCount, 
-            total: convertableThousands * 1000 
+            total: possible1000s * 1000 
           });
-          remaining -= convertableThousands * 1000;
-        }
-        
-        if (remainingThousands > 0) {
-          breakdown.push({ 
-            denomination: 1000, 
-            count: remainingThousands, 
-            total: remainingThousands * 1000 
-          });
-          remaining -= remainingThousands * 1000;
+          remaining -= possible1000s * 1000;
         }
       }
       
-      // Use greedy for the rest
-      for (const denom of [500, 250, 100, 50, 25, 10, 5]) {
-        if (denom === 500) continue; // Skip 500 as we already handled it
+      // Use greedy for the rest with adjusted denominations
+      const remainingDenoms = [500, 250, 100, 50, 25, 10, 5];
+      for (const denom of remainingDenoms) {
         if (remaining >= denom) {
           const count = Math.floor(remaining / denom);
           remaining -= count * denom;
@@ -109,18 +136,32 @@ const CaisseRecuCard = ({
         }
       }
       
-      return { breakdown, strategyName: "Préfère billets de 500" };
+      return { 
+        breakdown, 
+        strategyName: "Préfère billets de 500",
+        description: "Évite les billets de 1000 HTG"
+      };
     };
     
-    // Strategy 3: Avoid small coins, use larger bills when possible
+    // Strategy 3: Use more smaller bills, avoid large bills for small amounts
     const strategy3 = (amt) => {
       let remaining = amt;
       const breakdown = [];
       
-      // First pass: use only bills >= 100 HTG
-      for (const denom of [1000, 500, 250, 100]) {
+      // For amounts < 500, don't use 1000 or 500 bills
+      const adjustedDenoms = amt < 500 
+        ? [250, 100, 50, 25, 10, 5]  // Skip 1000 and 500 for small amounts
+        : [1000, 500, 250, 100, 50, 25, 10, 5];
+      
+      // Use greedy but with preference for smaller bills
+      for (const denom of adjustedDenoms) {
         if (remaining >= denom) {
-          const count = Math.floor(remaining / denom);
+          // For smaller bills, use more of them
+          let count = Math.floor(remaining / denom);
+          if (denom <= 100) {
+            // For bills <= 100, use more (up to 5) instead of larger bills
+            count = Math.min(count, 5);
+          }
           remaining -= count * denom;
           if (count > 0) {
             breakdown.push({ denomination: denom, count, total: denom * count });
@@ -128,79 +169,7 @@ const CaisseRecuCard = ({
         }
       }
       
-      // Second pass: if we have small remainder, try to adjust
-      if (remaining > 0 && remaining < 100) {
-        // Try to use one less large bill to accommodate smaller bills
-        if (breakdown.length > 0) {
-          const lastBill = breakdown[breakdown.length - 1];
-          const newRemaining = remaining + lastBill.denomination;
-          
-          // Remove the last bill
-          breakdown.pop();
-          remaining = newRemaining;
-          
-          // Now try with all denominations
-          for (const denom of [100, 50, 25, 10, 5]) {
-            if (remaining >= denom) {
-              const count = Math.floor(remaining / denom);
-              remaining -= count * denom;
-              if (count > 0) {
-                breakdown.push({ denomination: denom, count, total: denom * count });
-              }
-            }
-          }
-        }
-      } else {
-        // Use smaller denominations for remaining
-        for (const denom of [50, 25, 10, 5]) {
-          if (remaining >= denom) {
-            const count = Math.floor(remaining / denom);
-            remaining -= count * denom;
-            if (count > 0) {
-              breakdown.push({ denomination: denom, count, total: denom * count });
-            }
-          }
-        }
-      }
-      
-      return { breakdown, strategyName: "Évite petite monnaie" };
-    };
-    
-    // Strategy 4: Balanced approach (mix of large and medium bills)
-    const strategy4 = (amt) => {
-      let remaining = amt;
-      const breakdown = [];
-      
-      // Use 1000s only if amount is large
-      if (remaining >= 2000) {
-        const thousandCount = Math.min(2, Math.floor(remaining / 1000));
-        if (thousandCount > 0) {
-          breakdown.push({ 
-            denomination: 1000, 
-            count: thousandCount, 
-            total: thousandCount * 1000 
-          });
-          remaining -= thousandCount * 1000;
-        }
-      }
-      
-      // Prefer 250 and 500 bills for the rest
-      for (const denom of [500, 250, 100, 50, 25, 10, 5]) {
-        if (remaining >= denom) {
-          // For medium bills, don't use too many
-          let maxCount = Math.floor(remaining / denom);
-          if (denom <= 100) {
-            maxCount = Math.min(maxCount, 4); // Limit medium bills
-          }
-          
-          if (maxCount > 0) {
-            breakdown.push({ denomination: denom, count: maxCount, total: denom * maxCount });
-            remaining -= denom * maxCount;
-          }
-        }
-      }
-      
-      // If we still have remainder, use smaller denominations
+      // Fill any remaining with smallest denominations
       if (remaining > 0) {
         for (const denom of [10, 5]) {
           if (remaining >= denom) {
@@ -213,55 +182,187 @@ const CaisseRecuCard = ({
         }
       }
       
-      return { breakdown, strategyName: "Approche équilibrée" };
+      return { 
+        breakdown, 
+        strategyName: "Plus de petits billets",
+        description: "Privilégie les billets moyens et petits"
+      };
     };
     
-    // Apply all 4 strategies
-    const strategies = [strategy1, strategy2, strategy3, strategy4];
+    // Strategy 4: Balanced mix - use equal distribution of bill sizes
+    const strategy4 = (amt) => {
+      let remaining = amt;
+      const breakdown = [];
+      
+      // Calculate target bill counts based on amount
+      if (amt >= 1000) {
+        // For large amounts, use 1-2 of each large denomination
+        const largeBills = [1000, 500, 250];
+        for (const denom of largeBills) {
+          if (remaining >= denom) {
+            const maxPossible = Math.floor(remaining / denom);
+            const count = Math.min(maxPossible, 2); // Max 2 of each large bill
+            if (count > 0) {
+              breakdown.push({ denomination: denom, count, total: denom * count });
+              remaining -= count * denom;
+            }
+          }
+        }
+      }
+      
+      // Use medium bills (100, 50)
+      const mediumBills = [100, 50];
+      for (const denom of mediumBills) {
+        if (remaining >= denom) {
+          const maxPossible = Math.floor(remaining / denom);
+          const count = Math.min(maxPossible, 4); // Max 4 of each medium bill
+          if (count > 0) {
+            breakdown.push({ denomination: denom, count, total: denom * count });
+            remaining -= count * denom;
+          }
+        }
+      }
+      
+      // Use small bills for remainder
+      if (remaining > 0) {
+        const smallBills = [25, 10, 5];
+        for (const denom of smallBills) {
+          if (remaining >= denom) {
+            const count = Math.floor(remaining / denom);
+            remaining -= count * denom;
+            if (count > 0) {
+              breakdown.push({ denomination: denom, count, total: denom * count });
+            }
+          }
+        }
+      }
+      
+      return { 
+        breakdown, 
+        strategyName: "Mix équilibré",
+        description: "Répartit sur différentes tailles"
+      };
+    };
     
-    strategies.forEach((strategy, index) => {
-      const result = strategy(givableAmount);
-      const breakdown = result.breakdown;
+    // Strategy 5: Alternative - use only certain bill sizes
+    const strategy5 = (amt) => {
+      let remaining = amt;
+      const breakdown = [];
       
-      // Calculate totals
-      const totalAmount = breakdown.reduce((sum, item) => sum + item.total, 0);
-      const totalNotes = breakdown.reduce((sum, item) => sum + item.count, 0);
+      // Try to use only 250, 100, 50 bills when possible
+      const preferredBills = [250, 100, 50, 25, 10, 5];
       
-      // Create unique key
-      const comboKey = breakdown.map(item => `${item.count}x${item.denomination}`).join('-') || `empty-${index}`;
+      for (const denom of preferredBills) {
+        if (remaining >= denom) {
+          const count = Math.floor(remaining / denom);
+          remaining -= count * denom;
+          if (count > 0) {
+            breakdown.push({ denomination: denom, count, total: denom * count });
+          }
+        }
+      }
       
-      // Only add if unique
-      if (!combinations.some(c => c.key === comboKey)) {
-        combinations.push({
-          key: comboKey,
-          breakdown,
+      return { 
+        breakdown, 
+        strategyName: "Billets standards",
+        description: "Utilise 250, 100, 50 HTG principalement"
+      };
+    };
+    
+    // Apply the 4 best strategies (we have 5, will pick the most different 4)
+    const allStrategies = [strategy1, strategy2, strategy3, strategy4, strategy5];
+    const results = allStrategies.map(strat => strat(givableAmount));
+    
+    // Pick the 4 most different combinations
+    const selectedCombinations = [];
+    const seenPatterns = new Set();
+    
+    for (const result of results) {
+      const patternKey = result.breakdown.map(item => `${item.denomination}:${item.count}`).join('|');
+      
+      if (!seenPatterns.has(patternKey) && selectedCombinations.length < 4) {
+        seenPatterns.add(patternKey);
+        
+        // Calculate totals
+        const totalAmount = result.breakdown.reduce((sum, item) => sum + item.total, 0);
+        const totalNotes = result.breakdown.reduce((sum, item) => sum + item.count, 0);
+        
+        selectedCombinations.push({
+          key: `combo-${selectedCombinations.length + 1}`,
+          breakdown: result.breakdown,
           totalNotes,
           totalAmount,
           remainder,
           isExact: remainder === 0,
           strategyName: result.strategyName,
-          strategyIndex: index
+          description: result.description,
+          strategyIndex: selectedCombinations.length
         });
       }
-    });
+    }
     
-    // Ensure we have 4 combinations (duplicate if necessary)
-    while (combinations.length < 4 && combinations.length > 0) {
-      const lastCombo = combinations[combinations.length - 1];
-      combinations.push({
-        ...lastCombo,
-        key: `${lastCombo.key}-copy-${combinations.length}`,
-        strategyName: `${lastCombo.strategyName} (variante)`
+    // If we still don't have 4 unique combinations, create variations
+    while (selectedCombinations.length < 4) {
+      const baseCombo = selectedCombinations[selectedCombinations.length - 1] || selectedCombinations[0];
+      const variationIndex = selectedCombinations.length;
+      
+      // Create a variation by adjusting one denomination
+      let variationBreakdown = [...baseCombo.breakdown];
+      if (variationBreakdown.length > 0) {
+        // Try to adjust the first bill
+        const firstBill = variationBreakdown[0];
+        if (firstBill.count > 1) {
+          // Reduce by 1 and add smaller bills
+          variationBreakdown[0] = {
+            ...firstBill,
+            count: firstBill.count - 1,
+            total: (firstBill.count - 1) * firstBill.denomination
+          };
+          
+          // Add equivalent in smaller bills
+          const remainingValue = firstBill.denomination;
+          // Find smaller denominations to add
+          const smallerDenoms = denominations.filter(d => d < firstBill.denomination);
+          let tempRemaining = remainingValue;
+          for (const denom of smallerDenoms) {
+            if (tempRemaining >= denom) {
+              const count = Math.floor(tempRemaining / denom);
+              tempRemaining -= count * denom;
+              if (count > 0) {
+                variationBreakdown.push({
+                  denomination: denom,
+                  count,
+                  total: denom * count
+                });
+              }
+            }
+          }
+        }
+      }
+      
+      const totalAmount = variationBreakdown.reduce((sum, item) => sum + item.total, 0);
+      const totalNotes = variationBreakdown.reduce((sum, item) => sum + item.count, 0);
+      
+      selectedCombinations.push({
+        key: `variation-${variationIndex}`,
+        breakdown: variationBreakdown,
+        totalNotes,
+        totalAmount,
+        remainder,
+        isExact: remainder === 0,
+        strategyName: `${baseCombo.strategyName} (variante)`,
+        description: "Variation de la méthode principale",
+        strategyIndex: variationIndex
       });
     }
     
     // Sort by: fewest notes first, then strategy order
-    return combinations.sort((a, b) => {
+    return selectedCombinations.sort((a, b) => {
       if (a.totalNotes !== b.totalNotes) {
         return a.totalNotes - b.totalNotes;
       }
       return a.strategyIndex - b.strategyIndex;
-    }).slice(0, 4); // Always show exactly 4 combinations
+    });
   }, [changeNeeded, shouldGiveChange]);
 
   const formatDepositDisplay = (depot) => {
@@ -443,12 +544,12 @@ const CaisseRecuCard = ({
             </div>
           )}
 
-          {/* Change combinations - ALWAYS 4 combinations */}
+          {/* Change combinations - 4 TRULY DIFFERENT combinations */}
           {shouldGiveChange && generateChangeCombinations.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-1 mb-2">
                 <Sparkles size={10} className="text-green-300" />
-                <p className="text-xs font-bold text-green-300">4 Combinaisons possibles:</p>
+                <p className="text-xs font-bold text-green-300">4 Combinaisons différentes:</p>
               </div>
               
               {/* Denomination info */}
@@ -458,7 +559,7 @@ const CaisseRecuCard = ({
                 </p>
               </div>
               
-              {/* Single column of 4 combinations */}
+              {/* Single column of 4 truly different combinations */}
               <div className="space-y-2">
                 {generateChangeCombinations.map((combo, index) => (
                   <div 
@@ -473,33 +574,29 @@ const CaisseRecuCard = ({
                         : 'border-amber-400 border-opacity-40 bg-amber-500 bg-opacity-10'
                     }`}
                   >
-                    {/* Option header with strategy name */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${
-                          index === 0 ? 'bg-yellow-400' :
-                          index === 1 ? 'bg-blue-400' :
-                          index === 2 ? 'bg-purple-400' : 'bg-amber-400'
-                        }`}></div>
-                        <div>
+                    {/* Option header with strategy name and description */}
+                    <div className="mb-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${
+                            index === 0 ? 'bg-yellow-400' :
+                            index === 1 ? 'bg-blue-400' :
+                            index === 2 ? 'bg-purple-400' : 'bg-amber-400'
+                          }`}></div>
                           <p className="text-xs font-bold text-green-300">
-                            Option {index + 1}
-                          </p>
-                          <p className="text-[9px] opacity-80 mt-0.5">
-                            {combo.strategyName}
+                            Option {index + 1}: {combo.strategyName}
                           </p>
                         </div>
+                        <div className="flex items-center gap-1">
+                          <Coins size={10} className="text-green-300 opacity-70" />
+                          <span className="text-[10px] opacity-80">
+                            {combo.totalNotes} pièce{combo.totalNotes !== 1 ? 's' : ''}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Coins size={10} className={
-                          index === 0 ? 'text-green-300' :
-                          index === 1 ? 'text-blue-300' :
-                          index === 2 ? 'text-purple-300' : 'text-amber-300'
-                        } />
-                        <span className="text-[10px] opacity-80">
-                          {combo.totalNotes} pièce{combo.totalNotes !== 1 ? 's' : ''}
-                        </span>
-                      </div>
+                      <p className="text-[9px] opacity-80 ml-4">
+                        {combo.description}
+                      </p>
                     </div>
                     
                     {/* Complete breakdown */}
@@ -560,42 +657,47 @@ const CaisseRecuCard = ({
                         </div>
                       </>
                     ) : (
-                      // Show empty state
+                      // Show empty state for amounts < 5 HTG
                       <div className="text-center py-3">
                         <p className="text-xs text-amber-300 font-bold mb-1">
-                          Aucun billet/monnaie possible
+                          {combo.strategyName}
                         </p>
                         <p className="text-[10px] opacity-80">
                           Le montant est inférieur à 5 HTG
                         </p>
+                        <div className="mt-2 pt-2 border-t border-amber-400 border-opacity-20">
+                          <p className="text-[10px] font-bold text-amber-300">
+                            Total abandonné: {formaterArgent(combo.remainder)} HTG
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
               
-              {/* Practical tips */}
+              {/* Strategy comparison */}
               <div className="bg-green-500 bg-opacity-5 rounded p-2 border border-green-400 border-opacity-10">
                 <div className="flex items-center gap-1 mb-1">
                   <Sparkles size={9} className="text-green-300" />
-                  <p className="text-[10px] font-bold text-green-300">Guide des options:</p>
+                  <p className="text-[10px] font-bold text-green-300">Comparaison des stratégies:</p>
                 </div>
-                <div className="grid grid-cols-2 gap-1 text-[9px]">
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
-                    <span className="opacity-80">Option 1: Moins de billets</span>
+                <div className="space-y-1 text-[9px]">
+                  <div className="flex items-start gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-0.5"></div>
+                    <span className="opacity-80"><span className="font-bold">Option 1:</span> Moins de billets au total (recommandé)</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                    <span className="opacity-80">Option 2: Plus de 500 HTG</span>
+                  <div className="flex items-start gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-0.5"></div>
+                    <span className="opacity-80"><span className="font-bold">Option 2:</span> Plus de billets de 500 HTG, moins de 1000 HTG</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400"></div>
-                    <span className="opacity-80">Option 3: Moins de petite monnaie</span>
+                  <div className="flex items-start gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-0.5"></div>
+                    <span className="opacity-80"><span className="font-bold">Option 3:</span> Plus de petits et moyens billets</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                    <span className="opacity-80">Option 4: Mix équilibré</span>
+                  <div className="flex items-start gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5"></div>
+                    <span className="opacity-80"><span className="font-bold">Option 4:</span> Répartition équilibrée entre tailles</span>
                   </div>
                 </div>
               </div>
