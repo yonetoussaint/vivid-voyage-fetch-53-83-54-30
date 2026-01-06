@@ -26,97 +26,178 @@ const CaisseRecuCard = ({
     return amount - remainder; // Round down to nearest multiple of 5
   };
 
-  // Smart change combination algorithm - always show combinations
+  // Simple greedy algorithm that always works
   const generateChangeCombinations = useMemo(() => {
     if (!shouldGiveChange || changeNeeded <= 0) return [];
     
     const amount = Math.round(changeNeeded);
     const givableAmount = getMaximumGivableAmount(amount);
     const remainder = amount - givableAmount;
+    
+    if (givableAmount === 0) {
+      // If amount is less than 5, we can't give any change
+      return [{
+        key: 'no-change',
+        breakdown: [],
+        totalNotes: 0,
+        totalAmount: 0,
+        remainder: remainder,
+        isExact: false
+      }];
+    }
+    
     const combinations = [];
     
-    // Helper function to generate combinations recursively
-    const findCombinations = (remaining, currentCombo, startIndex, maxDepth = 4) => {
-      if (remaining === 0) {
-        // Format and add the combination
-        const formattedCombo = currentCombo
-          .filter(item => item.count > 0)
-          .map(item => ({
-            denomination: item.denomination,
-            count: item.count,
-            total: item.denomination * item.count
-          }))
-          .sort((a, b) => b.denomination - a.denomination);
-        
-        // Only add if not duplicate
-        const comboKey = formattedCombo.map(c => `${c.count}x${c.denomination}`).join('-');
-        if (!combinations.some(c => c.key === comboKey)) {
-          combinations.push({
-            key: comboKey,
-            breakdown: formattedCombo,
-            totalNotes: formattedCombo.reduce((sum, item) => sum + item.count, 0),
-            totalAmount: formattedCombo.reduce((sum, item) => sum + item.total, 0),
-            remainder: remainder,
-            isExact: remainder === 0
-          });
+    // Generate 3 different combination strategies
+    const strategies = [
+      // Strategy 1: Greedy algorithm (most common approach)
+      (amount) => {
+        let remaining = amount;
+        const breakdown = [];
+        for (const denom of denominations) {
+          if (remaining >= denom) {
+            const count = Math.floor(remaining / denom);
+            remaining -= count * denom;
+            if (count > 0) {
+              breakdown.push({ denomination: denom, count, total: denom * count });
+            }
+          }
         }
-        return;
-      }
+        return breakdown;
+      },
       
-      if (remaining < 0 || startIndex >= denominations.length || maxDepth === 0) {
-        return;
-      }
-      
-      const denom = denominations[startIndex];
-      if (denom > remaining) {
-        // Skip this denomination, try smaller ones
-        findCombinations(remaining, currentCombo, startIndex + 1, maxDepth - 1);
-        return;
-      }
-      
-      const maxCount = Math.floor(remaining / denom);
-      
-      // Limit to reasonable number of coins/bills of same denomination (max 10)
-      const actualMaxCount = Math.min(maxCount, 10);
-      
-      for (let count = actualMaxCount; count >= 0; count--) {
-        const newRemaining = remaining - (count * denom);
-        const newCombo = [...currentCombo, { denomination: denom, count }];
+      // Strategy 2: Prefer larger bills but try to use fewer total pieces
+      (amount) => {
+        let remaining = amount;
+        const breakdown = [];
         
-        findCombinations(newRemaining, newCombo, startIndex + 1, maxDepth - 1);
+        // First try with 1000 and 500 notes
+        for (const denom of [1000, 500, 250, 100]) {
+          if (remaining >= denom) {
+            const count = Math.floor(remaining / denom);
+            // If using this denomination would leave a small remainder, adjust
+            const remainderAfter = remaining - (count * denom);
+            if (remainderAfter > 0 && remainderAfter < 25) {
+              // Try with one less of this denomination
+              const adjustedCount = Math.max(0, count - 1);
+              remaining -= adjustedCount * denom;
+              if (adjustedCount > 0) {
+                breakdown.push({ denomination: denom, count: adjustedCount, total: denom * adjustedCount });
+              }
+            } else {
+              remaining -= count * denom;
+              if (count > 0) {
+                breakdown.push({ denomination: denom, count, total: denom * count });
+              }
+            }
+          }
+        }
         
-        // Limit total combinations for performance
-        if (combinations.length >= 15) return;
+        // Fill remaining with smaller denominations
+        for (const denom of [50, 25, 10, 5]) {
+          if (remaining >= denom) {
+            const count = Math.floor(remaining / denom);
+            remaining -= count * denom;
+            if (count > 0) {
+              breakdown.push({ denomination: denom, count, total: denom * count });
+            }
+          }
+        }
+        
+        return breakdown;
+      },
+      
+      // Strategy 3: Prefer more smaller bills for flexibility
+      (amount) => {
+        let remaining = amount;
+        const breakdown = [];
+        
+        // Avoid 1000 notes if possible, use 500s instead
+        if (remaining >= 1000) {
+          const thousandCount = Math.floor(remaining / 1000);
+          // Convert half of 1000s to 500s if possible
+          const thousandsToConvert = Math.floor(thousandCount / 2);
+          const remainingThousands = thousandCount - thousandsToConvert;
+          
+          if (thousandsToConvert > 0) {
+            breakdown.push({ 
+              denomination: 500, 
+              count: thousandsToConvert * 2, 
+              total: thousandsToConvert * 1000 
+            });
+            remaining -= thousandsToConvert * 1000;
+          }
+          
+          if (remainingThousands > 0) {
+            breakdown.push({ 
+              denomination: 1000, 
+              count: remainingThousands, 
+              total: remainingThousands * 1000 
+            });
+            remaining -= remainingThousands * 1000;
+          }
+        }
+        
+        // Use greedy for the rest
+        for (const denom of [500, 250, 100, 50, 25, 10, 5]) {
+          if (remaining >= denom) {
+            const count = Math.floor(remaining / denom);
+            remaining -= count * denom;
+            if (count > 0) {
+              breakdown.push({ denomination: denom, count, total: denom * count });
+            }
+          }
+        }
+        
+        return breakdown;
       }
-    };
+    ];
     
-    // Generate combinations for givable amount
-    findCombinations(givableAmount, [], 0, 4);
-    
-    // Remove duplicates and sort
-    const uniqueCombinations = [];
-    const seen = new Set();
-    
-    combinations.forEach(combo => {
-      if (!seen.has(combo.key)) {
-        seen.add(combo.key);
-        uniqueCombinations.push(combo);
+    // Generate combinations using different strategies
+    strategies.forEach((strategy, index) => {
+      const breakdown = strategy(givableAmount);
+      
+      // Calculate total from breakdown
+      const totalAmount = breakdown.reduce((sum, item) => sum + item.total, 0);
+      const totalNotes = breakdown.reduce((sum, item) => sum + item.count, 0);
+      
+      // Create a unique key for this combination
+      const comboKey = breakdown.map(item => `${item.count}x${item.denomination}`).join('-') || `empty-${index}`;
+      
+      // Only add if we haven't seen this exact combination
+      if (!combinations.some(c => c.key === comboKey)) {
+        combinations.push({
+          key: comboKey,
+          breakdown,
+          totalNotes,
+          totalAmount,
+          remainder,
+          isExact: remainder === 0,
+          strategyIndex: index
+        });
       }
     });
     
-    // Sort by: fewest notes, then larger denominations
-    return uniqueCombinations
-      .sort((a, b) => {
-        // First by total notes
-        if (a.totalNotes !== b.totalNotes) {
-          return a.totalNotes - b.totalNotes;
-        }
-        // Then by largest denomination
-        const aMax = Math.max(...a.breakdown.map(d => d.denomination));
-        const bMax = Math.max(...b.breakdown.map(d => d.denomination));
-        return bMax - aMax;
-      })
-      .slice(0, 4); // Show top 4 combinations
+    // Ensure we have at least one combination (even if empty)
+    if (combinations.length === 0) {
+      combinations.push({
+        key: 'fallback',
+        breakdown: [],
+        totalNotes: 0,
+        totalAmount: 0,
+        remainder,
+        isExact: false,
+        strategyIndex: 0
+      });
+    }
+    
+    // Sort by: fewest notes first, then by strategy order
+    return combinations.sort((a, b) => {
+      if (a.totalNotes !== b.totalNotes) {
+        return a.totalNotes - b.totalNotes;
+      }
+      return a.strategyIndex - b.strategyIndex;
+    }).slice(0, 3); // Show top 3 combinations
   }, [changeNeeded, shouldGiveChange]);
 
   const formatDepositDisplay = (depot) => {
@@ -349,67 +430,88 @@ const CaisseRecuCard = ({
                       </div>
                     </div>
                     
-                    {/* Complete breakdown */}
-                    <div className="space-y-1.5 mb-2">
-                      {combo.breakdown.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${
-                              item.denomination >= 500 ? 'bg-green-500' : 
-                              item.denomination >= 100 ? 'bg-green-400' : 
-                              'bg-green-300'
-                            }`}></div>
-                            <span className="text-xs opacity-90">
-                              {item.count} × {formaterArgent(item.denomination)} HTG
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium opacity-70">=</span>
-                            <span className="text-xs font-bold text-green-300">
-                              {formaterArgent(item.total)} HTG
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Total and remainder info */}
-                    <div className="pt-2 border-t border-green-400 border-opacity-20">
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                            <span className="text-xs font-bold text-green-300">Total donné:</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm font-bold text-green-300">
-                              {formaterArgent(combo.totalAmount)}
-                            </span>
-                            <span className="text-[10px] opacity-70">HTG</span>
-                          </div>
-                        </div>
-                        
-                        {/* Show remainder if any */}
-                        {combo.remainder > 0 && (
-                          <div className="flex items-center justify-between pt-1 border-t border-amber-400 border-opacity-20">
-                            <div className="flex items-center gap-1">
-                              <AlertCircle size={10} className="text-amber-300" />
-                              <span className="text-[10px] text-amber-300">Reste abandonné:</span>
+                    {/* Complete breakdown - show even if empty */}
+                    {combo.breakdown.length > 0 ? (
+                      <>
+                        <div className="space-y-1.5 mb-2">
+                          {combo.breakdown.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${
+                                  item.denomination >= 500 ? 'bg-green-500' : 
+                                  item.denomination >= 100 ? 'bg-green-400' : 
+                                  'bg-green-300'
+                                }`}></div>
+                                <span className="text-xs opacity-90">
+                                  {item.count} × {formaterArgent(item.denomination)} HTG
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium opacity-70">=</span>
+                                <span className="text-xs font-bold text-green-300">
+                                  {formaterArgent(item.total)} HTG
+                                </span>
+                              </div>
                             </div>
-                            <span className="text-[11px] font-bold text-amber-300">
-                              {formaterArgent(combo.remainder)} HTG
-                            </span>
-                          </div>
-                        )}
+                          ))}
+                        </div>
                         
-                        {/* Original total for context */}
+                        {/* Total and remainder info */}
+                        <div className="pt-2 border-t border-green-400 border-opacity-20">
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                <span className="text-xs font-bold text-green-300">Total donné:</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm font-bold text-green-300">
+                                  {formaterArgent(combo.totalAmount)}
+                                </span>
+                                <span className="text-[10px] opacity-70">HTG</span>
+                              </div>
+                            </div>
+                            
+                            {/* Show remainder if any */}
+                            {combo.remainder > 0 && (
+                              <div className="flex items-center justify-between pt-1 border-t border-amber-400 border-opacity-20">
+                                <div className="flex items-center gap-1">
+                                  <AlertCircle size={10} className="text-amber-300" />
+                                  <span className="text-[10px] text-amber-300">Reste abandonné:</span>
+                                </div>
+                                <span className="text-[11px] font-bold text-amber-300">
+                                  {formaterArgent(combo.remainder)} HTG
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Original total for context */}
+                            {combo.remainder > 0 && (
+                              <div className="text-[9px] opacity-70 text-center pt-0.5">
+                                Sur {formaterArgent(combo.totalAmount + combo.remainder)} HTG demandés
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      // Show empty state if no breakdown (amount < 5)
+                      <div className="text-center py-3">
+                        <p className="text-xs text-amber-300 font-bold mb-1">
+                          Aucun billet/monnaie possible
+                        </p>
+                        <p className="text-[10px] opacity-80">
+                          Le montant est inférieur à 5 HTG
+                        </p>
                         {combo.remainder > 0 && (
-                          <div className="text-[9px] opacity-70 text-center pt-0.5">
-                            Sur {formaterArgent(combo.totalAmount + combo.remainder)} HTG demandés
+                          <div className="mt-2 pt-2 border-t border-amber-400 border-opacity-20">
+                            <p className="text-[10px] text-amber-300 font-bold">
+                              Total abandonné: {formaterArgent(combo.remainder)} HTG
+                            </p>
                           </div>
                         )}
                       </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -422,13 +524,13 @@ const CaisseRecuCard = ({
                 </div>
                 <div className="space-y-1">
                   <p className="text-[9px] opacity-80 leading-tight">
-                    • L'<span className="text-green-300 font-bold">Option 1</span> utilise le moins de billets/monnaie
+                    • L'<span className="text-green-300 font-bold">Option 1</span> est généralement la plus efficace
                   </p>
                   <p className="text-[9px] opacity-80 leading-tight">
-                    • Seuls les billets de 5 HTG et plus sont utilisés
+                    • Les options 2 et 3 offrent des alternatives selon vos billets disponibles
                   </p>
                   <p className="text-[9px] opacity-80 leading-tight">
-                    • Les restes inférieurs à 5 HTG sont abandonnés par le vendeur
+                    • Les montants inférieurs à 5 HTG sont entièrement abandonnés
                   </p>
                 </div>
               </div>
