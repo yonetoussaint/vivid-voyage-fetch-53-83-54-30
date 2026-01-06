@@ -28,6 +28,13 @@ export function AppRoutes() {
         }
       />
 
+ <Route
+        path="portfolio"
+        element={
+          <Portfolio/>
+        }
+      />
+
       <Route path="product/:id" element={<Navigate to="overview" replace />} />
 
       <Route
