@@ -1,5 +1,4 @@
 import React from 'react';
-import { formaterArgent, formaterGallons } from '@/utils/formatters';
 import PumpHeader from '@/components/easy/PumpHeader';
 import PumpSelector from '@/components/easy/PumpSelector';
 import PumpPistolets from '@/components/easy/PumpPistolets';
@@ -46,60 +45,31 @@ const PumpInputView = ({
         showPropane={showPropane}
       />
 
-      {/* Render PumpHeader for ALL tabs */}
+      {/* Render content based on selected tab */}
       {pompeEtendue === 'propane' ? (
         <>
-          {/* PumpHeader for Propane */}
+          {/* PumpHeader for Propane mode */}
           <PumpHeader
             pompe="Propane"
             shift={shift}
             isPropane={true}
             propaneData={propaneDonneesCourantes}
-            propaneTotaux={totaux}
             prixPropane={prixPropane}
             vendeurs={vendeurs}
             vendeurDepots={depotsActuels}
-            // These props are not used for propane but kept for consistency
+            // Pass dummy data for unused props (propane doesn't use these)
             donneesPompe={{}}
             mettreAJourAffectationVendeur={() => {}}
             prix={prix}
           />
 
-          {/* Propane input manager */}
+          {/* Your existing PropaneManager component */}
           <PropaneManager
             shift={shift}
             propaneDonnees={propaneDonneesCourantes}
-            mettreAJourPropane={mettreAJourPropane}
+            mettreAJourPropane={(field, value) => mettreAJourPropane(field, value, shift)}
             prixPropane={prixPropane}
           />
-          
-          {/* Propane report card with detailed readings */}
-          <div className="bg-gradient-to-br from-red-500 to-orange-600 text-white rounded-xl p-4 shadow-xl">
-            <h3 className="text-lg font-bold mb-3">Lectures Propane</h3>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                  <p className="text-xs opacity-90">Début Shift</p>
-                  <p className="text-xl font-bold">{propaneDonneesCourantes.debut || '0.000'}</p>
-                </div>
-                <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                  <p className="text-xs opacity-90">Fin Shift</p>
-                  <p className="text-xl font-bold">{propaneDonneesCourantes.fin || '0.000'}</p>
-                </div>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded-lg p-3">
-                <div className="text-center">
-                  <p className="text-xs opacity-90 mb-1">Différence (Gallons)</p>
-                  <p className="text-2xl font-bold">
-                    {propaneDonneesCourantes.debut && propaneDonneesCourantes.fin 
-                      ? (parseFloat(propaneDonneesCourantes.fin) - parseFloat(propaneDonneesCourantes.debut)).toFixed(3)
-                      : '0.000'
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
         </>
       ) : (
         // Render pump pistolets for regular pump tabs
