@@ -258,45 +258,13 @@ const ChangeCombinations = ({
         </p>
       </div>
 
-      {/* Strategy comparison summary */}
+      {/* Note only (without the strategy guide) */}
       <div className="bg-green-500 bg-opacity-5 rounded p-2 border border-green-400 border-opacity-10">
-        <div className="flex items-center gap-1 mb-1">
-          <Sparkles size={9} className="text-green-300" />
-          <p className="text-[10px] font-bold text-green-300">Guide des stratégies:</p>
-        </div>
-        <div className="space-y-1 text-[9px]">
-          <div className="flex items-start gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-0.5"></div>
-            <span className="opacity-80">
-              <span className="font-bold">Option 1 (Minimum de billets):</span> Utilise le moins de billets possible
-            </span>
-          </div>
-          <div className="flex items-start gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-0.5"></div>
-            <span className="opacity-80">
-              <span className="font-bold">Option 2 (Approche équilibrée):</span> Bon compromis entre toutes les coupures
-            </span>
-          </div>
-          <div className="flex items-start gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt=0.5"></div>
-            <span className="opacity-80">
-              <span className="font-bold">Option 3 (Petites coupures):</span> Plus de billets de 250, 100, 50 HTG
-            </span>
-          </div>
-          <div className="flex items-start gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5"></div>
-            <span className="opacity-80">
-              <span className="font-bold">Option 4 (Solution optimisée):</span> Algorithme intelligent pour la meilleure distribution
-            </span>
-          </div>
-        </div>
-        <div className="mt-2 pt-2 border-t border-green-400 border-opacity-10">
-          <div className="flex items-center gap-1">
-            <Info size={9} className="text-blue-300" />
-            <p className="text-[9px] text-blue-300">
-              <span className="font-bold">Note:</span> Choisissez en fonction de vos disponibilités en caisse
-            </p>
-          </div>
+        <div className="flex items-center gap-1">
+          <Info size={9} className="text-blue-300" />
+          <p className="text-[9px] text-blue-300">
+            <span className="font-bold">Note:</span> Choisissez en fonction de vos disponibilités en caisse
+          </p>
         </div>
       </div>
     </div>
