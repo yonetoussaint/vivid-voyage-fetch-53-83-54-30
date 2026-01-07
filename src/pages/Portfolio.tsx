@@ -348,11 +348,18 @@ export default function Portfolio() {
         <div className="max-w-4xl mx-auto px-2 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img 
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" 
-                alt="Alex Chen"
-                className="w-10 h-10 rounded-full border-2 border-gray-200"
-              />
+              {/* Hamburger Menu Button - Replacing the profile picture */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? (
+                  <X className="w-6 h-6 text-gray-700" />
+                ) : (
+                  <Menu className="w-6 h-6 text-gray-700" />
+                )}
+              </button>
               <div>
                 <h1 className="font-bold text-lg">Alex Chen</h1>
                 <p className="text-xs text-gray-600">Full Stack Developer</p>
@@ -372,69 +379,102 @@ export default function Portfolio() {
           </div>
         </div>
 
-        {/* Thin Section Indicator Band */}
-        <div className="border-t">
-          <div className="max-w-4xl mx-auto">
-            <button
-              onClick={() => setSectionDropdownOpen(!sectionDropdownOpen)}
-              className="w-full flex items-center justify-between px-4 py-1.5 text-sm hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                {(() => {
-                  const Icon = getActiveTabIcon();
-                  return <Icon className="w-4 h-4 text-gray-500" />;
-                })()}
-                <span className="text-gray-700 text-sm font-medium">
-                  {getActiveTabLabel()}
-                </span>
-                <span className="text-gray-400 text-xs">•</span>
-                <span className="text-gray-500 text-xs">
-                  {getActiveTabDescription()}
-                </span>
+        {/* Mobile Menu - Appears when hamburger is clicked */}
+        {mobileMenuOpen && (
+          <div className="border-t bg-white shadow-lg">
+            <div className="max-w-4xl mx-auto py-2">
+              <div className="grid grid-cols-2 gap-2 px-2">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        scrollToSection(tab.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-left ${
+                        isActive 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-sm font-medium">{tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              <ChevronDown 
-                className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                  sectionDropdownOpen ? 'rotate-180' : ''
-                }`} 
-              />
-            </button>
-
-            {/* Dropdown Panel */}
-            {sectionDropdownOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-40"
-                  onClick={() => setSectionDropdownOpen(false)}
-                />
-                <div className="absolute left-0 right-0 bg-white border-t shadow-lg z-50">
-                  <div className="max-w-4xl mx-auto pb-2">
-                    {tabs.map((tab) => {
-                      const Icon = tab.icon;
-                      const isActive = activeTab === tab.id;
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => scrollToSection(tab.id)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${
-                            isActive 
-                              ? 'bg-blue-50 text-blue-600' 
-                              : 'text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <Icon className="w-5 h-5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium">{tab.label}</div>
-                            <div className="text-xs text-gray-500">{tab.description}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Thin Section Indicator Band - Hidden when mobile menu is open */}
+        {!mobileMenuOpen && (
+          <div className="border-t">
+            <div className="max-w-4xl mx-auto">
+              <button
+                onClick={() => setSectionDropdownOpen(!sectionDropdownOpen)}
+                className="w-full flex items-center justify-between px-4 py-1.5 text-sm hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const Icon = getActiveTabIcon();
+                    return <Icon className="w-4 h-4 text-gray-500" />;
+                  })()}
+                  <span className="text-gray-700 text-sm font-medium">
+                    {getActiveTabLabel()}
+                  </span>
+                  <span className="text-gray-400 text-xs">•</span>
+                  <span className="text-gray-500 text-xs">
+                    {getActiveTabDescription()}
+                  </span>
+                </div>
+                <ChevronDown 
+                  className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+                    sectionDropdownOpen ? 'rotate-180' : ''
+                  }`} 
+                />
+              </button>
+
+              {/* Dropdown Panel */}
+              {sectionDropdownOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40"
+                    onClick={() => setSectionDropdownOpen(false)}
+                  />
+                  <div className="absolute left-0 right-0 bg-white border-t shadow-lg z-50">
+                    <div className="max-w-4xl mx-auto pb-2">
+                      {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => scrollToSection(tab.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${
+                              isActive 
+                                ? 'bg-blue-50 text-blue-600' 
+                                : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <Icon className="w-5 h-5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium">{tab.label}</div>
+                              <div className="text-xs text-gray-500">{tab.description}</div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Content Area - Added padding-top to account for fixed header */}
