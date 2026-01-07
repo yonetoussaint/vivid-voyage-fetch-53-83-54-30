@@ -500,7 +500,7 @@ const toggleSidePanel = () => {
 )}
 
 {/* Side Panel */}
-<div className={`fixed top-0 right-0 h-full w-80 sm:w-96 bg-white shadow-xl z-50 transform transition-transform duration-300 ${sidePanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+<div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ${sidePanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
   <div className="h-full flex flex-col">
     {/* Close Button */}
     <button
@@ -532,134 +532,70 @@ const toggleSidePanel = () => {
       </div>
     </div>
 
-    {/* Scrollable Content */}
+    {/* Contact Information */}
     <div className="flex-1 overflow-y-auto p-6">
-      {/* Contact Info */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Contact</h3>
-        <div className="space-y-3">
-          <a href="mailto:alex@example.com" className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-            <Mail className="w-5 h-5 text-gray-400 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm text-gray-500 truncate">Email</p>
-              <p className="font-medium text-gray-800 truncate">alex@example.com</p>
-            </div>
-          </a>
-
-          <a href="tel:+15551234567" className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-            <Phone className="w-5 h-5 text-gray-400 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm text-gray-500 truncate">Phone</p>
-              <p className="font-medium text-gray-800 truncate">+1 (555) 123-4567</p>
-            </div>
-          </a>
-
-          <div className="flex items-center gap-3 p-3">
-            <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm text-gray-500 truncate">Location</p>
-              <p className="font-medium text-gray-800 truncate">San Francisco, CA</p>
-            </div>
+      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Contact Information</h3>
+      
+      <div className="space-y-4">
+        <a href="mailto:alex@example.com" className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Mail className="w-5 h-5 text-blue-600" />
           </div>
-
-          <a href="https://alexchen.dev" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-            <Globe className="w-5 h-5 text-gray-400 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm text-gray-500 truncate">Website</p>
-              <p className="font-medium text-gray-800 truncate">alexchen.dev</p>
-            </div>
-          </a>
-        </div>
-      </div>
-
-      {/* Social Links */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Social</h3>
-        <div className="flex gap-2">
-          <a href="#" className="flex-1 flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-            <Github className="w-5 h-5 text-gray-700 mb-1" />
-            <span className="text-xs font-medium">GitHub</span>
-          </a>
-          <a href="#" className="flex-1 flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-            <Linkedin className="w-5 h-5 text-blue-600 mb-1" />
-            <span className="text-xs font-medium">LinkedIn</span>
-          </a>
-          <a href="#" className="flex-1 flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-            <Mail className="w-5 h-5 text-red-500 mb-1" />
-            <span className="text-xs font-medium">Email</span>
-          </a>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Quick Stats</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-blue-50 rounded-lg p-3">
-            <div className="text-lg font-bold text-blue-600">5+</div>
-            <div className="text-xs text-gray-600">Years Experience</div>
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500">Email</p>
+            <p className="font-medium text-gray-800 truncate">alex@example.com</p>
           </div>
-          <div className="bg-green-50 rounded-lg p-3">
-            <div className="text-lg font-bold text-green-600">50+</div>
-            <div className="text-xs text-gray-600">Projects</div>
+        </a>
+
+        <a href="tel:+15551234567" className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Phone className="w-5 h-5 text-green-600" />
           </div>
-          <div className="bg-purple-50 rounded-lg p-3">
-            <div className="text-lg font-bold text-purple-600">2.4k</div>
-            <div className="text-xs text-gray-600">GitHub Stars</div>
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500">Phone</p>
+            <p className="font-medium text-gray-800 truncate">+1 (555) 123-4567</p>
           </div>
-          <div className="bg-orange-50 rounded-lg p-3">
-            <div className="text-lg font-bold text-orange-600">98%</div>
-            <div className="text-xs text-gray-600">Satisfaction</div>
+        </a>
+
+        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+          <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <MapPin className="w-5 h-5 text-purple-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500">Location</p>
+            <p className="font-medium text-gray-800 truncate">San Francisco, CA</p>
           </div>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Navigate</h3>
-        <div className="space-y-1">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  scrollToSection(tab.id);
-                  toggleSidePanel();
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  isActive 
-                    ? 'bg-blue-50 text-blue-600' 
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <Icon className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm font-medium">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        <a href="https://alexchen.dev" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+          <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Globe className="w-5 h-5 text-orange-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500">Website</p>
+            <p className="font-medium text-gray-800 truncate">alexchen.dev</p>
+          </div>
+        </a>
 
-      {/* Availability Status */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-100">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-800">Open to new opportunities</p>
-            <p className="text-xs text-gray-600">Available for full-time & contract work</p>
-          </div>
+        <div className="flex gap-3 mt-6">
+          <a href="#" className="flex-1 flex flex-col items-center p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+            <Github className="w-6 h-6 text-gray-700 mb-2" />
+            <span className="text-sm font-medium">GitHub</span>
+            <span className="text-xs text-gray-500">@alexchen</span>
+          </a>
+          <a href="#" className="flex-1 flex flex-col items-center p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+            <Linkedin className="w-6 h-6 text-blue-600 mb-2" />
+            <span className="text-sm font-medium">LinkedIn</span>
+            <span className="text-xs text-gray-500">/in/alexchen</span>
+          </a>
         </div>
       </div>
     </div>
 
-    {/* Footer */}
+    {/* Footer with minimal copyright */}
     <div className="border-t p-4">
       <p className="text-xs text-gray-500 text-center">
-        © {new Date().getFullYear()} Alex Chen. All rights reserved.
+        © {new Date().getFullYear()} Alex Chen
       </p>
     </div>
   </div>
