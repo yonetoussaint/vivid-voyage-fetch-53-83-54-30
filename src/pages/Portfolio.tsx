@@ -312,6 +312,14 @@ const [sidePanelOpen, setSidePanelOpen] = useState(false);
     { id: 'skills', label: 'Skills', description: 'Technical expertise', icon: Code2 }
   ];
 
+
+const toggleSidePanel = () => {
+  setSidePanelOpen(!sidePanelOpen);
+  setMobileMenuOpen(false); // Close mobile menu if open
+};
+
+
+
   const getActiveTabLabel = () => {
     const activeTabObj = tabs.find(tab => tab.id === activeTab);
     return activeTabObj ? activeTabObj.label : 'About';
