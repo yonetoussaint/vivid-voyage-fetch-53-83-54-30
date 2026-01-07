@@ -6,6 +6,7 @@ export default function Portfolio() {
   const [visibleSections, setVisibleSections] = useState(new Set());
   const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
   const aboutRef = useRef(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // New state for mobile menu
   const projectsRef = useRef(null);
   const experienceRef = useRef(null);
   const skillsRef = useRef(null);
