@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Sparkles, Coins, AlertCircle, Zap, BarChart, Target, Brain, CheckCircle } from 'lucide-react';
+import { Sparkles, Coins, AlertCircle, Zap, BarChart, Target, Brain, Info } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 import { generateChangeCombinations, getMaximumGivableAmount } from '@/utils/changeCalculator';
 
@@ -10,7 +10,6 @@ const ChangeCombinations = ({
   // Calculate givable amount and remainder
   const givableAmount = getMaximumGivableAmount(changeNeeded);
   const remainder = changeNeeded - givableAmount;
-  const hasRemainder = remainder > 0;
 
   // Generate combinations
   const combinations = useMemo(() => {
@@ -25,315 +24,225 @@ const ChangeCombinations = ({
   const getStrategyIcon = (strategyName, index) => {
     switch (strategyName) {
       case 'Minimum de billets':
-        return <Zap size={12} className="text-yellow-400" />;
+        return <Zap size={10} className="text-yellow-500" />;
       case 'Approche équilibrée':
-        return <BarChart size={12} className="text-green-400" />;
+        return <BarChart size={10} className="text-green-500" />;
       case 'Plus de petites coupures':
-        return <Target size={12} className="text-blue-400" />;
+        return <Target size={10} className="text-blue-500" />;
       case 'Solution optimisée':
       case 'Solution mathématique':
-      case 'Variante 1':
-      case 'Variante 2':
-      case 'Variante 3':
-      case 'Variante 4':
-        return <Brain size={12} className="text-purple-400" />;
+        return <Brain size={10} className="text-purple-500" />;
       default:
-        const colors = ['text-yellow-400', 'text-blue-400', 'text-green-400', 'text-purple-400'];
-        return <Sparkles size={12} className={colors[index % colors.length]} />;
+        const colors = ['text-yellow-500', 'text-blue-500', 'text-purple-500', 'text-amber-500'];
+        return <Sparkles size={10} className={colors[index % colors.length]} />;
     }
   };
 
-  const getCardColor = (index) => {
-    switch (index % 4) {
-      case 0: return {
-        bg: 'bg-gradient-to-br from-yellow-500/15 to-amber-500/10',
-        border: 'border-yellow-400/40',
-        accent: 'bg-yellow-500',
-        text: 'text-yellow-300'
-      };
-      case 1: return {
-        bg: 'bg-gradient-to-br from-blue-500/15 to-indigo-500/10',
-        border: 'border-blue-400/40',
-        accent: 'bg-blue-500',
-        text: 'text-blue-300'
-      };
-      case 2: return {
-        bg: 'bg-gradient-to-br from-green-500/15 to-emerald-500/10',
-        border: 'border-green-400/40',
-        accent: 'bg-green-500',
-        text: 'text-green-300'
-      };
-      case 3: return {
-        bg: 'bg-gradient-to-br from-purple-500/15 to-violet-500/10',
-        border: 'border-purple-400/40',
-        accent: 'bg-purple-500',
-        text: 'text-purple-300'
-      };
+  const getCardBorderColor = (index) => {
+    switch (index) {
+      case 0: return 'border-green-400 border-opacity-40 bg-green-500 bg-opacity-15 shadow-sm';
+      case 1: return 'border-blue-400 border-opacity-40 bg-blue-500 bg-opacity-10';
+      case 2: return 'border-purple-400 border-opacity-40 bg-purple-500 bg-opacity-10';
+      case 3: return 'border-amber-400 border-opacity-40 bg-amber-500 bg-opacity-10';
+      default: return 'border-gray-400 border-opacity-40 bg-gray-500 bg-opacity-10';
     }
   };
 
-  const getEfficiencyLabel = (efficiency) => {
-    if (efficiency >= 120) return { text: 'Excellent', color: 'text-green-400', bg: 'bg-green-500/20' };
-    if (efficiency >= 90) return { text: 'Très bon', color: 'text-green-300', bg: 'bg-green-500/15' };
-    if (efficiency >= 60) return { text: 'Bon', color: 'text-yellow-300', bg: 'bg-yellow-500/15' };
-    if (efficiency >= 30) return { text: 'Moyen', color: 'text-orange-300', bg: 'bg-orange-500/15' };
-    return { text: 'Faible', color: 'text-orange-300', bg: 'bg-orange-500/10' };
-  };
-
-  const getDenominationColor = (denomination) => {
-    if (denomination >= 500) return 'bg-green-600';
-    if (denomination >= 100) return 'bg-green-500';
-    if (denomination >= 50) return 'bg-green-400';
-    return 'bg-green-300';
+  const getDotColor = (index) => {
+    switch (index) {
+      case 0: return 'bg-yellow-400';
+      case 1: return 'bg-blue-400';
+      case 2: return 'bg-purple-400';
+      case 3: return 'bg-amber-400';
+      default: return 'bg-gray-400';
+    }
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-1">
-        <Sparkles size={12} className="text-green-300" />
-        <p className="text-xs font-bold text-green-300">Options disponibles:</p>
-        <span className="text-[10px] opacity-70 ml-auto">
-          {combinations.length} combinaisons
-        </span>
+      <div className="flex items-center gap-1 mb-2">
+        <Sparkles size={10} className="text-green-300" />
+        <p className="text-xs font-bold text-green-300">4 Combinaisons intelligentes:</p>
       </div>
 
       {/* Denomination info */}
-      <div className="bg-white/5 rounded-lg p-2 border border-white/10 mb-3">
-        <div className="flex items-center justify-between text-[10px]">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-400"></div>
-            <span className="opacity-80">Montant à rendre:</span>
-            <span className="font-bold text-blue-300">{formaterArgent(changeNeeded)} HTG</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400"></div>
-            <span className="opacity-80">Utilisable:</span>
-            <span className="font-bold text-green-300">{formaterArgent(givableAmount)} HTG</span>
-          </div>
-        </div>
-        {hasRemainder && (
-          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-amber-400/20">
-            <AlertCircle size={10} className="text-amber-300" />
-            <span className="text-[10px] text-amber-300">
-              <span className="font-bold">À abandonner:</span> {formaterArgent(remainder)} HTG
-              <span className="opacity-70 ml-1">(plus petit billet = 5 HTG)</span>
-            </span>
-          </div>
-        )}
+      <div className="bg-blue-500 bg-opacity-10 rounded p-1.5 border border-blue-400 border-opacity-20 mb-2">
+        <p className="text-[9px] text-center text-blue-300">
+          Plus petit billet/monnaie = 5 HTG • Montant utilisable: {formaterArgent(givableAmount)} HTG
+        </p>
       </div>
 
-      {/* All combinations displayed directly */}
-      <div className="space-y-3">
-        {combinations.map((combo, index) => {
-          const colors = getCardColor(index);
-          const efficiency = getEfficiencyLabel(combo.efficiency || 0);
-          
-          return (
-            <div 
-              key={combo.key}
-              className={`rounded-lg p-3 border ${colors.border} ${colors.bg} shadow-sm`}
-            >
-              {/* Strategy header */}
-              <div className="flex items-center justify-between mb-3">
+      {/* All combinations displayed directly - no tabs */}
+      <div className="space-y-2">
+        {combinations.map((combo, index) => (
+          <div 
+            key={combo.key} 
+            className={`rounded-lg p-2 border ${getCardBorderColor(index)}`}
+          >
+            {/* Option header with strategy name and description */}
+            <div className="mb-2">
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${colors.accent} flex items-center justify-center`}>
+                  <div className={`w-2 h-2 rounded-full ${getDotColor(index)}`}></div>
+                  <div className="flex items-center gap-1">
                     {getStrategyIcon(combo.strategyName, index)}
-                  </div>
-                  <div>
-                    <p className={`text-xs font-bold ${colors.text}`}>
+                    <p className="text-xs font-bold text-green-300">
                       Option {index + 1}: {combo.strategyName}
                     </p>
-                    <p className="text-[10px] opacity-80 mt-0.5">
-                      {combo.description}
-                    </p>
                   </div>
                 </div>
-                
-                {/* Efficiency badge */}
-                <div className={`px-2 py-1 rounded ${efficiency.bg}`}>
-                  <p className={`text-[10px] font-bold ${efficiency.color}`}>
-                    {efficiency.text}
-                  </p>
+                <div className="flex items-center gap-1">
+                  <Coins size={10} className="text-green-300 opacity-70" />
+                  <span className="text-[10px] opacity-80">
+                    {combo.totalNotes} pièce{combo.totalNotes !== 1 ? 's' : ''}
+                  </span>
                 </div>
               </div>
+              <p className="text-[9px] opacity-80 ml-4">
+                {combo.description}
+              </p>
+            </div>
 
-              {/* Bills summary */}
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1">
-                    <Coins size={10} className="opacity-70" />
-                    <span className="text-[10px] opacity-80">Composition:</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] opacity-70">
-                      {combo.totalNotes} billets
-                    </span>
-                    <span className="text-[10px] opacity-70">
-                      {formaterArgent(combo.totalAmount)} HTG
-                    </span>
-                  </div>
-                </div>
-
-                {/* Bills visualization */}
-                {combo.breakdown.length > 0 ? (
-                  <div className="space-y-2">
-                    {/* Stack visualization */}
-                    <div className="flex items-end gap-1 h-8">
-                      {combo.breakdown.slice(0, 6).map((item, idx) => (
-                        <div 
-                          key={idx}
-                          className={`${getDenominationColor(item.denomination)} rounded-t-sm transition-all duration-300`}
-                          style={{
-                            width: `${Math.max(20, Math.min(40, 20 + item.count * 2))}px`,
-                            height: `${Math.max(12, Math.min(30, 12 + item.denomination / 100))}px`,
-                            opacity: 0.8 + (item.count * 0.1)
-                          }}
-                          title={`${item.count} × ${formaterArgent(item.denomination)} HTG`}
-                        >
-                          <div className="text-[8px] text-center text-white font-bold mt-1">
-                            {item.count}
-                          </div>
-                        </div>
-                      ))}
-                      {combo.breakdown.length > 6 && (
-                        <div className="text-[10px] opacity-60 pl-2">
-                          +{combo.breakdown.length - 6} autres
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Detailed breakdown */}
-                    <div className="grid grid-cols-2 gap-1.5 mt-2">
-                      {combo.breakdown.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-1.5 bg-white/5 rounded">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${getDenominationColor(item.denomination)}`}></div>
-                            <span className="text-[10px]">
-                              {item.count} × <span className="font-medium">{formaterArgent(item.denomination)}</span>
-                            </span>
-                          </div>
-                          <span className="text-[10px] font-bold text-green-300">
-                            {formaterArgent(item.total)} HTG
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-3 bg-white/5 rounded">
-                    <p className="text-xs text-amber-300 font-bold">
-                      Aucun billet possible
-                    </p>
-                    <p className="text-[10px] opacity-80 mt-1">
-                      Le montant est inférieur à 5 HTG
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer with totals */}
-              <div className="pt-3 border-t border-white/10">
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="text-center">
-                    <p className="text-[10px] opacity-70">Total billets</p>
-                    <p className="text-sm font-bold text-green-300">{combo.totalNotes}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[10px] opacity-70">Montant rendu</p>
-                    <p className="text-sm font-bold text-green-300">{formaterArgent(combo.totalAmount)}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[10px] opacity-70">Efficacité</p>
-                    <p className="text-sm font-bold text-green-300">
-                      {Math.round(combo.efficiency || 0)}%
-                    </p>
-                  </div>
-                </div>
-
-                {/* Remainder warning */}
-                {combo.remainder > 0 && (
-                  <div className="mt-2 pt-2 border-t border-amber-400/20">
-                    <div className="flex items-center gap-1.5">
-                      <AlertCircle size={10} className="text-amber-300" />
-                      <div>
-                        <p className="text-[10px] font-bold text-amber-300">
-                          Monnaie non rendue: {formaterArgent(combo.remainder)} HTG
-                        </p>
-                        <p className="text-[9px] opacity-80">
-                          Doit être abandonné (plus petit billet = 5 HTG)
-                        </p>
+            {/* Complete breakdown */}
+            {combo.breakdown.length > 0 ? (
+              <>
+                <div className="space-y-1.5 mb-2">
+                  {combo.breakdown.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          item.denomination >= 500 ? 'bg-green-500' : 
+                          item.denomination >= 100 ? 'bg-green-400' : 
+                          'bg-green-300'
+                        }`}></div>
+                        <span className="text-xs opacity-90">
+                          {item.count} × {formaterArgent(item.denomination)} HTG
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium opacity-70">=</span>
+                        <span className="text-xs font-bold text-green-300">
+                          {formaterArgent(item.total)} HTG
+                        </span>
                       </div>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
 
-                {/* Exact match indicator */}
-                {combo.isExact && (
-                  <div className="mt-2 flex items-center justify-center gap-1">
-                    <CheckCircle size={10} className="text-green-400" />
-                    <span className="text-[10px] text-green-400 font-bold">
-                      Montant exact - Aucun abandon nécessaire
-                    </span>
-                  </div>
-                )}
-              </div>
+                {/* Total and remainder info */}
+                <div className="pt-2 border-t border-white border-opacity-20">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span className="text-xs font-bold text-green-300">Total donné:</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-bold text-green-300">
+                          {formaterArgent(combo.totalAmount)}
+                        </span>
+                        <span className="text-[10px] opacity-70">HTG</span>
+                      </div>
+                    </div>
 
-              {/* Quick comparison tip */}
-              {index === 0 && (
-                <div className="mt-2 pt-2 border-t border-white/10">
-                  <p className="text-[9px] text-center opacity-70">
-                    💡 <span className="font-medium">Recommandé</span> : Moins de billets, plus pratique
+                    {/* Show remainder if any */}
+                    {combo.remainder > 0 && (
+                      <div className="flex items-center justify-between pt-1 border-t border-amber-400 border-opacity-20">
+                        <div className="flex items-center gap-1">
+                          <AlertCircle size={10} className="text-amber-300" />
+                          <span className="text-[10px] text-amber-300">Reste abandonné:</span>
+                        </div>
+                        <span className="text-[11px] font-bold text-amber-300">
+                          {formaterArgent(combo.remainder)} HTG
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Efficiency score (if available) */}
+                    {combo.efficiency && (
+                      <div className="flex items-center justify-between pt-1 border-t border-green-400 border-opacity-20">
+                        <div className="flex items-center gap-1">
+                          <Info size={10} className="text-blue-300" />
+                          <span className="text-[10px] text-blue-300">Score d'efficacité:</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-16 bg-white bg-opacity-10 rounded-full h-1.5">
+                            <div 
+                              className="bg-gradient-to-r from-green-500 to-green-300 h-1.5 rounded-full"
+                              style={{ 
+                                width: `${Math.min(100, (combo.efficiency || 0) / 1.5)}%` 
+                              }}
+                            ></div>
+                          </div>
+                          <span className="text-[10px] font-bold text-green-300">
+                            {Math.round(combo.efficiency)}%
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              // Show empty state for amounts < 5 HTG
+              <div className="text-center py-3">
+                <p className="text-xs text-amber-300 font-bold mb-1">
+                  {combo.strategyName}
+                </p>
+                <p className="text-[10px] opacity-80">
+                  Le montant est inférieur à 5 HTG
+                </p>
+                <div className="mt-2 pt-2 border-t border-amber-400 border-opacity-20">
+                  <p className="text-[10px] font-bold text-amber-300">
+                    Total abandonné: {formaterArgent(combo.remainder)} HTG
                   </p>
                 </div>
-              )}
-            </div>
-          );
-        })}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* Comparison guide */}
-      <div className="bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-lg p-3 border border-white/10">
-        <div className="flex items-center gap-2 mb-2">
-          <Brain size={12} className="text-blue-400" />
-          <p className="text-xs font-bold text-blue-300">Guide de sélection:</p>
+      {/* Strategy comparison summary */}
+      <div className="bg-green-500 bg-opacity-5 rounded p-2 border border-green-400 border-opacity-10">
+        <div className="flex items-center gap-1 mb-1">
+          <Sparkles size={9} className="text-green-300" />
+          <p className="text-[10px] font-bold text-green-300">Guide des stratégies:</p>
         </div>
-        
-        <div className="grid grid-cols-2 gap-2 text-[10px]">
-          <div className="flex items-start gap-2">
-            <div className="w-2 h-2 rounded-full bg-yellow-500 mt-1"></div>
-            <div>
-              <p className="font-bold">Option 1 (Jaune):</p>
-              <p className="opacity-80">Minimum de billets</p>
-            </div>
+        <div className="space-y-1 text-[9px]">
+          <div className="flex items-start gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-0.5"></div>
+            <span className="opacity-80">
+              <span className="font-bold">Option 1 (Minimum de billets):</span> Utilise le moins de billets possible
+            </span>
           </div>
-          <div className="flex items-start gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500 mt-1"></div>
-            <div>
-              <p className="font-bold">Option 2 (Bleu):</p>
-              <p className="opacity-80">Équilibre coupures</p>
-            </div>
+          <div className="flex items-start gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-0.5"></div>
+            <span className="opacity-80">
+              <span className="font-bold">Option 2 (Approche équilibrée):</span> Bon compromis entre toutes les coupures
+            </span>
           </div>
-          <div className="flex items-start gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 mt-1"></div>
-            <div>
-              <p className="font-bold">Option 3 (Vert):</p>
-              <p className="opacity-80">Plus petites coupures</p>
-            </div>
+          <div className="flex items-start gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-0.5"></div>
+            <span className="opacity-80">
+              <span className="font-bold">Option 3 (Petites coupures):</span> Plus de billets de 250, 100, 50 HTG
+            </span>
           </div>
-          <div className="flex items-start gap-2">
-            <div className="w-2 h-2 rounded-full bg-purple-500 mt-1"></div>
-            <div>
-              <p className="font-bold">Option 4 (Violet):</p>
-              <p className="opacity-80">Solution optimisée</p>
-            </div>
+          <div className="flex items-start gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5"></div>
+            <span className="opacity-80">
+              <span className="font-bold">Option 4 (Solution optimisée):</span> Algorithme intelligent pour la meilleure distribution
+            </span>
           </div>
         </div>
-        
-        <div className="mt-3 pt-3 border-t border-white/10">
-          <p className="text-[9px] text-center opacity-80">
-            Toutes les solutions sont calculées en temps réel avec 4 algorithmes différents
-          </p>
+        <div className="mt-2 pt-2 border-t border-green-400 border-opacity-10">
+          <div className="flex items-center gap-1">
+            <Info size={9} className="text-blue-300" />
+            <p className="text-[9px] text-blue-300">
+              <span className="font-bold">Note:</span> Choisissez en fonction de vos disponibilités en caisse
+            </p>
+          </div>
         </div>
       </div>
     </div>
