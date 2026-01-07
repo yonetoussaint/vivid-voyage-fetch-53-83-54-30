@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Lazy load components for better performance
-const ProjectDetails = lazy(() => import('./components/ProjectDetails'));
-const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const ProjectDetails = lazy(() => import('@/components/ProjectDetails'));
+const AdminDashboard = lazy(() => import('@/components/AdminDashboard'));
 
 // Translation context
 const translations = {
