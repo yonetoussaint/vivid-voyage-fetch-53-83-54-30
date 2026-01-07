@@ -14,6 +14,38 @@ img, picture, .image-container, [data-prevent-context-menu] {
 }
 
 
+
+/* This ensures the side panel overlay works correctly */
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.transition-all {
+  transition-property: all;
+}
+.duration-300 {
+  transition-duration: 300ms;
+}
+.ease-in-out {
+  transition-timing-function: ease-in-out;
+}
+.visible {
+  visibility: visible;
+}
+.invisible {
+  visibility: hidden;
+}
+.translate-x-0 {
+  transform: translateX(0);
+}
+.translate-x-full {
+  transform: translateX(100%);
+}
+
+
+
 .no-drag {
   cursor: default !important;
   pointer-events: auto !important;
