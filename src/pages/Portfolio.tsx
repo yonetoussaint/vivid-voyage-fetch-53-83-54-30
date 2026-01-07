@@ -523,47 +523,59 @@ export default function Portfolio() {
   }, []);
 
   // Typing effect for hero section
-  useEffect(() => {
-    const texts = [
-      t.hero.description,
-      "Expert en React & TypeScript",
-      "Spécialiste en développement Full Stack",
-      "Contributeur Open Source"
-    ];
+  // Replace the typing effect useEffect in Portfolio component with this:
+useEffect(() => {
+  const texts = [
+    t.hero.description,
+    language === 'fr' ? "Expert en React & TypeScript" : "React & TypeScript Expert",
+    language === 'fr' ? "Spécialiste en développement Full Stack" : "Full Stack Development Specialist",
+    language === 'fr' ? "Contributeur Open Source" : "Open Source Contributor"
+  ];
 
-    let currentTextIndex = 0;
-    let currentCharIndex = 0;
-    let isDeleting = false;
+  let currentTextIndex = 0;
+  let currentCharIndex = 0;
+  let isDeleting = false;
+  let timeoutId;
 
-    const typeWriter = () => {
-      const currentText = texts[currentTextIndex];
+  const typeWriter = () => {
+    const currentText = texts[currentTextIndex];
 
-      if (isDeleting) {
-        setTypedText(currentText.substring(0, currentCharIndex - 1));
-        currentCharIndex--;
-      } else {
-        setTypedText(currentText.substring(0, currentCharIndex + 1));
-        currentCharIndex++;
-      }
+    if (isDeleting) {
+      setTypedText(currentText.substring(0, currentCharIndex - 1));
+      currentCharIndex--;
+    } else {
+      setTypedText(currentText.substring(0, currentCharIndex + 1));
+      currentCharIndex++;
+    }
 
-      if (!isDeleting && currentCharIndex === currentText.length) {
-        // Pause at the end
-        setTimeout(() => {
-          isDeleting = true;
-        }, 2000);
-      } else if (isDeleting && currentCharIndex === 0) {
-        isDeleting = false;
-        currentTextIndex = (currentTextIndex + 1) % texts.length;
-      }
+    if (!isDeleting && currentCharIndex === currentText.length) {
+      // Pause at the end
+      timeoutId = setTimeout(() => {
+        isDeleting = true;
+        typeWriter();
+      }, 2000);
+      return;
+    } else if (isDeleting && currentCharIndex === 0) {
+      isDeleting = false;
+      currentTextIndex = (currentTextIndex + 1) % texts.length;
+    }
 
-      const speed = isDeleting ? 50 : 100;
-      setTimeout(typeWriter, speed);
-    };
+    const speed = isDeleting ? 50 : 100;
+    timeoutId = setTimeout(typeWriter, speed);
+  };
 
-    setTimeout(typeWriter, 1000);
+  // Clear existing animation
+  setTypedText('');
+  currentTextIndex = 0;
+  currentCharIndex = 0;
+  isDeleting = false;
+  
+  timeoutId = setTimeout(typeWriter, 500);
 
-    return () => clearTimeout(typeWriter);
-  }, [language, t.hero.description]);
+  return () => {
+    if (timeoutId) clearTimeout(timeoutId);
+  };
+}, [language, t.hero.description]);
 
   // Scroll to section
   const scrollToSection = (id) => {
