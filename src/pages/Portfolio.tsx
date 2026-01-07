@@ -494,109 +494,101 @@ const toggleSidePanel = () => {
 {/* Side Panel Overlay */}
 {sidePanelOpen && (
   <div 
-    className="fixed inset-0 bg-black bg-opacity-50 z-50"
+    className="fixed inset-0 bg-black bg-opacity-30 z-50"
     onClick={toggleSidePanel}
   />
 )}
 
 {/* Side Panel */}
-<div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ${sidePanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+<div className={`fixed top-0 right-0 h-full w-80 bg-white border-l border-gray-200 z-50 transform transition-transform duration-200 ${sidePanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
   <div className="h-full flex flex-col">
-    {/* Close Button */}
-    <button
-      onClick={toggleSidePanel}
-      className="absolute left-4 top-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors z-10"
-      aria-label="Close panel"
-    >
-      <X className="w-5 h-5 text-gray-700" />
-    </button>
+    {/* Header with Close */}
+    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <h2 className="text-lg font-semibold text-gray-800">Profile & Contact</h2>
+      <button
+        onClick={toggleSidePanel}
+        className="p-1 hover:bg-gray-100 rounded transition-colors"
+        aria-label="Close panel"
+      >
+        <X className="w-5 h-5 text-gray-500" />
+      </button>
+    </div>
 
-    {/* Profile Header */}
-    <div className="bg-gradient-to-br from-blue-600 to-purple-600 text-white p-6 pt-12">
-      <div className="flex flex-col items-center text-center">
+    {/* Profile */}
+    <div className="p-4 border-b border-gray-200">
+      <div className="flex items-center gap-3">
         <img 
           src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" 
           alt="Alex Chen"
-          className="w-24 h-24 rounded-full border-4 border-white/30 mb-4"
+          className="w-14 h-14 rounded-full"
         />
-        <h2 className="text-xl font-bold mb-1">Alex Chen</h2>
-        <p className="text-blue-100 text-sm mb-3">Full Stack Developer</p>
-        <div className="flex items-center gap-2 mb-4">
-          <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></span>
-          <span className="text-xs font-medium text-green-100">Available for opportunities</span>
+        <div>
+          <h3 className="font-semibold text-gray-900">Alex Chen</h3>
+          <p className="text-sm text-gray-600">Full Stack Developer</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span className="text-xs text-gray-500">Available for work</span>
+          </div>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors">
-          <Download className="w-4 h-4" />
-          Download CV
-        </button>
       </div>
     </div>
 
     {/* Contact Information */}
-    <div className="flex-1 overflow-y-auto p-6">
-      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Contact Information</h3>
+    <div className="flex-1 overflow-y-auto p-4">
+      <h3 className="text-sm font-medium text-gray-700 mb-3">Contact</h3>
       
-      <div className="space-y-4">
-        <a href="mailto:alex@example.com" className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Mail className="w-5 h-5 text-blue-600" />
-          </div>
+      <div className="space-y-3">
+        <a href="mailto:alex@example.com" className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded transition-colors">
+          <Mail className="w-5 h-5 text-gray-500 flex-shrink-0" />
           <div className="min-w-0">
-            <p className="text-xs text-gray-500">Email</p>
-            <p className="font-medium text-gray-800 truncate">alex@example.com</p>
+            <p className="text-sm text-gray-600">Email</p>
+            <p className="font-medium text-gray-900">alex@example.com</p>
           </div>
         </a>
 
-        <a href="tel:+15551234567" className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Phone className="w-5 h-5 text-green-600" />
-          </div>
+        <a href="tel:+15551234567" className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded transition-colors">
+          <Phone className="w-5 h-5 text-gray-500 flex-shrink-0" />
           <div className="min-w-0">
-            <p className="text-xs text-gray-500">Phone</p>
-            <p className="font-medium text-gray-800 truncate">+1 (555) 123-4567</p>
+            <p className="text-sm text-gray-600">Phone</p>
+            <p className="font-medium text-gray-900">+1 (555) 123-4567</p>
           </div>
         </a>
 
-        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-          <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <MapPin className="w-5 h-5 text-purple-600" />
-          </div>
+        <div className="flex items-center gap-3 p-3">
+          <MapPin className="w-5 h-5 text-gray-500 flex-shrink-0" />
           <div className="min-w-0">
-            <p className="text-xs text-gray-500">Location</p>
-            <p className="font-medium text-gray-800 truncate">San Francisco, CA</p>
+            <p className="text-sm text-gray-600">Location</p>
+            <p className="font-medium text-gray-900">San Francisco, CA</p>
           </div>
         </div>
 
-        <a href="https://alexchen.dev" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-          <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Globe className="w-5 h-5 text-orange-600" />
-          </div>
+        <a href="https://alexchen.dev" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded transition-colors">
+          <Globe className="w-5 h-5 text-gray-500 flex-shrink-0" />
           <div className="min-w-0">
-            <p className="text-xs text-gray-500">Website</p>
-            <p className="font-medium text-gray-800 truncate">alexchen.dev</p>
+            <p className="text-sm text-gray-600">Website</p>
+            <p className="font-medium text-gray-900">alexchen.dev</p>
           </div>
         </a>
-
-        <div className="flex gap-3 mt-6">
-          <a href="#" className="flex-1 flex flex-col items-center p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-            <Github className="w-6 h-6 text-gray-700 mb-2" />
-            <span className="text-sm font-medium">GitHub</span>
-            <span className="text-xs text-gray-500">@alexchen</span>
-          </a>
-          <a href="#" className="flex-1 flex flex-col items-center p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-            <Linkedin className="w-6 h-6 text-blue-600 mb-2" />
-            <span className="text-sm font-medium">LinkedIn</span>
-            <span className="text-xs text-gray-500">/in/alexchen</span>
-          </a>
-        </div>
       </div>
-    </div>
 
-    {/* Footer with minimal copyright */}
-    <div className="border-t p-4">
-      <p className="text-xs text-gray-500 text-center">
-        © {new Date().getFullYear()} Alex Chen
-      </p>
+      {/* Social Links */}
+      <h3 className="text-sm font-medium text-gray-700 mt-6 mb-3">Connect</h3>
+      <div className="flex gap-2">
+        <a href="#" className="flex-1 flex items-center justify-center gap-2 p-3 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+          <Github className="w-5 h-5 text-gray-700" />
+          <span className="text-sm font-medium text-gray-900">GitHub</span>
+        </a>
+        <a href="#" className="flex-1 flex items-center justify-center gap-2 p-3 bg-blue-100 hover:bg-blue-200 rounded transition-colors">
+          <Linkedin className="w-5 h-5 text-blue-700" />
+          <span className="text-sm font-medium text-blue-900">LinkedIn</span>
+        </a>
+      </div>
+
+      {/* Download CV Button */}
+      <button className="w-full flex items-center justify-center gap-2 p-3 mt-6 bg-gray-900 hover:bg-black text-white rounded transition-colors">
+        <Download className="w-5 h-5" />
+        <span className="font-medium">Download CV</span>
+      </button>
     </div>
   </div>
 </div>
