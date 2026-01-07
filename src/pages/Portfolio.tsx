@@ -147,10 +147,10 @@ export default function Portfolio() {
   ];
 
   const skills = {
-  "Frontend": [
-    { name: "React", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg", cert: "https://certificates.example.com/react", proficiency: 95 },
+  Frontend: [
+    { name: "React", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg", cert: null, proficiency: 95 },
     { name: "Next.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg", cert: null, proficiency: 90 },
-    { name: "TypeScript", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg", cert: "https://certificates.example.com/typescript", proficiency: 88 },
+    { name: "TypeScript", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg", cert: null, proficiency: 88 },
     { name: "Tailwind CSS", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg", cert: null, proficiency: 92 },
     { name: "Vue.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg", cert: null, proficiency: 75 },
 
@@ -175,6 +175,42 @@ export default function Portfolio() {
 
     { name: "React Native", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg", cert: null, proficiency: 78 },
     { name: "Expo", logo: "https://avatars.githubusercontent.com/u/12504344?s=200&v=4", cert: null, proficiency: 80 }
+  ],
+
+  Backend: [
+    { name: "Node.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg", cert: null, proficiency: 90 },
+    { name: "Express.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg", cert: null, proficiency: 88 },
+    { name: "NestJS", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nestjs/nestjs-plain.svg", cert: null, proficiency: 85 },
+
+    { name: "Python", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg", cert: null, proficiency: 85 },
+    { name: "FastAPI", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg", cert: null, proficiency: 82 },
+
+    { name: "Go", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg", cert: null, proficiency: 70 },
+    { name: "Rust", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/rust/rust-plain.svg", cert: null, proficiency: 65 },
+
+    { name: "PostgreSQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg", cert: null, proficiency: 82 },
+    { name: "MongoDB", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg", cert: null, proficiency: 80 },
+    { name: "Redis", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg", cert: null, proficiency: 78 },
+
+    { name: "Supabase", logo: "https://raw.githubusercontent.com/supabase/supabase/master/packages/common/assets/images/supabase-logo-icon.png", cert: null, proficiency: 78 },
+
+    { name: "GraphQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/graphql/graphql-plain.svg", cert: null, proficiency: 80 },
+    { name: "tRPC", logo: "https://avatars.githubusercontent.com/u/78011399?s=200&v=4", cert: null, proficiency: 82 },
+
+    { name: "REST APIs", logo: "https://www.svgrepo.com/show/354202/rest-api.svg", cert: null, proficiency: 92 },
+    { name: "Auth (JWT / OAuth)", logo: "https://www.svgrepo.com/show/374118/jwt.svg", cert: null, proficiency: 85 }
+  ],
+
+  DevOps: [
+    { name: "Docker", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg", cert: null, proficiency: 88 },
+    { name: "Kubernetes", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg", cert: null, proficiency: 85 },
+    { name: "AWS", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg", cert: null, proficiency: 90 },
+    { name: "CI/CD", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg", cert: null, proficiency: 87 },
+    { name: "Terraform", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/terraform/terraform-original.svg", cert: null, proficiency: 75 }
+  ],
+
+  Other: [
+    { name: "Git", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg", cert: null, proficiency: 95 }
   ]
 };
 
