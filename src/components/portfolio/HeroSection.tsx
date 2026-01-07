@@ -2,37 +2,33 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const HeroSection = ({ theme, t, typedText, scrollToSection }) => {
-  // Add local state to manage typing display
   const [displayText, setDisplayText] = useState(t.hero.description);
   const [isTyping, setIsTyping] = useState(false);
 
-  // Sync typedText with animation
   useEffect(() => {
     if (typedText && typedText !== displayText) {
       setIsTyping(true);
       setDisplayText(typedText);
-      // Remove typing class after animation completes
       const timer = setTimeout(() => setIsTyping(false), 100);
       return () => clearTimeout(timer);
     }
   }, [typedText, displayText]);
 
-  // Reset to default text when language changes
   useEffect(() => {
     setDisplayText(t.hero.description);
     setIsTyping(false);
   }, [t.hero.description]);
 
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center px-4 pt-20 pb-16 relative">
-      <div className="w-full max-w-5xl px-2 py-2">
+    <section className="min-h-[90vh] flex flex-col items-center justify-center px-4 pt-16 pb-12 relative">
+      <div className="w-full max-w-4xl px-3 py-4">
         <div className="flex flex-col items-center text-center">
           {/* Profile Picture */}
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5 }}
-            className="relative w-28 h-28 md:w-40 md:h-40 rounded-full overflow-hidden border-3 border-[#00ff88] mb-6 md:mb-8"
+            className="relative w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden border-2 md:border-3 border-[#00ff88] mb-4 md:mb-6"
           >
             <img 
               src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400&q=80"
@@ -45,7 +41,7 @@ const HeroSection = ({ theme, t, typedText, scrollToSection }) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-[clamp(2.5rem,8vw,5rem)] font-extrabold leading-tight mb-4 tracking-tight"
+            className="text-[clamp(2rem,6vw,4rem)] font-bold leading-tight mb-3 tracking-tight"
           >
             Yoné<br />
             <span className="text-[#00ff88]">Toussaint</span>
@@ -55,7 +51,7 @@ const HeroSection = ({ theme, t, typedText, scrollToSection }) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-[clamp(1.1rem,3vw,1.3rem)] text-gray-400 mb-8 max-w-xl px-2 py-1 leading-relaxed min-h-[5rem] flex items-center justify-center"
+            className="text-[clamp(1rem,2.5vw,1.2rem)] text-gray-400 mb-6 max-w-lg px-2 leading-relaxed min-h-[4rem] flex items-center justify-center"
           >
             <div className={`relative ${isTyping ? 'typing-cursor' : ''}`}>
               {displayText || t.hero.description}
@@ -66,25 +62,25 @@ const HeroSection = ({ theme, t, typedText, scrollToSection }) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex flex-col sm:flex-row gap-4 px-2 py-2"
+            className="flex flex-col sm:flex-row gap-3 px-2 w-full max-w-xs sm:max-w-md"
           >
             <button
               onClick={() => scrollToSection('work')}
-              className={`px-8 py-3.5 ${
+              className={`px-6 py-3 ${
                 theme === 'dark' 
                   ? 'bg-[#00ff88] text-[#0a0a0a] border-[#00ff88] hover:bg-transparent hover:text-[#00ff88]'
                   : 'bg-green-600 text-white border-green-600 hover:bg-transparent hover:text-green-600'
-              } font-semibold rounded-lg border-2 transition-all duration-300 active:scale-95 text-base`}
+              } font-semibold rounded-lg border-2 transition-all duration-300 active:scale-95 text-sm sm:text-base w-full`}
             >
               {t.hero.ctaWork}
             </button>
             <button
               onClick={() => scrollToSection('contact')}
-              className={`px-8 py-3.5 bg-transparent font-semibold rounded-lg border-2 ${
+              className={`px-6 py-3 bg-transparent font-semibold rounded-lg border-2 ${
                 theme === 'dark'
                   ? 'border-gray-700 text-white hover:border-[#00ff88] hover:text-[#00ff88]'
                   : 'border-gray-300 text-gray-700 hover:border-green-600 hover:text-green-600'
-              } transition-all duration-300 active:scale-95 text-base`}
+              } transition-all duration-300 active:scale-95 text-sm sm:text-base w-full`}
             >
               {t.hero.ctaContact}
             </button>
@@ -92,12 +88,12 @@ const HeroSection = ({ theme, t, typedText, scrollToSection }) => {
         </div>
       </div>
 
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-        <div className={`w-5 h-8 border-2 ${
+      {/* Scroll Indicator - Smaller on Mobile */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+        <div className={`w-4 h-6 border-2 ${
           theme === 'dark' ? 'border-[#00ff88]/60' : 'border-green-600/60'
         } rounded-xl opacity-70`}>
-          <div className={`scroll-dot absolute top-1.5 left-1/2 -translate-x-1/2 w-1 h-2 ${
+          <div className={`scroll-dot absolute top-1 left-1/2 -translate-x-1/2 w-1 h-1.5 ${
             theme === 'dark' ? 'bg-[#00ff88]' : 'bg-green-600'
           } rounded-sm`} />
         </div>
