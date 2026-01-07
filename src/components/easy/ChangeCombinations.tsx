@@ -113,16 +113,19 @@ const ChangeCombinations = ({
           <button
             key={combo.key}
             onClick={() => setActiveTab(index)}
-            className={`flex items-center justify-center p-2 rounded-md border transition-all ${
+            className={`flex flex-col items-center p-1 rounded-t-md border-b-2 transition-all ${
               activeTab === index 
                 ? `${getTabColor(index)} border-opacity-100 font-bold` 
                 : 'bg-gray-800 border-gray-700 border-opacity-50 text-gray-400 hover:bg-gray-700'
             }`}
           >
-            <div className="flex items-center gap-1.5">
-              <div className={`w-2 h-2 rounded-full ${getDotColor(index)}`}></div>
-              <span className="text-xs font-medium">Option {index + 1}</span>
+            <div className="flex items-center gap-1">
+              {getStrategyIcon(combo.strategyName, index)}
+              <span className="text-[9px]">Option {index + 1}</span>
             </div>
+            <span className="text-[8px] mt-0.5 truncate w-full text-center">
+              {combo.strategyName}
+            </span>
           </button>
         ))}
       </div>
