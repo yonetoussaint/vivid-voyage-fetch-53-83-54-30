@@ -1,48 +1,203 @@
 // Haitian Gourde denominations in descending order
 export const denominations = [
-  { value: 1000, name: 'Mille', priority: 1 },
-  { value: 500, name: 'Cinq-cents', priority: 2 },
-  { value: 250, name: 'Deux-cents-cinquante', priority: 3 },
-  { value: 100, name: 'Cent', priority: 4 },
-  { value: 50, name: 'Cinquante', priority: 5 },
-  { value: 25, name: 'Vingt-cinq', priority: 6 },
-  { value: 10, name: 'Dix', priority: 7 },
-  { value: 5, name: 'Cinq', priority: 8 }
+  { value: 1000, name: 'Mille', priority: 1, category: 'large' },
+  { value: 500, name: 'Cinq-cents', priority: 2, category: 'large' },
+  { value: 250, name: 'Deux-cents-cinquante', priority: 3, category: 'large' },
+  { value: 100, name: 'Cent', priority: 4, category: 'medium' },
+  { value: 50, name: 'Cinquante', priority: 5, category: 'medium' },
+  { value: 25, name: 'Vingt-cinq', priority: 6, category: 'small' },
+  { value: 10, name: 'Dix', priority: 7, category: 'small' },
+  { value: 5, name: 'Cinq', priority: 8, category: 'small' }
 ];
 
-// Configuration
 const CONFIG = {
   MIN_DENOMINATION: 5,
-  MAX_BILLS_PER_DENOMINATION: 20
+  MAX_BILLS_PER_DENOMINATION: 20,
+  IDEAL_BILL_COUNT: 10 // Target for balanced approach
 };
 
-// Function to get the maximum amount we can give with denominations (round down to nearest 5)
 export const getMaximumGivableAmount = (amount) => {
   const remainder = amount % CONFIG.MIN_DENOMINATION;
   return amount - remainder;
 };
 
-// Simple greedy algorithm that always uses descending order
-const simpleGreedy = (amount, startFromIndex = 0, limitLargeBills = false) => {
+// Advanced greedy with constraints
+const constrainedGreedy = (amount, constraints = {}) => {
   let remaining = amount;
   const breakdown = [];
+  const {
+    skipDenoms = [],
+    maxPerDenom = {},
+    minPerDenom = {},
+    preferredDenoms = [],
+    startIndex = 0
+  } = constraints;
 
-  // Use denominations starting from specified index
-  for (let i = startFromIndex; i < denominations.length; i++) {
+  for (let i = startIndex; i < denominations.length; i++) {
     const denom = denominations[i];
+    
+    if (skipDenoms.includes(denom.value)) continue;
+    if (remaining < denom.value) continue;
+
+    let maxCount = Math.floor(remaining / denom.value);
+    
+    // Apply constraints
+    if (maxPerDenom[denom.value] !== undefined) {
+      maxCount = Math.min(maxCount, maxPerDenom[denom.value]);
+    }
+    
+    const minCount = minPerDenom[denom.value] || 0;
+    let count = Math.max(maxCount, minCount);
+    
+    // Prefer certain denominations
+    if (preferredDenoms.includes(denom.value) && count > 0) {
+      count = maxCount; // Use maximum available
+    }
+    
+    if (count > CONFIG.MAX_BILLS_PER_DENOMINATION) {
+      count = CONFIG.MAX_BILLS_PER_DENOMINATION;
+    }
+
+    if (count > 0) {
+      const value = count * denom.value;
+      remaining -= value;
+      breakdown.push({
+        denomination: denom.value,
+        count,
+        total: value
+      });
+    }
+  }
+
+  return {
+    breakdown,
+    remainder: remaining,
+    totalBills: breakdown.reduce((sum, item) => sum + item.count, 0),
+    isExact: remaining === 0
+  };
+};
+
+// Dynamic programming approach for optimal bill count
+const dpOptimalBills = (amount) => {
+  const dp = new Array(amount + 1).fill(Infinity);
+  const parent = new Array(amount + 1).fill(null);
+  dp[0] = 0;
+
+  for (let i = 1; i <= amount; i++) {
+    for (const denom of denominations) {
+      if (denom.value <= i && dp[i - denom.value] + 1 < dp[i]) {
+        dp[i] = dp[i - denom.value] + 1;
+        parent[i] = denom.value;
+      }
+    }
+  }
+
+  // Reconstruct solution
+  const breakdown = [];
+  let current = amount;
+  
+  while (current > 0 && parent[current] !== null) {
+    const denomValue = parent[current];
+    const existing = breakdown.find(b => b.denomination === denomValue);
+    
+    if (existing) {
+      existing.count++;
+      existing.total += denomValue;
+    } else {
+      breakdown.push({
+        denomination: denomValue,
+        count: 1,
+        total: denomValue
+      });
+    }
+    
+    current -= denomValue;
+  }
+
+  return {
+    breakdown: breakdown.sort((a, b) => b.denomination - a.denomination),
+    remainder: current,
+    totalBills: breakdown.reduce((sum, item) => sum + item.count, 0),
+    isExact: current === 0
+  };
+};
+
+// Balanced distribution approach
+const balancedDistribution = (amount) => {
+  let remaining = amount;
+  const breakdown = [];
+  const targetBillsPerDenom = 3; // Aim for 2-4 bills per denomination
+
+  // First pass: distribute evenly across suitable denominations
+  const suitableDenoms = denominations.filter(d => d.value <= amount / 2);
+  
+  for (const denom of suitableDenoms) {
+    if (remaining >= denom.value * targetBillsPerDenom) {
+      const count = targetBillsPerDenom;
+      const value = count * denom.value;
+      remaining -= value;
+      
+      breakdown.push({
+        denomination: denom.value,
+        count,
+        total: value
+      });
+    }
+  }
+
+  // Second pass: fill remaining with greedy
+  const fillResult = constrainedGreedy(remaining, {});
+  breakdown.push(...fillResult.breakdown);
+  
+  // Consolidate duplicates
+  const consolidated = [];
+  breakdown.forEach(item => {
+    const existing = consolidated.find(b => b.denomination === item.denomination);
+    if (existing) {
+      existing.count += item.count;
+      existing.total += item.total;
+    } else {
+      consolidated.push({...item});
+    }
+  });
+
+  const finalRemaining = amount - consolidated.reduce((sum, item) => sum + item.total, 0);
+
+  return {
+    breakdown: consolidated.sort((a, b) => b.denomination - a.denomination),
+    remainder: finalRemaining,
+    totalBills: consolidated.reduce((sum, item) => sum + item.count, 0),
+    isExact: finalRemaining === 0
+  };
+};
+
+// Practical merchant approach - easy to count and verify
+const merchantFriendly = (amount) => {
+  let remaining = amount;
+  const breakdown = [];
+  
+  // Strategy: Use round numbers (multiples of 5 bills when possible)
+  // and avoid single large bills mixed with many small ones
+  
+  for (const denom of denominations) {
     if (remaining >= denom.value) {
       let count = Math.floor(remaining / denom.value);
       
-      // Limit large bills if requested
-      if (limitLargeBills && denom.value >= 500 && count > 2) {
-        count = 2;
+      // Make counts rounder for easier handling
+      if (count > 10) {
+        count = Math.floor(count / 5) * 5; // Round to nearest 5
+      } else if (count > 5) {
+        count = 5; // Use exactly 5
+      } else if (count === 3 || count === 4) {
+        count = count; // Keep as is
+      } else if (count > 1) {
+        count = 2; // Use pairs
       }
       
-      // Also limit very large counts
       if (count > CONFIG.MAX_BILLS_PER_DENOMINATION) {
         count = CONFIG.MAX_BILLS_PER_DENOMINATION;
       }
-      
+
       if (count > 0) {
         const value = count * denom.value;
         remaining -= value;
@@ -64,7 +219,49 @@ const simpleGreedy = (amount, startFromIndex = 0, limitLargeBills = false) => {
   };
 };
 
-// Generate 4 different change combinations
+// Customer convenience approach - fewer total bills
+const customerConvenience = (amount) => {
+  // Similar to DP but prioritizes larger denominations more aggressively
+  let remaining = amount;
+  const breakdown = [];
+  
+  for (const denom of denominations) {
+    if (remaining >= denom.value) {
+      let count = Math.floor(remaining / denom.value);
+      
+      // Strongly prefer using larger bills completely
+      if (denom.value >= 250) {
+        count = Math.min(count, 3); // Max 3 large bills
+      } else if (denom.value >= 100) {
+        count = Math.min(count, 5); // Max 5 medium bills
+      }
+      
+      if (count > CONFIG.MAX_BILLS_PER_DENOMINATION) {
+        count = CONFIG.MAX_BILLS_PER_DENOMINATION;
+      }
+
+      if (count > 0) {
+        const value = count * denom.value;
+        remaining -= value;
+        
+        breakdown.push({
+          denomination: denom.value,
+          count,
+          total: value
+        });
+      }
+    }
+  }
+
+  return {
+    breakdown,
+    remainder: remaining,
+    totalBills: breakdown.reduce((sum, item) => sum + item.count, 0),
+    isExact: remaining === 0
+  };
+};
+
+// Generate 4 highly distinct change combinations
 export const generateChangeCombinations = (changeNeeded) => {
   if (changeNeeded <= 0) return [];
 
@@ -73,202 +270,132 @@ export const generateChangeCombinations = (changeNeeded) => {
   const remainder = amount - givableAmount;
 
   if (givableAmount === 0) {
-    return [
-      {
-        key: 'no-change-1',
-        breakdown: [],
-        totalNotes: 0,
-        totalAmount: 0,
-        remainder: remainder,
-        isExact: false,
-        strategyName: "Montant trop petit",
-        description: "Impossible de donner de la monnaie pour moins de 5 HTG"
-      }
-    ];
+    return [{
+      key: 'no-change-1',
+      breakdown: [],
+      totalNotes: 0,
+      totalAmount: 0,
+      remainder: remainder,
+      isExact: false,
+      strategyName: "Montant trop petit",
+      description: "Impossible de donner de la monnaie pour moins de 5 HTG"
+    }];
   }
 
   const combinations = [];
 
-  // Strategy 1: Standard greedy (starting from largest denomination)
-  const result1 = simpleGreedy(givableAmount, 0, false);
+  // Strategy 1: OPTIMAL BILL COUNT (DP-based minimum bills)
+  const result1 = dpOptimalBills(givableAmount);
   const totalAmount1 = givableAmount - result1.remainder;
   
   combinations.push({
-    key: 'strategy-standard',
-    breakdown: result1.breakdown.sort((a, b) => b.denomination - a.denomination),
+    key: 'strategy-optimal',
+    breakdown: result1.breakdown,
     totalNotes: result1.totalBills,
     totalAmount: totalAmount1,
     remainder: result1.remainder + remainder,
     isExact: (result1.remainder + remainder) === 0,
-    strategyName: "Priorité aux gros billets",
-    description: "Commence par les billets de 1000, 500, 250..."
+    strategyName: "🎯 Minimum de billets",
+    description: "Le moins de billets possible - optimal pour le client"
   });
 
-  // Strategy 2: Start from different denomination based on amount
-  let result2;
-  let strategy2Name;
-  let strategy2Desc;
-  
-  if (givableAmount >= 1000) {
-    // For large amounts, skip 1000 bills
-    result2 = simpleGreedy(givableAmount, 1, false); // Start from 500
-    strategy2Name = "Sans billets de 1000";
-    strategy2Desc = "Utilise plus de billets de 500, 250, 100 HTG";
-  } else if (givableAmount >= 500) {
-    // For medium amounts, start from 250
-    result2 = simpleGreedy(givableAmount, 2, false); // Start from 250
-    strategy2Name = "Priorité 250 HTG";
-    strategy2Desc = "Commence par les billets de 250 HTG";
-  } else {
-    // For small amounts, use standard but sorted differently
-    result2 = simpleGreedy(givableAmount, 0, false);
-    strategy2Name = "Toutes dénominations";
-    strategy2Desc = "Utilise toutes les coupures disponibles";
-  }
-  
+  // Strategy 2: CUSTOMER CONVENIENCE (Largest bills with constraints)
+  const result2 = customerConvenience(givableAmount);
   const totalAmount2 = givableAmount - result2.remainder;
   
-  // Only add if different from first strategy
-  const result1Str = JSON.stringify(result1.breakdown.sort((a, b) => b.denomination - a.denomination));
-  const result2Str = JSON.stringify(result2.breakdown.sort((a, b) => b.denomination - a.denomination));
-  
-  if (result1Str !== result2Str) {
-    combinations.push({
-      key: 'strategy-alternative',
-      breakdown: result2.breakdown.sort((a, b) => b.denomination - a.denomination),
-      totalNotes: result2.totalBills,
-      totalAmount: totalAmount2,
-      remainder: result2.remainder + remainder,
-      isExact: (result2.remainder + remainder) === 0,
-      strategyName: strategy2Name,
-      description: strategy2Desc
-    });
-  }
+  combinations.push({
+    key: 'strategy-convenience',
+    breakdown: result2.breakdown,
+    totalNotes: result2.totalBills,
+    totalAmount: totalAmount2,
+    remainder: result2.remainder + remainder,
+    isExact: (result2.remainder + remainder) === 0,
+    strategyName: "💼 Gros billets prioritaires",
+    description: "Maximise les grandes coupures - facile à transporter"
+  });
 
-  // Strategy 3: Balanced approach with limited large bills
-  const result3 = simpleGreedy(givableAmount, 0, true); // Limit large bills
+  // Strategy 3: MERCHANT FRIENDLY (Easy to count and verify)
+  const result3 = merchantFriendly(givableAmount);
   const totalAmount3 = givableAmount - result3.remainder;
-  const result3Str = JSON.stringify(result3.breakdown.sort((a, b) => b.denomination - a.denomination));
   
-  // Only add if different from previous strategies
-  const isUnique3 = !combinations.some(combo => 
-    JSON.stringify(combo.breakdown) === result3Str
-  );
-  
-  if (isUnique3) {
-    combinations.push({
-      key: 'strategy-balanced',
-      breakdown: result3.breakdown.sort((a, b) => b.denomination - a.denomination),
-      totalNotes: result3.totalBills,
-      totalAmount: totalAmount3,
-      remainder: result3.remainder + remainder,
-      isExact: (result3.remainder + remainder) === 0,
-      strategyName: "Approche équilibrée",
-      description: "Limite les gros billets pour plus de flexibilité"
-    });
-  }
+  combinations.push({
+    key: 'strategy-merchant',
+    breakdown: result3.breakdown,
+    totalNotes: result3.totalBills,
+    totalAmount: totalAmount3,
+    remainder: result3.remainder + remainder,
+    isExact: (result3.remainder + remainder) === 0,
+    strategyName: "🏪 Facile à compter",
+    description: "Nombres ronds et réguliers - pratique pour les commerçants"
+  });
 
-  // Strategy 4: Force use of medium denominations (100, 50, 25)
-  let result4;
-  let strategy4Name = "Billets moyens";
-  let strategy4Desc = "Privilégie 100, 50, 25 HTG";
-  
-  if (givableAmount >= 100) {
-    // Try to use more 100, 50, 25 bills
-    let remaining4 = givableAmount;
-    const breakdown4 = [];
-    
-    // First, take as many 100 as possible
-    if (remaining4 >= 100) {
-      const count100 = Math.floor(remaining4 / 100);
-      if (count100 > 0) {
-        const value100 = count100 * 100;
-        remaining4 -= value100;
-        breakdown4.push({
-          denomination: 100,
-          count: count100,
-          total: value100
-        });
-      }
-    }
-    
-    // Then use standard greedy for the rest
-    const remainingResult = simpleGreedy(remaining4, 0, false);
-    breakdown4.push(...remainingResult.breakdown);
-    remaining4 = remainingResult.remainder;
-    
-    result4 = {
-      breakdown: breakdown4,
-      remainder: remaining4,
-      totalBills: breakdown4.reduce((sum, item) => sum + item.count, 0)
-    };
-  } else {
-    // For very small amounts, just use standard
-    result4 = simpleGreedy(givableAmount, 0, false);
-    strategy4Name = "Petite monnaie";
-    strategy4Desc = "Optimisé pour les petits montants";
-  }
-  
+  // Strategy 4: BALANCED MIX (Good distribution across denominations)
+  const result4 = balancedDistribution(givableAmount);
   const totalAmount4 = givableAmount - result4.remainder;
-  const result4Str = JSON.stringify(result4.breakdown.sort((a, b) => b.denomination - a.denomination));
   
-  // Only add if different from previous strategies
-  const isUnique4 = !combinations.some(combo => 
-    JSON.stringify(combo.breakdown) === result4Str
-  );
-  
-  if (isUnique4) {
-    combinations.push({
-      key: 'strategy-medium',
-      breakdown: result4.breakdown.sort((a, b) => b.denomination - a.denomination),
-      totalNotes: result4.totalBills,
-      totalAmount: totalAmount4,
-      remainder: result4.remainder + remainder,
-      isExact: (result4.remainder + remainder) === 0,
-      strategyName: strategy4Name,
-      description: strategy4Desc
-    });
+  combinations.push({
+    key: 'strategy-balanced',
+    breakdown: result4.breakdown,
+    totalNotes: result4.totalBills,
+    totalAmount: totalAmount4,
+    remainder: result4.remainder + remainder,
+    isExact: (result4.remainder + remainder) === 0,
+    strategyName: "⚖️ Distribution équilibrée",
+    description: "Variété de coupures - flexible pour faire d'autres transactions"
+  });
+
+  // Remove exact duplicates
+  const uniqueCombinations = [];
+  const seen = new Set();
+
+  for (const combo of combinations) {
+    const signature = JSON.stringify(combo.breakdown);
+    if (!seen.has(signature)) {
+      seen.add(signature);
+      uniqueCombinations.push(combo);
+    }
   }
 
-  // If we still don't have 4 options, create simple variations
-  while (combinations.length < 4) {
-    const index = combinations.length;
-    const baseResult = simpleGreedy(givableAmount, index % denominations.length, false);
-    const totalAmount = givableAmount - baseResult.remainder;
+  // If we have fewer than 4 unique combinations, add intelligent variations
+  if (uniqueCombinations.length < 4) {
+    // Add variation: No large bills (500+)
+    const noLargeResult = constrainedGreedy(givableAmount, {
+      skipDenoms: [1000, 500]
+    });
+    const totalNoLarge = givableAmount - noLargeResult.remainder;
     
-    combinations.push({
-      key: `strategy-fallback-${index}`,
-      breakdown: baseResult.breakdown.sort((a, b) => b.denomination - a.denomination),
-      totalNotes: baseResult.totalBills,
-      totalAmount: totalAmount,
-      remainder: baseResult.remainder + remainder,
-      isExact: (baseResult.remainder + remainder) === 0,
-      strategyName: `Option ${index + 1}`,
-      description: "Variation simple"
+    uniqueCombinations.push({
+      key: 'strategy-no-large',
+      breakdown: noLargeResult.breakdown,
+      totalNotes: noLargeResult.totalBills,
+      totalAmount: totalNoLarge,
+      remainder: noLargeResult.remainder + remainder,
+      isExact: (noLargeResult.remainder + remainder) === 0,
+      strategyName: "🎒 Sans gros billets",
+      description: "Utilise des coupures moyennes et petites uniquement"
     });
   }
 
-  // Final verification: ensure totals are correct
-  combinations.forEach(combo => {
+  // Final verification
+  uniqueCombinations.forEach(combo => {
     const calculatedTotal = combo.breakdown.reduce((sum, item) => sum + item.total, 0);
     combo.totalAmount = calculatedTotal;
     combo.remainder = (givableAmount - calculatedTotal) + remainder;
     combo.isExact = combo.remainder === 0;
   });
 
-  // Ensure we only return 4 combinations
-  return combinations.slice(0, 4);
+  return uniqueCombinations.slice(0, 4);
 };
 
-// Simple utility function for quick calculation
+// Quick optimal calculation
 export const calculateOptimalChange = (amount) => {
   const givableAmount = getMaximumGivableAmount(amount);
   const remainder = amount - givableAmount;
   
-  const result = simpleGreedy(givableAmount, 0, false);
+  const result = dpOptimalBills(givableAmount);
   
   return {
-    breakdown: result.breakdown.sort((a, b) => b.denomination - a.denomination),
+    breakdown: result.breakdown,
     totalAmount: result.breakdown.reduce((sum, item) => sum + item.total, 0),
     totalBills: result.totalBills,
     remainder: result.remainder + remainder,
