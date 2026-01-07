@@ -1,813 +1,745 @@
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import { motion } from 'framer-motion';
-
-// Import all portfolio components
-import Navigation from '@/components/portfolio/Navigation';
-import HeroSection from '@/components/portfolio/HeroSection';
-import ProjectsSection from '@/components/portfolio/ProjectsSection';
-import ExperienceSection from '@/components/portfolio/ExperienceSection';
-import SkillsSection from '@/components/portfolio/SkillsSection';
-import CertificationsSection from '@/components/portfolio/CertificationsSection';
-import TestimonialsSection from '@/components/portfolio/TestimonialsSection';
-import BlogSection from '@/components/portfolio/BlogSection';
-import ContactSection from '@/components/portfolio/ContactSection';
-import Footer from '@/components/portfolio/Footer';
-import CursorFollower from '@/components/portfolio/CursorFollower';
-
-// Lazy load modal components
-const ProjectDetails = lazy(() => import('@/components/ProjectDetails'));
-const AdminDashboard = lazy(() => import('@/components/AdminDashboard'));
-
-// Translations
-const translations = {
-  fr: {
-    nav: {
-      work: 'Projets',
-      skills: 'Compétences',
-      experience: 'Expérience',
-      blog: 'Blog',
-      certifications: 'Certifications',
-      contact: 'Contact'
-    },
-    hero: {
-      title: 'Développeur Full Stack',
-      description: 'Création d\'applications web évolutives et contribution à l\'innovation open-source.',
-      ctaWork: 'Voir mes projets',
-      ctaContact: 'Me contacter'
-    },
-    projects: {
-      title: 'Projets <span class="text-[#00ff88]">Sélectionnés</span>',
-      filterAll: 'Tous',
-      filterWeb: 'Web Apps',
-      filterMobile: 'Mobile',
-      filterSdk: 'SDK',
-      filterOpenSource: 'Open Source',
-      visitSite: 'Voir le site',
-      viewGithub: 'Voir GitHub',
-      viewDetails: 'Détails',
-      technologies: 'Technologies utilisées',
-      challenges: 'Défis',
-      solutions: 'Solutions',
-      liveDemo: 'Démo Live',
-      repository: 'Repository'
-    },
-    experience: {
-      title: 'Expérience <span class="text-[#00ff88]">Professionnelle</span>',
-      current: 'Actuel',
-      responsibilities: 'Responsabilités',
-      achievements: 'Réalisations',
-      techStack: 'Stack technique'
-    },
-    skills: {
-      title: 'Stack <span class="text-[#00ff88]">Technique</span>',
-      frontend: 'Frontend',
-      backend: 'Backend',
-      mobile: 'Mobile',
-      databases: 'Bases de données',
-      tools: 'Outils',
-      languages: 'Langages'
-    },
-    certifications: {
-      title: 'Certifications <span class="text-[#00ff88]"></span>',
-      viewCert: 'Voir la certification',
-      issued: 'Délivré le',
-      validUntil: 'Valide jusqu\'au'
-    },
-    testimonials: {
-      title: 'Témoignages <span class="text-[#00ff88]"></span>',
-      from: 'de',
-      position: 'Poste',
-      company: 'Entreprise'
-    },
-    blog: {
-      title: 'Articles <span class="text-[#00ff88]">Techniques</span>',
-      readMore: 'Lire plus',
-      readTime: 'min de lecture',
-      tags: 'Tags',
-      latest: 'Derniers articles',
-      allArticles: 'Tous les articles'
-    },
-    contact: {
-      title: 'Contactez-<span class="text-[#00ff88]">moi</span>',
-      subtitle: 'Ouvert aux collaborations, opportunités et projets intéressants.',
-      name: 'Nom',
-      email: 'Email',
-      subject: 'Sujet',
-      message: 'Message',
-      send: 'Envoyer',
-      sending: 'Envoi en cours...',
-      success: 'Message envoyé avec succès !',
-      error: 'Une erreur est survenue. Réessayez.',
-      required: 'Champ requis',
-      invalidEmail: 'Email invalide'
-    },
-    footer: {
-      copyright: '© 2026 Yoné Toussaint',
-      builtWith: 'Construit avec React & Tailwind CSS'
-    }
-  },
-  en: {
-    nav: {
-      work: 'Work',
-      skills: 'Skills',
-      experience: 'Experience',
-      blog: 'Blog',
-      certifications: 'Certifications',
-      contact: 'Contact'
-    },
-    hero: {
-      title: 'Full Stack Developer',
-      description: 'Crafting scalable web applications and contributing to open-source innovation.',
-      ctaWork: 'View My Work',
-      ctaContact: 'Contact Me'
-    },
-    projects: {
-      title: 'Selected <span class="text-[#00ff88]">Projects</span>',
-      filterAll: 'All',
-      filterWeb: 'Web Apps',
-      filterMobile: 'Mobile',
-      filterSdk: 'SDK',
-      filterOpenSource: 'Open Source',
-      visitSite: 'Visit Site',
-      viewGithub: 'View GitHub',
-      viewDetails: 'Details',
-      technologies: 'Technologies Used',
-      challenges: 'Challenges',
-      solutions: 'Solutions',
-      liveDemo: 'Live Demo',
-      repository: 'Repository'
-    },
-    experience: {
-      title: 'Professional <span class="text-[#00ff88]">Experience</span>',
-      current: 'Current',
-      responsibilities: 'Responsibilities',
-      achievements: 'Achievements',
-      techStack: 'Tech Stack'
-    },
-    skills: {
-      title: 'Tech <span class="text-[#00ff88]">Stack</span>',
-      frontend: 'Frontend',
-      backend: 'Backend',
-      mobile: 'Mobile',
-      databases: 'Databases',
-      tools: 'Tools',
-      languages: 'Languages'
-    },
-    certifications: {
-      title: '<span class="text-[#00ff88]">Certifications</span>',
-      viewCert: 'View Certification',
-      issued: 'Issued',
-      validUntil: 'Valid until'
-    },
-    testimonials: {
-      title: '<span class="text-[#00ff88]">Testimonials</span>',
-      from: 'from',
-      position: 'Position',
-      company: 'Company'
-    },
-    blog: {
-      title: 'Technical <span class="text-[#00ff88]">Articles</span>',
-      readMore: 'Read More',
-      readTime: 'min read',
-      tags: 'Tags',
-      latest: 'Latest Articles',
-      allArticles: 'All Articles'
-    },
-    contact: {
-      title: 'Let\'s <span class="text-[#00ff88]">Connect</span>',
-      subtitle: 'Open to collaboration, opportunities, and interesting projects.',
-      name: 'Name',
-      email: 'Email',
-      subject: 'Subject',
-      message: 'Message',
-      send: 'Send',
-      sending: 'Sending...',
-      success: 'Message sent successfully!',
-      error: 'An error occurred. Please try again.',
-      required: 'Required field',
-      invalidEmail: 'Invalid email'
-    },
-    footer: {
-      copyright: '© 2026 Yoné Toussaint',
-      builtWith: 'Built with React & Tailwind CSS'
-    }
-  }
-};
-
-// Theme context
-const ThemeContext = React.createContext();
+import React, { useState, useEffect, useRef } from 'react';
+import { Github, Linkedin, Mail, ExternalLink, Star, GitFork, Calendar, Briefcase, Code2, User, FolderGit2, GraduationCap, Award, Quote, ChevronDown, TrendingUp } from 'lucide-react';
 
 export default function Portfolio() {
-  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
-  const [cursorVisible, setCursorVisible] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('fr');
-  const [theme, setTheme] = useState('dark');
-  const [activeProjectFilter, setActiveProjectFilter] = useState('all');
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [contactForm, setContactForm] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
-  const [formStatus, setFormStatus] = useState({ type: '', message: '' });
-  const [isTyping, setIsTyping] = useState(false);
-  const [typedText, setTypedText] = useState('');
-  const [showAdmin, setShowAdmin] = useState(false);
-  const [analytics, setAnalytics] = useState({
-    pageViews: 0,
-    projectClicks: {},
-    contactSubmissions: 0
-  });
+  const [activeTab, setActiveTab] = useState('about');
+  const [visibleSections, setVisibleSections] = useState(new Set());
+  const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
+  const aboutRef = useRef(null);
+  const projectsRef = useRef(null);
+  const experienceRef = useRef(null);
+  const skillsRef = useRef(null);
+  const educationRef = useRef(null);
+  const testimonialsRef = useRef(null);
 
-  const cursorRef = useRef({ x: 0, y: 0 });
-  const t = translations[language];
-
-  // Data arrays
   const projects = [
     {
-      id: 1,
-      title: 'Mima',
-      description: 'Plateforme de marketplace en ligne complète connectant acheteurs et vendeurs avec des capacités de transaction transparentes.',
-      fullDescription: 'Mima est une marketplace B2B/B2C développée avec une architecture microservices. Le projet incluait la mise en place d\'un système de paiement sécurisé, un moteur de recherche avancé avec Elasticsearch, et une interface administrateur complète.',
-      tags: ['React', 'TypeScript', 'MongoDB', 'Node.js', 'Express', 'Redis'],
-      link: 'https://mimaht.com',
-      github: '#',
-      logo: '🛒',
-      category: 'web',
-      challenges: ['Scalabilité pour 10k+ utilisateurs', 'Intégration de multiples gateways de paiement', 'Temps de chargement initial optimisé'],
-      solutions: ['Architecture microservices', 'Mise en cache avec Redis', 'Code splitting et lazy loading'],
-      images: [],
-      featured: true
+      title: "E-Commerce Platform",
+      desc: "Full-stack marketplace with real-time inventory, payment processing, and admin dashboard",
+      tech: ["Next.js", "PostgreSQL", "Stripe", "Redis"],
+      stars: 234,
+      forks: 45,
+      image: "https://images.unsplash.com/photo-1557821552-17105176677c?w=800&h=600&fit=crop"
     },
     {
-      id: 2,
-      title: 'TransfèPam',
-      description: 'Application web moderne de transfert d\'argent permettant des transactions financières rapides et sécurisées avec une interface intuitive.',
-      fullDescription: 'Solution de transfert d\'argent peer-to-peer avec vérification KYC, taux de change en temps réel, et notifications push. Intégration avec des services bancaires locaux et systèmes de mobile money.',
-      tags: ['React', 'Node.js', 'Supabase', 'TypeScript', 'Stripe'],
-      logo: '💸',
-      category: 'web',
-      challenges: ['Conformité financière et sécurité', 'Taux de change dynamiques', 'Notifications en temps réel'],
-      solutions: ['Chiffrement end-to-end', 'API de taux de change', 'WebSockets pour les notifications'],
-      featured: true
+      title: "DevOps Dashboard",
+      desc: "Kubernetes cluster monitoring with real-time metrics, alerts, and deployment management",
+      tech: ["React", "Go", "Prometheus", "WebSocket"],
+      stars: 189,
+      forks: 32,
+      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop"
     },
     {
-      id: 3,
-      title: 'Auth SDK',
-      description: 'SDK d\'authentification conçu pour simplifier l\'implémentation d\'une authentification utilisateur sécurisée pour les développeurs.',
-      fullDescription: 'Bibliothèque JavaScript/TypeScript pour l\'authentification avec support multi-fournisseur (Google, Facebook, GitHub), 2FA, et gestion de session avancée. Documentation complète et exemples d\'implémentation.',
-      tags: ['TypeScript', 'SDK', 'Open Source', 'JWT', 'OAuth2'],
-      link: '#',
-      github: '#',
-      logo: '🔐',
-      category: 'sdk',
-      challenges: ['Compatibilité cross-browser', 'Support TypeScript natif', 'Bundle size optimisé'],
-      solutions: ['Build avec Rollup', 'Typings complets', 'Tree shaking automatique'],
-      featured: true
+      title: "AI Content Generator",
+      desc: "ML-powered content creation tool with fine-tuned models and custom training pipeline",
+      tech: ["Python", "FastAPI", "Transformers", "Docker"],
+      stars: 567,
+      forks: 98,
+      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop"
     },
     {
-      id: 4,
-      title: 'Easy+ Gaz',
-      description: 'Application de gestion de projet construite pour l\'efficacité opérationnelle, rationalisant le flux de travail et la collaboration d\'équipe.',
-      fullDescription: 'Suite d\'outils de productivité pour les équipes distribuées avec tableaux Kanban, suivi du temps, gestion des documents, et intégration Slack/Zoom.',
-      tags: ['React', 'JavaScript', 'MongoDB', 'Socket.io', 'AWS'],
-      link: 'https://mimaht.com/easy',
-      github: '#',
-      logo: '⚡',
-      category: 'web',
-      challenges: ['Collaboration en temps réel', 'Stockage de documents scalable', 'Interface utilisateur complexe'],
-      solutions: ['WebSockets pour le real-time', 'S3 pour le stockage', 'Component library interne'],
-      featured: true
+      title: "Real-Time Collaboration",
+      desc: "Collaborative document editor with CRDT synchronization and presence awareness",
+      tech: ["TypeScript", "Yjs", "WebRTC", "Node.js"],
+      stars: 423,
+      forks: 76,
+      image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop"
     },
     {
-      id: 5,
-      title: 'Contributions Open Source',
-      description: 'Contributeur actif à des projets open-source majeurs incluant PayPal SDK et Moncash SDK JS, améliorant les intégrations de paiement.',
-      fullDescription: 'Maintien et amélioration de SDK de paiement avec focus sur la stabilité, les tests, et la documentation. Review de code, résolution de bugs, et ajout de nouvelles fonctionnalités.',
-      tags: ['JavaScript', 'SDK Development', 'Community', 'Git', 'Testing'],
-      github: '#',
-      logo: '🌍',
-      category: 'opensource',
-      challenges: ['Compatibilité avec les versions majeures', 'Documentation technique', 'Support communautaire'],
-      solutions: ['Versioning semantique', 'JSDoc auto-généré', 'Issue template optimisé'],
-      featured: true
+      title: "API Gateway",
+      desc: "High-performance API gateway with rate limiting, caching, and authentication",
+      tech: ["Rust", "Redis", "JWT", "Nginx"],
+      stars: 312,
+      forks: 54,
+      image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop"
     },
     {
-      id: 6,
-      title: 'Portfolio Admin',
-      description: 'Dashboard admin pour gérer le contenu du portfolio sans avoir à modifier le code.',
-      fullDescription: 'Backoffice complet avec CRUD pour projets, compétences, expériences. Upload d\'images, édition Markdown, et prévisualisation en direct.',
-      tags: ['Next.js', 'Prisma', 'PostgreSQL', 'Tailwind', 'Cloudinary'],
-      github: '#',
-      logo: '⚙️',
-      category: 'web',
-      featured: false
+      title: "Mobile Fitness App",
+      desc: "Cross-platform fitness tracking with workout plans, progress analytics, and social features",
+      tech: ["React Native", "Firebase", "TensorFlow Lite"],
+      stars: 198,
+      forks: 41,
+      image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=600&fit=crop"
     }
   ];
 
   const experience = [
     {
-      id: 1,
-      title: 'Développeur Full Stack Senior',
-      company: 'Tech Solutions Inc.',
-      period: '2022 - Présent',
-      location: 'Remote',
-      current: true,
-      responsibilities: [
-        'Développement d\'applications web avec React et Node.js',
-        'Architecture de bases de données et API REST',
-        'Mentoring des développeurs juniors',
-        'Revue de code et bonnes pratiques'
-      ],
-      achievements: [
-        'Réduction de 40% du temps de chargement des pages',
-        'Implémentation réussie d\'un système de microservices',
-        'Formation de 3 développeurs juniors'
-      ],
-      techStack: ['React', 'TypeScript', 'Node.js', 'MongoDB', 'AWS', 'Docker']
+      company: "Tech Innovations Inc",
+      role: "Senior Full Stack Developer",
+      period: "2023 - Present",
+      desc: "Led development of microservices architecture serving 2M+ users. Improved API response times by 60%.",
+      year: "2023"
     },
     {
-      id: 2,
-      title: 'Développeur Frontend',
-      company: 'Digital Agency',
-      period: '2020 - 2022',
-      location: 'Paris, France',
-      current: false,
-      responsibilities: [
-        'Développement d\'interfaces utilisateur responsive',
-        'Intégration avec des APIs backend',
-        'Optimisation des performances web',
-        'Collaboration avec les designers UX/UI'
-      ],
-      achievements: [
-        'Développement de 15+ sites e-commerce',
-        'Augmentation des scores Lighthouse de 30% en moyenne',
-        'Création d\'une librairie de composants réutilisables'
-      ],
-      techStack: ['React', 'JavaScript', 'CSS3', 'REST API', 'Git']
+      company: "StartupCo",
+      role: "Full Stack Developer",
+      period: "2021 - 2023",
+      desc: "Built core platform features from scratch. Reduced infrastructure costs by 40% through optimization.",
+      year: "2021"
+    },
+    {
+      company: "Digital Agency",
+      role: "Frontend Developer",
+      period: "2019 - 2021",
+      desc: "Developed responsive web applications for Fortune 500 clients. Mentored junior developers.",
+      year: "2019"
     }
   ];
 
-  const skills = {
-    frontend: ['React.js', 'TypeScript', 'JavaScript', 'HTML5', 'CSS3', 'Tailwind CSS'],
-    backend: ['Node.js', 'Express', 'Python', 'REST API', 'GraphQL'],
-    mobile: ['React Native', 'Expo'],
-    databases: ['MongoDB', 'PostgreSQL', 'Redis', 'Supabase'],
-    tools: ['Git', 'Docker', 'AWS', 'CI/CD', 'Jest', 'Webpack'],
-    languages: ['Français', 'Anglais', 'Créole']
-  };
+  const education = [
+    {
+      degree: "Master of Science in Computer Science",
+      institution: "Stanford University",
+      period: "2017 - 2019",
+      desc: "Specialized in Machine Learning and Distributed Systems",
+      type: "degree"
+    },
+    {
+      degree: "Bachelor of Science in Software Engineering",
+      institution: "University of California, Berkeley",
+      period: "2013 - 2017",
+      desc: "Graduated with Honors, GPA: 3.8/4.0",
+      type: "degree"
+    }
+  ];
 
   const certifications = [
     {
-      id: 1,
-      title: 'AWS Certified Developer',
-      issuer: 'Amazon Web Services',
-      date: '2023-06-15',
-      expiry: '2026-06-15',
-      credentialId: 'AWS123456',
-      link: '#',
-      logo: '☁️'
+      name: "AWS Certified Solutions Architect",
+      issuer: "Amazon Web Services",
+      date: "2023",
+      type: "cert"
     },
     {
-      id: 2,
-      title: 'React Advanced Patterns',
-      issuer: 'Frontend Masters',
-      date: '2023-03-10',
-      expiry: null,
-      credentialId: 'FEM789012',
-      link: '#',
-      logo: '⚛️'
+      name: "Kubernetes Administrator (CKA)",
+      issuer: "Cloud Native Computing Foundation",
+      date: "2022",
+      type: "cert"
     },
     {
-      id: 3,
-      title: 'Node.js Certified Developer',
-      issuer: 'OpenJS Foundation',
-      date: '2022-11-20',
-      expiry: '2025-11-20',
-      credentialId: 'OJS345678',
-      link: '#',
-      logo: '🟢'
+      name: "Google Cloud Professional Developer",
+      issuer: "Google Cloud",
+      date: "2022",
+      type: "cert"
     }
   ];
 
   const testimonials = [
     {
-      id: 1,
-      name: 'Marie Laurent',
-      position: 'CTO',
-      company: 'Startup XYZ',
-      text: 'Yoné a transformé notre plateforme avec son expertise React. Son code est propre, maintenable et scalable.',
-      rating: 5,
-      date: '2023-12-01'
+      name: "Sarah Johnson",
+      role: "CTO at Tech Innovations Inc",
+      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
+      text: "Alex is an exceptional developer who consistently delivers high-quality code. Their ability to tackle complex problems and mentor junior developers has been invaluable to our team."
     },
     {
-      id: 2,
-      name: 'Jean Dupont',
-      position: 'Product Manager',
-      company: 'Tech Corp',
-      text: 'Collaboration excellente. Yoné comprend rapidement les besoins business et les transforme en solutions techniques efficaces.',
-      rating: 5,
-      date: '2023-10-15'
+      name: "Michael Lee",
+      role: "Product Manager at StartupCo",
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop",
+      text: "Working with Alex was a game-changer for our product. They have a rare combination of technical expertise and business acumen that helped us ship features faster than ever."
+    },
+    {
+      name: "Emily Rodriguez",
+      role: "Senior Engineer at Digital Agency",
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop",
+      text: "Alex's attention to detail and commitment to best practices raised the bar for our entire engineering team. A true professional and excellent collaborator."
     }
   ];
 
-  const blogPosts = [
-    {
-      id: 1,
-      title: 'Optimisation des Performances React',
-      excerpt: 'Techniques avancées pour améliorer les performances de vos applications React.',
-      content: '...',
-      readTime: 8,
-      tags: ['React', 'Performance', 'JavaScript'],
-      date: '2024-01-15',
-      featured: true
-    },
-    {
-      id: 2,
-      title: 'TypeScript en Production',
-      excerpt: 'Best practices pour utiliser TypeScript dans des projets à grande échelle.',
-      content: '...',
-      readTime: 10,
-      tags: ['TypeScript', 'Best Practices'],
-      date: '2023-12-10',
-      featured: true
-    }
+  const skills = {
+    "Frontend": [
+      { name: "React", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg", cert: "https://certificates.example.com/react", proficiency: 95 },
+      { name: "Next.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg", cert: null, proficiency: 90 },
+      { name: "TypeScript", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg", cert: "https://certificates.example.com/typescript", proficiency: 88 },
+      { name: "Tailwind CSS", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-plain.svg", cert: null, proficiency: 92 },
+      { name: "Vue.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg", cert: null, proficiency: 75 }
+    ],
+    "Backend": [
+      { name: "Node.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg", cert: "https://certificates.example.com/nodejs", proficiency: 90 },
+      { name: "Python", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg", cert: "https://certificates.example.com/python", proficiency: 85 },
+      { name: "Go", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg", cert: null, proficiency: 70 },
+      { name: "Rust", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/rust/rust-plain.svg", cert: null, proficiency: 65 },
+      { name: "PostgreSQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg", cert: null, proficiency: 82 },
+      { name: "MongoDB", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg", cert: null, proficiency: 80 }
+    ],
+    "DevOps": [
+      { name: "Docker", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg", cert: "https://certificates.example.com/docker", proficiency: 88 },
+      { name: "Kubernetes", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg", cert: "https://certificates.example.com/kubernetes", proficiency: 85 },
+      { name: "AWS", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg", cert: "https://certificates.example.com/aws", proficiency: 90 },
+      { name: "CI/CD", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg", cert: null, proficiency: 87 },
+      { name: "Terraform", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/terraform/terraform-original.svg", cert: null, proficiency: 75 }
+    ],
+    "Other": [
+      { name: "GraphQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/graphql/graphql-plain.svg", cert: null, proficiency: 80 },
+      { name: "Redis", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg", cert: null, proficiency: 78 },
+      { name: "Git", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg", cert: null, proficiency: 95 }
+    ]
+  };
+
+  const learningPath = [
+    { name: "Rust", progress: 65, target: "Advanced proficiency by Q2 2026", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/rust/rust-plain.svg" },
+    { name: "WebAssembly", progress: 40, target: "Build production app by Q3 2026", logo: "https://upload.wikimedia.org/wikipedia/commons/1/1f/WebAssembly_Logo.svg" },
+    { name: "Machine Learning", progress: 55, target: "Deploy ML model by Q4 2026", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tensorflow/tensorflow-original.svg" }
   ];
 
-  const contactLinks = [
-    { 
-      name: 'Email', 
-      href: 'mailto:yone95572@gmail.com',
-      icon: '✉️',
-      copyText: 'yone95572@gmail.com'
-    },
-    { 
-      name: 'WhatsApp', 
-      href: 'https://wa.me/47279318',
-      icon: '💬',
-      copyText: '+47279318'
-    },
-    { 
-      name: 'GitHub', 
-      href: '#',
-      icon: '🐙'
-    },
-    { 
-      name: 'LinkedIn', 
-      href: '#',
-      icon: '👔'
-    }
-  ];
-
-  const filteredProjects = activeProjectFilter === 'all' 
-    ? projects.filter(p => p.featured)
-    : projects.filter(p => p.category === activeProjectFilter && p.featured);
-
-  // Initialize theme from localStorage or system preference
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('portfolio-theme');
-    const savedLanguage = localStorage.getItem('portfolio-language');
-
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-      setTheme('light');
-    }
-
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
-    }
-
-    // Track page view
-    setAnalytics(prev => ({
-      ...prev,
-      pageViews: prev.pageViews + 1
-    }));
-  }, []);
-
-  // Apply theme to document
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('portfolio-theme', theme);
-  }, [theme]);
-
-  // Apply language
-  useEffect(() => {
-    localStorage.setItem('portfolio-language', language);
-  }, [language]);
-
-  // Cursor animation
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      cursorRef.current = { x: e.clientX, y: e.clientY };
-      setCursorVisible(true);
+  const scrollToSection = (sectionId) => {
+    const refs = {
+      about: aboutRef,
+      projects: projectsRef,
+      experience: experienceRef,
+      skills: skillsRef,
+      education: educationRef,
+      testimonials: testimonialsRef
     };
-
-    document.addEventListener('mousemove', handleMouseMove);
-
-    const animateCursor = () => {
-      setCursorPos(prev => ({
-        x: prev.x + (cursorRef.current.x - prev.x) * 0.1,
-        y: prev.y + (cursorRef.current.y - prev.y) * 0.1
-      }));
-      requestAnimationFrame(animateCursor);
-    };
-
-    if (window.innerWidth > 768) {
-      animateCursor();
-    }
-
-    return () => document.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  // Typing effect for hero section
-  // Replace the typing effect useEffect in Portfolio component with this:
-useEffect(() => {
-  const texts = [
-    t.hero.description,
-    language === 'fr' ? "Expert en React & TypeScript" : "React & TypeScript Expert",
-    language === 'fr' ? "Spécialiste en développement Full Stack" : "Full Stack Development Specialist",
-    language === 'fr' ? "Contributeur Open Source" : "Open Source Contributor"
-  ];
-
-  let currentTextIndex = 0;
-  let currentCharIndex = 0;
-  let isDeleting = false;
-  let timeoutId;
-
-  const typeWriter = () => {
-    const currentText = texts[currentTextIndex];
-
-    if (isDeleting) {
-      setTypedText(currentText.substring(0, currentCharIndex - 1));
-      currentCharIndex--;
-    } else {
-      setTypedText(currentText.substring(0, currentCharIndex + 1));
-      currentCharIndex++;
-    }
-
-    if (!isDeleting && currentCharIndex === currentText.length) {
-      // Pause at the end
-      timeoutId = setTimeout(() => {
-        isDeleting = true;
-        typeWriter();
-      }, 2000);
-      return;
-    } else if (isDeleting && currentCharIndex === 0) {
-      isDeleting = false;
-      currentTextIndex = (currentTextIndex + 1) % texts.length;
-    }
-
-    const speed = isDeleting ? 50 : 100;
-    timeoutId = setTimeout(typeWriter, speed);
+    
+    refs[sectionId]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActiveTab(sectionId);
+    setSectionDropdownOpen(false);
   };
 
-  // Clear existing animation
-  setTypedText('');
-  currentTextIndex = 0;
-  currentCharIndex = 0;
-  isDeleting = false;
-  
-  timeoutId = setTimeout(typeWriter, 500);
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = [
+        { id: 'about', ref: aboutRef },
+        { id: 'projects', ref: projectsRef },
+        { id: 'experience', ref: experienceRef },
+        { id: 'education', ref: educationRef },
+        { id: 'testimonials', ref: testimonialsRef },
+        { id: 'skills', ref: skillsRef }
+      ];
 
-  return () => {
-    if (timeoutId) clearTimeout(timeoutId);
-  };
-}, [language, t.hero.description]);
+      const scrollPosition = window.scrollY + 100;
 
-  // Scroll to section
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
-    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setIsMenuOpen(false);
-  };
-
-  // Toggle theme
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
-  // Toggle language
-  const toggleLanguage = () => {
-    setLanguage(prev => prev === 'fr' ? 'en' : 'fr');
-  };
-
-  // Track project click
-  const trackProjectClick = (projectId) => {
-    setAnalytics(prev => ({
-      ...prev,
-      projectClicks: {
-        ...prev.projectClicks,
-        [projectId]: (prev.projectClicks[projectId] || 0) + 1
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
+        if (section.ref.current && section.ref.current.offsetTop <= scrollPosition) {
+          setActiveTab(section.id);
+          break;
+        }
       }
-    }));
-  };
+    };
 
-  // Handle contact form submission
-  const handleContactSubmit = async (e) => {
-    e.preventDefault();
-    setFormStatus({ type: 'sending', message: t.contact.sending });
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-    // Simulate API call - Replace with actual EmailJS/Formspree integration
-    setTimeout(() => {
-      setFormStatus({ type: 'success', message: t.contact.success });
-      setAnalytics(prev => ({
-        ...prev,
-        contactSubmissions: prev.contactSubmissions + 1
-      }));
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisibleSections((prev) => new Set([...prev, entry.target.id]));
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
 
-      // Reset form
-      setContactForm({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-
-      // Clear success message after 5 seconds
-      setTimeout(() => {
-        setFormStatus({ type: '', message: '' });
-      }, 5000);
-    }, 1500);
-  };
-
-  // Handle form input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setContactForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Copy to clipboard
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-      const toast = document.createElement('div');
-      toast.className = `fixed bottom-4 left-1/2 -translate-x-1/2 ${
-        theme === 'dark' ? 'bg-[#00ff88] text-black' : 'bg-green-600 text-white'
-      } px-4 py-2 rounded-lg font-medium z-[9999] animate-fade-in-out`;
-      toast.textContent = language === 'fr' ? 'Copié !' : 'Copied!';
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2000);
+    const sections = [aboutRef, projectsRef, experienceRef, educationRef, testimonialsRef, skillsRef];
+    sections.forEach((ref) => {
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
     });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const tabs = [
+    { id: 'about', label: 'About', description: 'Learn about my background', icon: User },
+    { id: 'projects', label: 'Projects', description: 'View my portfolio work', icon: FolderGit2 },
+    { id: 'experience', label: 'Experience', description: 'My professional journey', icon: Briefcase },
+    { id: 'education', label: 'Education', description: 'Degrees & certifications', icon: GraduationCap },
+    { id: 'testimonials', label: 'Reviews', description: 'What others say', icon: Quote },
+    { id: 'skills', label: 'Skills', description: 'Technical expertise', icon: Code2 }
+  ];
+
+  const getActiveTabLabel = () => {
+    const activeTabObj = tabs.find(tab => tab.id === activeTab);
+    return activeTabObj ? activeTabObj.label : 'About';
+  };
+
+  const getActiveTabIcon = () => {
+    const activeTabObj = tabs.find(tab => tab.id === activeTab);
+    return activeTabObj ? activeTabObj.icon : User;
+  };
+
+  const getActiveTabDescription = () => {
+    const activeTabObj = tabs.find(tab => tab.id === activeTab);
+    return activeTabObj ? activeTabObj.description : 'Learn about my background';
+  };
+
+  const AnimatedSection = ({ children, id, delay = 0 }) => {
+    const isVisible = visibleSections.has(id);
+    return (
+      <div
+        className={`transition-all duration-700 ease-out ${
+          isVisible
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-8'
+        }`}
+        style={{ transitionDelay: `${delay}ms` }}
+      >
+        {children}
+      </div>
+    );
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#0a0a0a] text-white' : 'bg-gray-50 text-gray-900'} transition-colors duration-300 overflow-x-hidden`}>
-        {/* Global Styles */}
-        <style>{`
-          @keyframes scroll {
-            0%, 100% { transform: translate(-50%, 0); opacity: 1; }
-            50% { transform: translate(-50%, 10px); opacity: 0.3; }
-          }
-          @keyframes fadeInOut {
-            0%, 100% { opacity: 0; transform: translateY(10px); }
-            20%, 80% { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
-          }
-          .scroll-dot { animation: scroll 2s infinite; }
-          .animate-fade-in-out { animation: fadeInOut 2s ease-in-out; }
-          .typing-animation { 
-            overflow: hidden;
-            border-right: 2px solid ${theme === 'dark' ? '#00ff88' : '#059669'};
-            white-space: nowrap;
-            animation: typing 3.5s steps(40, end);
-          }
-          .project-card { transition: all 0.3s ease; }
-          .project-card:hover { transform: translateY(-4px); }
-          .skill-item { transition: all 0.2s ease; }
-          @media (max-width: 768px) { .hide-cursor-mobile { display: none; } }
-          
-          /* Theme variables */
-          :root {
-            --primary-color: #00ff88;
-            --secondary-color: #0a0a0a;
-          }
-          
-          [data-theme="light"] {
-            --primary-color: #059669;
-            --secondary-color: #f9fafb;
-          }
-        `}</style>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-white border-b sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-2 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img 
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" 
+                alt="Alex Chen"
+                className="w-10 h-10 rounded-full border-2 border-gray-200"
+              />
+              <div>
+                <h1 className="font-bold text-lg">Alex Chen</h1>
+                <p className="text-xs text-gray-600">Full Stack Developer</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <a href="#" className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <Github className="w-5 h-5" />
+              </a>
+              <a href="#" className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <Linkedin className="w-5 h-5" />
+              </a>
+              <a href="#" className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <Mail className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
+        </div>
 
-        <CursorFollower 
-          theme={theme} 
-          cursorPos={cursorPos} 
-          cursorVisible={cursorVisible} 
-        />
+        {/* Thin Section Indicator Band */}
+        <div className="border-t">
+          <div className="max-w-4xl mx-auto">
+            <button
+              onClick={() => setSectionDropdownOpen(!sectionDropdownOpen)}
+              className="w-full flex items-center justify-between px-4 py-1.5 text-sm hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const Icon = getActiveTabIcon();
+                  return <Icon className="w-4 h-4 text-gray-500" />;
+                })()}
+                <span className="text-gray-700 text-sm font-medium">
+                  {getActiveTabLabel()}
+                </span>
+                <span className="text-gray-400 text-xs">•</span>
+                <span className="text-gray-500 text-xs">
+                  {getActiveTabDescription()}
+                </span>
+              </div>
+              <ChevronDown 
+                className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+                  sectionDropdownOpen ? 'rotate-180' : ''
+                }`} 
+              />
+            </button>
 
-        <Navigation
-          isMenuOpen={isMenuOpen}
-          setIsMenuOpen={setIsMenuOpen}
-          t={t}
-          theme={theme}
-          toggleTheme={toggleTheme}
-          toggleLanguage={toggleLanguage}
-          language={language}
-          scrollToSection={scrollToSection}
-        />
+            {/* Dropdown Panel */}
+            {sectionDropdownOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40"
+                  onClick={() => setSectionDropdownOpen(false)}
+                />
+                <div className="absolute left-0 right-0 bg-white border-t shadow-lg z-50">
+                  <div className="max-w-4xl mx-auto pb-2">
+                    {tabs.map((tab) => {
+                      const Icon = tab.icon;
+                      const isActive = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => scrollToSection(tab.id)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${
+                            isActive 
+                              ? 'bg-blue-50 text-blue-600' 
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <Icon className="w-5 h-5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium">{tab.label}</div>
+                            <div className="text-xs text-gray-500">{tab.description}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
 
-        <HeroSection
-          theme={theme}
-          t={t}
-          typedText={typedText}
-          scrollToSection={scrollToSection}
-        />
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto pb-8">
+        <div className="max-w-4xl mx-auto px-2 py-6 space-y-8">
+          {/* About Section */}
+          <section ref={aboutRef} id="about" className="scroll-mt-20">
+            <div className="space-y-6">
+              <AnimatedSection id="about" delay={0}>
+                <div className="bg-white rounded-xl p-6 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span className="text-sm font-medium text-green-700">Available for opportunities</span>
+                  </div>
+                  <h2 className="text-2xl font-bold mb-3">Hey there! 👋</h2>
+                  <p className="text-gray-600 leading-relaxed mb-4">
+                    I'm a software engineer specializing in building exceptional digital experiences. 
+                    Currently focused on creating accessible, human-centered products at scale.
+                  </p>
+                  <p className="text-gray-600 leading-relaxed">
+                    With 5+ years of experience, I've worked on everything from e-commerce platforms 
+                    to real-time collaboration tools, always striving to write clean, maintainable code 
+                    that solves real problems.
+                  </p>
+                </div>
+              </AnimatedSection>
 
-        <ProjectsSection
-          theme={theme}
-          t={t}
-          activeProjectFilter={activeProjectFilter}
-          setActiveProjectFilter={setActiveProjectFilter}
-          filteredProjects={filteredProjects}
-          setSelectedProject={setSelectedProject}
-          trackProjectClick={trackProjectClick}
-        />
+              <AnimatedSection id="about" delay={100}>
+                <div className="bg-white rounded-xl p-6 shadow-sm">
+                  <h3 className="text-lg font-bold mb-4">Quick Stats</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600 mb-1">5+</div>
+                      <div className="text-sm text-gray-600">Years Experience</div>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600 mb-1">50+</div>
+                      <div className="text-sm text-gray-600">Projects</div>
+                    </div>
+                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600 mb-1">2.4k</div>
+                      <div className="text-sm text-gray-600">GitHub Stars</div>
+                    </div>
+                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600 mb-1">98%</div>
+                      <div className="text-sm text-gray-600">Satisfaction</div>
+                    </div>
+                  </div>
+                </div>
+              </AnimatedSection>
 
-        <ExperienceSection
-          theme={theme}
-          t={t}
-          experience={experience}
-        />
+              <AnimatedSection id="about" delay={200}>
+                <div className="bg-white rounded-xl p-6 shadow-sm">
+                  <h3 className="text-lg font-bold mb-4">Get In Touch</h3>
+                  <div className="space-y-3">
+                    <a href="mailto:alex@example.com" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <Mail className="w-5 h-5 text-gray-600" />
+                      <span className="text-sm font-medium">alex@example.com</span>
+                    </a>
+                    <a href="#" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <Github className="w-5 h-5 text-gray-600" />
+                      <span className="text-sm font-medium">github.com/alexchen</span>
+                    </a>
+                    <a href="#" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <Linkedin className="w-5 h-5 text-gray-600" />
+                      <span className="text-sm font-medium">linkedin.com/in/alexchen</span>
+                    </a>
+                  </div>
+                </div>
+              </AnimatedSection>
+            </div>
+          </section>
 
-        <SkillsSection
-          theme={theme}
-          t={t}
-          skills={skills}
-        />
+          {/* Projects Section */}
+          <section ref={projectsRef} id="projects" className="scroll-mt-20">
+            <h2 className="text-2xl font-bold mb-4 px-2">Projects</h2>
+            <div className="space-y-4">
+              {projects.map((project, i) => (
+                <AnimatedSection key={i} id="projects" delay={i * 100}>
+                  <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div className="relative h-48 overflow-hidden bg-gray-200">
+                      <img 
+                        src={project.image} 
+                        alt={project.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-3 right-3 flex gap-2">
+                        <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                          <Star className="w-3 h-3 text-yellow-500" />
+                          {project.stars}
+                        </span>
+                        <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                          <GitFork className="w-3 h-3 text-gray-600" />
+                          {project.forks}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4">
+                      <h3 className="text-lg font-bold mb-2">
+                        {project.title}
+                      </h3>
+                      
+                      <p className="text-gray-600 text-sm mb-3">
+                        {project.desc}
+                      </p>
 
-        <CertificationsSection
-          theme={theme}
-          t={t}
-          certifications={certifications}
-          language={language}
-        />
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {project.tech.map((tech, j) => (
+                          <span 
+                            key={j}
+                            className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded"
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
 
-        <TestimonialsSection
-          theme={theme}
-          t={t}
-          testimonials={testimonials}
-          language={language}
-        />
+                      <div className="flex gap-3">
+                        <a href="#" className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+                          View Project
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <a href="#" className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900">
+                          <Github className="w-4 h-4" />
+                          Code
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </AnimatedSection>
+              ))}
+            </div>
+          </section>
 
-        <BlogSection
-          theme={theme}
-          t={t}
-          blogPosts={blogPosts}
-          language={language}
-        />
+          {/* Experience Section with Timeline */}
+          <section ref={experienceRef} id="experience" className="scroll-mt-20">
+            <h2 className="text-2xl font-bold mb-4 px-2">Experience</h2>
+            <div className="relative">
+              {/* Timeline line */}
+              <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-blue-200"></div>
+              
+              <div className="space-y-6">
+                {experience.map((exp, i) => (
+                  <AnimatedSection key={i} id="experience" delay={i * 100}>
+                    <div className="relative pl-16">
+                      {/* Timeline dot */}
+                      <div className="absolute left-6 top-5 w-5 h-5 bg-blue-600 rounded-full border-4 border-white shadow-md"></div>
+                      
+                      {/* Year badge */}
+                      <div className="absolute left-0 top-4 w-12 text-center">
+                        <span className="text-xs font-bold text-blue-600">{exp.year}</span>
+                      </div>
+                      
+                      <div className="bg-white rounded-xl p-5 shadow-sm">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Briefcase className="w-6 h-6 text-blue-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-bold mb-1">{exp.role}</h3>
+                            <div className="text-sm text-gray-600 mb-1">{exp.company}</div>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <Calendar className="w-3 h-3" />
+                              <span>{exp.period}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 leading-relaxed">{exp.desc}</p>
+                      </div>
+                    </div>
+                  </AnimatedSection>
+                ))}
+              </div>
+            </div>
+          </section>
 
-        <ContactSection
-          theme={theme}
-          t={t}
-          language={language}
-          contactForm={contactForm}
-          handleInputChange={handleInputChange}
-          handleContactSubmit={handleContactSubmit}
-          formStatus={formStatus}
-          copyToClipboard={copyToClipboard}
-          contactLinks={contactLinks}
-        />
+          {/* Education & Certifications Section */}
+          <section ref={educationRef} id="education" className="scroll-mt-20">
+            <h2 className="text-2xl font-bold mb-4 px-2">Education & Certifications</h2>
+            
+            {/* Education */}
+            <div className="space-y-4 mb-6">
+              {education.map((edu, i) => (
+                <AnimatedSection key={i} id="education" delay={i * 100}>
+                  <div className="bg-white rounded-xl p-5 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <GraduationCap className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-bold mb-1">{edu.degree}</h3>
+                        <div className="text-sm text-gray-600 mb-1">{edu.institution}</div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                          <Calendar className="w-3 h-3" />
+                          <span>{edu.period}</span>
+                        </div>
+                        <p className="text-sm text-gray-600">{edu.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                </AnimatedSection>
+              ))}
+            </div>
 
-        <Footer
-          theme={theme}
-          t={t}
-          setShowAdmin={setShowAdmin}
-          showAdmin={showAdmin}
-          analytics={analytics}
-        />
+            {/* Certifications */}
+            <h3 className="text-lg font-bold mb-3 px-2">Professional Certifications</h3>
+            <div className="space-y-3">
+              {certifications.map((cert, i) => (
+                <AnimatedSection key={i} id="education" delay={(education.length + i) * 100}>
+                  <div className="bg-white rounded-xl p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Award className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-sm mb-1">{cert.name}</h4>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600">{cert.issuer}</span>
+                          <span className="text-xs text-gray-500">{cert.date}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </AnimatedSection>
+              ))}
+            </div>
+          </section>
 
-        {/* Admin Dashboard Modal */}
-        {showAdmin && (
-          <Suspense fallback={<div>Loading admin...</div>}>
-            <AdminDashboard
-              projects={projects}
-              analytics={analytics}
-              theme={theme}
-              onClose={() => setShowAdmin(false)}
-            />
-          </Suspense>
-        )}
+          {/* Testimonials Section */}
+          <section ref={testimonialsRef} id="testimonials" className="scroll-mt-20">
+            <h2 className="text-2xl font-bold mb-4 px-2">What People Say</h2>
+            <div className="space-y-4">
+              {testimonials.map((testimonial, i) => (
+                <AnimatedSection key={i} id="testimonials" delay={i * 100}>
+                  <div className="bg-white rounded-xl p-5 shadow-sm">
+                    <div className="flex items-start gap-4 mb-3">
+                      <img 
+                        src={testimonial.image} 
+                        alt={testimonial.name}
+                        className="w-14 h-14 rounded-full object-cover border-2 border-gray-200"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-bold text-base mb-1">{testimonial.name}</h3>
+                        <p className="text-xs text-gray-600">{testimonial.role}</p>
+                      </div>
+                      <Quote className="w-8 h-8 text-blue-100 flex-shrink-0" />
+                    </div>
+                    <p className="text-sm text-gray-600 leading-relaxed italic">
+                      "{testimonial.text}"
+                    </p>
+                  </div>
+                </AnimatedSection>
+              ))}
+            </div>
+          </section>
 
-        {/* Project Details Modal */}
-        {selectedProject && (
-          <Suspense fallback={<div>Loading project details...</div>}>
-            <ProjectDetails
-              project={selectedProject}
-              t={t}
-              theme={theme}
-              onClose={() => setSelectedProject(null)}
-            />
-          </Suspense>
-        )}
-      </div>
-    </ThemeContext.Provider>
+          {/* Skills Section */}
+          <section ref={skillsRef} id="skills" className="scroll-mt-20">
+            <h2 className="text-2xl font-bold mb-4 px-2">Skills & Expertise</h2>
+            
+            {/* Current Learning Path */}
+            <AnimatedSection id="skills" delay={0}>
+              <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-5 shadow-sm mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-5 h-5 text-purple-600" />
+                  <h3 className="text-lg font-bold text-purple-900">Currently Learning</h3>
+                </div>
+                <div className="space-y-4">
+                  {learningPath.map((skill, i) => (
+                    <div key={i} className="bg-white/80 rounded-lg p-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <img 
+                          src={skill.logo} 
+                          alt={skill.name}
+                          className="w-8 h-8 object-contain"
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-semibold text-gray-800">{skill.name}</span>
+                            <span className="text-sm font-medium text-purple-600">{skill.progress}%</span>
+                          </div>
+                          <p className="text-xs text-gray-600">{skill.target}</p>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${skill.progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </AnimatedSection>
+
+            {/* Skills by Category */}
+            <div className="space-y-4">
+              {Object.entries(skills).map(([category, items], i) => (
+                <AnimatedSection key={category} id="skills" delay={(i + 1) * 100}>
+                  <div className="bg-white rounded-xl p-5 shadow-sm">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                      <Code2 className="w-5 h-5 text-blue-600" />
+                      {category}
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {items.map((skill, j) => (
+                        <div 
+                          key={j}
+                          className="group relative bg-gradient-to-br from-blue-50 to-gray-50 rounded-lg p-3 hover:shadow-md transition-all duration-200 hover:scale-105"
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <img 
+                              src={skill.logo} 
+                              alt={skill.name}
+                              className="w-6 h-6 object-contain"
+                              onError={(e) => e.target.style.display = 'none'}
+                            />
+                            <span className="text-sm font-semibold text-gray-800">{skill.name}</span>
+                          </div>
+                          
+                          {/* Proficiency Bar */}
+                          <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                            <div 
+                              className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
+                              style={{ width: `${skill.proficiency}%` }}
+                            />
+                          </div>
+                          
+                          {/* Certificate Badge */}
+                          {skill.cert && (
+                            <a 
+                              href={skill.cert}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Award className="w-3 h-3" />
+                              Certified
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                          
+                          {/* Tooltip on hover */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                            {skill.proficiency}% proficiency
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              ))}
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
   );
 }
