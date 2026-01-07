@@ -359,17 +359,18 @@ const toggleSidePanel = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Hamburger Menu Button - Replacing the profile picture */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Toggle menu"
-              >
-                {mobileMenuOpen ? (
-                  <X className="w-6 h-6 text-gray-700" />
-                ) : (
-                  <Menu className="w-6 h-6 text-gray-700" />
-                )}
-              </button>
+              {/* Hamburger Menu Button */}
+<button
+  onClick={toggleSidePanel}
+  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+  aria-label="Toggle side panel"
+>
+  {sidePanelOpen ? (
+    <X className="w-6 h-6 text-gray-700" />
+  ) : (
+    <Menu className="w-6 h-6 text-gray-700" />
+  )}
+</button>
               <div>
                 <h1 className="font-bold text-lg">Alex Chen</h1>
                 <p className="text-xs text-gray-600">Full Stack Developer</p>
