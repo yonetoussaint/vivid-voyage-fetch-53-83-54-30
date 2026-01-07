@@ -1,11 +1,24 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
-// Lazy load components for better performance
+// Import all portfolio components
+import Navigation from '@/components/portfolio/Navigation';
+import HeroSection from '@/components/portfolio/HeroSection';
+import ProjectsSection from '@/components/portfolio/ProjectsSection';
+import ExperienceSection from '@/components/portfolio/ExperienceSection';
+import SkillsSection from '@/components/portfolio/SkillsSection';
+import CertificationsSection from '@/components/portfolio/CertificationsSection';
+import TestimonialsSection from '@/components/portfolio/TestimonialsSection';
+import BlogSection from '@/components/portfolio/BlogSection';
+import ContactSection from '@/components/portfolio/ContactSection';
+import Footer from '@/components/portfolio/Footer';
+import CursorFollower from '@/components/portfolio/CursorFollower';
+
+// Lazy load modal components
 const ProjectDetails = lazy(() => import('@/components/ProjectDetails'));
 const AdminDashboard = lazy(() => import('@/components/AdminDashboard'));
 
-// Translation context
+// Translations
 const translations = {
   fr: {
     nav: {
@@ -211,172 +224,7 @@ export default function Portfolio() {
   const cursorRef = useRef({ x: 0, y: 0 });
   const t = translations[language];
 
-  // Initialize theme from localStorage or system preference
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('portfolio-theme');
-    const savedLanguage = localStorage.getItem('portfolio-language');
-    
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-      setTheme('light');
-    }
-    
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
-    }
-    
-    // Track page view
-    setAnalytics(prev => ({
-      ...prev,
-      pageViews: prev.pageViews + 1
-    }));
-  }, []);
-
-  // Apply theme to document
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('portfolio-theme', theme);
-  }, [theme]);
-
-  // Apply language
-  useEffect(() => {
-    localStorage.setItem('portfolio-language', language);
-  }, [language]);
-
-  // Cursor animation
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      cursorRef.current = { x: e.clientX, y: e.clientY };
-      setCursorVisible(true);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-
-    const animateCursor = () => {
-      setCursorPos(prev => ({
-        x: prev.x + (cursorRef.current.x - prev.x) * 0.1,
-        y: prev.y + (cursorRef.current.y - prev.y) * 0.1
-      }));
-      requestAnimationFrame(animateCursor);
-    };
-    
-    if (window.innerWidth > 768) {
-      animateCursor();
-    }
-
-    return () => document.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  // Typing effect for hero section
-  useEffect(() => {
-    const texts = [
-      t.hero.description,
-      "Expert en React & TypeScript",
-      "Spécialiste en développement Full Stack",
-      "Contributeur Open Source"
-    ];
-    
-    let currentTextIndex = 0;
-    let currentCharIndex = 0;
-    let isDeleting = false;
-    
-    const typeWriter = () => {
-      const currentText = texts[currentTextIndex];
-      
-      if (isDeleting) {
-        setTypedText(currentText.substring(0, currentCharIndex - 1));
-        currentCharIndex--;
-      } else {
-        setTypedText(currentText.substring(0, currentCharIndex + 1));
-        currentCharIndex++;
-      }
-      
-      if (!isDeleting && currentCharIndex === currentText.length) {
-        // Pause at the end
-        setTimeout(() => {
-          isDeleting = true;
-        }, 2000);
-      } else if (isDeleting && currentCharIndex === 0) {
-        isDeleting = false;
-        currentTextIndex = (currentTextIndex + 1) % texts.length;
-      }
-      
-      const speed = isDeleting ? 50 : 100;
-      setTimeout(typeWriter, speed);
-    };
-    
-    setTimeout(typeWriter, 1000);
-    
-    return () => clearTimeout(typeWriter);
-  }, [language, t.hero.description]);
-
-  // Scroll to section
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
-    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setIsMenuOpen(false);
-  };
-
-  // Toggle theme
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
-  // Toggle language
-  const toggleLanguage = () => {
-    setLanguage(prev => prev === 'fr' ? 'en' : 'fr');
-  };
-
-  // Track project click
-  const trackProjectClick = (projectId) => {
-    setAnalytics(prev => ({
-      ...prev,
-      projectClicks: {
-        ...prev.projectClicks,
-        [projectId]: (prev.projectClicks[projectId] || 0) + 1
-      }
-    }));
-  };
-
-  // Handle contact form submission
-  const handleContactSubmit = async (e) => {
-    e.preventDefault();
-    setFormStatus({ type: 'sending', message: t.contact.sending });
-    
-    // Simulate API call - Replace with actual EmailJS/Formspree integration
-    setTimeout(() => {
-      setFormStatus({ type: 'success', message: t.contact.success });
-      setAnalytics(prev => ({
-        ...prev,
-        contactSubmissions: prev.contactSubmissions + 1
-      }));
-      
-      // Reset form
-      setContactForm({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-      
-      // Clear success message after 5 seconds
-      setTimeout(() => {
-        setFormStatus({ type: '', message: '' });
-      }, 5000);
-    }, 1500);
-  };
-
-  // Handle form input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setContactForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Data arrays (would normally come from API/DB)
+  // Data arrays
   const projects = [
     {
       id: 1,
@@ -502,6 +350,15 @@ export default function Portfolio() {
     }
   ];
 
+  const skills = {
+    frontend: ['React.js', 'TypeScript', 'JavaScript', 'HTML5', 'CSS3', 'Tailwind CSS'],
+    backend: ['Node.js', 'Express', 'Python', 'REST API', 'GraphQL'],
+    mobile: ['React Native', 'Expo'],
+    databases: ['MongoDB', 'PostgreSQL', 'Redis', 'Supabase'],
+    tools: ['Git', 'Docker', 'AWS', 'CI/CD', 'Jest', 'Webpack'],
+    languages: ['Français', 'Anglais', 'Créole']
+  };
+
   const certifications = [
     {
       id: 1,
@@ -579,45 +436,199 @@ export default function Portfolio() {
     }
   ];
 
-  // Après la ligne où les skills sont définis (~ligne 330)
-const skills = {
-  frontend: ['React.js', 'TypeScript', 'JavaScript', 'HTML5', 'CSS3', 'Tailwind CSS'],
-  backend: ['Node.js', 'Express', 'Python', 'REST API', 'GraphQL'],
-  mobile: ['React Native', 'Expo'],
-  databases: ['MongoDB', 'PostgreSQL', 'Redis', 'Supabase'],
-  tools: ['Git', 'Docker', 'AWS', 'CI/CD', 'Jest', 'Webpack'],
-  languages: ['Français', 'Anglais', 'Créole']
-};
-
-// AJOUTE CE CODE ICI :
-const contactLinks = [
-  { 
-    name: 'Email', 
-    href: 'mailto:yone95572@gmail.com',
-    icon: '✉️',
-    copyText: 'yone95572@gmail.com'
-  },
-  { 
-    name: 'WhatsApp', 
-    href: 'https://wa.me/47279318',
-    icon: '💬',
-    copyText: '+47279318'
-  },
-  { 
-    name: 'GitHub', 
-    href: '#',
-    icon: '🐙'
-  },
-  { 
-    name: 'LinkedIn', 
-    href: '#',
-    icon: '👔'
-  }
-];
+  const contactLinks = [
+    { 
+      name: 'Email', 
+      href: 'mailto:yone95572@gmail.com',
+      icon: '✉️',
+      copyText: 'yone95572@gmail.com'
+    },
+    { 
+      name: 'WhatsApp', 
+      href: 'https://wa.me/47279318',
+      icon: '💬',
+      copyText: '+47279318'
+    },
+    { 
+      name: 'GitHub', 
+      href: '#',
+      icon: '🐙'
+    },
+    { 
+      name: 'LinkedIn', 
+      href: '#',
+      icon: '👔'
+    }
+  ];
 
   const filteredProjects = activeProjectFilter === 'all' 
     ? projects.filter(p => p.featured)
     : projects.filter(p => p.category === activeProjectFilter && p.featured);
+
+  // Initialize theme from localStorage or system preference
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('portfolio-theme');
+    const savedLanguage = localStorage.getItem('portfolio-language');
+
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      setTheme('light');
+    }
+
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+
+    // Track page view
+    setAnalytics(prev => ({
+      ...prev,
+      pageViews: prev.pageViews + 1
+    }));
+  }, []);
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('portfolio-theme', theme);
+  }, [theme]);
+
+  // Apply language
+  useEffect(() => {
+    localStorage.setItem('portfolio-language', language);
+  }, [language]);
+
+  // Cursor animation
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      cursorRef.current = { x: e.clientX, y: e.clientY };
+      setCursorVisible(true);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+
+    const animateCursor = () => {
+      setCursorPos(prev => ({
+        x: prev.x + (cursorRef.current.x - prev.x) * 0.1,
+        y: prev.y + (cursorRef.current.y - prev.y) * 0.1
+      }));
+      requestAnimationFrame(animateCursor);
+    };
+
+    if (window.innerWidth > 768) {
+      animateCursor();
+    }
+
+    return () => document.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Typing effect for hero section
+  useEffect(() => {
+    const texts = [
+      t.hero.description,
+      "Expert en React & TypeScript",
+      "Spécialiste en développement Full Stack",
+      "Contributeur Open Source"
+    ];
+
+    let currentTextIndex = 0;
+    let currentCharIndex = 0;
+    let isDeleting = false;
+
+    const typeWriter = () => {
+      const currentText = texts[currentTextIndex];
+
+      if (isDeleting) {
+        setTypedText(currentText.substring(0, currentCharIndex - 1));
+        currentCharIndex--;
+      } else {
+        setTypedText(currentText.substring(0, currentCharIndex + 1));
+        currentCharIndex++;
+      }
+
+      if (!isDeleting && currentCharIndex === currentText.length) {
+        // Pause at the end
+        setTimeout(() => {
+          isDeleting = true;
+        }, 2000);
+      } else if (isDeleting && currentCharIndex === 0) {
+        isDeleting = false;
+        currentTextIndex = (currentTextIndex + 1) % texts.length;
+      }
+
+      const speed = isDeleting ? 50 : 100;
+      setTimeout(typeWriter, speed);
+    };
+
+    setTimeout(typeWriter, 1000);
+
+    return () => clearTimeout(typeWriter);
+  }, [language, t.hero.description]);
+
+  // Scroll to section
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setIsMenuOpen(false);
+  };
+
+  // Toggle theme
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  // Toggle language
+  const toggleLanguage = () => {
+    setLanguage(prev => prev === 'fr' ? 'en' : 'fr');
+  };
+
+  // Track project click
+  const trackProjectClick = (projectId) => {
+    setAnalytics(prev => ({
+      ...prev,
+      projectClicks: {
+        ...prev.projectClicks,
+        [projectId]: (prev.projectClicks[projectId] || 0) + 1
+      }
+    }));
+  };
+
+  // Handle contact form submission
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setFormStatus({ type: 'sending', message: t.contact.sending });
+
+    // Simulate API call - Replace with actual EmailJS/Formspree integration
+    setTimeout(() => {
+      setFormStatus({ type: 'success', message: t.contact.success });
+      setAnalytics(prev => ({
+        ...prev,
+        contactSubmissions: prev.contactSubmissions + 1
+      }));
+
+      // Reset form
+      setContactForm({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
+
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setFormStatus({ type: '', message: '' });
+      }, 5000);
+    }, 1500);
+  };
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setContactForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   // Copy to clipboard
   const copyToClipboard = (text) => {
@@ -674,846 +685,92 @@ const contactLinks = [
           }
         `}</style>
 
-        {/* Cursor Follower */}
-        <div
-          className={`fixed w-5 h-5 border-2 ${theme === 'dark' ? 'border-[#00ff88]' : 'border-green-600'} rounded-full pointer-events-none z-[9999] transition-transform duration-150 hide-cursor-mobile`}
-          style={{
-            left: `${cursorPos.x}px`,
-            top: `${cursorPos.y}px`,
-            opacity: cursorVisible ? 1 : 0
-          }}
+        <CursorFollower 
+          theme={theme} 
+          cursorPos={cursorPos} 
+          cursorVisible={cursorVisible} 
         />
 
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/95 backdrop-blur-lg z-[2000] flex items-center justify-center"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="flex flex-col items-center gap-8 text-center px-4"
-              >
-                {Object.entries(t.nav).map(([key, value]) => (
-                  <button
-                    key={key}
-                    onClick={() => scrollToSection(key)}
-                    className="text-3xl font-medium hover:text-[#00ff88] transition-colors duration-300 px-4 py-3"
-                  >
-                    {value}
-                  </button>
-                ))}
-                <div className="mt-12 pt-8 border-t border-gray-700 w-48">
-                  <p className="text-lg text-gray-400">yone95572@gmail.com</p>
-                  <p className="text-lg text-gray-400 mt-2">+47279318</p>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <Navigation
+          isMenuOpen={isMenuOpen}
+          setIsMenuOpen={setIsMenuOpen}
+          t={t}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          toggleLanguage={toggleLanguage}
+          language={language}
+          scrollToSection={scrollToSection}
+        />
 
-        {/* Navigation */}
-        <nav className={`fixed top-0 w-full px-4 py-4 flex justify-between items-center z-[1000] ${
-          theme === 'dark' ? 'bg-[#0a0a0a]/90 backdrop-blur-md' : 'bg-white/90 backdrop-blur-md border-b border-gray-200'
-        }`}>
-          <div className="text-xl font-bold tracking-tight px-2 py-1">YT</div>
-          
-          {/* Desktop Navigation */}
-          <ul className="hidden md:flex items-center gap-6 list-none">
-            {Object.entries(t.nav).map(([key, value]) => (
-              <li key={key}>
-                <button onClick={() => scrollToSection(key)} className={`text-sm font-medium hover:text-[#00ff88] transition-colors duration-300 px-2 py-1 ${
-                  theme === 'light' ? 'text-gray-700' : 'text-white'
-                }`}>
-                  {value}
-                </button>
-              </li>
-            ))}
-            
-            {/* Theme Toggle */}
-            <li>
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'} hover:opacity-80 transition-all duration-300`}
-                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {theme === 'dark' ? '☀️' : '🌙'}
-              </button>
-            </li>
-            
-            {/* Language Toggle */}
-            <li>
-              <button
-                onClick={toggleLanguage}
-                className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'} hover:opacity-80 transition-all duration-300 font-medium`}
-              >
-                {language === 'fr' ? 'EN' : 'FR'}
-              </button>
-            </li>
-          </ul>
+        <HeroSection
+          theme={theme}
+          t={t}
+          typedText={typedText}
+          scrollToSection={scrollToSection}
+        />
 
-          {/* Mobile Controls */}
-          <div className="md:hidden flex items-center gap-3">
-            <button
-              onClick={toggleTheme}
-              className="p-2"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? '☀️' : '🌙'}
-            </button>
-            <button
-              onClick={toggleLanguage}
-              className="px-3 py-1 rounded bg-gray-800 text-sm font-medium"
-            >
-              {language === 'fr' ? 'EN' : 'FR'}
-            </button>
-            <button 
-              className="w-10 h-10 flex flex-col justify-center items-center gap-1.5 px-2 py-2"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              <span className={`block w-6 h-0.5 ${
-                theme === 'dark' ? 'bg-white' : 'bg-gray-900'
-              } transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></span>
-              <span className={`block w-6 h-0.5 ${
-                theme === 'dark' ? 'bg-white' : 'bg-gray-900'
-              } transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
-              <span className={`block w-6 h-0.5 ${
-                theme === 'dark' ? 'bg-white' : 'bg-gray-900'
-              } transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></span>
-            </button>
-          </div>
-        </nav>
+        <ProjectsSection
+          theme={theme}
+          t={t}
+          activeProjectFilter={activeProjectFilter}
+          setActiveProjectFilter={setActiveProjectFilter}
+          filteredProjects={filteredProjects}
+          setSelectedProject={setSelectedProject}
+          trackProjectClick={trackProjectClick}
+        />
 
-        {/* Hero Section */}
-        <section className="min-h-screen flex flex-col items-center justify-center px-4 pt-20 pb-16 relative">
-          <div className="w-full max-w-5xl px-2 py-2">
-            <div className="flex flex-col items-center text-center">
-              {/* Profile Picture */}
-              <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="relative w-28 h-28 md:w-40 md:h-40 rounded-full overflow-hidden border-3 border-[#00ff88] mb-6 md:mb-8"
-              >
-                <img 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400&q=80"
-                  alt="Yoné Toussaint" 
-                  className="w-full h-full object-cover"
-                />
-              </motion.div>
+        <ExperienceSection
+          theme={theme}
+          t={t}
+          experience={experience}
+        />
 
-              <motion.h1
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="text-[clamp(2.5rem,8vw,5rem)] font-extrabold leading-tight mb-4 tracking-tight"
-              >
-                Yoné<br />
-                <span className="text-[#00ff88]">Toussaint</span>
-              </motion.h1>
-              
-              <motion.p
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-[clamp(1.1rem,3vw,1.3rem)] text-gray-400 mb-8 max-w-xl px-2 py-1 leading-relaxed h-20"
-              >
-                {typedText || t.hero.description}
-              </motion.p>
-              
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="flex flex-col sm:flex-row gap-4 px-2 py-2"
-              >
-                <button
-                  onClick={() => scrollToSection('work')}
-                  className={`px-8 py-3.5 ${
-                    theme === 'dark' 
-                      ? 'bg-[#00ff88] text-[#0a0a0a] border-[#00ff88] hover:bg-transparent hover:text-[#00ff88]'
-                      : 'bg-green-600 text-white border-green-600 hover:bg-transparent hover:text-green-600'
-                  } font-semibold rounded-lg border-2 transition-all duration-300 active:scale-95 text-base`}
-                >
-                  {t.hero.ctaWork}
-                </button>
-                <button
-                  onClick={() => scrollToSection('contact')}
-                  className={`px-8 py-3.5 bg-transparent font-semibold rounded-lg border-2 ${
-                    theme === 'dark'
-                      ? 'border-gray-700 text-white hover:border-[#00ff88] hover:text-[#00ff88]'
-                      : 'border-gray-300 text-gray-700 hover:border-green-600 hover:text-green-600'
-                  } transition-all duration-300 active:scale-95 text-base`}
-                >
-                  {t.hero.ctaContact}
-                </button>
-              </motion.div>
-            </div>
-          </div>
-          
-          {/* Scroll Indicator */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-            <div className={`w-5 h-8 border-2 ${
-              theme === 'dark' ? 'border-[#00ff88]/60' : 'border-green-600/60'
-            } rounded-xl opacity-70`}>
-              <div className={`scroll-dot absolute top-1.5 left-1/2 -translate-x-1/2 w-1 h-2 ${
-                theme === 'dark' ? 'bg-[#00ff88]' : 'bg-green-600'
-              } rounded-sm`} />
-            </div>
-          </div>
-        </section>
+        <SkillsSection
+          theme={theme}
+          t={t}
+          skills={skills}
+        />
 
-        {/* Projects Section */}
-        <section id="work" className="py-20 px-4 max-w-6xl mx-auto">
-          <h2 
-            className="text-[clamp(2rem,5vw,3rem)] mb-12 font-extrabold tracking-tight text-center px-2 py-2"
-            dangerouslySetInnerHTML={{ __html: t.projects.title }}
-          />
-          
-          {/* Project Filters */}
-          <div className="flex flex-wrap gap-3 justify-center mb-12 px-2 py-2">
-            {['all', 'web', 'sdk', 'opensource'].map(filter => (
-              <button
-                key={filter}
-                onClick={() => setActiveProjectFilter(filter)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  activeProjectFilter === filter
-                    ? theme === 'dark'
-                      ? 'bg-[#00ff88] text-black'
-                      : 'bg-green-600 text-white'
-                    : theme === 'dark'
-                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                {t.projects[`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`]}
-              </button>
-            ))}
-          </div>
-          
-          {/* Projects Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-2 py-2">
-            {filteredProjects.map((project) => (
-              <motion.div
-                key={project.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className={`project-card ${
-                  theme === 'dark' ? 'bg-[#111] border-[#222]' : 'bg-white border-gray-200'
-                } p-6 rounded-xl border hover:border-[#00ff88] active:scale-[0.99] transition-all duration-300 shadow-lg`}
-              >
-                {/* Project Logo & Title */}
-                <div className="flex items-center gap-4 mb-5">
-                  <div className={`text-3xl p-3 rounded-lg border ${
-                    theme === 'dark' ? 'bg-[#1a1a1a] border-[#2a2a2a]' : 'bg-gray-100 border-gray-300'
-                  }`}>
-                    {project.logo}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">{project.title}</h3>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {project.tags.slice(0, 2).map((tag, i) => (
-                        <span key={i} className={`px-2 py-1 text-xs border rounded ${
-                          theme === 'dark' 
-                            ? 'bg-[#2a2a2a] border-[#333]' 
-                            : 'bg-gray-100 border-gray-300 text-gray-700'
-                        }`}>
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+        <CertificationsSection
+          theme={theme}
+          t={t}
+          certifications={certifications}
+          language={language}
+        />
 
-                <p className={`text-sm mb-5 leading-relaxed px-1 py-1 line-clamp-3 ${
-                  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                }`}>
-                  {project.description}
-                </p>
-                
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {project.tags.map((tag, i) => (
-                    <span key={i} className={`px-2.5 py-1 text-xs border rounded ${
-                      theme === 'dark' 
-                        ? 'bg-[#1a1a1a] border-[#2a2a2a]' 
-                        : 'bg-gray-100 border-gray-300 text-gray-700'
-                    }`}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                
-                <div className="flex gap-3">
-                  {project.link && project.link !== '#' && (
-                    <a
-                      href={project.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => trackProjectClick(project.id)}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border font-medium transition-all duration-300 active:scale-[0.98] text-sm ${
-                        theme === 'dark'
-                          ? 'bg-[#1a1a1a] border-[#2a2a2a] text-[#00ff88] hover:bg-[#00ff88] hover:text-black hover:border-[#00ff88]'
-                          : 'bg-gray-100 border-gray-300 text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600'
-                      }`}
-                    >
-                      <span>{t.projects.visitSite}</span>
-                      <span>→</span>
-                    </a>
-                  )}
-                  
-                  <button
-                    onClick={() => setSelectedProject(project)}
-                    className={`px-4 py-2.5 rounded-lg border font-medium transition-all duration-300 active:scale-[0.98] text-sm ${
-                      theme === 'dark'
-                        ? 'border-[#2a2a2a] text-gray-400 hover:border-[#00ff88] hover:text-[#00ff88]'
-                        : 'border-gray-300 text-gray-600 hover:border-green-600 hover:text-green-600'
-                    }`}
-                  >
-                    {t.projects.viewDetails}
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
+        <TestimonialsSection
+          theme={theme}
+          t={t}
+          testimonials={testimonials}
+          language={language}
+        />
 
-        {/* Experience Section */}
-        <section id="experience" className="py-20 px-4 max-w-4xl mx-auto">
-          <h2 
-            className="text-[clamp(2rem,5vw,3rem)] mb-12 font-extrabold tracking-tight text-center px-2 py-2"
-            dangerouslySetInnerHTML={{ __html: t.experience.title }}
-          />
-          
-          <div className="space-y-8">
-            {experience.map((exp, index) => (
-              <motion.div
-                key={exp.id}
-                initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className={`relative pl-8 border-l-2 ${
-                  theme === 'dark' ? 'border-[#00ff88]' : 'border-green-600'
-                }`}
-              >
-                {/* Current badge */}
-                {exp.current && (
-                  <span className={`absolute -left-2 top-0 px-3 py-1 text-xs font-medium rounded-full ${
-                    theme === 'dark' 
-                      ? 'bg-[#00ff88]/20 text-[#00ff88]' 
-                      : 'bg-green-100 text-green-800'
-                  }`}>
-                    {t.experience.current}
-                  </span>
-                )}
-                
-                <div className={`p-6 rounded-xl ${
-                  theme === 'dark' ? 'bg-[#111]' : 'bg-white shadow-sm'
-                }`}>
-                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-bold">{exp.title}</h3>
-                      <p className={`text-lg ${theme === 'dark' ? 'text-[#00ff88]' : 'text-green-600'}`}>
-                        {exp.company}
-                      </p>
-                    </div>
-                    <div className={`mt-2 md:mt-0 text-right ${
-                      theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      <p className="font-medium">{exp.period}</p>
-                      <p className="text-sm">{exp.location}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <h4 className="font-semibold mb-2">{t.experience.responsibilities}:</h4>
-                    <ul className={`space-y-1 ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      {exp.responsibilities.map((item, i) => (
-                        <li key={i} className="flex items-start">
-                          <span className="mr-2">•</span>
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <h4 className="font-semibold mb-2">{t.experience.achievements}:</h4>
-                    <ul className={`space-y-1 ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      {exp.achievements.map((item, i) => (
-                        <li key={i} className="flex items-start">
-                          <span className={`mr-2 ${theme === 'dark' ? 'text-[#00ff88]' : 'text-green-600'}`}>✓</span>
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-semibold mb-2">{t.experience.techStack}:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {exp.techStack.map((tech, i) => (
-                        <span key={i} className={`px-3 py-1 text-sm rounded-full ${
-                          theme === 'dark'
-                            ? 'bg-[#2a2a2a] text-gray-300'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
+        <BlogSection
+          theme={theme}
+          t={t}
+          blogPosts={blogPosts}
+          language={language}
+        />
 
-        {/* Skills Section */}
-        <section id="skills" className="py-20 px-4 max-w-6xl mx-auto">
-          <h2 
-            className="text-[clamp(2rem,5vw,3rem)] mb-12 font-extrabold tracking-tight text-center px-2 py-2"
-            dangerouslySetInnerHTML={{ __html: t.skills.title }}
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-2 py-2">
-            {Object.entries(skills).map(([category, items]) => (
-              <motion.div
-                key={category}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className={`p-6 rounded-xl ${
-                  theme === 'dark' ? 'bg-[#111]' : 'bg-white shadow-sm'
-                }`}
-              >
-                <h3 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-[#00ff88]' : 'text-green-600'}`}>
-                  {t.skills[category]}
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  {items.map((skill, index) => (
-                    <span
-                      key={index}
-                      className={`skill-item px-4 py-2 rounded-lg border ${
-                        theme === 'dark'
-                          ? 'bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#00ff88] hover:bg-[#2a2a2a]'
-                          : 'bg-gray-100 border-gray-300 hover:border-green-600 hover:bg-green-50'
-                      } transition-all duration-200`}
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
+        <ContactSection
+          theme={theme}
+          t={t}
+          language={language}
+          contactForm={contactForm}
+          handleInputChange={handleInputChange}
+          handleContactSubmit={handleContactSubmit}
+          formStatus={formStatus}
+          copyToClipboard={copyToClipboard}
+          contactLinks={contactLinks}
+        />
 
-        {/* Certifications Section */}
-        <section id="certifications" className="py-20 px-4 max-w-4xl mx-auto">
-          <h2 
-            className="text-[clamp(2rem,5vw,3rem)] mb-12 font-extrabold tracking-tight text-center px-2 py-2"
-            dangerouslySetInnerHTML={{ __html: t.certifications.title }}
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-2 py-2">
-            {certifications.map((cert) => (
-              <motion.div
-                key={cert.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className={`p-6 rounded-xl border ${
-                  theme === 'dark' ? 'bg-[#111] border-[#222]' : 'bg-white border-gray-200 shadow-sm'
-                }`}
-              >
-                <div className="flex items-start gap-4 mb-4">
-                  <div className={`text-3xl p-3 rounded-lg ${
-                    theme === 'dark' ? 'bg-[#1a1a1a]' : 'bg-gray-100'
-                  }`}>
-                    {cert.logo}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold mb-1">{cert.title}</h3>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {cert.issuer}
-                    </p>
-                    <div className={`flex items-center gap-4 mt-2 text-xs ${
-                      theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
-                    }`}>
-                      <span>{t.certifications.issued}: {new Date(cert.date).toLocaleDateString(language)}</span>
-                      {cert.expiry && (
-                        <span>{t.certifications.validUntil}: {new Date(cert.expiry).toLocaleDateString(language)}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className={`flex items-center justify-between mt-4 pt-4 border-t ${
-                  theme === 'dark' ? 'border-gray-800' : 'border-gray-200'
-                }`}>
-                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                    ID: {cert.credentialId}
-                  </span>
-                  <a
-                    href={cert.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`text-sm font-medium px-4 py-2 rounded-lg transition-all duration-300 ${
-                      theme === 'dark'
-                        ? 'bg-[#1a1a1a] text-[#00ff88] hover:bg-[#00ff88] hover:text-black'
-                        : 'bg-gray-100 text-green-600 hover:bg-green-600 hover:text-white'
-                    }`}
-                  >
-                    {t.certifications.viewCert}
-                  </a>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section id="testimonials" className="py-20 px-4 max-w-4xl mx-auto">
-          <h2 
-            className="text-[clamp(2rem,5vw,3rem)] mb-12 font-extrabold tracking-tight text-center px-2 py-2"
-            dangerouslySetInnerHTML={{ __html: t.testimonials.title }}
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-2 py-2">
-            {testimonials.map((testimonial) => (
-              <motion.div
-                key={testimonial.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className={`p-6 rounded-xl ${
-                  theme === 'dark' ? 'bg-[#111]' : 'bg-white shadow-sm'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${
-                    theme === 'dark' ? 'bg-[#1a1a1a]' : 'bg-gray-100'
-                  }`}>
-                    👤
-                  </div>
-                  <div>
-                    <h4 className="font-bold">{testimonial.name}</h4>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {testimonial.position}, {testimonial.company}
-                    </p>
-                  </div>
-                </div>
-                
-                <p className={`mb-4 italic ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  "{testimonial.text}"
-                </p>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <span key={i} className="text-yellow-500">★</span>
-                    ))}
-                  </div>
-                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-                    {new Date(testimonial.date).toLocaleDateString(language)}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* Blog Section */}
-        <section id="blog" className="py-20 px-4 max-w-6xl mx-auto">
-          <h2 
-            className="text-[clamp(2rem,5vw,3rem)] mb-12 font-extrabold tracking-tight text-center px-2 py-2"
-            dangerouslySetInnerHTML={{ __html: t.blog.title }}
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-2 py-2">
-            {blogPosts.map((post) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className={`p-6 rounded-xl border ${
-                  theme === 'dark' ? 'bg-[#111] border-[#222]' : 'bg-white border-gray-200 shadow-sm'
-                }`}
-              >
-                <div className={`px-3 py-1 rounded-full text-xs font-medium inline-block mb-4 ${
-                  theme === 'dark' 
-                    ? 'bg-[#00ff88]/20 text-[#00ff88]' 
-                    : 'bg-green-100 text-green-800'
-                }`}>
-                  {post.readTime} {t.blog.readTime}
-                </div>
-                
-                <h3 className="text-lg font-bold mb-3">{post.title}</h3>
-                <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {post.excerpt}
-                </p>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {post.tags.map((tag, i) => (
-                    <span key={i} className={`px-2 py-1 text-xs rounded ${
-                      theme === 'dark' 
-                        ? 'bg-[#2a2a2a] text-gray-300' 
-                        : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-                    {new Date(post.date).toLocaleDateString(language)}
-                  </span>
-                  <button className={`text-sm font-medium hover:underline ${
-                    theme === 'dark' ? 'text-[#00ff88]' : 'text-green-600'
-                  }`}>
-                    {t.blog.readMore} →
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* Contact Section */}
-        <section id="contact" className="py-20 px-4 max-w-2xl mx-auto">
-          <div className="text-center px-2 py-2">
-            <h2 
-              className="text-[clamp(2rem,5vw,3rem)] mb-6 font-extrabold tracking-tight"
-              dangerouslySetInnerHTML={{ __html: t.contact.title }}
-            />
-            <p className={`text-lg mb-10 px-2 py-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-              {t.contact.subtitle}
-            </p>
-            
-            {/* Contact Form */}
-            <form onSubmit={handleContactSubmit} className="mb-12">
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      {t.contact.name} *
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={contactForm.name}
-                      onChange={handleInputChange}
-                      required
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        theme === 'dark'
-                          ? 'bg-[#111] border-gray-700 text-white focus:border-[#00ff88] focus:ring-2 focus:ring-[#00ff88]/20'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-green-600 focus:ring-2 focus:ring-green-600/20'
-                      } outline-none transition-all duration-300`}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      {t.contact.email} *
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={contactForm.email}
-                      onChange={handleInputChange}
-                      required
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        theme === 'dark'
-                          ? 'bg-[#111] border-gray-700 text-white focus:border-[#00ff88] focus:ring-2 focus:ring-[#00ff88]/20'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-green-600 focus:ring-2 focus:ring-green-600/20'
-                      } outline-none transition-all duration-300`}
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    {t.contact.subject} *
-                  </label>
-                  <input
-                    type="text"
-                    name="subject"
-                    value={contactForm.subject}
-                    onChange={handleInputChange}
-                    required
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      theme === 'dark'
-                        ? 'bg-[#111] border-gray-700 text-white focus:border-[#00ff88] focus:ring-2 focus:ring-[#00ff88]/20'
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-green-600 focus:ring-2 focus:ring-green-600/20'
-                    } outline-none transition-all duration-300`}
-                  />
-                </div>
-                
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    {t.contact.message} *
-                  </label>
-                  <textarea
-                    name="message"
-                    value={contactForm.message}
-                    onChange={handleInputChange}
-                    required
-                    rows={6}
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      theme === 'dark'
-                        ? 'bg-[#111] border-gray-700 text-white focus:border-[#00ff88] focus:ring-2 focus:ring-[#00ff88]/20'
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-green-600 focus:ring-2 focus:ring-green-600/20'
-                    } outline-none transition-all duration-300 resize-none`}
-                  />
-                </div>
-                
-                {formStatus.message && (
-                  <div className={`p-4 rounded-lg ${
-                    formStatus.type === 'success'
-                      ? theme === 'dark'
-                        ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/20'
-                        : 'bg-green-50 text-green-800 border border-green-200'
-                      : formStatus.type === 'error'
-                      ? theme === 'dark'
-                        ? 'bg-red-900/20 text-red-400 border border-red-800/30'
-                        : 'bg-red-50 text-red-800 border border-red-200'
-                      : theme === 'dark'
-                        ? 'bg-blue-900/20 text-blue-400 border border-blue-800/30'
-                        : 'bg-blue-50 text-blue-800 border border-blue-200'
-                  }`}>
-                    {formStatus.message}
-                  </div>
-                )}
-                
-                <button
-                  type="submit"
-                  disabled={formStatus.type === 'sending'}
-                  className={`w-full py-3.5 font-semibold rounded-lg transition-all duration-300 ${
-                    theme === 'dark'
-                      ? 'bg-[#00ff88] text-black hover:bg-[#00ff88]/90 disabled:opacity-50 disabled:cursor-not-allowed'
-                      : 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                  }`}
-                >
-                  {formStatus.type === 'sending' ? t.contact.sending : t.contact.send}
-                </button>
-              </div>
-            </form>
-            
-            {/* Contact Info */}
-            <div className="space-y-4 mb-12">
-              <div className={`p-5 rounded-xl ${
-                theme === 'dark' ? 'bg-[#111] border-[#222]' : 'bg-white border-gray-200 shadow-sm'
-              }`}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">✉️</span>
-                    <div>
-                      <p className="text-sm font-medium">Email</p>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                        yone95572@gmail.com
-                      </p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => copyToClipboard('yone95572@gmail.com')}
-                    className={`p-2 rounded-lg hover:opacity-80 transition-all duration-200 ${
-                      theme === 'dark' ? 'bg-[#1a1a1a]' : 'bg-gray-100'
-                    }`}
-                    title={language === 'fr' ? 'Copier l\'email' : 'Copy email'}
-                  >
-                    📋
-                  </button>
-                </div>
-              </div>
-              
-              <div className={`p-5 rounded-xl ${
-                theme === 'dark' ? 'bg-[#111] border-[#222]' : 'bg-white border-gray-200 shadow-sm'
-              }`}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">💬</span>
-                    <div>
-                      <p className="text-sm font-medium">WhatsApp</p>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                        +47279318
-                      </p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => copyToClipboard('+47279318')}
-                    className={`p-2 rounded-lg hover:opacity-80 transition-all duration-200 ${
-                      theme === 'dark' ? 'bg-[#1a1a1a]' : 'bg-gray-100'
-                    }`}
-                    title={language === 'fr' ? 'Copier le numéro' : 'Copy number'}
-                  >
-                    📋
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Social Links */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-2 py-2">
-              {contactLinks.map((link, index) => (
-                <a
-                  key={index}
-                  href={link.href}
-                  target={link.href.startsWith('http') ? '_blank' : undefined}
-                  rel="noopener noreferrer"
-                  className={`flex flex-col items-center p-4 rounded-xl border transition-all duration-300 active:scale-95 ${
-                    theme === 'dark'
-                      ? 'bg-[#111] border-[#222] hover:border-[#00ff88] hover:bg-[#1a1a1a]'
-                      : 'bg-white border-gray-200 hover:border-green-600 hover:bg-green-50 shadow-sm'
-                  }`}
-                >
-                  <span className="text-2xl mb-2">{link.icon}</span>
-                  <span className="text-sm font-medium">{link.name}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className={`text-center py-8 px-4 ${
-          theme === 'dark' ? 'border-t border-[#222] text-gray-600' : 'border-t border-gray-200 text-gray-500'
-        }`}>
-          <p className="text-sm px-2 py-1">{t.footer.copyright}</p>
-          <p className="text-xs mt-2 px-2 py-1 opacity-70">{t.footer.builtWith}</p>
-          
-          {/* Admin Access Button (hidden by default) */}
-          <button
-            onClick={() => setShowAdmin(!showAdmin)}
-            className="mt-4 text-xs opacity-50 hover:opacity-100 transition-opacity"
-          >
-            {showAdmin ? 'Hide Admin' : 'Admin'}
-          </button>
-          
-          {/* Analytics Badge */}
-          <div className="mt-4 text-xs opacity-50">
-            {analytics.pageViews} views • {analytics.contactSubmissions} contacts
-          </div>
-        </footer>
+        <Footer
+          theme={theme}
+          t={t}
+          setShowAdmin={setShowAdmin}
+          showAdmin={showAdmin}
+          analytics={analytics}
+        />
 
         {/* Admin Dashboard Modal */}
         {showAdmin && (
