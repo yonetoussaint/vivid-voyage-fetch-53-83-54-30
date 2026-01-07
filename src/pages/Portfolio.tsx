@@ -488,6 +488,178 @@ const toggleSidePanel = () => {
         )}
       </header>
 
+
+
+
+{/* Side Panel */}
+<div className={`fixed inset-0 z-50 transition-all duration-300 ease-in-out ${sidePanelOpen ? 'visible' : 'invisible'}`}>
+  {/* Backdrop */}
+  <div 
+    className={`absolute inset-0 bg-black transition-opacity duration-300 ${sidePanelOpen ? 'opacity-50' : 'opacity-0'}`}
+    onClick={toggleSidePanel}
+  />
+  
+  {/* Panel Content */}
+  <div className={`absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-xl transform transition-transform duration-300 ${sidePanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+    <div className="h-full overflow-y-auto">
+      {/* Profile Section */}
+      <div className="bg-gradient-to-br from-blue-600 to-purple-600 text-white p-6">
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h2 className="text-2xl font-bold mb-1">Alex Chen</h2>
+            <p className="text-blue-100">Full Stack Developer</p>
+          </div>
+          <button
+            onClick={toggleSidePanel}
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            aria-label="Close panel"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="flex items-center gap-4 mb-6">
+          <img 
+            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" 
+            alt="Alex Chen"
+            className="w-20 h-20 rounded-full border-4 border-white/20"
+          />
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></span>
+              <span className="text-sm font-medium text-green-100">Available for opportunities</span>
+            </div>
+            <button className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors">
+              <Download className="w-4 h-4" />
+              Download CV
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Information */}
+      <div className="p-6">
+        <h3 className="text-lg font-bold mb-4 text-gray-800">Contact Information</h3>
+        
+        <div className="space-y-4">
+          <a href="mailto:alex@example.com" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Mail className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="font-medium text-gray-800">alex@example.com</p>
+            </div>
+          </a>
+
+          <a href="#" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <Phone className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Phone</p>
+              <p className="font-medium text-gray-800">+1 (555) 123-4567</p>
+            </div>
+          </a>
+
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Location</p>
+              <p className="font-medium text-gray-800">San Francisco, CA</p>
+            </div>
+          </div>
+
+          <a href="#" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+              <Globe className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Website</p>
+              <p className="font-medium text-gray-800">alexchen.dev</p>
+            </div>
+          </a>
+        </div>
+
+        {/* Social Links */}
+        <div className="mt-8">
+          <h3 className="text-lg font-bold mb-4 text-gray-800">Connect With Me</h3>
+          <div className="flex gap-3">
+            <a href="#" className="flex-1 flex flex-col items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+              <Github className="w-6 h-6 text-gray-700 mb-2" />
+              <span className="text-sm font-medium">GitHub</span>
+              <span className="text-xs text-gray-500">@alexchen</span>
+            </a>
+            <a href="#" className="flex-1 flex flex-col items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+              <Linkedin className="w-6 h-6 text-blue-600 mb-2" />
+              <span className="text-sm font-medium">LinkedIn</span>
+              <span className="text-xs text-gray-500">/in/alexchen</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="mt-8">
+          <h3 className="text-lg font-bold mb-4 text-gray-800">Quick Stats</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-blue-600">5+</div>
+              <div className="text-xs text-gray-600">Years Exp</div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-green-600">50+</div>
+              <div className="text-xs text-gray-600">Projects</div>
+            </div>
+            <div className="bg-purple-50 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-purple-600">2.4k</div>
+              <div className="text-xs text-gray-600">Stars</div>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-orange-600">98%</div>
+              <div className="text-xs text-gray-600">Satisfaction</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Links */}
+        <div className="mt-8">
+          <h3 className="text-lg font-bold mb-4 text-gray-800">Navigation</h3>
+          <div className="space-y-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    scrollToSection(tab.id);
+                    toggleSidePanel();
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
+                    isActive 
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-medium">{tab.label}</div>
+                    <div className="text-xs text-gray-500">{tab.description}</div>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 transform ${isActive ? 'rotate-180' : ''} text-gray-400`} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
       {/* Main Content Area - Added padding-top to account for fixed header */}
       <main className="flex-1 overflow-y-auto pb-8 pt-24">
         <div className="max-w-4xl mx-auto px-2 py-6 space-y-8">
