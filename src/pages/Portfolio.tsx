@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Github, Linkedin, Mail, ExternalLink, Star, GitFork, Calendar, Briefcase, Code2, User, FolderGit2, GraduationCap, Award, Quote, ChevronDown } from 'lucide-react';
+import { Github, Linkedin, Mail, ExternalLink, Star, GitFork, Calendar, Briefcase, Code2, User, FolderGit2, GraduationCap, Award, Quote, ChevronDown, Menu, X } from 'lucide-react';
 
 export default function Portfolio() {
   const [activeTab, setActiveTab] = useState('about');
