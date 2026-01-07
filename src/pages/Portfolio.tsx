@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Github, Linkedin, Mail, ExternalLink, Star, GitFork, Calendar, Briefcase, Code2, User, FolderGit2, GraduationCap, Award, Quote, ChevronDown, TrendingUp } from 'lucide-react';
+import { Github, Linkedin, Mail, ExternalLink, Star, GitFork, Calendar, Briefcase, Code2, User, FolderGit2, GraduationCap, Award, Quote, ChevronDown } from 'lucide-react';
 
 export default function Portfolio() {
   const [activeTab, setActiveTab] = useState('about');
@@ -177,12 +177,6 @@ export default function Portfolio() {
       { name: "Git", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg", cert: null, proficiency: 95 }
     ]
   };
-
-  const learningPath = [
-    { name: "Rust", progress: 65, target: "Advanced proficiency by Q2 2026", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/rust/rust-plain.svg" },
-    { name: "WebAssembly", progress: 40, target: "Build production app by Q3 2026", logo: "https://upload.wikimedia.org/wikipedia/commons/1/1f/WebAssembly_Logo.svg" },
-    { name: "Machine Learning", progress: 55, target: "Deploy ML model by Q4 2026", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tensorflow/tensorflow-original.svg" }
-  ];
 
   const scrollToSection = (sectionId) => {
     const refs = {
@@ -668,21 +662,6 @@ export default function Portfolio() {
                             <span className="text-sm font-semibold text-gray-800">{skill.name}</span>
                           </div>
                           
-                          {/* Certificate Badge */}
-                          {skill.cert && (
-                            <a 
-                              href={skill.cert}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Award className="w-3 h-3" />
-                              Certified
-                              <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          )}
-                          
                           {/* Tooltip on hover */}
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
                             {skill.proficiency}% proficiency
@@ -691,47 +670,6 @@ export default function Portfolio() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Currently Learning section - Now placed after Backend section only */}
-                  {category === "Backend" && (
-                    <div className="mt-6">
-                      <AnimatedSection id="currently-learning" delay={200}>
-                        <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-5 shadow-sm">
-                          <div className="flex items-center gap-2 mb-4">
-                            <TrendingUp className="w-5 h-5 text-purple-600" />
-                            <h3 className="text-lg font-bold text-purple-900">Currently Learning</h3>
-                          </div>
-                          <div className="space-y-4">
-                            {learningPath.map((skill, index) => (
-                              <div key={index} className="bg-white/80 rounded-lg p-4">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <img 
-                                    src={skill.logo} 
-                                    alt={skill.name}
-                                    className="w-8 h-8 object-contain"
-                                    onError={(e) => e.target.style.display = 'none'}
-                                  />
-                                  <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <span className="font-semibold text-gray-800">{skill.name}</span>
-                                      <span className="text-sm font-medium text-purple-600">{skill.progress}%</span>
-                                    </div>
-                                    <p className="text-xs text-gray-600">{skill.target}</p>
-                                  </div>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div 
-                                    className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-500"
-                                    style={{ width: `${skill.progress}%` }}
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </AnimatedSection>
-                    </div>
-                  )}
                 </AnimatedSection>
               ))}
             </div>
