@@ -3,14 +3,25 @@ import { motion } from 'framer-motion';
 
 const HeroSection = ({ theme, t, typedText, scrollToSection }) => {
   // Add local state to manage typing display
-  const [displayText, setDisplayText] = useState('');
+  const [displayText, setDisplayText] = useState(t.hero.description);
+  const [isTyping, setIsTyping] = useState(false);
 
-  // Sync typedText with a small delay to prevent layout shift
+  // Sync typedText with animation
   useEffect(() => {
-    if (typedText) {
+    if (typedText && typedText !== displayText) {
+      setIsTyping(true);
       setDisplayText(typedText);
+      // Remove typing class after animation completes
+      const timer = setTimeout(() => setIsTyping(false), 100);
+      return () => clearTimeout(timer);
     }
-  }, [typedText]);
+  }, [typedText, displayText]);
+
+  // Reset to default text when language changes
+  useEffect(() => {
+    setDisplayText(t.hero.description);
+    setIsTyping(false);
+  }, [t.hero.description]);
 
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-4 pt-20 pb-16 relative">
@@ -44,9 +55,9 @@ const HeroSection = ({ theme, t, typedText, scrollToSection }) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-[clamp(1.1rem,3vw,1.3rem)] text-gray-400 mb-8 max-w-xl px-2 py-1 leading-relaxed min-h-[5rem]"
+            className="text-[clamp(1.1rem,3vw,1.3rem)] text-gray-400 mb-8 max-w-xl px-2 py-1 leading-relaxed min-h-[5rem] flex items-center justify-center"
           >
-            <div className={`inline-block ${displayText ? 'typing-animation' : ''}`}>
+            <div className={`relative ${isTyping ? 'typing-cursor' : ''}`}>
               {displayText || t.hero.description}
             </div>
           </motion.div>
