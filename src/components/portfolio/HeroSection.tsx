@@ -2,6 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const HeroSection = ({ theme, t, typedText, scrollToSection }) => {
+  // Add local state to manage typing display
+  const [displayText, setDisplayText] = useState('');
+
+  // Sync typedText with a small delay to prevent layout shift
+  useEffect(() => {
+    if (typedText) {
+      setDisplayText(typedText);
+    }
+  }, [typedText]);
+
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-4 pt-20 pb-16 relative">
       <div className="w-full max-w-5xl px-2 py-2">
@@ -30,14 +40,16 @@ const HeroSection = ({ theme, t, typedText, scrollToSection }) => {
             <span className="text-[#00ff88]">Toussaint</span>
           </motion.h1>
 
-          <motion.p
+          <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-[clamp(1.1rem,3vw,1.3rem)] text-gray-400 mb-8 max-w-xl px-2 py-1 leading-relaxed h-20"
+            className="text-[clamp(1.1rem,3vw,1.3rem)] text-gray-400 mb-8 max-w-xl px-2 py-1 leading-relaxed min-h-[5rem]"
           >
-            {typedText || t.hero.description}
-          </motion.p>
+            <div className={`inline-block ${displayText ? 'typing-animation' : ''}`}>
+              {displayText || t.hero.description}
+            </div>
+          </motion.div>
 
           <motion.div
             initial={{ y: 20, opacity: 0 }}
