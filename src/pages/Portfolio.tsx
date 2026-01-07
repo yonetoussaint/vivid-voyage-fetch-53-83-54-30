@@ -3,8 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 export default function Portfolio() {
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
   const [cursorVisible, setCursorVisible] = useState(false);
-  const [profileImage, setProfileImage] = useState(null);
-  const fileInputRef = useRef(null);
   const cursorRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -32,59 +30,39 @@ export default function Portfolio() {
     element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const handleProfileImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfileImage(e.target.result);
-        // Store in localStorage for persistence
-        localStorage.setItem('portfolioProfileImage', e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const triggerFileInput = () => {
-    fileInputRef.current.click();
-  };
-
-  // Load profile image from localStorage on component mount
-  useEffect(() => {
-    const savedImage = localStorage.getItem('portfolioProfileImage');
-    if (savedImage) {
-      setProfileImage(savedImage);
-    }
-  }, []);
-
   const projects = [
     {
       title: 'Mima',
       description: 'A comprehensive online marketplace platform connecting buyers and sellers with seamless transaction capabilities.',
       tags: ['React', 'TypeScript', 'MongoDB'],
-      link: 'https://mimaht.com'
+      link: 'https://mimaht.com',
+      logo: '🛒' // Marketplace icon
     },
     {
       title: 'TransfèPam',
       description: 'Modern money transfer web application enabling fast and secure financial transactions with an intuitive interface.',
-      tags: ['React', 'Node.js', 'Supabase']
+      tags: ['React', 'Node.js', 'Supabase'],
+      logo: '💸' // Money transfer icon
     },
     {
       title: 'Auth SDK',
       description: 'Authentication SDK designed to simplify secure user authentication implementation for developers.',
       tags: ['TypeScript', 'SDK', 'Open Source'],
-      link: '#'
+      link: '#',
+      logo: '🔐' // Security/authentication icon
     },
     {
       title: 'Easy+ Gaz',
       description: 'Project management application built for operational efficiency, streamlining workflow and team collaboration.',
       tags: ['React', 'JavaScript', 'MongoDB'],
-      link: 'https://mimaht.com/easy'
+      link: 'https://mimaht.com/easy',
+      logo: '⚡' // Fast/efficient icon
     },
     {
       title: 'Open Source Contributions',
       description: 'Active contributor to major open-source projects including PayPal SDK and Moncash SDK JS, improving payment integrations.',
-      tags: ['JavaScript', 'SDK Development', 'Community']
+      tags: ['JavaScript', 'SDK Development', 'Community'],
+      logo: '🌍' // Global/open source icon
     }
   ];
 
@@ -130,6 +108,9 @@ export default function Portfolio() {
     });
   };
 
+  // PROFILE IMAGE - Replace this URL with your actual image
+  const profileImage = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400&q=80"; // Replace with your image URL
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       <style>{`
@@ -146,19 +127,13 @@ export default function Portfolio() {
         .project-card:hover {
           transform: translateY(-5px);
         }
-        .profile-hover:hover .profile-overlay {
-          opacity: 1;
+        .project-logo {
+          transition: all 0.3s ease;
+        }
+        .project-card:hover .project-logo {
+          transform: scale(1.1) rotate(5deg);
         }
       `}</style>
-
-      {/* Hidden file input */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleProfileImageUpload}
-        accept="image/*"
-        className="hidden"
-      />
 
       {/* Cursor Follower */}
       <div
@@ -196,25 +171,13 @@ export default function Portfolio() {
       <section className="min-h-screen flex flex-col md:flex-row items-center justify-center px-2 py-2 relative">
         <div className="max-w-[900px] px-2 py-2">
           <div className="flex flex-col md:flex-row items-center gap-8 mb-8">
-            {/* Profile Picture */}
-            <div 
-              className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-4 border-[#00ff88] cursor-pointer profile-hover px-2 py-2"
-              onClick={triggerFileInput}
-            >
-              {profileImage ? (
-                <img 
-                  src={profileImage} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-4xl">
-                  YT
-                </div>
-              )}
-              <div className="profile-overlay absolute inset-0 bg-[#00ff88]/20 opacity-0 transition-opacity duration-300 flex items-center justify-center">
-                <span className="text-white font-semibold px-2 py-2">Click to Upload</span>
-              </div>
+            {/* Profile Picture - Replace the image URL above */}
+            <div className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-4 border-[#00ff88] px-2 py-2">
+              <img 
+                src={profileImage} 
+                alt="Yoné Toussaint" 
+                className="w-full h-full object-cover"
+              />
             </div>
 
             <div className="px-2 py-2">
@@ -249,26 +212,48 @@ export default function Portfolio() {
           {projects.map((project, index) => (
             <div
               key={index}
-              className="project-card bg-[#1a1a1a] p-10 border border-[#2a2a2a] hover:border-[#00ff88] relative overflow-hidden"
+              className="project-card bg-[#1a1a1a] p-8 border border-[#2a2a2a] hover:border-[#00ff88] relative overflow-hidden group"
             >
-              <div className="absolute top-0 left-0 w-full h-[3px] bg-[#00ff88] scale-x-0 hover:scale-x-100 transition-transform duration-300" />
-              <h3 className="text-[1.8rem] mb-4 font-bold px-2 py-2">{project.title}</h3>
+              <div className="absolute top-0 left-0 w-full h-[3px] bg-[#00ff88] scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+              
+              {/* Project Logo */}
+              <div className="mb-6 flex items-start justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="project-logo text-4xl md:text-5xl bg-[#2a2a2a] p-4 rounded-lg border border-[#3a3a3a] group-hover:border-[#00ff88] transition-all duration-300">
+                    {project.logo}
+                  </div>
+                  <div>
+                    <h3 className="text-[1.8rem] font-bold px-2 py-2">{project.title}</h3>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {project.tags.slice(0, 2).map((tag, i) => (
+                        <span key={i} className="px-2 py-1 bg-[#2a2a2a] text-xs border border-[#2a2a2a] rounded">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <p className="text-[#999] mb-6 leading-relaxed px-2 py-2">{project.description}</p>
+              
               <div className="flex flex-wrap gap-2 mt-4 px-2 py-2">
                 {project.tags.map((tag, i) => (
-                  <span key={i} className="px-3 py-1 bg-[#2a2a2a] text-sm border border-[#2a2a2a]">
+                  <span key={i} className="px-3 py-1 bg-[#2a2a2a] text-sm border border-[#2a2a2a] rounded">
                     {tag}
                   </span>
                 ))}
               </div>
+              
               {project.link && (
                 <a
                   href={project.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#00ff88] font-semibold inline-flex items-center gap-2 mt-4 px-2 py-2"
+                  className="inline-flex items-center gap-2 mt-6 px-4 py-2 bg-[#2a2a2a] hover:bg-[#00ff88] hover:text-black text-[#00ff88] font-semibold border border-[#2a2a2a] hover:border-[#00ff88] transition-all duration-300"
                 >
-                  {project.link.includes('http') ? 'Visit Site' : 'View on GitHub'} →
+                  <span>{project.link.includes('http') ? 'Visit Site' : 'View on GitHub'}</span>
+                  <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
                 </a>
               )}
             </div>
@@ -285,9 +270,9 @@ export default function Portfolio() {
           {skills.map((skill, index) => (
             <div
               key={index}
-              className="p-6 bg-[#1a1a1a] text-center border border-[#2a2a2a] hover:border-[#00ff88] hover:bg-[#2a2a2a] transition-all duration-300"
+              className="p-6 bg-[#1a1a1a] text-center border border-[#2a2a2a] hover:border-[#00ff88] hover:bg-[#2a2a2a] transition-all duration-300 group"
             >
-              <h4 className="text-lg font-semibold px-2 py-2">{skill}</h4>
+              <h4 className="text-lg font-semibold px-2 py-2 group-hover:text-[#00ff88] transition-colors duration-300">{skill}</h4>
             </div>
           ))}
         </div>
