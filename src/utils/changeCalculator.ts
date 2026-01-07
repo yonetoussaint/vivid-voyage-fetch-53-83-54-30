@@ -344,7 +344,7 @@ export const generateChangeCombinations = (changeNeeded) => {
     description: "Variété de coupures - flexible pour faire d'autres transactions"
   });
 
-  // Remove exact duplicates
+  // Remove exact duplicates but keep trying to get 4 unique options
   const uniqueCombinations = [];
   const seen = new Set();
 
@@ -357,23 +357,76 @@ export const generateChangeCombinations = (changeNeeded) => {
   }
 
   // If we have fewer than 4 unique combinations, add intelligent variations
-  if (uniqueCombinations.length < 4) {
-    // Add variation: No large bills (500+)
-    const noLargeResult = constrainedGreedy(givableAmount, {
-      skipDenoms: [1000, 500]
-    });
-    const totalNoLarge = givableAmount - noLargeResult.remainder;
+  while (uniqueCombinations.length < 4) {
+    let newCombo = null;
     
-    uniqueCombinations.push({
-      key: 'strategy-no-large',
-      breakdown: noLargeResult.breakdown,
-      totalNotes: noLargeResult.totalBills,
-      totalAmount: totalNoLarge,
-      remainder: noLargeResult.remainder + remainder,
-      isExact: (noLargeResult.remainder + remainder) === 0,
-      strategyName: "🎒 Sans gros billets",
-      description: "Utilise des coupures moyennes et petites uniquement"
-    });
+    if (uniqueCombinations.length === 1) {
+      // Add variation: No large bills (500+)
+      const noLargeResult = constrainedGreedy(givableAmount, {
+        skipDenoms: [1000, 500]
+      });
+      const totalNoLarge = givableAmount - noLargeResult.remainder;
+      
+      newCombo = {
+        key: 'strategy-no-large',
+        breakdown: noLargeResult.breakdown,
+        totalNotes: noLargeResult.totalBills,
+        totalAmount: totalNoLarge,
+        remainder: noLargeResult.remainder + remainder,
+        isExact: (noLargeResult.remainder + remainder) === 0,
+        strategyName: "🎒 Sans gros billets",
+        description: "Utilise des coupures moyennes et petites uniquement"
+      };
+    } else if (uniqueCombinations.length === 2) {
+      // Add variation: Prefer medium denominations (100, 50)
+      const mediumResult = constrainedGreedy(givableAmount, {
+        preferredDenoms: [100, 50],
+        maxPerDenom: { 1000: 1, 500: 1 }
+      });
+      const totalMedium = givableAmount - mediumResult.remainder;
+      
+      newCombo = {
+        key: 'strategy-medium',
+        breakdown: mediumResult.breakdown,
+        totalNotes: mediumResult.totalBills,
+        totalAmount: totalMedium,
+        remainder: mediumResult.remainder + remainder,
+        isExact: (mediumResult.remainder + remainder) === 0,
+        strategyName: "📊 Coupures moyennes",
+        description: "Privilégie les billets de 100 et 50 HTG"
+      };
+    } else if (uniqueCombinations.length === 3) {
+      // Add variation: Small bills focus
+      const smallResult = constrainedGreedy(givableAmount, {
+        skipDenoms: [1000],
+        maxPerDenom: { 500: 2, 250: 3 }
+      });
+      const totalSmall = givableAmount - smallResult.remainder;
+      
+      newCombo = {
+        key: 'strategy-small',
+        breakdown: smallResult.breakdown,
+        totalNotes: smallResult.totalBills,
+        totalAmount: totalSmall,
+        remainder: smallResult.remainder + remainder,
+        isExact: (smallResult.remainder + remainder) === 0,
+        strategyName: "💵 Petites coupures",
+        description: "Plus de flexibilité avec des petits billets"
+      };
+    }
+    
+    if (newCombo) {
+      const signature = JSON.stringify(newCombo.breakdown);
+      if (!seen.has(signature)) {
+        seen.add(signature);
+        uniqueCombinations.push(newCombo);
+      } else {
+        // If duplicate, break to avoid infinite loop
+        break;
+      }
+    } else {
+      break;
+    }
   }
 
   // Final verification
@@ -384,6 +437,7 @@ export const generateChangeCombinations = (changeNeeded) => {
     combo.isExact = combo.remainder === 0;
   });
 
+  // Ensure we return exactly 4 options (or all unique ones if less)
   return uniqueCombinations.slice(0, 4);
 };
 
