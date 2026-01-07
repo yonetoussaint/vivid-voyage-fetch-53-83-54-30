@@ -579,14 +579,41 @@ export default function Portfolio() {
     }
   ];
 
-  const skills = {
-    frontend: ['React.js', 'TypeScript', 'JavaScript', 'HTML5', 'CSS3', 'Tailwind CSS'],
-    backend: ['Node.js', 'Express', 'Python', 'REST API', 'GraphQL'],
-    mobile: ['React Native', 'Expo'],
-    databases: ['MongoDB', 'PostgreSQL', 'Redis', 'Supabase'],
-    tools: ['Git', 'Docker', 'AWS', 'CI/CD', 'Jest', 'Webpack'],
-    languages: ['Français', 'Anglais', 'Créole']
-  };
+  // Après la ligne où les skills sont définis (~ligne 330)
+const skills = {
+  frontend: ['React.js', 'TypeScript', 'JavaScript', 'HTML5', 'CSS3', 'Tailwind CSS'],
+  backend: ['Node.js', 'Express', 'Python', 'REST API', 'GraphQL'],
+  mobile: ['React Native', 'Expo'],
+  databases: ['MongoDB', 'PostgreSQL', 'Redis', 'Supabase'],
+  tools: ['Git', 'Docker', 'AWS', 'CI/CD', 'Jest', 'Webpack'],
+  languages: ['Français', 'Anglais', 'Créole']
+};
+
+// AJOUTE CE CODE ICI :
+const contactLinks = [
+  { 
+    name: 'Email', 
+    href: 'mailto:yone95572@gmail.com',
+    icon: '✉️',
+    copyText: 'yone95572@gmail.com'
+  },
+  { 
+    name: 'WhatsApp', 
+    href: 'https://wa.me/47279318',
+    icon: '💬',
+    copyText: '+47279318'
+  },
+  { 
+    name: 'GitHub', 
+    href: '#',
+    icon: '🐙'
+  },
+  { 
+    name: 'LinkedIn', 
+    href: '#',
+    icon: '👔'
+  }
+];
 
   const filteredProjects = activeProjectFilter === 'all' 
     ? projects.filter(p => p.featured)
