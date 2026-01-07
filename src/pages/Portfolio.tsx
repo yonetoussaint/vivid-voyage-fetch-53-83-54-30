@@ -8,6 +8,7 @@ export default function Portfolio() {
   const aboutRef = useRef(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // New state for mobile menu
   const projectsRef = useRef(null);
+const [sidePanelOpen, setSidePanelOpen] = useState(false);
   const experienceRef = useRef(null);
   const skillsRef = useRef(null);
   const educationRef = useRef(null);
