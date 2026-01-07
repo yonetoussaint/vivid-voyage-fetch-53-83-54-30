@@ -156,11 +156,13 @@ export default function Portfolio() {
     ],
     "Backend": [
       { name: "Node.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg", cert: "https://certificates.example.com/nodejs", proficiency: 90 },
+      { name: "Express.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg", cert: null, proficiency: 88 },
       { name: "Python", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg", cert: "https://certificates.example.com/python", proficiency: 85 },
       { name: "Go", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg", cert: null, proficiency: 70 },
       { name: "Rust", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/rust/rust-plain.svg", cert: null, proficiency: 65 },
       { name: "PostgreSQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg", cert: null, proficiency: 82 },
-      { name: "MongoDB", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg", cert: null, proficiency: 80 }
+      { name: "MongoDB", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg", cert: null, proficiency: 80 },
+      { name: "Supabase", logo: "https://raw.githubusercontent.com/supabase/supabase/master/packages/common/assets/images/supabase-logo-icon.png", cert: null, proficiency: 78 }
     ],
     "DevOps": [
       { name: "Docker", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg", cert: "https://certificates.example.com/docker", proficiency: 88 },
@@ -288,8 +290,8 @@ export default function Portfolio() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
+      {/* Header - Fixed on top */}
+      <header className="bg-white border-b fixed top-0 left-0 right-0 z-50">
         <div className="max-w-4xl mx-auto px-2 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -382,8 +384,8 @@ export default function Portfolio() {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto pb-8">
+      {/* Main Content Area - Added padding-top to account for fixed header */}
+      <main className="flex-1 overflow-y-auto pb-8 pt-24">
         <div className="max-w-4xl mx-auto px-2 py-6 space-y-8">
           {/* About Section */}
           <section ref={aboutRef} id="about" className="scroll-mt-20">
@@ -641,47 +643,10 @@ export default function Portfolio() {
           <section ref={skillsRef} id="skills" className="scroll-mt-20">
             <h2 className="text-2xl font-bold mb-4 px-2">Skills & Expertise</h2>
             
-            {/* Current Learning Path */}
-            <AnimatedSection id="skills" delay={0}>
-              <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-5 shadow-sm mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-5 h-5 text-purple-600" />
-                  <h3 className="text-lg font-bold text-purple-900">Currently Learning</h3>
-                </div>
-                <div className="space-y-4">
-                  {learningPath.map((skill, i) => (
-                    <div key={i} className="bg-white/80 rounded-lg p-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <img 
-                          src={skill.logo} 
-                          alt={skill.name}
-                          className="w-8 h-8 object-contain"
-                          onError={(e) => e.target.style.display = 'none'}
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-semibold text-gray-800">{skill.name}</span>
-                            <span className="text-sm font-medium text-purple-600">{skill.progress}%</span>
-                          </div>
-                          <p className="text-xs text-gray-600">{skill.target}</p>
-                        </div>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${skill.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </AnimatedSection>
-
             {/* Skills by Category */}
             <div className="space-y-4">
               {Object.entries(skills).map(([category, items], i) => (
-                <AnimatedSection key={category} id="skills" delay={(i + 1) * 100}>
+                <AnimatedSection key={category} id="skills" delay={i * 100}>
                   <div className="bg-white rounded-xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                       <Code2 className="w-5 h-5 text-blue-600" />
@@ -734,6 +699,47 @@ export default function Portfolio() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Currently Learning section - Now placed after Backend section only */}
+                  {category === "Backend" && (
+                    <div className="mt-6">
+                      <AnimatedSection id="currently-learning" delay={200}>
+                        <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-5 shadow-sm">
+                          <div className="flex items-center gap-2 mb-4">
+                            <TrendingUp className="w-5 h-5 text-purple-600" />
+                            <h3 className="text-lg font-bold text-purple-900">Currently Learning</h3>
+                          </div>
+                          <div className="space-y-4">
+                            {learningPath.map((skill, index) => (
+                              <div key={index} className="bg-white/80 rounded-lg p-4">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <img 
+                                    src={skill.logo} 
+                                    alt={skill.name}
+                                    className="w-8 h-8 object-contain"
+                                    onError={(e) => e.target.style.display = 'none'}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="font-semibold text-gray-800">{skill.name}</span>
+                                      <span className="text-sm font-medium text-purple-600">{skill.progress}%</span>
+                                    </div>
+                                    <p className="text-xs text-gray-600">{skill.target}</p>
+                                  </div>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-500"
+                                    style={{ width: `${skill.progress}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </AnimatedSection>
+                    </div>
+                  )}
                 </AnimatedSection>
               ))}
             </div>
