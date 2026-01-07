@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, Coins, Sparkles, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, Coins, Sparkles, AlertCircle, Plus, Trash2, Globe } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const CaisseRecuCard = ({
@@ -11,16 +11,34 @@ const CaisseRecuCard = ({
   isPropane = false,
   tauxUSD = 132
 }) => {
-  const [cashRecu, setCashRecu] = useState('');
-  const [cashSequences, setCashSequences] = useState([]);
   const [inputValue, setInputValue] = useState('');
+  const [currencyType, setCurrencyType] = useState('HTG'); // 'HTG' or 'USD'
+  const [cashSequences, setCashSequences] = useState([]);
   
-  // Calculate total cash received from all sequences
-  const totalCashRecu = useMemo(() => {
-    return cashSequences.reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
+  // Calculate total cash received from all sequences (converted to HTG)
+  const totalCashRecuHTG = useMemo(() => {
+    return cashSequences.reduce((sum, seq) => {
+      if (seq.currency === 'USD') {
+        return sum + (parseFloat(seq.amount) * tauxUSD || 0);
+      }
+      return sum + (parseFloat(seq.amount) || 0);
+    }, 0);
+  }, [cashSequences, tauxUSD]);
+
+  // Calculate total in original currencies for display
+  const totalHTG = useMemo(() => {
+    return cashSequences
+      .filter(seq => seq.currency === 'HTG')
+      .reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
   }, [cashSequences]);
-  
-  const changeNeeded = totalCashRecu - especesAttendues;
+
+  const totalUSD = useMemo(() => {
+    return cashSequences
+      .filter(seq => seq.currency === 'USD')
+      .reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
+  }, [cashSequences]);
+
+  const changeNeeded = totalCashRecuHTG - especesAttendues;
   const shouldGiveChange = changeNeeded > 0;
   const isShort = changeNeeded < 0;
 
@@ -40,7 +58,9 @@ const CaisseRecuCard = ({
       const newSequence = {
         id: Date.now(),
         amount: amount,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        currency: currencyType,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        convertedToHTG: currencyType === 'USD' ? amount * tauxUSD : amount
       };
       setCashSequences(prev => [...prev, newSequence]);
       setInputValue('');
@@ -62,11 +82,24 @@ const CaisseRecuCard = ({
     setInputValue(e.target.value);
   };
 
+  // Handle currency toggle
+  const handleCurrencyToggle = () => {
+    setCurrencyType(prev => prev === 'HTG' ? 'USD' : 'HTG');
+  };
+
   // Handle Enter key press
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleAddSequence();
     }
+  };
+
+  // Quick add amounts based on currency
+  const getQuickAddAmounts = () => {
+    if (currencyType === 'USD') {
+      return [1, 5, 10, 20]; // Common USD bills
+    }
+    return [100, 250, 500, 1000]; // Common HTG bills
   };
 
   // Generate 4 truly different combination strategies
@@ -529,16 +562,25 @@ const CaisseRecuCard = ({
 
       {/* Cash Sequences Section */}
       <div className="mb-3">
+        {/* Exchange Rate Info */}
+        <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <Globe size={12} className="text-blue-300" />
+            <p className="text-xs opacity-90">Taux USD:</p>
+          </div>
+          <p className="text-sm font-bold text-blue-300">1 USD = {tauxUSD} HTG</p>
+        </div>
+
         {/* Total Cash Received Summary */}
         {cashSequences.length > 0 && (
           <div className="bg-green-500 bg-opacity-20 rounded-lg p-2 mb-2 border border-green-400 border-opacity-30">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1">
                 <DollarSign size={12} className="text-green-300" />
                 <p className="text-xs font-bold text-green-300">Total reçu:</p>
               </div>
               <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-green-300">{formaterArgent(totalCashRecu)} HTG</p>
+                <p className="text-sm font-bold text-green-300">{formaterArgent(totalCashRecuHTG)} HTG</p>
                 <button
                   onClick={handleClearAll}
                   className="p-1 hover:bg-red-500 hover:bg-opacity-30 rounded text-red-300 hover:text-red-200 transition-colors"
@@ -548,7 +590,27 @@ const CaisseRecuCard = ({
                 </button>
               </div>
             </div>
-            <p className="text-[10px] opacity-80 mt-1 text-green-300">
+            
+            {/* Breakdown by currency */}
+            <div className="grid grid-cols-2 gap-2 text-[10px]">
+              <div className="bg-blue-500 bg-opacity-10 rounded p-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="opacity-80">Total HTG:</span>
+                  <span className="font-bold text-blue-300">{formaterArgent(totalHTG)} HTG</span>
+                </div>
+              </div>
+              <div className="bg-green-500 bg-opacity-10 rounded p-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="opacity-80">Total USD:</span>
+                  <span className="font-bold text-green-300">
+                    {totalUSD.toFixed(2)} USD
+                    <span className="text-[9px] opacity-70 ml-1">({formaterArgent(totalUSD * tauxUSD)} HTG)</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-[10px] opacity-80 mt-2 text-green-300">
               {cashSequences.length} séquence{cashSequences.length !== 1 ? 's' : ''} ajoutée{cashSequences.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -561,14 +623,32 @@ const CaisseRecuCard = ({
               {cashSequences.map((sequence, index) => (
                 <div key={sequence.id} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                    <div className={`w-2 h-2 rounded-full ${
+                      sequence.currency === 'USD' ? 'bg-green-400' : 'bg-blue-400'
+                    }`}></div>
                     <span className="opacity-80">Séquence {index + 1}:</span>
                     <span className="text-[10px] opacity-60">{sequence.timestamp}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                      sequence.currency === 'USD' 
+                        ? 'bg-green-500 bg-opacity-20 text-green-300' 
+                        : 'bg-blue-500 bg-opacity-20 text-blue-300'
+                    }`}>
+                      {sequence.currency}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium opacity-90 text-green-300">
-                      {formaterArgent(sequence.amount)} HTG
-                    </span>
+                    <div className="text-right">
+                      <span className={`font-medium ${
+                        sequence.currency === 'USD' ? 'text-green-300' : 'text-blue-300'
+                      }`}>
+                        {sequence.currency === 'USD' ? '$' : ''}{sequence.amount} {sequence.currency}
+                      </span>
+                      {sequence.currency === 'USD' && (
+                        <p className="text-[10px] opacity-60">
+                          = {formaterArgent(sequence.convertedToHTG)} HTG
+                        </p>
+                      )}
+                    </div>
                     <button
                       onClick={() => handleRemoveSequence(sequence.id)}
                       className="p-0.5 hover:bg-red-500 hover:bg-opacity-30 rounded text-red-300 hover:text-red-200 transition-colors"
@@ -585,36 +665,75 @@ const CaisseRecuCard = ({
 
         {/* Input field for adding cash sequences */}
         <div className="relative mb-2">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-white font-bold text-xs">HTG</span>
+          {/* Currency selector and label */}
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCurrencyToggle}
+                className={`px-2 py-1 rounded text-xs font-bold flex items-center gap-1 transition-colors ${
+                  currencyType === 'HTG' 
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                    : 'bg-green-500 hover:bg-green-600 text-white'
+                }`}
+              >
+                {currencyType === 'HTG' ? (
+                  <>
+                    <DollarSign size={10} />
+                    HTG
+                  </>
+                ) : (
+                  <>
+                    <Globe size={10} />
+                    USD
+                  </>
+                )}
+              </button>
+              <span className="text-xs opacity-80">
+                {currencyType === 'HTG' ? 'Gourdes Haïtiennes' : 'Dollars US'}
+              </span>
+            </div>
+            <span className="text-xs opacity-70">
+              Taux: 1 USD = {tauxUSD} HTG
+            </span>
           </div>
-          <input
-            type="number"
-            value={inputValue}
-            onChange={handleInputChange}
-            onKeyPress={handleKeyPress}
-            placeholder="Ajouter un montant..."
-            className="w-full pl-12 pr-20 py-2.5 text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
-          />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-1">
-            <button
-              onClick={handleAddSequence}
-              disabled={!inputValue || parseFloat(inputValue) <= 0}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 ${
-                inputValue && parseFloat(inputValue) > 0
-                  ? 'bg-green-500 hover:bg-green-600 text-white'
-                  : 'bg-gray-400 bg-opacity-30 text-gray-300 cursor-not-allowed'
-              } transition-colors`}
-            >
-              <Plus size={12} />
-              Ajouter
-            </button>
+
+          {/* Input with Add button */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-white font-bold text-xs">
+                {currencyType === 'HTG' ? 'HTG' : 'USD'}
+              </span>
+            </div>
+            <input
+              type="number"
+              value={inputValue}
+              onChange={handleInputChange}
+              onKeyPress={handleKeyPress}
+              placeholder={`Montant en ${currencyType}...`}
+              className="w-full pl-12 pr-20 py-2.5 text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
+            />
+            <div className="absolute inset-y-0 right-0 flex items-center pr-1">
+              <button
+                onClick={handleAddSequence}
+                disabled={!inputValue || parseFloat(inputValue) <= 0}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 ${
+                  inputValue && parseFloat(inputValue) > 0
+                    ? currencyType === 'HTG' 
+                      ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                      : 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-gray-400 bg-opacity-30 text-gray-300 cursor-not-allowed'
+                } transition-colors`}
+              >
+                <Plus size={12} />
+                Ajouter
+              </button>
+            </div>
           </div>
         </div>
         
         {/* Quick add buttons */}
         <div className="grid grid-cols-4 gap-1 mb-2">
-          {[100, 250, 500, 1000].map((amount) => (
+          {getQuickAddAmounts().map((amount) => (
             <button
               key={amount}
               onClick={() => {
@@ -625,9 +744,13 @@ const CaisseRecuCard = ({
                   if (button) button.click();
                 }, 50);
               }}
-              className="px-2 py-1.5 text-xs font-medium bg-white bg-opacity-10 hover:bg-opacity-20 rounded border border-white border-opacity-20 transition-colors"
+              className={`px-2 py-1.5 text-xs font-medium rounded border transition-colors ${
+                currencyType === 'USD'
+                  ? 'bg-green-500 bg-opacity-10 hover:bg-opacity-20 border-green-400 border-opacity-30 text-green-300'
+                  : 'bg-blue-500 bg-opacity-10 hover:bg-opacity-20 border-blue-400 border-opacity-30 text-blue-300'
+              }`}
             >
-              +{amount}
+              +{amount} {currencyType === 'USD' ? '$' : ''}
             </button>
           ))}
         </div>
@@ -866,10 +989,10 @@ const CaisseRecuCard = ({
       {cashSequences.length === 0 && (
         <div className="bg-white bg-opacity-5 rounded-lg p-2 text-center">
           <p className="text-[10px] opacity-70">
-            Entrez les montants séquentiellement lorsque le vendeur donne l'argent
+            Entrez les montants séquentiellement en HTG ou USD
           </p>
           <p className="text-[9px] opacity-50 mt-0.5">
-            Ex: 500 + 250 + 100 = 850 HTG
+            Ex: 500 HTG + 5 USD + 250 HTG = 1,410 HTG total
           </p>
         </div>
       )}
