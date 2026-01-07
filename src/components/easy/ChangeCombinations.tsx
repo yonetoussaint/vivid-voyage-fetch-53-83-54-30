@@ -207,29 +207,6 @@ const ChangeCombinations = ({
                     </span>
                   </div>
                 )}
-
-                {/* Efficiency score (if available) */}
-                {activeCombination.efficiency && (
-                  <div className="flex items-center justify-between pt-2 border-t border-green-400 border-opacity-20">
-                    <div className="flex items-center gap-1.5">
-                      <Info size={10} className="text-blue-300" />
-                      <span className="text-[10px] text-blue-300">Score d'efficacité:</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-16 bg-white bg-opacity-10 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-green-500 to-green-300 h-2 rounded-full"
-                          style={{ 
-                            width: `${Math.min(100, (activeCombination.efficiency || 0) / 1.5)}%` 
-                          }}
-                        ></div>
-                      </div>
-                      <span className="text-[10px] font-bold text-green-300">
-                        {Math.round(activeCombination.efficiency)}%
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </>
@@ -251,14 +228,7 @@ const ChangeCombinations = ({
         )}
       </div>
 
-      {/* Denomination info */}
-      <div className="bg-blue-500 bg-opacity-10 rounded p-1.5 border border-blue-400 border-opacity-20">
-        <p className="text-[9px] text-center text-blue-300">
-          Plus petit billet/monnaie = 5 HTG • Montant utilisable: {formaterArgent(givableAmount)} HTG
-        </p>
-      </div>
-
-      {/* Note only (without the strategy guide) */}
+      {/* Note only */}
       <div className="bg-green-500 bg-opacity-5 rounded p-2 border border-green-400 border-opacity-10">
         <div className="flex items-center gap-1">
           <Info size={9} className="text-blue-300" />
