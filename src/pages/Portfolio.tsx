@@ -165,9 +165,8 @@ export default function Portfolio() {
     { name: "Radix UI", logo: "https://avatars.githubusercontent.com/u/75042455?s=200&v=4", cert: null, proficiency: 85 },
     { name: "MUI", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/materialui/materialui-original.svg", cert: null, proficiency: 82 },
 
+    { name: "Lucide Icons", logo: "https://lucide.dev/logo.svg", cert: null, proficiency: 85 },
     { name: "Framer Motion", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/framermotion/framermotion-original.svg", cert: null, proficiency: 85 },
-
-    { name: "PWA", logo: "https://web.dev/static/images/pwa.svg", cert: null, proficiency: 80 },
 
     { name: "Auth.js", logo: "https://authjs.dev/img/logo-sm.png", cert: null, proficiency: 82 },
     { name: "Clerk", logo: "https://avatars.githubusercontent.com/u/83972758?s=200&v=4", cert: null, proficiency: 80 },
@@ -176,9 +175,7 @@ export default function Portfolio() {
 
     { name: "React Native", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg", cert: null, proficiency: 78 },
     { name: "Expo", logo: "https://avatars.githubusercontent.com/u/12504344?s=200&v=4", cert: null, proficiency: 80 }
-  ],
-
-  // Backend, DevOps, Other unchanged
+  ]
 };
 
   const scrollToSection = (sectionId) => {
