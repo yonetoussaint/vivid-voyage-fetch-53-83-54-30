@@ -668,14 +668,6 @@ export default function Portfolio() {
                             <span className="text-sm font-semibold text-gray-800">{skill.name}</span>
                           </div>
                           
-                          {/* Proficiency Bar */}
-                          <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
-                            <div 
-                              className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
-                              style={{ width: `${skill.proficiency}%` }}
-                            />
-                          </div>
-                          
                           {/* Certificate Badge */}
                           {skill.cert && (
                             <a 
