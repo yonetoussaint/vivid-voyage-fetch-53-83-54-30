@@ -178,28 +178,51 @@ export default function Portfolio() {
   ],
 
   Backend: [
-    { name: "Node.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg", cert: null, proficiency: 90 },
-    { name: "Express.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg", cert: null, proficiency: 88 },
-    { name: "NestJS", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nestjs/nestjs-plain.svg", cert: null, proficiency: 85 },
+  // JS Runtimes
+  { name: "Node.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg", cert: null, proficiency: 90 },
+  { name: "Bun", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bun/bun-original.svg", cert: null, proficiency: 82 },
+  { name: "Deno", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/denojs/denojs-original.svg", cert: null, proficiency: 75 },
 
-    { name: "Python", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg", cert: null, proficiency: 85 },
-    { name: "FastAPI", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg", cert: null, proficiency: 82 },
+  // JS Frameworks
+  { name: "Express.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg", cert: null, proficiency: 88 },
+  { name: "Fastify", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastify/fastify-original.svg", cert: null, proficiency: 85 },
+  { name: "NestJS", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nestjs/nestjs-plain.svg", cert: null, proficiency: 85 },
+  { name: "Hono", logo: "https://avatars.githubusercontent.com/u/98495527?s=200&v=4", cert: null, proficiency: 78 },
 
-    { name: "Go", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg", cert: null, proficiency: 70 },
-    { name: "Rust", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/rust/rust-plain.svg", cert: null, proficiency: 65 },
+  // APIs & Realtime
+  { name: "REST APIs", logo: "https://www.svgrepo.com/show/354202/rest-api.svg", cert: null, proficiency: 92 },
+  { name: "GraphQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/graphql/graphql-plain.svg", cert: null, proficiency: 80 },
+  { name: "tRPC", logo: "https://avatars.githubusercontent.com/u/78011399?s=200&v=4", cert: null, proficiency: 82 },
+  { name: "WebSockets", logo: "https://www.svgrepo.com/show/493713/websocket.svg", cert: null, proficiency: 80 },
 
-    { name: "PostgreSQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg", cert: null, proficiency: 82 },
-    { name: "MongoDB", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg", cert: null, proficiency: 80 },
-    { name: "Redis", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg", cert: null, proficiency: 78 },
+  // Auth & Security
+  { name: "Auth.js / NextAuth", logo: "https://authjs.dev/img/logo-sm.png", cert: null, proficiency: 82 },
+  { name: "JWT", logo: "https://www.svgrepo.com/show/374118/jwt.svg", cert: null, proficiency: 88 },
+  { name: "OAuth 2.0", logo: "https://www.svgrepo.com/show/475656/oauth.svg", cert: null, proficiency: 85 },
 
-    { name: "Supabase", logo: "https://raw.githubusercontent.com/supabase/supabase/master/packages/common/assets/images/supabase-logo-icon.png", cert: null, proficiency: 78 },
+  // Databases & ORM
+  { name: "PostgreSQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg", cert: null, proficiency: 82 },
+  { name: "MongoDB", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg", cert: null, proficiency: 80 },
+  { name: "Redis", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg", cert: null, proficiency: 78 },
+  { name: "Prisma", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg", cert: null, proficiency: 85 },
+  { name: "Drizzle ORM", logo: "https://avatars.githubusercontent.com/u/108468352?s=200&v=4", cert: null, proficiency: 80 },
 
-    { name: "GraphQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/graphql/graphql-plain.svg", cert: null, proficiency: 80 },
-    { name: "tRPC", logo: "https://avatars.githubusercontent.com/u/78011399?s=200&v=4", cert: null, proficiency: 82 },
+  // Backend Platforms
+  { name: "Supabase", logo: "https://raw.githubusercontent.com/supabase/supabase/master/packages/common/assets/images/supabase-logo-icon.png", cert: null, proficiency: 78 },
+  { name: "Firebase", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg", cert: null, proficiency: 75 },
 
-    { name: "REST APIs", logo: "https://www.svgrepo.com/show/354202/rest-api.svg", cert: null, proficiency: 92 },
-    { name: "Auth (JWT / OAuth)", logo: "https://www.svgrepo.com/show/374118/jwt.svg", cert: null, proficiency: 85 }
-  ],
+  // Jobs & Scheduling
+  { name: "BullMQ", logo: "https://avatars.githubusercontent.com/u/75309366?s=200&v=4", cert: null, proficiency: 80 },
+  { name: "Node Cron", logo: "https://www.svgrepo.com/show/373598/cron.svg", cert: null, proficiency: 78 },
+
+  // Testing
+  { name: "Jest", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jest/jest-plain.svg", cert: null, proficiency: 85 },
+  { name: "Vitest", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitest/vitest-original.svg", cert: null, proficiency: 82 },
+
+  // PHP
+  { name: "PHP", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg", cert: null, proficiency: 78 },
+  { name: "Laravel", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/laravel/laravel-original.svg", cert: null, proficiency: 80 }
+],
 
   DevOps: [
     { name: "Docker", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg", cert: null, proficiency: 88 },
