@@ -113,19 +113,16 @@ const ChangeCombinations = ({
           <button
             key={combo.key}
             onClick={() => setActiveTab(index)}
-            className={`flex flex-col items-center p-1 rounded-t-md border-b-2 transition-all ${
+            className={`flex items-center justify-center p-1.5 rounded-md border transition-all ${
               activeTab === index 
                 ? `${getTabColor(index)} border-opacity-100 font-bold` 
                 : 'bg-gray-800 border-gray-700 border-opacity-50 text-gray-400 hover:bg-gray-700'
             }`}
           >
-            <div className="flex items-center gap-1">
-              {getStrategyIcon(combo.strategyName, index)}
-              <span className="text-[9px]">Option {index + 1}</span>
+            <div className="flex items-center gap-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${getDotColor(index)}`}></div>
+              <span className="text-[10px] font-medium whitespace-nowrap">Option {index + 1}</span>
             </div>
-            <span className="text-[8px] mt-0.5 truncate w-full text-center">
-              {combo.strategyName}
-            </span>
           </button>
         ))}
       </div>
@@ -281,7 +278,7 @@ const ChangeCombinations = ({
             </span>
           </div>
           <div className="flex items-start gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-0.5"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt=0.5"></div>
             <span className="opacity-80">
               <span className="font-bold">Option 3 (Petites coupures):</span> Plus de billets de 250, 100, 50 HTG
             </span>
