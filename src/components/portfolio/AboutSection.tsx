@@ -42,12 +42,6 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutRef, visibleSec
               <div className="absolute bottom-8 left-10 w-10 h-10 rounded-full bg-white/10"></div>
               <div className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-white/15"></div>
             </div>
-            
-            {/* Status Badge */}
-            <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-md">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-sm font-medium text-green-700">Available for opportunities</span>
-            </div>
           </div>
         </AnimatedSection>
 
