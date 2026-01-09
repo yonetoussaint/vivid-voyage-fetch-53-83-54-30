@@ -1,58 +1,40 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { Quote } from 'lucide-react';
+import { AnimatedSection } from './AnimatedSection';
+import { testimonials } from './data';
 
-const TestimonialsSection = ({ theme, t, testimonials, language }) => {
+interface TestimonialsSectionProps {
+  testimonialsRef: React.RefObject<HTMLElement>;
+  visibleSections: Set<string>;
+}
+
+export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonialsRef, visibleSections }) => {
   return (
-    <section id="testimonials" className="py-20 px-4 max-w-4xl mx-auto">
-      <h2 
-        className="text-[clamp(2rem,5vw,3rem)] mb-12 font-extrabold tracking-tight text-center px-2 py-2"
-        dangerouslySetInnerHTML={{ __html: t.testimonials.title }}
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-2 py-2">
-        {testimonials.map((testimonial) => (
-          <motion.div
-            key={testimonial.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className={`p-6 rounded-xl ${
-              theme === 'dark' ? 'bg-[#111]' : 'bg-white shadow-sm'
-            }`}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${
-                theme === 'dark' ? 'bg-[#1a1a1a]' : 'bg-gray-100'
-              }`}>
-                👤
+    <section ref={testimonialsRef} id="testimonials" className="scroll-mt-20">
+      <h2 className="text-2xl font-bold mb-4 px-2">What People Say</h2>
+      <div className="space-y-4">
+        {testimonials.map((testimonial, i) => (
+          <AnimatedSection key={i} id="testimonials" delay={i * 100} visibleSections={visibleSections}>
+            <div className="bg-white rounded-xl p-5 shadow-sm">
+              <div className="flex items-start gap-4 mb-3">
+                <img 
+                  src={testimonial.image} 
+                  alt={testimonial.name}
+                  className="w-14 h-14 rounded-full object-cover border-2 border-gray-200"
+                />
+                <div className="flex-1">
+                  <h3 className="font-bold text-base mb-1">{testimonial.name}</h3>
+                  <p className="text-xs text-gray-600">{testimonial.role}</p>
+                </div>
+                <Quote className="w-8 h-8 text-blue-100 flex-shrink-0" />
               </div>
-              <div>
-                <h4 className="font-bold">{testimonial.name}</h4>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {testimonial.position}, {testimonial.company}
-                </p>
-              </div>
+              <p className="text-sm text-gray-600 leading-relaxed italic">
+                "{testimonial.text}"
+              </p>
             </div>
-
-            <p className={`mb-4 italic ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-              "{testimonial.text}"
-            </p>
-
-            <div className="flex items-center justify-between">
-              <div className="flex">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <span key={i} className="text-yellow-500">★</span>
-                ))}
-              </div>
-              <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-                {new Date(testimonial.date).toLocaleDateString(language)}
-              </span>
-            </div>
-          </motion.div>
+          </AnimatedSection>
         ))}
       </div>
     </section>
   );
 };
-
-export default TestimonialsSection;
