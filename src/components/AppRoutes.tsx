@@ -13,7 +13,7 @@ import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
 import ProductDetail from "@/pages/ProductDetail";
-import ProductCommentsPage from "@/pages/ProductCommentsPage";
+import Calculator from "@/pages/Calculator";
 import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage"; // Add this import
 
