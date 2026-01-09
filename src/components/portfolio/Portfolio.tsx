@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+// Alternative: Simplified version with CSS-only solution
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from './Header';
 import { SidePanel } from './SidePanel';
 import { AboutSection } from './AboutSection';
@@ -7,7 +8,6 @@ import { ExperienceSection } from './ExperienceSection';
 import { EducationSection } from './EducationSection';
 import { TestimonialsSection } from './TestimonialsSection';
 import { SkillsSection } from './SkillsSection';
-import { tabs } from './data';
 
 export default function Portfolio() {
   const [activeTab, setActiveTab] = useState('about');
@@ -15,43 +15,48 @@ export default function Portfolio() {
   const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(0); // Track header height
+  const [headerHeight, setHeaderHeight] = useState(96); // Default estimate
 
   const headerRef = useRef<HTMLDivElement>(null);
-  const aboutRef = useRef(null);
-  const projectsRef = useRef(null);
-  const experienceRef = useRef(null);
-  const skillsRef = useRef(null);
-  const educationRef = useRef(null);
-  const testimonialsRef = useRef(null);
+  const aboutRef = useRef<HTMLDivElement>(null);
+  const projectsRef = useRef<HTMLDivElement>(null);
+  const experienceRef = useRef<HTMLDivElement>(null);
+  const skillsRef = useRef<HTMLDivElement>(null);
+  const educationRef = useRef<HTMLDivElement>(null);
+  const testimonialsRef = useRef<HTMLDivElement>(null);
 
-  // Function to measure and update header height
-  const updateHeaderHeight = () => {
-    if (headerRef.current) {
-      const height = headerRef.current.offsetHeight;
-      setHeaderHeight(height);
-    }
-  };
-
-  // Update header height on mount and on window resize
+  // Simple header height measurement
   useEffect(() => {
-    updateHeaderHeight();
-    
-    const handleResize = () => {
-      updateHeaderHeight();
+    const measureHeader = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.offsetHeight;
+        setHeaderHeight(height);
+        // Set CSS variable
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+      }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    measureHeader();
+    window.addEventListener('resize', measureHeader);
+    
+    return () => window.removeEventListener('resize', measureHeader);
   }, []);
 
-  // Update header height when mobile menu opens/closes
+  // Update height when menus change
   useEffect(() => {
-    updateHeaderHeight();
-  }, [mobileMenuOpen]);
+    const timer = setTimeout(() => {
+      if (headerRef.current) {
+        const height = headerRef.current.offsetHeight;
+        setHeaderHeight(height);
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+      }
+    }, 100);
 
-  const scrollToSection = (sectionId: string) => {
-    const refs: Record<string, React.RefObject<HTMLElement>> = {
+    return () => clearTimeout(timer);
+  }, [mobileMenuOpen, sectionDropdownOpen]);
+
+  const scrollToSection = useCallback((sectionId: string) => {
+    const refs = {
       about: aboutRef,
       projects: projectsRef,
       experience: experienceRef,
@@ -60,21 +65,21 @@ export default function Portfolio() {
       testimonials: testimonialsRef
     };
 
-    if (refs[sectionId]?.current) {
-      const element = refs[sectionId].current;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+    const element = refs[sectionId as keyof typeof refs]?.current;
+    if (!element) return;
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
+    // Use browser's native scrollIntoView with scroll-margin-top from CSS
+    element.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
 
     setActiveTab(sectionId);
     setSectionDropdownOpen(false);
-  };
+    setMobileMenuOpen(false);
+  }, []);
 
+  // Simple scroll detection
   useEffect(() => {
     const handleScroll = () => {
       const sections = [
@@ -97,10 +102,11 @@ export default function Portfolio() {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [headerHeight]); // Re-run when header height changes
+  }, [headerHeight]);
 
+  // Intersection Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -110,30 +116,30 @@ export default function Portfolio() {
           }
         });
       },
-      { 
-        threshold: 0.1,
-        rootMargin: `-${headerHeight}px 0px 0px 0px` // Adjust root margin based on header height
-      }
+      { threshold: 0.1 }
     );
 
-    const sections = [aboutRef, projectsRef, experienceRef, educationRef, testimonialsRef, skillsRef];
-    sections.forEach((ref) => {
-      if (ref.current) {
-        observer.observe(ref.current);
-      }
+    const elements = [aboutRef, projectsRef, experienceRef, educationRef, testimonialsRef, skillsRef];
+    elements.forEach(ref => {
+      if (ref.current) observer.observe(ref.current);
     });
 
     return () => observer.disconnect();
-  }, [headerHeight]); // Re-run when header height changes
+  }, []);
 
   const toggleSidePanel = () => {
     setSidePanelOpen(!sidePanelOpen);
     setMobileMenuOpen(false);
+    setSectionDropdownOpen(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div ref={headerRef}>
+      {/* Fixed Header */}
+      <div 
+        ref={headerRef}
+        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm"
+      >
         <Header
           activeTab={activeTab}
           mobileMenuOpen={mobileMenuOpen}
@@ -150,40 +156,59 @@ export default function Portfolio() {
         toggleSidePanel={toggleSidePanel}
       />
 
+      {/* Main Content - margin-top equals header height */}
       <main 
-        className="flex-1 overflow-y-auto pb-8"
-        style={{ paddingTop: `${headerHeight}px` }} // Add dynamic padding based on header height
+        className="flex-1 w-full"
+        style={{ marginTop: `${headerHeight}px` }}
       >
         <div className="max-w-4xl mx-auto px-2 py-6 space-y-8">
-          <AboutSection
-            aboutRef={aboutRef}
-            visibleSections={visibleSections}
-          />
+          <section 
+            id="about"
+            ref={aboutRef}
+            className="scroll-mt-header"
+          >
+            <AboutSection visibleSections={visibleSections} />
+          </section>
 
-          <ProjectsSection
-            projectsRef={projectsRef}
-            visibleSections={visibleSections}
-          />
+          <section 
+            id="projects"
+            ref={projectsRef}
+            className="scroll-mt-header"
+          >
+            <ProjectsSection visibleSections={visibleSections} />
+          </section>
 
-          <ExperienceSection
-            experienceRef={experienceRef}
-            visibleSections={visibleSections}
-          />
+          <section 
+            id="experience"
+            ref={experienceRef}
+            className="scroll-mt-header"
+          >
+            <ExperienceSection visibleSections={visibleSections} />
+          </section>
 
-          <EducationSection
-            educationRef={educationRef}
-            visibleSections={visibleSections}
-          />
+          <section 
+            id="education"
+            ref={educationRef}
+            className="scroll-mt-header"
+          >
+            <EducationSection visibleSections={visibleSections} />
+          </section>
 
-          <TestimonialsSection
-            testimonialsRef={testimonialsRef}
-            visibleSections={visibleSections}
-          />
+          <section 
+            id="testimonials"
+            ref={testimonialsRef}
+            className="scroll-mt-header"
+          >
+            <TestimonialsSection visibleSections={visibleSections} />
+          </section>
 
-          <SkillsSection
-            skillsRef={skillsRef}
-            visibleSections={visibleSections}
-          />
+          <section 
+            id="skills"
+            ref={skillsRef}
+            className="scroll-mt-header"
+          >
+            <SkillsSection visibleSections={visibleSections} />
+          </section>
         </div>
       </main>
     </div>
