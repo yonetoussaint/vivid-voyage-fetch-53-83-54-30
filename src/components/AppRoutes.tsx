@@ -38,9 +38,9 @@ export function AppRoutes() {
       <Route path="product/:id" element={<Navigate to="overview" replace />} />
 
       <Route
-        path="product/:id/comments"
+        path="calculator"
         element={
-          <ProductCommentsPage />
+          <Calculator/>
         }
       />
 
