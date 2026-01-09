@@ -13,40 +13,37 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutRef, visibleSec
       <div className="space-y-6">
         {/* Profile Image Section */}
         <AnimatedSection id="about" delay={0} visibleSections={visibleSections}>
-          <div className="relative">
-            {/* Profile Image Container */}
-            <div className="relative w-full h-48 md:h-56 overflow-hidden rounded-[36px_36px_12px_12px] shadow-md">
-              {/* Curvy top border effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-90"></div>
-              
-              {/* Profile Image */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-lg overflow-hidden">
-                  {/* Placeholder for profile image - Replace with actual image */}
-                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                    <span className="text-white text-4xl font-bold">AC</span>
-                  </div>
-                  {/* Alternative: If you want to use an actual image, replace the above div with:
-                      <img 
-                        src="/path-to-your-image.jpg" 
-                        alt="Profile" 
-                        className="w-full h-full object-cover"
-                      />
-                  */}
-                </div>
+          <div className="relative w-full h-64 md:h-72 overflow-hidden rounded-[36px_36px_12px_12px] shadow-lg">
+            {/* Real Profile Image */}
+            <img 
+              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
+              alt="Profile" 
+              className="w-full h-full object-cover"
+            />
+            
+            {/* Gradient overlay for better text visibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+            
+            {/* Profile info overlay */}
+            <div className="absolute bottom-6 left-6 right-6 text-white">
+              <h1 className="text-2xl md:text-3xl font-bold mb-1">Alex Chen</h1>
+              <p className="text-white/90 mb-2">Senior Software Engineer</p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm">React</span>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm">TypeScript</span>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm">Node.js</span>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm">UI/UX</span>
               </div>
-              
-              {/* Decorative elements */}
-              <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20"></div>
-              <div className="absolute top-8 right-8 w-6 h-6 rounded-full bg-white/20"></div>
-              <div className="absolute bottom-8 left-10 w-10 h-10 rounded-full bg-white/10"></div>
-              <div className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-white/15"></div>
             </div>
+            
+            {/* Decorative elements */}
+            <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm"></div>
+            <div className="absolute top-8 right-8 w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm"></div>
           </div>
         </AnimatedSection>
 
         <AnimatedSection id="about" delay={100} visibleSections={visibleSections}>
-          <div className="bg-white rounded-xl p-6 shadow-sm mt-8">
+          <div className="bg-white rounded-xl p-6 shadow-sm">
             <h2 className="text-2xl font-bold mb-3">Hey there! 👋</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               I'm a software engineer specializing in building exceptional digital experiences. 
