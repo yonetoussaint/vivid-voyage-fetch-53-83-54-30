@@ -13,7 +13,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutRef, visibleSec
       <div className="space-y-6">
         {/* Profile Image Section */}
         <AnimatedSection id="about" delay={0} visibleSections={visibleSections}>
-          <div className="relative w-full h-64 md:h-72 overflow-hidden rounded-[36px_36px_12px_12px] shadow-lg">
+          <div className="relative w-full h-64 md:h-72 overflow-hidden rounded-[36px_36px_36px_36px] shadow-lg">
             {/* Real Profile Image */}
             <img 
               src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
@@ -21,24 +21,16 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutRef, visibleSec
               className="w-full h-full object-cover"
             />
             
-            {/* Gradient overlay for better text visibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+            {/* Subtle gradient overlay for depth */}
+            <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent"></div>
             
-            {/* Profile info overlay */}
-            <div className="absolute bottom-6 left-6 right-6 text-white">
-              <h1 className="text-2xl md:text-3xl font-bold mb-1">Alex Chen</h1>
-              <p className="text-white/90 mb-2">Senior Software Engineer</p>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm">React</span>
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm">TypeScript</span>
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm">Node.js</span>
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm">UI/UX</span>
-              </div>
-            </div>
-            
-            {/* Decorative elements */}
+            {/* Decorative elements - top corners */}
             <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm"></div>
             <div className="absolute top-8 right-8 w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm"></div>
+            
+            {/* Decorative elements - bottom corners */}
+            <div className="absolute bottom-4 left-4 w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm"></div>
+            <div className="absolute bottom-8 right-4 w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm"></div>
           </div>
         </AnimatedSection>
 
