@@ -1,47 +1,52 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { Code2 } from 'lucide-react';
+import { AnimatedSection } from './AnimatedSection';
+import { skills } from './data';
 
-const SkillsSection = ({ theme, t, skills }) => {
+interface SkillsSectionProps {
+  skillsRef: React.RefObject<HTMLElement>;
+  visibleSections: Set<string>;
+}
+
+export const SkillsSection: React.FC<SkillsSectionProps> = ({ skillsRef, visibleSections }) => {
   return (
-    <section id="skills" className="py-20 px-4 max-w-6xl mx-auto">
-      <h2 
-        className="text-[clamp(2rem,5vw,3rem)] mb-12 font-extrabold tracking-tight text-center px-2 py-2"
-        dangerouslySetInnerHTML={{ __html: t.skills.title }}
-      />
+    <section ref={skillsRef} id="skills" className="scroll-mt-20">
+      <h2 className="text-2xl font-bold mb-4 px-2">Skills & Expertise</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-2 py-2">
-        {Object.entries(skills).map(([category, items]) => (
-          <motion.div
-            key={category}
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className={`p-6 rounded-xl ${
-              theme === 'dark' ? 'bg-[#111]' : 'bg-white shadow-sm'
-            }`}
-          >
-            <h3 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-[#00ff88]' : 'text-green-600'}`}>
-              {t.skills[category]}
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {items.map((skill, index) => (
-                <span
-                  key={index}
-                  className={`skill-item px-4 py-2 rounded-lg border ${
-                    theme === 'dark'
-                      ? 'bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#00ff88] hover:bg-[#2a2a2a]'
-                      : 'bg-gray-100 border-gray-300 hover:border-green-600 hover:bg-green-50'
-                  } transition-all duration-200`}
-                >
-                  {skill}
-                </span>
-              ))}
+      <div className="space-y-4">
+        {Object.entries(skills).map(([category, items], i) => (
+          <AnimatedSection key={category} id="skills" delay={i * 100} visibleSections={visibleSections}>
+            <div className="bg-white rounded-xl p-5 shadow-sm">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Code2 className="w-5 h-5 text-blue-600" />
+                {category}
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {items.map((skill, j) => (
+                  <div 
+                    key={j}
+                    className="group relative bg-gradient-to-br from-blue-50 to-gray-50 rounded-lg p-3 hover:shadow-md transition-all duration-200 hover:scale-105"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <img 
+                        src={skill.logo} 
+                        alt={skill.name}
+                        className="w-6 h-6 object-contain"
+                        onError={(e) => e.target.style.display = 'none'}
+                      />
+                      <span className="text-sm font-semibold text-gray-800">{skill.name}</span>
+                    </div>
+
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                      {skill.proficiency}% proficiency
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </motion.div>
+          </AnimatedSection>
         ))}
       </div>
     </section>
   );
 };
-
-export default SkillsSection;
