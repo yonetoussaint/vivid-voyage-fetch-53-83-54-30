@@ -18,20 +18,19 @@ export default function Portfolio() {
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const headerRef = useRef<HTMLDivElement>(null);
-  const aboutRef = useRef(null);
-  const projectsRef = useRef(null);
-  const experienceRef = useRef(null);
-  const skillsRef = useRef(null);
-  const educationRef = useRef(null);
-  const testimonialsRef = useRef(null);
+  const aboutRef = useRef<HTMLDivElement>(null);
+  const projectsRef = useRef<HTMLDivElement>(null);
+  const experienceRef = useRef<HTMLDivElement>(null);
+  const skillsRef = useRef<HTMLDivElement>(null);
+  const educationRef = useRef<HTMLDivElement>(null);
+  const testimonialsRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
 
   // Function to measure and update header height
   const updateHeaderHeight = () => {
     if (headerRef.current) {
       const height = headerRef.current.offsetHeight;
       setHeaderHeight(height);
-      // Also set as CSS variable for potential CSS usage
-      document.documentElement.style.setProperty('--header-height', `${height}px`);
     }
   };
 
@@ -49,14 +48,12 @@ export default function Portfolio() {
 
   // Update header height when mobile menu or dropdown states change
   useEffect(() => {
-    // Use requestAnimationFrame to ensure DOM has updated
-    requestAnimationFrame(() => {
-      updateHeaderHeight();
-    });
+    // Small timeout to ensure DOM has updated
+    setTimeout(updateHeaderHeight, 50);
   }, [mobileMenuOpen, sectionDropdownOpen]);
 
   const scrollToSection = (sectionId: string) => {
-    const refs: Record<string, React.RefObject<HTMLElement>> = {
+    const refs: Record<string, React.RefObject<HTMLDivElement>> = {
       about: aboutRef,
       projects: projectsRef,
       experience: experienceRef,
@@ -67,11 +64,10 @@ export default function Portfolio() {
 
     if (refs[sectionId]?.current) {
       const element = refs[sectionId].current;
-      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-      const offsetPosition = elementPosition - headerHeight;
-
+      const scrollTarget = element.offsetTop - headerHeight + 1; // +1 ensures it's just below header
+      
       window.scrollTo({
-        top: Math.max(0, offsetPosition), // Ensure we don't scroll to negative position
+        top: scrollTarget,
         behavior: 'smooth'
       });
     }
@@ -91,7 +87,8 @@ export default function Portfolio() {
         { id: 'skills', ref: skillsRef }
       ];
 
-      const scrollPosition = window.scrollY + headerHeight + 20; // Add small buffer
+      // Account for header height in scroll position
+      const scrollPosition = window.scrollY + headerHeight + 10;
 
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sections[i];
@@ -139,6 +136,7 @@ export default function Portfolio() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Fixed Header */}
       <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
         <Header
           activeTab={activeTab}
@@ -156,43 +154,57 @@ export default function Portfolio() {
         toggleSidePanel={toggleSidePanel}
       />
 
-      {/* Main content starts below the header */}
-      <main 
-        className="flex-1 overflow-y-auto pb-8"
-        style={{ marginTop: `${headerHeight}px` }}
+      {/* Main Content - No margin or padding, content starts at top */}
+      <div 
+        ref={mainContentRef}
+        className="flex-1 overflow-y-auto"
+        style={{ paddingTop: `${headerHeight}px` }}
       >
         <div className="max-w-4xl mx-auto px-2 py-6 space-y-8">
-          <AboutSection
-            aboutRef={aboutRef}
-            visibleSections={visibleSections}
-          />
+          {/* Add id attributes to sections for IntersectionObserver */}
+          <section id="about">
+            <AboutSection
+              aboutRef={aboutRef}
+              visibleSections={visibleSections}
+            />
+          </section>
 
-          <ProjectsSection
-            projectsRef={projectsRef}
-            visibleSections={visibleSections}
-          />
+          <section id="projects">
+            <ProjectsSection
+              projectsRef={projectsRef}
+              visibleSections={visibleSections}
+            />
+          </section>
 
-          <ExperienceSection
-            experienceRef={experienceRef}
-            visibleSections={visibleSections}
-          />
+          <section id="experience">
+            <ExperienceSection
+              experienceRef={experienceRef}
+              visibleSections={visibleSections}
+            />
+          </section>
 
-          <EducationSection
-            educationRef={educationRef}
-            visibleSections={visibleSections}
-          />
+          <section id="education">
+            <EducationSection
+              educationRef={educationRef}
+              visibleSections={visibleSections}
+            />
+          </section>
 
-          <TestimonialsSection
-            testimonialsRef={testimonialsRef}
-            visibleSections={visibleSections}
-          />
+          <section id="testimonials">
+            <TestimonialsSection
+              testimonialsRef={testimonialsRef}
+              visibleSections={visibleSections}
+            />
+          </section>
 
-          <SkillsSection
-            skillsRef={skillsRef}
-            visibleSections={visibleSections}
-          />
+          <section id="skills">
+            <SkillsSection
+              skillsRef={skillsRef}
+              visibleSections={visibleSections}
+            />
+          </section>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
