@@ -19,7 +19,6 @@ export default function Portfolio() {
   const [isReady, setIsReady] = useState(false);
 
   const headerRef = useRef<HTMLDivElement>(null);
-  const mainContainerRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
   const projectsRef = useRef<HTMLDivElement>(null);
   const experienceRef = useRef<HTMLDivElement>(null);
@@ -27,27 +26,48 @@ export default function Portfolio() {
   const educationRef = useRef<HTMLDivElement>(null);
   const testimonialsRef = useRef<HTMLDivElement>(null);
 
-  // Measure header height
+  // Measure header height using ResizeObserver
   useEffect(() => {
+    if (!headerRef.current) return;
+
     const updateHeight = () => {
       if (headerRef.current) {
         const height = headerRef.current.offsetHeight;
         setHeaderHeight(height);
+        // Update CSS custom property
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+        document.documentElement.classList.add('has-fixed-header');
       }
     };
 
-    // Initial measurement after a delay
-    const initTimer = setTimeout(() => {
+    // Initial measurement
+    const timer = setTimeout(() => {
       updateHeight();
       setIsReady(true);
     }, 100);
 
-    // Update on resize
-    window.addEventListener('resize', updateHeight);
+    // Use ResizeObserver to track header height changes
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const height = entry.contentRect.height;
+        setHeaderHeight(height);
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+      }
+    });
+
+    resizeObserver.observe(headerRef.current);
+
+    // Also listen to window resize
+    const handleResize = () => {
+      updateHeight();
+    };
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      clearTimeout(initTimer);
-      window.removeEventListener('resize', updateHeight);
+      clearTimeout(timer);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', handleResize);
+      document.documentElement.classList.remove('has-fixed-header');
     };
   }, []);
 
@@ -55,17 +75,21 @@ export default function Portfolio() {
   useEffect(() => {
     if (!isReady) return;
 
+    // Small delay to ensure DOM has updated
     const timer = setTimeout(() => {
       if (headerRef.current) {
         const height = headerRef.current.offsetHeight;
         setHeaderHeight(height);
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
       }
-    }, 150);
+    }, 50);
 
     return () => clearTimeout(timer);
   }, [mobileMenuOpen, sectionDropdownOpen, isReady]);
 
   const scrollToSection = useCallback((sectionId: string) => {
+    if (!isReady) return;
+
     const refs: Record<string, React.RefObject<HTMLDivElement>> = {
       about: aboutRef,
       projects: projectsRef,
@@ -78,13 +102,11 @@ export default function Portfolio() {
     const element = refs[sectionId]?.current;
     if (!element) return;
 
-    // Get the element's position relative to the document
-    const elementTop = element.getBoundingClientRect().top + window.pageYOffset;
-    
-    // Calculate the target scroll position (element top minus header height)
+    // Calculate position with header offset
+    const elementTop = element.offsetTop;
     const scrollTarget = elementTop - headerHeight;
-    
-    // Scroll to the calculated position
+
+    // Smooth scroll
     window.scrollTo({
       top: Math.max(0, scrollTarget),
       behavior: 'smooth'
@@ -93,15 +115,14 @@ export default function Portfolio() {
     setActiveTab(sectionId);
     setSectionDropdownOpen(false);
     setMobileMenuOpen(false);
-  }, [headerHeight]);
+  }, [headerHeight, isReady]);
 
   // Handle scroll for active tab detection
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || headerHeight === 0) return;
 
     const handleScroll = () => {
-      // Calculate scroll position accounting for header
-      const scrollPosition = window.scrollY + headerHeight + 10;
+      const scrollPosition = window.scrollY + headerHeight;
       
       const sections = [
         { id: 'about', element: aboutRef.current },
@@ -112,27 +133,40 @@ export default function Portfolio() {
         { id: 'skills', element: skillsRef.current }
       ];
 
-      // Find the current active section
+      // Find active section
+      let currentActive = activeTab;
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sections[i];
-        if (section.element) {
-          const elementTop = section.element.getBoundingClientRect().top + window.pageYOffset;
-          
-          if (elementTop <= scrollPosition) {
-            setActiveTab(section.id);
-            break;
-          }
+        if (section.element && section.element.offsetTop <= scrollPosition) {
+          currentActive = section.id;
+          break;
         }
+      }
+
+      if (currentActive !== activeTab) {
+        setActiveTab(currentActive);
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [headerHeight, isReady]);
+    // Throttle scroll event
+    let ticking = false;
+    const throttledScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    return () => window.removeEventListener('scroll', throttledScroll);
+  }, [headerHeight, isReady, activeTab]);
 
   // Intersection Observer for animations
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || headerHeight === 0) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -159,7 +193,6 @@ export default function Portfolio() {
 
     sections.forEach(({ ref, id }) => {
       if (ref.current) {
-        // Ensure each section has an ID
         if (!ref.current.id) {
           ref.current.id = id;
         }
@@ -176,29 +209,42 @@ export default function Portfolio() {
     setSectionDropdownOpen(false);
   };
 
-  // Add CSS for scroll-margin-top to prevent content hiding
+  // Add scroll-margin CSS dynamically
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || headerHeight === 0) return;
 
-    const style = document.createElement('style');
+    const styleId = 'portfolio-scroll-margin';
+    let style = document.getElementById(styleId) as HTMLStyleElement;
+    
+    if (!style) {
+      style = document.createElement('style');
+      style.id = styleId;
+      document.head.appendChild(style);
+    }
+
+    // Add scroll margin to all sections
     style.textContent = `
-      .section-scroll-margin {
-        scroll-margin-top: ${headerHeight + 10}px;
+      [data-portfolio-section] {
+        scroll-margin-top: ${headerHeight + 20}px;
+      }
+      .portfolio-section {
+        scroll-margin-top: ${headerHeight + 20}px;
       }
     `;
-    document.head.appendChild(style);
 
     return () => {
-      document.head.removeChild(style);
+      if (style && document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
     };
   }, [headerHeight, isReady]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col relative">
-      {/* Fixed Header - outside of main content flow */}
+      {/* Fixed Header */}
       <div 
-        ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm"
+        ref={headerRef}
+        className="fixed-header fixed top-0 left-0 right-0 z-50 bg-white shadow-sm"
       >
         <Header
           activeTab={activeTab}
@@ -217,71 +263,88 @@ export default function Portfolio() {
       />
 
       {/* Main Content - starts below header */}
-      <div 
-        ref={mainContainerRef}
-        className="flex-1 w-full"
+      <main 
+        className="flex-1 w-full main-content"
         style={{ 
           marginTop: `${headerHeight}px`,
-          minHeight: `calc(100vh - ${headerHeight}px)`
-        }}
+          minHeight: `calc(100vh - ${headerHeight}px)`,
+          '--header-height': `${headerHeight}px`
+        } as React.CSSProperties}
       >
         <div className="max-w-4xl mx-auto px-2 py-6 space-y-8">
-          {/* Add scroll-margin class and ensure sections have IDs */}
-          <div 
+          {/* About Section */}
+          <section 
             id="about"
             ref={aboutRef}
-            className="section-scroll-margin"
+            data-portfolio-section
+            className="portfolio-section scroll-mt-header"
           >
             <AboutSection visibleSections={visibleSections} />
-          </div>
+          </section>
 
-          <div 
+          {/* Projects Section */}
+          <section 
             id="projects"
             ref={projectsRef}
-            className="section-scroll-margin"
+            data-portfolio-section
+            className="portfolio-section scroll-mt-header"
           >
             <ProjectsSection visibleSections={visibleSections} />
-          </div>
+          </section>
 
-          <div 
+          {/* Experience Section */}
+          <section 
             id="experience"
             ref={experienceRef}
-            className="section-scroll-margin"
+            data-portfolio-section
+            className="portfolio-section scroll-mt-header"
           >
             <ExperienceSection visibleSections={visibleSections} />
-          </div>
+          </section>
 
-          <div 
+          {/* Education Section */}
+          <section 
             id="education"
             ref={educationRef}
-            className="section-scroll-margin"
+            data-portfolio-section
+            className="portfolio-section scroll-mt-header"
           >
             <EducationSection visibleSections={visibleSections} />
-          </div>
+          </section>
 
-          <div 
+          {/* Testimonials Section */}
+          <section 
             id="testimonials"
             ref={testimonialsRef}
-            className="section-scroll-margin"
+            data-portfolio-section
+            className="portfolio-section scroll-mt-header"
           >
             <TestimonialsSection visibleSections={visibleSections} />
-          </div>
+          </section>
 
-          <div 
+          {/* Skills Section */}
+          <section 
             id="skills"
             ref={skillsRef}
-            className="section-scroll-margin"
+            data-portfolio-section
+            className="portfolio-section scroll-mt-header"
           >
             <SkillsSection visibleSections={visibleSections} />
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
 
-      {/* Debug info (remove in production) */}
+      {/* Debug overlay (remove in production) */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 bg-black text-white text-xs p-2 rounded opacity-50 z-50">
-          Header Height: {headerHeight}px
-        </div>
+        <>
+          <div className="fixed bottom-4 right-4 bg-black text-white text-xs p-2 rounded opacity-70 z-50">
+            Header: {headerHeight}px | Active: {activeTab}
+          </div>
+          <div 
+            className="fixed top-0 left-0 right-0 h-1 bg-red-500 z-50"
+            style={{ top: `${headerHeight}px` }}
+          />
+        </>
       )}
     </div>
   );
