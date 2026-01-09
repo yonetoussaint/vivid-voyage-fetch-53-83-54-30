@@ -13,8 +13,6 @@ img, picture, .image-container, [data-prevent-context-menu] {
   pointer-events: none;
 }
 
-
-
 /* This ensures the side panel overlay works correctly */
 .fixed {
   position: fixed;
@@ -44,8 +42,6 @@ img, picture, .image-container, [data-prevent-context-menu] {
   transform: translateX(100%);
 }
 
-
-
 .no-drag {
   cursor: default !important;
   pointer-events: auto !important;
@@ -63,9 +59,6 @@ img, picture, .image-container, [data-prevent-context-menu] {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-
-
-
 
 /* Alternative approach - more specific to images */
 img {
@@ -129,6 +122,9 @@ img.interactive {
     --ali-border-gray: 0 0% 90%;
     --ali-text-primary: 0 0% 20%;
     --ali-text-secondary: 0 0% 45%;
+    
+    /* Portfolio specific variables */
+    --header-height: 0px;
   }
 
   .dark {
@@ -181,19 +177,28 @@ img.interactive {
 
   body {
     @apply bg-white text-foreground;
+    /* Ensure body can scroll */
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    width: 100%;
   }
 
-  /* FIXED: Removed overflow-x: hidden from #root to allow position: fixed to work */
-  html, body {
+  /* FIXED: Remove overflow-x: hidden from html to allow proper scrolling */
+  html {
     @apply bg-white;
-    overflow-x: hidden;
-    max-width: 100vw;
+    overflow-y: auto;
+    /* Remove overflow-x: hidden - it breaks fixed positioning */
+    width: 100%;
+    scroll-behavior: smooth;
+    scroll-padding-top: var(--header-height, 100px);
   }
 
   #root {
     @apply bg-white;
-    /* overflow-x: hidden removed - this was breaking position: fixed */
-    max-width: 100vw;
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
   }
 
   /* Allow text selection for input fields and editable content */
@@ -211,31 +216,77 @@ img.interactive {
     -webkit-touch-callout: none;
   }
 
-  /* Remove scrollbars for all elements */
+  /* Remove horizontal scrollbars for all elements but allow vertical */
   * {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
   }
 
   *::-webkit-scrollbar {
-    display: none; /* WebKit browsers (Chrome, Safari, Edge) */
-    width: 0;
-    height: 0;
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  /* Ensure html and body elements also hide scrollbars */
+  *::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+
+  /* Ensure html and body elements also have proper scrollbars */
   html, body {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
   }
 
   html::-webkit-scrollbar,
   body::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
+    width: 6px;
+    height: 6px;
   }
+
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+}
+
+/* Portfolio specific fixes */
+.portfolio-section {
+  scroll-margin-top: calc(var(--header-height, 96px) + 10px);
+}
+
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.main-content {
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure sections don't get hidden under fixed header */
+section[id],
+div[id],
+.section-anchor {
+  position: relative;
 }
 
 /* AliExpress specific styles */
@@ -315,7 +366,7 @@ img.interactive {
   animation: successPulse 0.6s ease-out;
 }
 
-/* Hide scrollbars for all browsers */
+/* Hide scrollbars for specific elements */
 .scrollbar-hide::-webkit-scrollbar,
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -525,4 +576,69 @@ img.interactive {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-@media (max-width: 640px) { .embla__slide { width: 65vw !important;    flex-shrink: 0;   }  .embla__container {    scroll-snap-type: x mandatory;     scroll-padding-left: 1rem;   }    .embla__slide {    scroll-snap-align: start;   }  }
+@media (max-width: 640px) { 
+  .embla__slide { 
+    width: 65vw !important;    
+    flex-shrink: 0;   
+  }  
+  .embla__container {    
+    scroll-snap-type: x mandatory;     
+    scroll-padding-left: 1rem;   
+  }    
+  .embla__slide {    
+    scroll-snap-align: start;   
+  }  
+}
+
+/* Portfolio-specific utility classes */
+@layer utilities {
+  .scroll-mt-header {
+    scroll-margin-top: var(--header-height, 96px);
+  }
+  
+  .pt-header {
+    padding-top: var(--header-height, 96px);
+  }
+  
+  .mt-header {
+    margin-top: var(--header-height, 96px);
+  }
+  
+  .min-h-screen-header {
+    min-height: calc(100vh - var(--header-height, 96px));
+  }
+  
+  /* Fix for iOS Safari */
+  @supports (-webkit-touch-callout: none) {
+    .min-h-screen-header {
+      min-height: -webkit-fill-available;
+    }
+  }
+}
+
+/* Critical fix: Ensure fixed header doesn't break layout */
+html.has-fixed-header {
+  scroll-padding-top: var(--header-height, 96px);
+}
+
+body.has-fixed-header {
+  padding-top: 0 !important;
+}
+
+/* Ensure sections are properly spaced */
+section + section {
+  margin-top: 2rem;
+}
+
+/* Debug border (remove in production) */
+.debug-border {
+  border: 1px solid red;
+}
+
+.debug-border-green {
+  border: 1px solid green;
+}
+
+.debug-border-blue {
+  border: 1px solid blue;
+}
