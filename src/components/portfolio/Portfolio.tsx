@@ -1,168 +1,198 @@
-import React from 'react';
-import { Github, Linkedin, Mail, Menu, X, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Header } from './Header';
+import { SidePanel } from './SidePanel';
+import { AboutSection } from './AboutSection';
+import { ProjectsSection } from './ProjectsSection';
+import { ExperienceSection } from './ExperienceSection';
+import { EducationSection } from './EducationSection';
+import { TestimonialsSection } from './TestimonialsSection';
+import { SkillsSection } from './SkillsSection';
 import { tabs } from './data';
 
-interface HeaderProps {
-  activeTab: string;
-  mobileMenuOpen: boolean;
-  sectionDropdownOpen: boolean;
-  setMobileMenuOpen: (open: boolean) => void;
-  setSectionDropdownOpen: (open: boolean) => void;
-  toggleSidePanel: () => void;
-  scrollToSection: (sectionId: string) => void;
-}
+export default function Portfolio() {
+  const [activeTab, setActiveTab] = useState('about');
+  const [visibleSections, setVisibleSections] = useState(new Set());
+  const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidePanelOpen, setSidePanelOpen] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
 
-export const Header: React.FC<HeaderProps> = ({
-  activeTab,
-  mobileMenuOpen,
-  sectionDropdownOpen,
-  setMobileMenuOpen,
-  setSectionDropdownOpen,
-  toggleSidePanel,
-  scrollToSection
-}) => {
-  const getActiveTabLabel = () => {
-    const activeTabObj = tabs.find(tab => tab.id === activeTab);
-    return activeTabObj ? activeTabObj.label : 'About';
+  const headerRef = useRef<HTMLDivElement>(null);
+  const aboutRef = useRef(null);
+  const projectsRef = useRef(null);
+  const experienceRef = useRef(null);
+  const skillsRef = useRef(null);
+  const educationRef = useRef(null);
+  const testimonialsRef = useRef(null);
+
+  // Function to measure and update header height
+  const updateHeaderHeight = () => {
+    if (headerRef.current) {
+      const height = headerRef.current.offsetHeight;
+      setHeaderHeight(height);
+      // Also set as CSS variable for potential CSS usage
+      document.documentElement.style.setProperty('--header-height', `${height}px`);
+    }
   };
 
-  const getActiveTabIcon = () => {
-    const activeTabObj = tabs.find(tab => tab.id === activeTab);
-    return activeTabObj ? activeTabObj.icon : null;
+  // Update header height on mount and when menu states change
+  useEffect(() => {
+    updateHeaderHeight();
+    
+    const handleResize = () => {
+      updateHeaderHeight();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Update header height when mobile menu or dropdown states change
+  useEffect(() => {
+    // Use requestAnimationFrame to ensure DOM has updated
+    requestAnimationFrame(() => {
+      updateHeaderHeight();
+    });
+  }, [mobileMenuOpen, sectionDropdownOpen]);
+
+  const scrollToSection = (sectionId: string) => {
+    const refs: Record<string, React.RefObject<HTMLElement>> = {
+      about: aboutRef,
+      projects: projectsRef,
+      experience: experienceRef,
+      skills: skillsRef,
+      education: educationRef,
+      testimonials: testimonialsRef
+    };
+
+    if (refs[sectionId]?.current) {
+      const element = refs[sectionId].current;
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - headerHeight;
+
+      window.scrollTo({
+        top: Math.max(0, offsetPosition), // Ensure we don't scroll to negative position
+        behavior: 'smooth'
+      });
+    }
+
+    setActiveTab(sectionId);
+    setSectionDropdownOpen(false);
   };
 
-  const getActiveTabDescription = () => {
-    const activeTabObj = tabs.find(tab => tab.id === activeTab);
-    return activeTabObj ? activeTabObj.description : 'Learn about my background';
-  };
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = [
+        { id: 'about', ref: aboutRef },
+        { id: 'projects', ref: projectsRef },
+        { id: 'experience', ref: experienceRef },
+        { id: 'education', ref: educationRef },
+        { id: 'testimonials', ref: testimonialsRef },
+        { id: 'skills', ref: skillsRef }
+      ];
 
-  const ActiveIcon = getActiveTabIcon();
+      const scrollPosition = window.scrollY + headerHeight + 20; // Add small buffer
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
+        if (section.ref.current && section.ref.current.offsetTop <= scrollPosition) {
+          setActiveTab(section.id);
+          break;
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [headerHeight]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisibleSections((prev) => new Set([...prev, entry.target.id]));
+          }
+        });
+      },
+      { 
+        threshold: 0.1,
+        rootMargin: `-${headerHeight}px 0px 0px 0px`
+      }
+    );
+
+    const sections = [aboutRef, projectsRef, experienceRef, educationRef, testimonialsRef, skillsRef];
+    sections.forEach((ref) => {
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, [headerHeight]);
+
+  const toggleSidePanel = () => {
+    setSidePanelOpen(!sidePanelOpen);
+    setMobileMenuOpen(false);
+    setSectionDropdownOpen(false);
+  };
 
   return (
-    <header className="bg-white border-b fixed top-0 left-0 right-0 z-50">
-      <div className="max-w-4xl mx-auto px-2 py-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleSidePanel}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              aria-label="Toggle side panel"
-            >
-              {mobileMenuOpen ? (
-                <X className="w-6 h-6 text-gray-700" />
-              ) : (
-                <Menu className="w-6 h-6 text-gray-700" />
-              )}
-            </button>
-            <div>
-              <h1 className="font-bold text-lg">Alex Chen</h1>
-              <p className="text-xs text-gray-600">Full Stack Developer</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <a href="#" className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-              <Github className="w-5 h-5" />
-            </a>
-            <a href="#" className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-              <Linkedin className="w-5 h-5" />
-            </a>
-            <a href="#" className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-              <Mail className="w-5 h-5" />
-            </a>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
+        <Header
+          activeTab={activeTab}
+          mobileMenuOpen={mobileMenuOpen}
+          sectionDropdownOpen={sectionDropdownOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+          setSectionDropdownOpen={setSectionDropdownOpen}
+          toggleSidePanel={toggleSidePanel}
+          scrollToSection={scrollToSection}
+        />
       </div>
 
-      {mobileMenuOpen && (
-        <div className="border-t bg-white shadow-lg">
-          <div className="max-w-4xl mx-auto py-2">
-            <div className="grid grid-cols-2 gap-2 px-2">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      scrollToSection(tab.id);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-left ${
-                      isActive 
-                        ? 'bg-blue-50 text-blue-600' 
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm font-medium">{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+      <SidePanel
+        sidePanelOpen={sidePanelOpen}
+        toggleSidePanel={toggleSidePanel}
+      />
 
-      {!mobileMenuOpen && (
-        <div className="border-t">
-          <div className="max-w-4xl mx-auto">
-            <button
-              onClick={() => setSectionDropdownOpen(!sectionDropdownOpen)}
-              className="w-full flex items-center justify-between px-4 py-1.5 text-sm hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                {ActiveIcon && <ActiveIcon className="w-4 h-4 text-gray-500" />}
-                <span className="text-gray-700 text-sm font-medium">
-                  {getActiveTabLabel()}
-                </span>
-                <span className="text-gray-400 text-xs">•</span>
-                <span className="text-gray-500 text-xs">
-                  {getActiveTabDescription()}
-                </span>
-              </div>
-              <ChevronDown 
-                className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                  sectionDropdownOpen ? 'rotate-180' : ''
-                }`} 
-              />
-            </button>
+      {/* Main content starts below the header */}
+      <main 
+        className="flex-1 overflow-y-auto pb-8"
+        style={{ marginTop: `${headerHeight}px` }}
+      >
+        <div className="max-w-4xl mx-auto px-2 py-6 space-y-8">
+          <AboutSection
+            aboutRef={aboutRef}
+            visibleSections={visibleSections}
+          />
 
-            {sectionDropdownOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-40"
-                  onClick={() => setSectionDropdownOpen(false)}
-                />
-                <div className="absolute left-0 right-0 bg-white border-t shadow-lg z-50">
-                  <div className="max-w-4xl mx-auto pb-2">
-                    {tabs.map((tab) => {
-                      const Icon = tab.icon;
-                      const isActive = activeTab === tab.id;
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => scrollToSection(tab.id)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${
-                            isActive 
-                              ? 'bg-blue-50 text-blue-600' 
-                              : 'text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <Icon className="w-5 h-5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium">{tab.label}</div>
-                            <div className="text-xs text-gray-500">{tab.description}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <ProjectsSection
+            projectsRef={projectsRef}
+            visibleSections={visibleSections}
+          />
+
+          <ExperienceSection
+            experienceRef={experienceRef}
+            visibleSections={visibleSections}
+          />
+
+          <EducationSection
+            educationRef={educationRef}
+            visibleSections={visibleSections}
+          />
+
+          <TestimonialsSection
+            testimonialsRef={testimonialsRef}
+            visibleSections={visibleSections}
+          />
+
+          <SkillsSection
+            skillsRef={skillsRef}
+            visibleSections={visibleSections}
+          />
         </div>
-      )}
-    </header>
+      </main>
+    </div>
   );
-};
+}
