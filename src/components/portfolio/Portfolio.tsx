@@ -15,7 +15,7 @@ export default function Portfolio() {
   const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(0); // Track header height
+  const [headerHeight, setHeaderHeight] = useState(96); // Default height (assuming 6rem = 96px)
 
   const headerRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef(null);
@@ -47,7 +47,8 @@ export default function Portfolio() {
 
   // Update header height when mobile menu opens/closes
   useEffect(() => {
-    updateHeaderHeight();
+    // Use setTimeout to ensure DOM has updated
+    setTimeout(updateHeaderHeight, 100);
   }, [mobileMenuOpen]);
 
   const scrollToSection = (sectionId: string) => {
@@ -62,11 +63,10 @@ export default function Portfolio() {
 
     if (refs[sectionId]?.current) {
       const element = refs[sectionId].current;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+      const offsetTop = element.offsetTop - headerHeight;
 
       window.scrollTo({
-        top: offsetPosition,
+        top: offsetTop,
         behavior: 'smooth'
       });
     }
@@ -86,7 +86,7 @@ export default function Portfolio() {
         { id: 'skills', ref: skillsRef }
       ];
 
-      const scrollPosition = window.scrollY + headerHeight;
+      const scrollPosition = window.scrollY + headerHeight + 10; // Add small buffer
 
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sections[i];
@@ -99,7 +99,7 @@ export default function Portfolio() {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [headerHeight]); // Re-run when header height changes
+  }, [headerHeight]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -112,7 +112,7 @@ export default function Portfolio() {
       },
       { 
         threshold: 0.1,
-        rootMargin: `-${headerHeight}px 0px 0px 0px` // Adjust root margin based on header height
+        rootMargin: `-${headerHeight}px 0px 0px 0px`
       }
     );
 
@@ -124,7 +124,7 @@ export default function Portfolio() {
     });
 
     return () => observer.disconnect();
-  }, [headerHeight]); // Re-run when header height changes
+  }, [headerHeight]);
 
   const toggleSidePanel = () => {
     setSidePanelOpen(!sidePanelOpen);
@@ -133,7 +133,7 @@ export default function Portfolio() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div ref={headerRef}>
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
         <Header
           activeTab={activeTab}
           mobileMenuOpen={mobileMenuOpen}
@@ -150,9 +150,10 @@ export default function Portfolio() {
         toggleSidePanel={toggleSidePanel}
       />
 
+      {/* Add margin-top to main content equal to header height */}
       <main 
-        className="flex-1 overflow-y-auto pb-8"
-        style={{ paddingTop: `${headerHeight}px` }} // Add dynamic padding based on header height
+        className="flex-1 overflow-y-auto pb-8 mt-[var(--header-height)]"
+        style={{ '--header-height': `${headerHeight}px` } as React.CSSProperties}
       >
         <div className="max-w-4xl mx-auto px-2 py-6 space-y-8">
           <AboutSection
