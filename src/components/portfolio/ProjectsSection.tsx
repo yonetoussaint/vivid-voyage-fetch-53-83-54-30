@@ -66,7 +66,7 @@ const getTechLogoUrl = (techName: string) => {
 
 export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsRef }) => {
   return (
-    <section ref={projectsRef} id="projects" className="scroll-mt-16 px-4 py-8 md:px-6 lg:px-8">
+    <section ref={projectsRef} id="projects" className="scroll-mt-16  py-8 md:px-6 lg:px-8">
       {/* Header - Simplified for mobile */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
