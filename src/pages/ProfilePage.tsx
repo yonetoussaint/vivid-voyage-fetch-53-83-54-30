@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { User, Settings, Heart, ShoppingBag, Package, TrendingUp, Eye, Users, MessageCircle, Share2, Plus, Grid3x3, Bookmark, Lock, ChevronRight, Star, DollarSign, Video, PlayCircle, BarChart3, Clock, Award, Shield, Camera } from 'lucide-react';
+import { User, Settings, Heart, ShoppingBag, Package, TrendingUp, Eye, Users, MessageCircle, Share2, Plus, Grid3x3, Bookmark, Lock, ChevronRight, Star, DollarSign, Video, PlayCircle, BarChart3, Clock, Award, Shield, Camera, Sparkles } from 'lucide-react';
+
+// Import the InfiniteContentGrid component
+import InfiniteContentGrid, { type FilterState } from '@/components/InfiniteContentGrid';
 
 function TabButton({ active, children, icon, onClick }) {
   return (
@@ -20,30 +23,29 @@ function TabButton({ active, children, icon, onClick }) {
   );
 }
 
-// Helper function to render tag elements (copied from CategoriesPage)
-const renderTag = (tag: string) => {
-  if (tag === "Sale") {
-    return <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
-  }
-  if (tag === "SuperDeals") {
-    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
-  }
-  if (tag === "Brand+") {
-    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
-  }
-  if (tag === "Certified Original") {
-    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
-  }
-  if (tag === "250%") {
-    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
-  }
-  return null;
-};
-
-// ProductCard component matching CategoriesPage UI
+// ProductCard component - Keep this for Saved/Liked tabs if you want grid layout
 function ProductCard({ product }) {
+  const renderTag = (tag: string) => {
+    if (tag === "Sale") {
+      return <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+    }
+    if (tag === "SuperDeals") {
+      return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+    }
+    if (tag === "Brand+") {
+      return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+    }
+    if (tag === "Certified Original") {
+      return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+    }
+    if (tag === "250%") {
+      return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+    }
+    return null;
+  };
+
   return (
-    <div key={product.id} className="bg-white rounded overflow-hidden">
+    <div className="bg-white rounded overflow-hidden">
       <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
         <img 
           src={product.imageUrl} 
@@ -53,7 +55,7 @@ function ProductCard({ product }) {
       </div>
       <div className="p-1">
         <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight min-h-[2.2rem]">
-          {product.tags.map(tag => renderTag(tag))}
+          {product.tags?.map(tag => renderTag(tag))}
           {product.description}
         </p>
         <div className="flex items-center gap-1 mb-0.5">
@@ -106,8 +108,8 @@ function MenuItem({ icon, title, badge, subtitle, onClick }) {
 export default function TikTokProfile() {
   const [activeTab, setActiveTab] = useState('products');
 
-  // Using the exact same products from CategoriesPage
-  const products = [
+  // Sample products for saved and liked tabs (you might want to fetch these from API)
+  const sampleProducts = [
     {
       id: "1",
       title: "Wireless Bluetooth Headphones Noise Cancel",
@@ -152,55 +154,10 @@ export default function TikTokProfile() {
       description: "30 36 Inch Curly Highlight Wig Human",
       note: "Top selling on AliExpress"
     },
-    {
-      id: "5",
-      title: "Premium Wireless Speaker Deep Bass",
-      price: "89990",
-      soldCount: "432",
-      rating: "4.8",
-      imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300&h=300&auto=format&fit=crop",
-      tags: ["Sale"],
-      description: "Premium Wireless Speaker Deep Bass",
-      note: ""
-    },
-    {
-      id: "6",
-      title: "HD Webcam 1080P Built-in Microphone",
-      price: "49990",
-      soldCount: "789",
-      rating: "5.0",
-      imageUrl: "https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?q=80&w=300&h=300&auto=format&fit=crop",
-      tags: ["Certified Original"],
-      description: "HD Webcam 1080P Built-in Microphone",
-      qualityNote: "Premium Quality"
-    },
-    {
-      id: "7",
-      title: "Mechanical Gaming Keyboard RGB",
-      price: "767523",
-      soldCount: "38",
-      rating: "4.8",
-      imageUrl: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=300&h=300&auto=format&fit=crop",
-      tags: ["Sale", "250%"],
-      description: "Mechanical Gaming Keyboard RGB",
-      qualityNote: "Premium Quality"
-    },
-    {
-      id: "8",
-      title: "Ergonomic Wireless Mouse Rechargeable",
-      price: "24990",
-      soldCount: "923",
-      rating: "4.7",
-      imageUrl: "https://images.unsplash.com/photo-1586864387634-97201e228378?q=80&w=300&h=300&auto=format&fit=crop",
-      tags: ["Brand+"],
-      description: "Ergonomic Wireless Mouse Rechargeable",
-      note: ""
-    }
   ];
 
-  // Sample products for saved and liked tabs
-  const savedProducts = products.slice(0, 4);
-  const likedProducts = products.slice(4, 8);
+  const savedProducts = sampleProducts.slice(0, 2);
+  const likedProducts = sampleProducts.slice(2, 4);
 
   return (
     <div className="min-h-screen bg-slate-50 max-w-2xl mx-auto">
@@ -288,36 +245,73 @@ export default function TikTokProfile() {
 
       {/* Content Sections */}
       {activeTab === 'products' && (
-        <div className="p-2 pb-24">
-          <div className="grid grid-cols-2 gap-2">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+        <div className="pb-20">
+          {/* Use InfiniteContentGrid for products tab with infinite scroll */}
+          <InfiniteContentGrid 
+            category="all" // or specify a category
+            filters={{ 
+              priceRange: [0, 1000000],
+              tags: [],
+              searchQuery: '',
+              rating: 0
+            }}
+          />
         </div>
       )}
 
       {activeTab === 'saved' && (
         <div className="p-2 pb-24">
-          <div className="grid grid-cols-2 gap-2">
-            {savedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          <div className="mb-4 px-2">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-medium text-slate-900">Saved Products</h2>
+              <span className="text-xs text-slate-500">{savedProducts.length} items</span>
+            </div>
+            <p className="text-xs text-slate-500">Products you've saved for later</p>
           </div>
+          
+          {savedProducts.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {savedProducts.map((product) => (
+                <ProductCard key={`saved-${product.id}`} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Bookmark className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-700 mb-1">No saved products</p>
+              <p className="text-xs text-gray-500 mb-4">Save products to see them here</p>
+            </div>
+          )}
         </div>
       )}
 
       {activeTab === 'liked' && (
         <div className="p-2 pb-24">
-          <div className="grid grid-cols-2 gap-2">
-            {likedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          <div className="mb-4 px-2">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-medium text-slate-900">Liked Products</h2>
+              <span className="text-xs text-slate-500">{likedProducts.length} items</span>
+            </div>
+            <p className="text-xs text-slate-500">Products you've liked</p>
           </div>
+          
+          {likedProducts.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {likedProducts.map((product) => (
+                <ProductCard key={`liked-${product.id}`} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Heart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-700 mb-1">No liked products</p>
+              <p className="text-xs text-gray-500 mb-4">Like products to see them here</p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Floating Add Product Button */}
+      {/* Floating Add Product Button (only for products tab) */}
       {activeTab === 'products' && (
         <button className="fixed bottom-5 right-5 w-14 h-14 bg-gradient-to-r from-pink-500 to-red-500 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform z-50">
           <Plus className="w-6 h-6 text-white" />
