@@ -1,101 +1,168 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Terminal, Minimize2, Maximize2, X, Trash2, Search } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Terminal, Play, Trash2, AlertCircle, AlertTriangle, Info, FileText, ExternalLink } from 'lucide-react';
 
-export default function ConsoleDevTools() {
+export default function WebsiteConsoleInspector() {
+  const [url, setUrl] = useState('');
   const [logs, setLogs] = useState([]);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState('');
   const [filters, setFilters] = useState({
     log: true,
     warn: true,
     error: true,
-    info: true
+    info: true,
+    network: true
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const iframeRef = useRef(null);
   const logsEndRef = useRef(null);
 
-  // Intercept console methods
+  const addLog = (type, message, details = null) => {
+    setLogs(prev => [...prev, {
+      id: Date.now() + Math.random(),
+      type,
+      message,
+      details,
+      timestamp: new Date()
+    }]);
+  };
+
+  const loadWebsite = () => {
+    if (!url.trim()) return;
+
+    setLogs([]);
+    setIsLoading(true);
+    
+    let finalUrl = url.trim();
+    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+      finalUrl = 'https://' + finalUrl;
+    }
+    
+    setCurrentUrl(finalUrl);
+    addLog('info', `Loading: ${finalUrl}`);
+
+    // Setup iframe with console capture
+    const iframe = iframeRef.current;
+    if (iframe) {
+      iframe.src = finalUrl;
+    }
+  };
+
   useEffect(() => {
-    const originalLog = console.log;
-    const originalWarn = console.warn;
-    const originalError = console.error;
-    const originalInfo = console.info;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
 
-    const addLog = (type, args) => {
-      const message = args.map(arg => {
-        if (typeof arg === 'object') {
-          try {
-            return JSON.stringify(arg, null, 2);
-          } catch (e) {
-            return String(arg);
-          }
+    const handleLoad = () => {
+      setIsLoading(false);
+      addLog('info', `✓ Page loaded successfully`);
+
+      try {
+        // Try to inject console interceptor
+        const iframeWindow = iframe.contentWindow;
+        const iframeDoc = iframe.contentDocument;
+
+        if (iframeWindow && iframeDoc) {
+          // Inject script to capture console
+          const script = iframeDoc.createElement('script');
+          script.textContent = `
+            (function() {
+              const originalLog = console.log;
+              const originalWarn = console.warn;
+              const originalError = console.error;
+              const originalInfo = console.info;
+
+              console.log = function(...args) {
+                originalLog.apply(console, args);
+                window.parent.postMessage({
+                  type: 'console',
+                  level: 'log',
+                  message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+                }, '*');
+              };
+
+              console.warn = function(...args) {
+                originalWarn.apply(console, args);
+                window.parent.postMessage({
+                  type: 'console',
+                  level: 'warn',
+                  message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+                }, '*');
+              };
+
+              console.error = function(...args) {
+                originalError.apply(console, args);
+                window.parent.postMessage({
+                  type: 'console',
+                  level: 'error',
+                  message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+                }, '*');
+              };
+
+              console.info = function(...args) {
+                originalInfo.apply(console, args);
+                window.parent.postMessage({
+                  type: 'console',
+                  level: 'info',
+                  message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+                }, '*');
+              };
+
+              window.addEventListener('error', function(e) {
+                window.parent.postMessage({
+                  type: 'console',
+                  level: 'error',
+                  message: e.message + ' at ' + e.filename + ':' + e.lineno + ':' + e.colno
+                }, '*');
+              });
+
+              window.addEventListener('unhandledrejection', function(e) {
+                window.parent.postMessage({
+                  type: 'console',
+                  level: 'error',
+                  message: 'Unhandled Promise Rejection: ' + e.reason
+                }, '*');
+              });
+            })();
+          `;
+          iframeDoc.head.appendChild(script);
         }
-        return String(arg);
-      }).join(' ');
-
-      setLogs(prev => [...prev, {
-        id: Date.now() + Math.random(),
-        type,
-        message,
-        timestamp: new Date(),
-        stack: type === 'error' ? new Error().stack : null
-      }]);
+      } catch (e) {
+        addLog('error', `Cross-origin restriction: Cannot access console from ${currentUrl}`);
+        addLog('warn', 'Due to CORS policy, console logs from cross-origin sites cannot be captured.');
+        addLog('info', 'You can still see network errors and page load status.');
+      }
     };
 
-    console.log = (...args) => {
-      originalLog.apply(console, args);
-      addLog('log', args);
+    const handleError = () => {
+      setIsLoading(false);
+      addLog('error', `Failed to load: ${currentUrl}`);
+      addLog('error', 'Possible reasons: CORS policy, invalid URL, or network error');
     };
 
-    console.warn = (...args) => {
-      originalWarn.apply(console, args);
-      addLog('warn', args);
-    };
-
-    console.error = (...args) => {
-      originalError.apply(console, args);
-      addLog('error', args);
-    };
-
-    console.info = (...args) => {
-      originalInfo.apply(console, args);
-      addLog('info', args);
-    };
-
-    // Catch unhandled errors
-    const handleError = (event) => {
-      addLog('error', [event.message, `at ${event.filename}:${event.lineno}:${event.colno}`]);
-    };
-
-    const handleUnhandledRejection = (event) => {
-      addLog('error', ['Unhandled Promise Rejection:', event.reason]);
-    };
-
-    window.addEventListener('error', handleError);
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    iframe.addEventListener('load', handleLoad);
+    iframe.addEventListener('error', handleError);
 
     return () => {
-      console.log = originalLog;
-      console.warn = originalWarn;
-      console.error = originalError;
-      console.info = originalInfo;
-      window.removeEventListener('error', handleError);
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      iframe.removeEventListener('load', handleLoad);
+      iframe.removeEventListener('error', handleError);
     };
+  }, [currentUrl]);
+
+  // Listen for messages from iframe
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data.type === 'console') {
+        addLog(event.data.level, event.data.message);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Auto scroll to bottom
   useEffect(() => {
-    if (!isMinimized) {
-      logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [logs, isMinimized]);
-
-  const clearLogs = () => setLogs([]);
-
-  const toggleFilter = (type) => {
-    setFilters(prev => ({ ...prev, [type]: !prev[type] }));
-  };
+    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs]);
 
   const filteredLogs = logs.filter(log => {
     if (!filters[log.type]) return false;
@@ -105,21 +172,23 @@ export default function ConsoleDevTools() {
     return true;
   });
 
-  const getLogColor = (type) => {
+  const getLogIcon = (type) => {
     switch (type) {
-      case 'error': return 'text-red-400';
-      case 'warn': return 'text-yellow-400';
-      case 'info': return 'text-blue-400';
-      default: return 'text-gray-300';
+      case 'error': return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case 'warn': return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+      case 'info': return <Info className="w-4 h-4 text-blue-500" />;
+      case 'network': return <ExternalLink className="w-4 h-4 text-purple-500" />;
+      default: return <FileText className="w-4 h-4 text-gray-500" />;
     }
   };
 
-  const getLogIcon = (type) => {
+  const getLogColor = (type) => {
     switch (type) {
-      case 'error': return '❌';
-      case 'warn': return '⚠️';
-      case 'info': return 'ℹ️';
-      default: return '📝';
+      case 'error': return 'text-red-600';
+      case 'warn': return 'text-yellow-600';
+      case 'info': return 'text-blue-600';
+      case 'network': return 'text-purple-600';
+      default: return 'text-gray-700';
     }
   };
 
@@ -133,184 +202,140 @@ export default function ConsoleDevTools() {
     });
   };
 
-  if (!isVisible) return null;
-
   return (
-    <>
-      {/* Demo Website Content */}
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Your Website</h1>
-          <p className="text-gray-600 mb-6">
-            This is your website content. The console dev tools are overlaid at the bottom right.
-            Try clicking the buttons below to generate different types of console messages!
-          </p>
-          
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-            <p className="text-sm text-blue-700">
-              <strong>📌 Pro Tip:</strong> The console overlay captures all console.log(), console.warn(), 
-              console.error(), and console.info() calls, plus any unhandled errors on your page.
-            </p>
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 p-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 mb-3">
+            <Terminal className="w-6 h-6 text-blue-600" />
+            <h1 className="text-xl font-bold text-gray-900">Website Console Inspector</h1>
           </div>
-
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-800">Test Console Output:</h2>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => console.log('This is a regular log message', { data: 'example' })}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Generate Log
-              </button>
-              <button
-                onClick={() => console.warn('Warning: Something might be wrong!')}
-                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
-              >
-                Generate Warning
-              </button>
-              <button
-                onClick={() => console.error('Error: Something went wrong!', new Error('Test error'))}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Generate Error
-              </button>
-              <button
-                onClick={() => console.info('Info: Application started successfully')}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Generate Info
-              </button>
-              <button
-                onClick={() => {
-                  const data = { users: [1, 2, 3], config: { debug: true } };
-                  console.log('Complex object:', data);
-                }}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                Log Object
-              </button>
-              <button
-                onClick={() => {
-                  throw new Error('Uncaught error example!');
-                }}
-                className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors"
-              >
-                Throw Error
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-8 p-6 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold text-gray-800 mb-2">How to use on your website:</h3>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
-              <li>Copy this component code</li>
-              <li>Add it to your React application</li>
-              <li>It will automatically intercept all console calls</li>
-              <li>View all logs in the overlay at the bottom right</li>
-              <li>Filter by type, search, clear, or minimize as needed</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-
-      {/* Console Overlay */}
-      <div 
-        className={`fixed bottom-0 right-0 bg-gray-900 border-2 border-gray-700 rounded-t-lg shadow-2xl flex flex-col z-50 transition-all ${
-          isMinimized ? 'h-12' : 'h-96'
-        }`}
-        style={{ width: '600px' }}
-      >
-        {/* Header */}
-        <div className="bg-gray-800 px-4 py-2 flex items-center justify-between border-b border-gray-700 cursor-move">
-          <div className="flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-blue-400" />
-            <span className="text-sm font-semibold text-gray-200">Console Dev Tools</span>
-            <span className="text-xs text-gray-500">({filteredLogs.length} logs)</span>
-          </div>
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && loadWebsite()}
+              placeholder="Enter website URL (e.g., example.com or https://example.com)"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             <button
-              onClick={clearLogs}
-              className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
-              title="Clear logs"
+              onClick={loadWebsite}
+              disabled={isLoading}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+            >
+              <Play className="w-4 h-4" />
+              {isLoading ? 'Loading...' : 'Load'}
+            </button>
+            <button
+              onClick={() => setLogs([])}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 transition-colors"
             >
               <Trash2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
-              title={isMinimized ? 'Maximize' : 'Minimize'}
-            >
-              {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={() => setIsVisible(false)}
-              className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-red-400 transition-colors"
-              title="Close"
-            >
-              <X className="w-4 h-4" />
+              Clear
             </button>
           </div>
         </div>
-
-        {!isMinimized && (
-          <>
-            {/* Filters */}
-            <div className="bg-gray-800 px-4 py-2 flex items-center gap-4 border-b border-gray-700">
-              <div className="flex gap-2">
-                {['log', 'warn', 'error', 'info'].map(type => (
-                  <button
-                    key={type}
-                    onClick={() => toggleFilter(type)}
-                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                      filters[type]
-                        ? type === 'error' ? 'bg-red-600 text-white'
-                          : type === 'warn' ? 'bg-yellow-600 text-white'
-                          : type === 'info' ? 'bg-blue-600 text-white'
-                          : 'bg-gray-600 text-white'
-                        : 'bg-gray-700 text-gray-400'
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-              <div className="flex-1 relative">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="Search logs..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-7 pr-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Logs */}
-            <div className="flex-1 overflow-y-auto p-2 font-mono text-xs">
-              {filteredLogs.length === 0 ? (
-                <div className="text-center text-gray-500 mt-8">
-                  <Terminal className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No console logs yet...</p>
-                </div>
-              ) : (
-                filteredLogs.map(log => (
-                  <div key={log.id} className="mb-2 pb-2 border-b border-gray-800">
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-600 text-xs">{formatTime(log.timestamp)}</span>
-                      <span>{getLogIcon(log.type)}</span>
-                      <pre className={`flex-1 whitespace-pre-wrap break-words ${getLogColor(log.type)}`}>
-                        {log.message}
-                      </pre>
-                    </div>
-                  </div>
-                ))
-              )}
-              <div ref={logsEndRef} />
-            </div>
-          </>
-        )}
       </div>
-    </>
+
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Website Preview */}
+        <div className="flex-1 bg-white border-r border-gray-200 relative">
+          {currentUrl ? (
+            <>
+              <div className="absolute top-2 left-2 bg-gray-900 text-white px-3 py-1 rounded text-sm z-10">
+                Preview: {currentUrl}
+              </div>
+              <iframe
+                ref={iframeRef}
+                className="w-full h-full"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                title="Website Preview"
+              />
+            </>
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <Terminal className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">Enter a URL above to inspect console logs</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Console Logs Panel */}
+        <div className="w-2/5 flex flex-col bg-gray-900">
+          {/* Filters */}
+          <div className="bg-gray-800 p-3 border-b border-gray-700">
+            <div className="flex items-center gap-2 mb-2">
+              {['log', 'warn', 'error', 'info', 'network'].map(type => (
+                <button
+                  key={type}
+                  onClick={() => setFilters(prev => ({ ...prev, [type]: !prev[type] }))}
+                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                    filters[type]
+                      ? type === 'error' ? 'bg-red-600 text-white'
+                        : type === 'warn' ? 'bg-yellow-600 text-white'
+                        : type === 'info' ? 'bg-blue-600 text-white'
+                        : type === 'network' ? 'bg-purple-600 text-white'
+                        : 'bg-gray-600 text-white'
+                      : 'bg-gray-700 text-gray-400'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search logs..."
+              className="w-full px-3 py-1.5 bg-gray-700 border border-gray-600 rounded text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          {/* Logs */}
+          <div className="flex-1 overflow-y-auto p-3 font-mono text-xs">
+            {filteredLogs.length === 0 ? (
+              <div className="text-center text-gray-500 mt-8">
+                <Terminal className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p>No console logs yet...</p>
+                <p className="text-xs mt-2">Load a website to see logs</p>
+              </div>
+            ) : (
+              filteredLogs.map(log => (
+                <div key={log.id} className="mb-3 pb-3 border-b border-gray-800">
+                  <div className="flex items-start gap-2">
+                    <span className="text-gray-600 text-xs whitespace-nowrap">{formatTime(log.timestamp)}</span>
+                    {getLogIcon(log.type)}
+                    <pre className={`flex-1 whitespace-pre-wrap break-words ${getLogColor(log.type)}`}>
+                      {log.message}
+                    </pre>
+                  </div>
+                  {log.details && (
+                    <div className="mt-1 ml-16 text-gray-500 text-xs">
+                      {log.details}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+            <div ref={logsEndRef} />
+          </div>
+
+          {/* Stats */}
+          <div className="bg-gray-800 p-2 border-t border-gray-700 text-xs text-gray-400">
+            <div className="flex justify-between">
+              <span>Total: {logs.length}</span>
+              <span>Errors: {logs.filter(l => l.type === 'error').length}</span>
+              <span>Warnings: {logs.filter(l => l.type === 'warn').length}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
