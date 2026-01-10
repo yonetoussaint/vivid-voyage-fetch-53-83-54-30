@@ -1,7 +1,7 @@
 import React from 'react';
 import { TechIcon } from './TechIcon';
 
-interface TechStackProps {
+interface TekStackProps {
   techs: string[];
   maxDisplay?: number;
   size?: 'sm' | 'md' | 'lg';
@@ -9,7 +9,7 @@ interface TechStackProps {
   className?: string;
 }
 
-export default const TechStack: React.FC<TechStackProps> = ({ 
+export default const TekStack: React.FC<TekStackProps> = ({ 
   techs, 
   maxDisplay = 6,
   size = 'md',
