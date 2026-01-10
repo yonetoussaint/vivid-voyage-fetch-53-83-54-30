@@ -30,7 +30,7 @@ export const TechStack: React.FC<TechStackProps> = ({
           <TechIcon 
             tech={tech} 
             size={size}
-            showName={showNames}
+            showName={showNames}  // Changed from showName to showNames to match prop name
             className="w-full"
           />
         </div>
