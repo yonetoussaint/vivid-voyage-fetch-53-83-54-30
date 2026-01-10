@@ -131,7 +131,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
           </div>
         )}
 
-        <div className="mt-2">
+        <div className="">
           <ProductDetailInfo
             product={listingProduct}
             onReadMore={handleReadMore}
