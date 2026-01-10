@@ -8,7 +8,7 @@ interface AboutSectionProps {
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ aboutRef, visibleSections }) => {
   return (
-    <section ref={aboutRef} id="about" className="scroll-mt-20">
+    <section ref={aboutRef} id="about" className="scroll-mt-26">
       <div className="space-y-6">
         {/* Profile Image Section */}
         <div className="relative w-full h-64 md:h-72 overflow-hidden rounded-[12px]">
