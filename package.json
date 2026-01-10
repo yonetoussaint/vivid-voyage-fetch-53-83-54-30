@@ -123,6 +123,16 @@
     "vite": "^5.4.1",
     "vite-plugin-pwa": "^0.20.0",
     "vite-plugin-svgr": "^4.2.0",
-    "workbox-window": "^7.1.0"
+    "workbox-window": "^7.1.0",
+    
+    // Added packages for Transformers.js polyfills
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@esbuild-plugins/node-modules-polyfill": "^0.2.3",
+    "rollup-plugin-polyfill-node": "^0.13.0",
+    
+    // Additional useful dev dependencies
+    "@types/lodash": "^4.14.202",
+    "@types/fs-extra": "^11.0.4",
+    "dotenv": "^16.4.5"
   }
 }
