@@ -1,5 +1,5 @@
 import React from 'react';
-import { TechIcon } from './TechIcon';
+import { TechIcon } from '@/components/portfolio/TechIcon';
 
 interface TekStackProps {
   techs: string[];
