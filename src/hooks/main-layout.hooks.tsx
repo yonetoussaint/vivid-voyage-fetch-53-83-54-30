@@ -116,14 +116,15 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
     // Determine if we should show the header
-    const shouldShowHeader = [
-      '/', '/for-you', '/wallet', '/explore', '/wishlist', '/cart', '/notifications',
-      '/addresses', '/help', '/products', '/mall', '/mall/', '/categories',
-      '/categories/electronics', '/categories/home-living', '/categories/fashion',
-      '/categories/entertainment', '/categories/kids-hobbies', '/categories/sports-outdoors',
-      '/categories/automotive', '/categories/women', '/categories/men', '/categories/books',
-      '/profile'
-    ].includes(pathname) || isMessagesListPage || isProfilePage || isMallPage;
+    // Determine if we should show the header
+const shouldShowHeader = [
+  '/', '/for-you', '/wallet', '/explore', '/wishlist', '/cart', '/notifications',
+  '/addresses', '/help', '/products', '/mall', '/mall/', '/categories',
+  '/categories/electronics', '/categories/home-living', '/categories/fashion',
+  '/categories/entertainment', '/categories/kids-hobbies', '/categories/sports-outdoors',
+  '/categories/automotive', '/categories/women', '/categories/men', '/categories/books'
+  // Removed '/profile' from the array
+].includes(pathname) || isMessagesListPage || isMallPage; // Removed isProfilePage
 
     // Determine if we should show the bottom nav
     const shouldShowBottomNav = isMobile && (
