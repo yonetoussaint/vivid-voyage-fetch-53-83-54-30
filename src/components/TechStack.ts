@@ -5,7 +5,7 @@ interface TechStackProps {
   techs: string[];
   maxDisplay?: number;
   size?: 'sm' | 'md' | 'lg';
-  showNames?: boolean;
+  showName?: boolean;  // Changed from showNames to showName
   className?: string;
 }
 
@@ -13,7 +13,7 @@ export const TechStack: React.FC<TechStackProps> = ({
   techs, 
   maxDisplay = 6,
   size = 'md',
-  showNames = false,
+  showName = false,  // Changed from showNames to showName
   className = ''
 }) => {
   const displayTechs = techs.slice(0, maxDisplay);
@@ -30,7 +30,7 @@ export const TechStack: React.FC<TechStackProps> = ({
           <TechIcon 
             tech={tech} 
             size={size}
-            showName={showNames}  // Changed from showName to showNames to match prop name
+            showName={showName}  // Now consistent
             className="w-full"
           />
         </div>
