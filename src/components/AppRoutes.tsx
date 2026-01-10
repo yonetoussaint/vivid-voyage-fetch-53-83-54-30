@@ -16,7 +16,7 @@ import ProductDetail from "@/pages/ProductDetail";
 import Calculator from "@/pages/Calculator";
 import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
-import AuthCallback from "@/components/auth/AuthCallback"; // Add this import
+import AuthCallback from "@/pages/AuthCallback"; // Add this import
 
 export function AppRoutes() {
   return (
