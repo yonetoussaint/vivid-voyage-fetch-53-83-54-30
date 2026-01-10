@@ -18,7 +18,7 @@ export const TechStack: React.FC<TechStackProps> = ({
 }) => {
   const displayTechs = techs.slice(0, maxDisplay);
   const hasMore = techs.length > maxDisplay;
-  
+
   return (
     <div className={`grid grid-cols-3 sm:grid-cols-4 gap-2 ${className}`}>
       {displayTechs.map((tech, index) => (
@@ -35,7 +35,7 @@ export const TechStack: React.FC<TechStackProps> = ({
           />
         </div>
       ))}
-      
+
       {hasMore && (
         <div className="flex flex-col items-center justify-center p-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
           <div className="w-8 h-8 mb-1 flex items-center justify-center">
