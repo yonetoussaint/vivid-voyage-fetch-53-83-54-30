@@ -1,353 +1,300 @@
 import React, { useState, useEffect } from 'react';
-import { RotateCcw, Plus, X } from 'lucide-react';
+import { AlertCircle, CheckCircle, XCircle, Clock, Search, Filter, Download, RefreshCw } from 'lucide-react';
 
-export default function MoneyCounter() {
-  const [deposits, setDeposits] = useState([
-    { id: 1, number: 1, sellerName: '', bills: { 1000: 0, 500: 0, 250: 0, 100: 0, 50: 0, 25: 0, 10: 0, 5: 0 }, timestamp: new Date().toISOString() }
-  ]);
-  const [activeTab, setActiveTab] = useState(1);
-  const [showSummary, setShowSummary] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+export default function DeploymentErrorMonitor() {
+  const [errors, setErrors] = useState([]);
+  const [filteredErrors, setFilteredErrors] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSeverity, setSelectedSeverity] = useState('all');
+  const [selectedError, setSelectedError] = useState(null);
 
-  const billColors = {
-    1000: 'bg-purple-500',
-    500: 'bg-blue-500',
-    250: 'bg-red-500',
-    100: 'bg-green-500',
-    50: 'bg-orange-500',
-    25: 'bg-pink-500',
-    10: 'bg-yellow-500',
-    5: 'bg-teal-500'
-  };
+  // Sample deployment errors
+  useEffect(() => {
+    const sampleErrors = [
+      {
+        id: 1,
+        timestamp: new Date(Date.now() - 1000 * 60 * 5),
+        severity: 'error',
+        type: 'Build Failed',
+        message: 'Module not found: Cannot resolve \'./components/Header\'',
+        file: 'src/pages/index.js',
+        line: 12,
+        deploy: 'deploy-abc123',
+        stack: 'Error: Module not found\n  at Resolver.resolve (/build/webpack.js:234)\n  at doResolve (/build/webpack.js:456)',
+        status: 'unresolved'
+      },
+      {
+        id: 2,
+        timestamp: new Date(Date.now() - 1000 * 60 * 15),
+        severity: 'warning',
+        type: 'Dependency Warning',
+        message: 'Package \'lodash\' is deprecated. Consider using lodash-es',
+        file: 'package.json',
+        line: null,
+        deploy: 'deploy-abc123',
+        stack: null,
+        status: 'unresolved'
+      },
+      {
+        id: 3,
+        timestamp: new Date(Date.now() - 1000 * 60 * 30),
+        severity: 'error',
+        type: 'Runtime Error',
+        message: 'Uncaught TypeError: Cannot read property \'map\' of undefined',
+        file: 'src/components/ProductList.js',
+        line: 45,
+        deploy: 'deploy-def456',
+        stack: 'TypeError: Cannot read property \'map\' of undefined\n  at ProductList (ProductList.js:45)\n  at renderWithHooks (react-dom.js:789)',
+        status: 'resolved'
+      },
+      {
+        id: 4,
+        timestamp: new Date(Date.now() - 1000 * 60 * 60),
+        severity: 'error',
+        type: 'API Error',
+        message: 'Failed to fetch: 500 Internal Server Error',
+        file: 'src/api/users.js',
+        line: 23,
+        deploy: 'deploy-ghi789',
+        stack: 'Error: 500 Internal Server Error\n  at fetchUsers (users.js:23)\n  at async loadUserData (app.js:67)',
+        status: 'unresolved'
+      },
+      {
+        id: 5,
+        timestamp: new Date(Date.now() - 1000 * 60 * 90),
+        severity: 'warning',
+        type: 'Performance Warning',
+        message: 'Bundle size exceeds recommended limit (2.5MB > 2MB)',
+        file: 'webpack.config.js',
+        line: null,
+        deploy: 'deploy-ghi789',
+        stack: null,
+        status: 'unresolved'
+      },
+      {
+        id: 6,
+        timestamp: new Date(Date.now() - 1000 * 60 * 120),
+        severity: 'info',
+        type: 'Build Success',
+        message: 'Build completed successfully in 45s',
+        file: null,
+        line: null,
+        deploy: 'deploy-jkl012',
+        stack: null,
+        status: 'resolved'
+      }
+    ];
+    setErrors(sampleErrors);
+    setFilteredErrors(sampleErrors);
+  }, []);
 
-  // Audio functions
-  const playSound = (frequency, duration = 0.1, type = 'sine') => {
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = frequency;
-      oscillator.type = type;
-      
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + duration);
-    } catch (e) {
-      console.log('Audio not supported');
+  useEffect(() => {
+    let filtered = errors;
+
+    if (searchTerm) {
+      filtered = filtered.filter(error => 
+        error.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        error.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (error.file && error.file.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    if (selectedSeverity !== 'all') {
+      filtered = filtered.filter(error => error.severity === selectedSeverity);
+    }
+
+    setFilteredErrors(filtered);
+  }, [searchTerm, selectedSeverity, errors]);
+
+  const getSeverityIcon = (severity) => {
+    switch (severity) {
+      case 'error':
+        return <XCircle className="w-5 h-5 text-red-500" />;
+      case 'warning':
+        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+      case 'info':
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
+      default:
+        return <AlertCircle className="w-5 h-5 text-gray-500" />;
     }
   };
 
-  const playLargeAmountSound = () => {
-    playSound(800, 0.15);
-    setTimeout(() => playSound(1000, 0.15), 100);
-  };
-
-  const playCompleteSound = () => {
-    playSound(523, 0.1); // C
-    setTimeout(() => playSound(659, 0.1), 100); // E
-    setTimeout(() => playSound(784, 0.2), 200); // G
-  };
-
-  // Check if deposit has all denominations filled
-  const isDepositComplete = (bills) => {
-    return Object.values(bills).every(count => count > 0);
-  };
-
-  const hasAnyData = (bills) => {
-    return Object.values(bills).some(count => count > 0);
-  };
-
-  const getDepositTotal = (bills) => {
-    return Object.entries(bills).reduce((sum, [denom, count]) => 
-      sum + (parseFloat(denom) * count), 0);
-  };
-
-  const getGrandTotal = () => {
-    return deposits.reduce((sum, deposit) => sum + getDepositTotal(deposit.bills), 0);
-  };
-
-  const getAllBills = () => {
-    const combined = { 1000: 0, 500: 0, 250: 0, 100: 0, 50: 0, 25: 0, 10: 0, 5: 0 };
-    deposits.forEach(deposit => {
-      Object.entries(deposit.bills).forEach(([denom, count]) => {
-        combined[denom] += count;
-      });
-    });
-    return combined;
-  };
-
-  const calculateLiasses = () => {
-    const allBills = getAllBills();
-    const liasses = {};
-    Object.entries(allBills).forEach(([denom, count]) => {
-      liasses[denom] = Math.floor(count / 100);
-    });
-    return liasses;
-  };
-
-  const updateBill = (depositId, denomination, value) => {
-    const numValue = parseInt(value) || 0;
-    const oldBills = deposits.find(d => d.id === depositId).bills;
-    
-    setDeposits(prev => prev.map(dep => 
-      dep.id === depositId 
-        ? { ...dep, bills: { ...dep.bills, [denomination]: Math.max(0, numValue) }, timestamp: new Date().toISOString() }
-        : dep
-    ));
-
-    // Play sound for large amounts (100+ bills or high denomination with 50+ bills)
-    if (numValue >= 100 || (parseInt(denomination) >= 100 && numValue >= 50)) {
-      playLargeAmountSound();
-    }
-
-    // Check if deposit is now complete
-    const newBills = { ...oldBills, [denomination]: numValue };
-    const wasComplete = isDepositComplete(oldBills);
-    const isComplete = isDepositComplete(newBills);
-    
-    if (!wasComplete && isComplete) {
-      setTimeout(() => playCompleteSound(), 100);
+  const getSeverityBg = (severity) => {
+    switch (severity) {
+      case 'error':
+        return 'bg-red-50 border-red-200';
+      case 'warning':
+        return 'bg-yellow-50 border-yellow-200';
+      case 'info':
+        return 'bg-green-50 border-green-200';
+      default:
+        return 'bg-gray-50 border-gray-200';
     }
   };
 
-  const addDeposit = () => {
-    const newNumber = deposits.length + 1;
-    const newId = Math.max(...deposits.map(d => d.id)) + 1;
-    setDeposits(prev => [...prev, {
-      id: newId,
-      number: newNumber,
-      sellerName: '',
-      bills: { 1000: 0, 500: 0, 250: 0, 100: 0, 50: 0, 25: 0, 10: 0, 5: 0 },
-      timestamp: new Date().toISOString()
-    }]);
-    setActiveTab(newId);
+  const formatTime = (date) => {
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return date.toLocaleDateString();
   };
 
-  const deleteDeposit = (id) => {
-    if (deposits.length === 1) return;
-    
-    const depositToDelete = deposits.find(d => d.id === id);
-    
-    // Check if deposit has data and show confirmation
-    if (hasAnyData(depositToDelete.bills)) {
-      setShowDeleteConfirm(id);
-      return;
-    }
-    
-    performDelete(id);
+  const exportErrors = () => {
+    const data = JSON.stringify(filteredErrors, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `deployment-errors-${new Date().toISOString()}.json`;
+    a.click();
   };
 
-  const performDelete = (id) => {
-    const filtered = deposits.filter(d => d.id !== id);
-    const renumbered = filtered.map((dep, idx) => ({ ...dep, number: idx + 1 }));
-    setDeposits(renumbered);
-    if (activeTab === id) {
-      setActiveTab(renumbered[0].id);
-    }
-    setShowDeleteConfirm(null);
+  const stats = {
+    total: errors.length,
+    errors: errors.filter(e => e.severity === 'error').length,
+    warnings: errors.filter(e => e.severity === 'warning').length,
+    resolved: errors.filter(e => e.status === 'resolved').length
   };
-
-  const resetDeposit = (id) => {
-    setDeposits(prev => prev.map(dep => 
-      dep.id === id 
-        ? { ...dep, bills: { 1000: 0, 500: 0, 250: 0, 100: 0, 50: 0, 25: 0, 10: 0, 5: 0 } }
-        : dep
-    ));
-  };
-
-  const updateSellerName = (id, name) => {
-    setDeposits(prev => prev.map(dep => 
-      dep.id === id ? { ...dep, sellerName: name } : dep
-    ));
-  };
-
-  const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const activeDeposit = deposits.find(d => d.id === activeTab);
-  const liasses = calculateLiasses();
-  const totalLiasses = Object.values(liasses).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-4 max-w-sm w-full">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Deposit?</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              This deposit has data. Are you sure you want to delete it?
-            </p>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Deployment Error Monitor</h1>
+          <p className="text-gray-600">Track and debug errors from your website deployments</p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Issues</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              </div>
+              <Clock className="w-8 h-8 text-blue-500" />
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Errors</p>
+                <p className="text-2xl font-bold text-red-500">{stats.errors}</p>
+              </div>
+              <XCircle className="w-8 h-8 text-red-500" />
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Warnings</p>
+                <p className="text-2xl font-bold text-yellow-500">{stats.warnings}</p>
+              </div>
+              <AlertCircle className="w-8 h-8 text-yellow-500" />
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Resolved</p>
+                <p className="text-2xl font-bold text-green-500">{stats.resolved}</p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search errors, files, or messages..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setShowDeleteConfirm(null)}
-                className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded font-bold"
+              <select
+                value={selectedSeverity}
+                onChange={(e) => setSelectedSeverity(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                Cancel
-              </button>
+                <option value="all">All Severities</option>
+                <option value="error">Errors</option>
+                <option value="warning">Warnings</option>
+                <option value="info">Info</option>
+              </select>
               <button
-                onClick={() => performDelete(showDeleteConfirm)}
-                className="flex-1 bg-red-500 text-white px-4 py-2 rounded font-bold"
+                onClick={exportErrors}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Delete
+                <Download className="w-4 h-4" />
+                Export
               </button>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Total Display - Fixed */}
-      <div className="bg-green-500 sticky top-0 z-20 shadow">
-        <div className="max-w-lg mx-auto px-3 py-2">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <div>
-              <p className="text-green-100 text-xs">GRAND TOTAL</p>
-              <p className="text-lg font-bold text-white">
-                {getGrandTotal().toLocaleString()} HTG
-              </p>
-            </div>
-            <button
-              onClick={() => setShowSummary(!showSummary)}
-              className="bg-white text-green-600 px-3 py-1.5 rounded text-xs font-bold"
+        {/* Error List */}
+        <div className="space-y-3">
+          {filteredErrors.map((error) => (
+            <div
+              key={error.id}
+              className={`bg-white rounded-lg border-2 p-4 cursor-pointer transition-all hover:shadow-md ${
+                getSeverityBg(error.severity)
+              } ${selectedError?.id === error.id ? 'ring-2 ring-blue-500' : ''}`}
+              onClick={() => setSelectedError(selectedError?.id === error.id ? null : error)}
             >
-              {showSummary ? 'Hide' : 'Liasses'}
-            </button>
-          </div>
-          
-          {showSummary && (
-            <div className="bg-white/20 rounded p-2 mb-2">
-              <p className="text-white text-xs font-bold mb-1">Total Liasses: {totalLiasses}</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {Object.entries(liasses).sort((a, b) => parseFloat(b[0]) - parseFloat(a[0])).map(([denom, count]) => (
-                  count > 0 && (
-                    <div key={denom} className="bg-white/30 rounded px-2 py-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-white text-xs font-bold">{denom} HTG</p>
-                        <p className="text-white text-xs font-bold">×{count}</p>
-                      </div>
-                      <p className="text-white text-xs mt-0.5">
-                        = {(parseFloat(denom) * 100 * count).toLocaleString()} HTG
-                      </p>
+              <div className="flex items-start gap-3">
+                {getSeverityIcon(error.severity)}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">{error.type}</h3>
+                      <p className="text-sm text-gray-700 mt-1">{error.message}</p>
                     </div>
-                  )
-                ))}
+                    <span className="text-xs text-gray-500 whitespace-nowrap">{formatTime(error.timestamp)}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                    {error.file && (
+                      <span className="font-mono bg-gray-100 px-2 py-1 rounded">
+                        {error.file}{error.line ? `:${error.line}` : ''}
+                      </span>
+                    )}
+                    <span className="bg-gray-100 px-2 py-1 rounded">{error.deploy}</span>
+                    <span className={`px-2 py-1 rounded ${
+                      error.status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {error.status}
+                    </span>
+                  </div>
+
+                  {/* Stack Trace (expanded) */}
+                  {selectedError?.id === error.id && error.stack && (
+                    <div className="mt-4 p-3 bg-gray-900 rounded-lg overflow-x-auto">
+                      <pre className="text-xs text-green-400 font-mono">{error.stack}</pre>
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
+          ))}
+
+          {filteredErrors.length === 0 && (
+            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+              <CheckCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No errors found</h3>
+              <p className="text-gray-600">All deployments are running smoothly!</p>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 sticky top-16 z-10">
-        <div className="max-w-lg mx-auto px-3 py-2 flex items-center gap-2 overflow-x-auto">
-          {deposits.map(deposit => (
-            <button
-              key={deposit.id}
-              onClick={() => setActiveTab(deposit.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap ${
-                activeTab === deposit.id 
-                  ? 'bg-green-500 text-white' 
-                  : 'bg-gray-100 text-gray-700'
-              }`}
-            >
-              <span>Deposit {deposit.number}</span>
-              <span className="text-xs opacity-70">
-                ({getDepositTotal(deposit.bills).toLocaleString()})
-              </span>
-              {deposits.length > 1 && (
-                <X 
-                  className="w-3 h-3 ml-1 opacity-70 hover:opacity-100" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteDeposit(deposit.id);
-                  }}
-                />
-              )}
-            </button>
-          ))}
-          <button
-            onClick={addDeposit}
-            className="flex items-center gap-1 px-2 py-1.5 rounded text-xs font-bold bg-blue-500 text-white flex-shrink-0"
-          >
-            <Plus className="w-3 h-3" />
-            Add
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-lg mx-auto p-3">
-        {/* Seller Name & Current Deposit Total */}
-        <div className="bg-blue-50 rounded-lg p-2 mb-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex-1">
-              <label className="text-blue-600 text-xs font-medium block mb-1">Seller Name</label>
-              <input
-                type="text"
-                value={activeDeposit.sellerName}
-                onChange={(e) => updateSellerName(activeTab, e.target.value)}
-                placeholder="Enter seller name..."
-                className="w-full text-sm font-medium text-gray-900 bg-white px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div className="ml-2 text-right">
-              <p className="text-blue-600 text-xs font-medium">Time</p>
-              <p className="text-blue-900 text-xs font-bold">{formatTimestamp(activeDeposit.timestamp)}</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-600 text-xs font-medium">Deposit Total</p>
-              <p className="text-blue-900 font-bold">
-                {getDepositTotal(activeDeposit.bills).toLocaleString()} HTG
-              </p>
-              {isDepositComplete(activeDeposit.bills) && (
-                <p className="text-green-600 text-xs font-bold mt-0.5">✓ Complete</p>
-              )}
-            </div>
-            <button
-              onClick={() => resetDeposit(activeTab)}
-              className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1"
-            >
-              <RotateCcw className="w-3 h-3" />
-              Reset
-            </button>
-          </div>
-        </div>
-
-        {/* Bills Grid */}
-        <div className="grid grid-cols-2 gap-2">
-          {Object.entries(activeDeposit.bills).sort((a, b) => parseFloat(b[0]) - parseFloat(a[0])).map(([denom, count]) => (
-            <div key={denom} className="bg-white rounded-lg p-2 border border-gray-200">
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-1">
-                  <div className={`${billColors[denom]} px-1.5 py-0.5 rounded flex items-center justify-center`}>
-                    <span className="text-white font-bold text-xs">{denom}</span>
-                  </div>
-                  <span className="text-xs text-gray-600">Gourdes</span>
-                </div>
-                <span className="text-xs font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">HTG</span>
-              </div>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={count === 0 ? '' : count}
-                onChange={(e) => updateBill(activeDeposit.id, denom, e.target.value)}
-                className="w-full text-base font-bold text-gray-900 bg-gray-50 rounded px-2 py-1 border border-gray-300 focus:border-green-500 focus:outline-none text-center mb-1"
-                placeholder="0"
-              />
-              <div className="text-xs font-bold text-gray-500 text-center">
-                {count > 0 ? (parseFloat(denom) * count).toLocaleString() : '—'}
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>
