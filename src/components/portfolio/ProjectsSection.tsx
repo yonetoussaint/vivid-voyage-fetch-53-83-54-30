@@ -1,188 +1,175 @@
 import React from 'react';
-import { Star, ExternalLink, Globe, GitFork, ChevronRight, Download, Users } from 'lucide-react';
-import { projects } from './data';
+import { Mail, Github, Linkedin, ExternalLink } from 'lucide-react';
 
-interface ProjectsSectionProps {
-  projectsRef: React.RefObject<HTMLElement>;
+interface AboutSectionProps {
+  aboutRef: React.RefObject<HTMLElement>;
+  visibleSections: Set<string>;
 }
 
-export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsRef }) => {
+// Tech stack data with logo URLs from public CDNs
+const techStack = [
+  { name: 'React', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg' },
+  { name: 'TypeScript', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg' },
+  { name: 'Next.js', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg' },
+  { name: 'Node.js', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg' },
+  { name: 'Tailwind CSS', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-plain.svg' },
+  { name: 'GraphQL', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/graphql/graphql-plain.svg' },
+  { name: 'PostgreSQL', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg' },
+  { name: 'AWS', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg' },
+  { name: 'Docker', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg' },
+  { name: 'Git', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg' },
+  { name: 'Jest', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jest/jest-plain.svg' },
+  { name: 'Figma', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg' },
+];
+
+export const AboutSection: React.FC<AboutSectionProps> = ({ aboutRef, visibleSections }) => {
   return (
-    <section ref={projectsRef} id="projects" className="scroll-mt-16 py-8 md:px-6 lg:px-8">
-      {/* Header - Simplified for mobile */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-2xl font-bold text-gray-900">Featured Apps</h2>
-          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
-            View all <ChevronRight className="w-4 h-4" />
-          </button>
+    <section ref={aboutRef} id="about" className="scroll-mt-20">
+      <div className="space-y-6">
+        {/* Profile Image Section */}
+        <div className="relative w-full h-64 md:h-72 overflow-hidden rounded-[12px]">
+          <img 
+            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
+            alt="Portrait professionnel" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-transparent"></div>
         </div>
-        <p className="text-gray-500 text-sm">Discover my latest web applications and projects</p>
-      </div>
 
-      {/* Projects Grid - Mobile first approach */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {projects.map((project, i) => (
-          <div 
-            key={i} 
-            className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-300 hover:shadow-lg"
-          >
-            {/* Project Header with Gradient */}
-            <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
-              <div className="flex items-start justify-between">
-                {/* App Logo/Badge */}
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
-                    {project.image ? (
-                      <img 
-                        src={project.image} 
-                        alt={project.title}
-                        className="w-8 h-8 object-contain"
-                      />
-                    ) : (
-                      <span className="text-white font-bold text-lg">
-                        {project.title.charAt(0)}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-lg leading-tight">
-                      {project.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm mt-0.5">
-                      {project.company || "Web Application"}
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Star Rating - Compact */}
-                <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-lg">
-                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  <span className="text-gray-700 font-medium text-sm">
-                    {project.stars || "4.8"}
-                  </span>
-                </div>
-              </div>
+        {/* Bio Card - Clean Header */}
+        <div className="bg-white rounded-[12px] p-6 border border-gray-100">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+            <h2 className="text-xl font-bold text-gray-900">Enchanté ✨</h2>
+          </div>
+          <p className="text-gray-600 leading-relaxed mb-4">
+            Ingénieur logiciel passionné par la création d'expériences numériques d'exception. 
+            Je consacre mon art à concevoir des produits élégants, accessibles et centrés sur l'humain, 
+            à l'échelle.
+          </p>
+          <p className="text-gray-600 leading-relaxed">
+            Fort de plus de cinq années d'expérience, j'ai eu le privilège de collaborer sur 
+            des projets variés – des plateformes e-commerce aux outils de collaboration en temps réel. 
+            Mon exigence : un code d'une pureté cristalline, maintenable, qui résout avec élégance 
+            les défis les plus complexes.
+          </p>
+        </div>
+
+        {/* Tech Stack Card - Clean Header */}
+        <div className="bg-white rounded-[12px] p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-6 bg-green-500 rounded-full"></div>
+              <h3 className="text-xl font-bold text-gray-900">Stack technique</h3>
             </div>
-
-            {/* Project Content */}
-            <div className="p-5">
-              {/* Description */}
-              <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                {project.desc}
-              </p>
-
-              {/* Stats Row - Horizontal Scroll on Mobile */}
-              <div className="flex items-center gap-3 overflow-x-auto pb-3 mb-4 scrollbar-hide">
-                <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-lg whitespace-nowrap">
-                  <Download className="w-4 h-4 text-gray-600" />
-                  <span className="text-gray-700 text-sm font-medium">
-                    {project.downloads || "5M+"}
-                  </span>
+            <a 
+              href="https://github.com/alexchen?tab=repositories" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <span>Voir les projets</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+          
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+            {techStack.map((tech) => (
+              <div 
+                key={tech.name}
+                className="flex flex-col items-center p-3 bg-gray-50 rounded-[8px] border border-gray-100 hover:bg-gray-100 transition-colors group"
+              >
+                <div className="w-10 h-10 mb-2 flex items-center justify-center">
+                  <img 
+                    src={tech.logo} 
+                    alt={tech.name}
+                    className="w-8 h-8 object-contain"
+                    loading="lazy"
+                  />
                 </div>
-                
-                <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-lg whitespace-nowrap">
-                  <Users className="w-4 h-4 text-gray-600" />
-                  <span className="text-gray-700 text-sm font-medium">
-                    {project.users || "Active Users"}
-                  </span>
-                </div>
-
-                {project.forks && (
-                  <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-lg whitespace-nowrap">
-                    <GitFork className="w-4 h-4 text-gray-600" />
-                    <span className="text-gray-700 text-sm font-medium">
-                      {project.forks}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Tech Stack - Scrollable on Mobile */}
-              <div className="mb-5">
-                <h4 className="text-gray-700 text-sm font-semibold mb-2">Tech Stack</h4>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {project.tech?.slice(0, 4).map((tech, j) => (
-                    <span 
-                      key={j}
-                      className="px-3 py-1.5 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 text-xs font-medium rounded-lg border border-gray-200 whitespace-nowrap"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                  {project.tech && project.tech.length > 4 && (
-                    <span className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-lg">
-                      +{project.tech.length - 4} more
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Single Featured Screenshot - Better for mobile */}
-              <div className="mb-5">
-                <h4 className="text-gray-700 text-sm font-semibold mb-2">Preview</h4>
-                <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                  {project.screenshots?.[0] ? (
-                    <img 
-                      src={project.screenshots[0]} 
-                      alt={`${project.title} preview`}
-                      className="w-full h-40 object-cover hover:scale-[1.02] transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-40 bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center">
-                      <span className="text-gray-500 text-sm">Preview coming soon</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons - Stacked on Mobile */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <a 
-                  href={project.liveUrl || "#"} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg"
-                >
-                  <Globe className="w-4 h-4" />
-                  Live Demo
-                </a>
-                
-                {project.githubUrl && (
-                  <a 
-                    href={project.githubUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <GitFork className="w-4 h-4" />
-                    View Code
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-5 py-3 border-t border-gray-100 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 text-xs">
-                  Updated: {project.lastUpdated || "Recently"}
+                <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900">
+                  {tech.name}
                 </span>
-                <a 
-                  href="#" 
-                  className="text-blue-600 hover:text-blue-700 text-xs font-medium flex items-center gap-1"
-                >
-                  Details <ExternalLink className="w-3 h-3" />
-                </a>
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats Card - Clean Header */}
+        <div className="bg-white rounded-[12px] p-6 border border-gray-100">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1 h-6 bg-purple-500 rounded-full"></div>
+            <h3 className="text-xl font-bold text-gray-900">Quelques repères</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-4 bg-blue-50 rounded-[8px] border border-blue-100">
+              <div className="text-2xl font-bold text-blue-600 mb-1">5+</div>
+              <div className="text-sm text-gray-600">Années d'expertise</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-[8px] border border-green-100">
+              <div className="text-2xl font-bold text-green-600 mb-1">50+</div>
+              <div className="text-sm text-gray-600">Projets aboutis</div>
+            </div>
+            <div className="text-center p-4 bg-purple-50 rounded-[8px] border border-purple-100">
+              <div className="text-2xl font-bold text-purple-600 mb-1">2.4k</div>
+              <div className="text-sm text-gray-600">Étoiles GitHub</div>
+            </div>
+            <div className="text-center p-4 bg-orange-50 rounded-[8px] border border-orange-100">
+              <div className="text-2xl font-bold text-orange-600 mb-1">98%</div>
+              <div className="text-sm text-gray-600">Satisfaction client</div>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Mobile-only hint */}
-      <div className="mt-8 text-center md:hidden">
-        <p className="text-gray-400 text-sm">💡 Swipe horizontally to see more info</p>
+        {/* Contact Card - Clean Header */}
+        <div className="bg-white rounded-[12px] p-6 border border-gray-100">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1 h-6 bg-orange-500 rounded-full"></div>
+            <h3 className="text-xl font-bold text-gray-900">Restons en contact</h3>
+          </div>
+          <div className="space-y-3">
+            <a 
+              href="mailto:alex@example.com" 
+              className="flex items-center gap-3 p-3 bg-gray-50 rounded-[8px] border border-gray-100 hover:bg-gray-100 transition-colors group"
+            >
+              <div className="w-8 h-8 flex items-center justify-center bg-white rounded-full border border-gray-200">
+                <Mail className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-600 group-hover:text-gray-900 truncate">alex@example.com</div>
+                <div className="text-xs text-gray-400">Email professionnel</div>
+              </div>
+            </a>
+            <a 
+              href="https://github.com/alexchen" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-3 bg-gray-50 rounded-[8px] border border-gray-100 hover:bg-gray-100 transition-colors group"
+            >
+              <div className="w-8 h-8 flex items-center justify-center bg-white rounded-full border border-gray-200">
+                <Github className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-600 group-hover:text-gray-900 truncate">github.com/alexchen</div>
+                <div className="text-xs text-gray-400">Projets open-source</div>
+              </div>
+            </a>
+            <a 
+              href="https://linkedin.com/in/alexchen" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-3 bg-gray-50 rounded-[8px] border border-gray-100 hover:bg-gray-100 transition-colors group"
+            >
+              <div className="w-8 h-8 flex items-center justify-center bg-white rounded-full border border-gray-200">
+                <Linkedin className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-600 group-hover:text-gray-900 truncate">linkedin.com/in/alexchen</div>
+                <div className="text-xs text-gray-400">Expérience professionnelle</div>
+              </div>
+            </a>
+          </div>
+        </div>
       </div>
     </section>
   );
