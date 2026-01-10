@@ -46,20 +46,31 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Fix for onnxruntime-web
+      'onnxruntime-web': 'onnxruntime-web/dist/ort.esm.min.mjs',
     },
   },
   build: {
-    rollupOptions: {
-      external: [
-        // Mark these as external to prevent bundling issues
-        'onnxruntime-web'
-      ]
-    },
     // Increase chunk size for AI models
     chunkSizeWarningLimit: 1500,
     // Optimize for Transformers.js
     commonjsOptions: {
       transformMixedEsModules: true
+    },
+    rollupOptions: {
+      external: [],
+      // Make sure onnxruntime-web is bundled properly
+      output: {
+        manualChunks(id) {
+          // Group large dependencies together
+          if (id.includes('node_modules/@xenova')) {
+            return 'transformers';
+          }
+          if (id.includes('node_modules/onnxruntime-web')) {
+            return 'onnxruntime';
+          }
+        }
+      }
     }
   },
   define: {
