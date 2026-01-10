@@ -1,12 +1,15 @@
-// Base URL for all icons
+// Base URL for all icons - using skillicons.dev
 const ICON_CDN = 'https://skillicons.dev/icons?i=';
 
-// Unified icon mapping - all use the same CDN pattern
+// Complete mapping of available skillicons.dev IDs
+// You can check all available icons at: https://skillicons.dev/
+
 export const techIcons: Record<string, { 
-  id: string;
-  name: string;
-  color?: string;
+  id: string;        // skillicons.dev icon ID
+  name: string;      // Display name
 }> = {
+  // ✅ Verified working icons:
+  
   // Frontend
   'react': { id: 'react', name: 'React' },
   'nextjs': { id: 'nextjs', name: 'Next.js' },
@@ -19,10 +22,13 @@ export const techIcons: Record<string, {
   'vue.js': { id: 'vuejs', name: 'Vue.js' },
   'vue': { id: 'vuejs', name: 'Vue.js' },
   'angular': { id: 'angular', name: 'Angular' },
+  'svelte': { id: 'svelte', name: 'Svelte' },
   'redux': { id: 'redux', name: 'Redux' },
-  'zustand': { id: 'redux', name: 'Zustand' }, // Using Redux as fallback
   'vite': { id: 'vite', name: 'Vite' },
   'webpack': { id: 'webpack', name: 'Webpack' },
+  'html': { id: 'html', name: 'HTML5' },
+  'css': { id: 'css', name: 'CSS3' },
+  'sass': { id: 'sass', name: 'Sass' },
   
   // Backend
   'nodejs': { id: 'nodejs', name: 'Node.js' },
@@ -52,33 +58,26 @@ export const techIcons: Record<string, {
   'redis': { id: 'redis', name: 'Redis' },
   'sqlite': { id: 'sqlite', name: 'SQLite' },
   
-  // APIs & Auth
+  // APIs & Communication
   'graphql': { id: 'graphql', name: 'GraphQL' },
-  'rest': { id: 'restapi', name: 'REST API' },
-  'restapi': { id: 'restapi', name: 'REST API' },
   'jwt': { id: 'jwt', name: 'JWT' },
-  'oauth': { id: 'oauth', name: 'OAuth' },
-  'oauth2': { id: 'oauth', name: 'OAuth 2.0' },
-  'socket.io': { id: 'socketio', name: 'Socket.IO' },
   'socketio': { id: 'socketio', name: 'Socket.IO' },
-  'webrtc': { id: 'webrtc', name: 'WebRTC' },
+  'socket.io': { id: 'socketio', name: 'Socket.IO' },
   
   // DevOps & Cloud
   'docker': { id: 'docker', name: 'Docker' },
   'kubernetes': { id: 'kubernetes', name: 'Kubernetes' },
   'k8s': { id: 'kubernetes', name: 'Kubernetes' },
   'aws': { id: 'aws', name: 'AWS' },
-  'amazon': { id: 'aws', name: 'AWS' },
   'azure': { id: 'azure', name: 'Azure' },
   'gcp': { id: 'gcp', name: 'Google Cloud' },
   'googlecloud': { id: 'gcp', name: 'Google Cloud' },
   'firebase': { id: 'firebase', name: 'Firebase' },
   'vercel': { id: 'vercel', name: 'Vercel' },
   'netlify': { id: 'netlify', name: 'Netlify' },
-  'terraform': { id: 'terraform', name: 'Terraform' },
   'nginx': { id: 'nginx', name: 'Nginx' },
   
-  // Tools & Platforms
+  // Tools
   'git': { id: 'git', name: 'Git' },
   'github': { id: 'github', name: 'GitHub' },
   'gitlab': { id: 'gitlab', name: 'GitLab' },
@@ -89,48 +88,45 @@ export const techIcons: Record<string, {
   'deno': { id: 'deno', name: 'Deno' },
   'figma': { id: 'figma', name: 'Figma' },
   
-  // Payment & Services
+  // Testing
+  'jest': { id: 'jest', name: 'Jest' },
+  'cypress': { id: 'cypress', name: 'Cypress' },
+  
+  // UI/Design
+  'mui': { id: 'mui', name: 'Material-UI' },
+  'materialui': { id: 'mui', name: 'Material-UI' },
+  'bootstrap': { id: 'bootstrap', name: 'Bootstrap' },
+  
+  // Payment
   'stripe': { id: 'stripe', name: 'Stripe' },
-  'paypal': { id: 'paypal', name: 'PayPal' },
   
   // Mobile
   'reactnative': { id: 'react', name: 'React Native' },
   'react native': { id: 'react', name: 'React Native' },
-  'expo': { id: 'expo', name: 'Expo' },
+  'android': { id: 'android', name: 'Android' },
+  'ios': { id: 'ios', name: 'iOS' },
   
-  // Testing
-  'jest': { id: 'jest', name: 'Jest' },
-  'vitest': { id: 'vitest', name: 'Vitest' },
-  'cypress': { id: 'cypress', name: 'Cypress' },
-  
-  // ORMs & Tools
+  // Fallbacks for missing skillicons
+  // These use devicon as alternative source
   'prisma': { id: 'prisma', name: 'Prisma' },
-  'mongoose': { id: 'mongodb', name: 'Mongoose' },
-  'sequelize': { id: 'sequelize', name: 'Sequelize' },
-  'typeorm': { id: 'typeorm', name: 'TypeORM' },
-  'drizzle': { id: 'postgresql', name: 'Drizzle ORM' },
-  
-  // State Management
-  'tanstackquery': { id: 'reactquery', name: 'TanStack Query' },
-  'reactquery': { id: 'reactquery', name: 'TanStack Query' },
-  
-  // UI Libraries
-  'mui': { id: 'mui', name: 'Material-UI' },
-  'materialui': { id: 'mui', name: 'Material-UI' },
-  'shadcn': { id: 'react', name: 'shadcn/ui' },
-  'radix': { id: 'radixui', name: 'Radix UI' },
-  'framer': { id: 'framer', name: 'Framer Motion' },
-  
-  // Authentication
-  'authjs': { id: 'nextauth', name: 'Auth.js' },
-  'nextauth': { id: 'nextauth', name: 'Auth.js' },
-  'clerk': { id: 'clerk', name: 'Clerk' },
+  'trpc': { id: 'trpc', name: 'tRPC' },
+  'zustand': { id: 'redux', name: 'Zustand' }, // Using redux as visual placeholder
+  'webrtc': { id: 'webrtc', name: 'WebRTC' },
+  'oauth': { id: 'oauth', name: 'OAuth' },
+  'terraform': { id: 'terraform', name: 'Terraform' },
   'supabase': { id: 'supabase', name: 'Supabase' },
-  
-  // AI/ML
-  'tensorflow': { id: 'tensorflow', name: 'TensorFlow' },
-  'pytorch': { id: 'pytorch', name: 'PyTorch' },
-  'openai': { id: 'openai', name: 'OpenAI' },
+  'expo': { id: 'react', name: 'Expo' }, // Using react as placeholder
+  'vitest': { id: 'vitest', name: 'Vitest' },
+};
+
+// Special icons that need different CDN (not available on skillicons.dev)
+const SPECIAL_ICONS: Record<string, string> = {
+  'prisma': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg',
+  'trpc': 'https://trpc.io/img/logo.svg',
+  'supabase': 'https://supabase.com/favicon/favicon-32x32.png',
+  'zustand': 'https://zustand-demo.pmnd.rs/favicon.ico',
+  'expo': 'https://docs.expo.dev/static/images/favicon.png',
+  'webrtc': 'https://webrtc.org/assets/images/webrtc-logo-vert-retro-dist.svg',
 };
 
 // Helper function to normalize tech names
@@ -152,9 +148,10 @@ export const getTechIcon = (techName: string) => {
     return techIcons[normalized];
   }
   
-  // Partial match
+  // Try to find by partial match
   for (const [key, value] of Object.entries(techIcons)) {
-    if (normalized.includes(key) || key.includes(normalized)) {
+    const normalizedKey = normalizeTechName(key);
+    if (normalized.includes(normalizedKey) || normalizedKey.includes(normalized)) {
       return value;
     }
   }
@@ -168,7 +165,20 @@ export const getTechIcon = (techName: string) => {
 
 // Get icon URL
 export const getTechIconUrl = (techName: string): string => {
+  const normalized = normalizeTechName(techName);
+  
+  // Check for special icons first
+  if (SPECIAL_ICONS[normalized]) {
+    return SPECIAL_ICONS[normalized];
+  }
+  
   const icon = getTechIcon(techName);
+  
+  // If it's a special icon with custom URL already, return it
+  if (SPECIAL_ICONS[icon.id]) {
+    return SPECIAL_ICONS[icon.id];
+  }
+  
   return `${ICON_CDN}${icon.id}`;
 };
 
@@ -176,4 +186,10 @@ export const getTechIconUrl = (techName: string): string => {
 export const getTechDisplayName = (techName: string): string => {
   const icon = getTechIcon(techName);
   return icon.name;
+};
+
+// Check if icon exists
+export const hasTechIcon = (techName: string): boolean => {
+  const normalized = normalizeTechName(techName);
+  return !!techIcons[normalized] || !!SPECIAL_ICONS[normalized];
 };
