@@ -156,6 +156,18 @@ const normalizeTechName = (tech: string): string => {
     .replace(/[^a-z0-9]/g, ''); // Remove special chars
 };
 
+// Helper function to get all skills data
+const getAllSkills = () => {
+  // Since skills is defined in the same file, we can access it directly
+  // This function ensures we only call it when needed
+  return [
+    ...skills.Frontend,
+    ...skills.Backend,
+    ...skills.DevOps,
+    ...skills.Other
+  ];
+};
+
 // Get icon info by tech name
 export const getTechIcon = (techName: string) => {
   const normalized = normalizeTechName(techName);
@@ -187,7 +199,7 @@ export const getTechIcon = (techName: string) => {
   }
 
   // Default fallback - try to find in your skills data
-  const allSkills = [...skills.Frontend, ...skills.Backend, ...skills.DevOps, ...skills.Other];
+  const allSkills = getAllSkills();
   const foundSkill = allSkills.find(skill => 
     normalizeTechName(skill.name) === normalized || 
     skill.name.toLowerCase().includes(techName.toLowerCase()) ||
@@ -236,7 +248,7 @@ export const getTechIconUrl = (techName: string): string => {
   }
 
   // Try to find the logo in your skills data
-  const allSkills = [...skills.Frontend, ...skills.Backend, ...skills.DevOps, ...skills.Other];
+  const allSkills = getAllSkills();
   const foundSkill = allSkills.find(skill => 
     normalizeTechName(skill.name) === normalized || 
     skill.name.toLowerCase().includes(techName.toLowerCase()) ||
@@ -270,7 +282,71 @@ export const hasTechIcon = (techName: string): boolean => {
   }
   
   // Check in skills data
-  const allSkills = [...skills.Frontend, ...skills.Backend, ...skills.DevOps, ...skills.Other];
+  const allSkills = getAllSkills();
   return allSkills.some(skill => normalizeTechName(skill.name) === normalized);
 };
 
+// Your skills data (already defined in the file)
+export const skills = {
+  Frontend: [
+    { name: "React", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg", cert: null, proficiency: 95 },
+    { name: "Next.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg", cert: null, proficiency: 90 },
+    { name: "TypeScript", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg", cert: null, proficiency: 88 },
+    { name: "Tailwind CSS", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg", cert: null, proficiency: 92 },
+    { name: "Vue.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg", cert: null, proficiency: 75 },
+    { name: "TanStack Query", logo: "https://tanstack.com/_build/assets/logo-color-100w.png", cert: null, proficiency: 90 },
+    { name: "Redux Toolkit", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redux/redux-original.svg", cert: null, proficiency: 85 },
+    { name: "Zustand", logo: "https://raw.githubusercontent.com/pmndrs/zustand/main/examples/demo/public/favicon.ico", cert: null, proficiency: 88 },
+    { name: "Vite", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg", cert: null, proficiency: 92 },
+    { name: "Bun", logo: "https://bun.sh/logo.svg", cert: null, proficiency: 80 },
+    { name: "shadcn/ui", logo: "https://ui.shadcn.com/favicon.ico", cert: null, proficiency: 88 },
+    { name: "Radix UI", logo: "https://avatars.githubusercontent.com/u/75042455?s=200&v=4", cert: null, proficiency: 85 },
+    { name: "MUI", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/materialui/materialui-original.svg", cert: null, proficiency: 82 },
+    { name: "Lucide Icons", logo: "https://lucide.dev/logo.svg", cert: null, proficiency: 85 },
+    { name: "Framer Motion", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/framermotion/framermotion-original.svg", cert: null, proficiency: 85 },
+    { name: "Auth.js", logo: "https://authjs.dev/img/logo-sm.png", cert: null, proficiency: 82 },
+    { name: "Clerk", logo: "https://avatars.githubusercontent.com/u/83972758?s=200&v=4", cert: null, proficiency: 80 },
+    { name: "Netlify", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/netlify/netlify-original.svg", cert: null, proficiency: 85 },
+    { name: "React Native", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg", cert: null, proficiency: 78 },
+    { name: "Expo", logo: "https://avatars.githubusercontent.com/u/12504344?s=200&v=4", cert: null, proficiency: 80 }
+  ],
+  Backend: [
+    { name: "Node.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg", cert: null, proficiency: 90 },
+    { name: "Bun", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bun/bun-original.svg", cert: null, proficiency: 82 },
+    { name: "Deno", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/denojs/denojs-original.svg", cert: null, proficiency: 75 },
+    { name: "Express.js", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg", cert: null, proficiency: 88 },
+    { name: "Fastify", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastify/fastify-original.svg", cert: null, proficiency: 85 },
+    { name: "NestJS", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nestjs/nestjs-plain.svg", cert: null, proficiency: 85 },
+    { name: "Hono", logo: "https://avatars.githubusercontent.com/u/98495527?s=200&v=4", cert: null, proficiency: 78 },
+    { name: "REST APIs", logo: "https://www.svgrepo.com/show/354202/rest-api.svg", cert: null, proficiency: 92 },
+    { name: "GraphQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/graphql/graphql-plain.svg", cert: null, proficiency: 80 },
+    { name: "tRPC", logo: "https://avatars.githubusercontent.com/u/78011399?s=200&v=4", cert: null, proficiency: 82 },
+    { name: "WebSockets", logo: "https://www.svgrepo.com/show/493713/websocket.svg", cert: null, proficiency: 80 },
+    { name: "Auth.js / NextAuth", logo: "https://authjs.dev/img/logo-sm.png", cert: null, proficiency: 82 },
+    { name: "JWT", logo: "https://www.svgrepo.com/show/374118/jwt.svg", cert: null, proficiency: 88 },
+    { name: "OAuth 2.0", logo: "https://www.svgrepo.com/show/475656/oauth.svg", cert: null, proficiency: 85 },
+    { name: "PostgreSQL", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg", cert: null, proficiency: 82 },
+    { name: "MongoDB", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg", cert: null, proficiency: 80 },
+    { name: "Redis", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg", cert: null, proficiency: 78 },
+    { name: "Prisma", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg", cert: null, proficiency: 85 },
+    { name: "Drizzle ORM", logo: "https://avatars.githubusercontent.com/u/108468352?s=200&v=4", cert: null, proficiency: 80 },
+    { name: "Supabase", logo: "https://raw.githubusercontent.com/supabase/supabase/master/packages/common/assets/images/supabase-logo-icon.png", cert: null, proficiency: 78 },
+    { name: "Firebase", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg", cert: null, proficiency: 75 },
+    { name: "BullMQ", logo: "https://avatars.githubusercontent.com/u/75309366?s=200&v=4", cert: null, proficiency: 80 },
+    { name: "Node Cron", logo: "https://www.svgrepo.com/show/373598/cron.svg", cert: null, proficiency: 78 },
+    { name: "Jest", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jest/jest-plain.svg", cert: null, proficiency: 85 },
+    { name: "Vitest", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitest/vitest-original.svg", cert: null, proficiency: 82 },
+    { name: "PHP", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg", cert: null, proficiency: 78 },
+    { name: "Laravel", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/laravel/laravel-original.svg", cert: null, proficiency: 80 }
+  ],
+  DevOps: [
+    { name: "Docker", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg", cert: null, proficiency: 88 },
+    { name: "Kubernetes", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg", cert: null, proficiency: 85 },
+    { name: "AWS", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg", cert: null, proficiency: 90 },
+    { name: "CI/CD", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg", cert: null, proficiency: 87 },
+    { name: "Terraform", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/terraform/terraform-original.svg", cert: null, proficiency: 75 }
+  ],
+  Other: [
+    { name: "Git", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg", cert: null, proficiency: 95 }
+  ]
+};
