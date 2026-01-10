@@ -1,7 +1,7 @@
 import React from 'react';
 import { Star, ExternalLink, Globe, GitFork, ChevronRight, Download, Users } from 'lucide-react';
 import { projects } from './data';
-import { TekStack } from '@/components/TekStack';
+import  TekStack  from '@/components/TekStack';
 
 interface ProjectsSectionProps {
   projectsRef: React.RefObject<HTMLElement>;
