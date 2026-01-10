@@ -86,6 +86,9 @@
       </div>
     </noscript>
 
+    <!-- ONNX Runtime Web CDN - REQUIRED for Transformers.js -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/ort.esm.min.mjs" crossorigin></script>
+
     <!-- Application Scripts -->
     <script type="module" src="/src/main.tsx"></script>
 
@@ -97,6 +100,13 @@
           const perfData = window.performance.timing;
           const loadTime = perfData.loadEventEnd - perfData.navigationStart;
           console.log('Page load time:', loadTime + 'ms');
+        }
+        
+        // Verify ONNX Runtime is loaded
+        if (typeof ort !== 'undefined') {
+          console.log('✅ ONNX Runtime Web loaded successfully');
+        } else {
+          console.warn('⚠️ ONNX Runtime Web not loaded - AI features may not work');
         }
       });
     </script>
