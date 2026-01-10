@@ -1,3 +1,6 @@
+rewrite bio in ultra elegant french 
+
+
 import React from 'react';
 import { Mail, Github, Linkedin } from 'lucide-react';
 
