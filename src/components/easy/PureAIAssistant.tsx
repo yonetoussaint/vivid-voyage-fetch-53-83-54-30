@@ -1,0 +1,301 @@
+// components/easy/PureAIAssistant.jsx
+import React, { useState, useEffect, useRef } from 'react';
+import { Bot, Sparkles, Loader2, Zap, Brain, X } from 'lucide-react';
+import { getPureAI } from './PureTransformersAI';
+
+const PureAIAssistant = ({ contextData, onClose }) => {
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      content: "🔋 Initialisation de l'IA locale... Chargement des modèles Transformers.js (cela peut prendre 15-30 secondes pour le premier chargement).",
+      timestamp: new Date(),
+      isLoading: true
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [modelProgress, setModelProgress] = useState(0);
+  const messagesEndRef = useRef(null);
+
+  const aiEngine = getPureAI();
+
+  // Initialize AI on component mount
+  useEffect(() => {
+    const initializeAI = async () => {
+      try {
+        await aiEngine.initialize();
+        setIsInitialized(true);
+
+        // Add welcome message
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: "✅ IA locale chargée avec succès! Je suis prêt à analyser vos données de station-service. Posez-moi des questions sur les ventes, les pompes, les vendeurs, ou les tendances.",
+          timestamp: new Date(),
+          isLoading: false
+        }]);
+      } catch (error) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `❌ Erreur de chargement: ${error.message}. Vérifiez votre connexion internet et rafraîchissez la page.`,
+          timestamp: new Date(),
+          isLoading: false
+        }]);
+      }
+    };
+
+    initializeAI();
+  }, []);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!input.trim() || isProcessing || !isInitialized) return;
+
+    const userMessage = {
+      role: 'user',
+      content: input,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsProcessing(true);
+
+    // Add loading message
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: "🧠 Traitement en cours avec l'IA locale...",
+      timestamp: new Date(),
+      isLoading: true
+    }]);
+
+    try {
+      // Get AI response
+      const response = await aiEngine.answerQuestion(input, contextData);
+
+      // Remove loading message and add actual response
+      setMessages(prev => {
+        const newMessages = [...prev];
+        newMessages.pop(); // Remove loading message
+        return [...newMessages, {
+          role: 'assistant',
+          content: response,
+          timestamp: new Date(),
+          isLoading: false
+        }];
+      });
+    } catch (error) {
+      setMessages(prev => {
+        const newMessages = [...prev];
+        newMessages.pop(); // Remove loading message
+        return [...newMessages, {
+          role: 'assistant',
+          content: `Erreur de traitement: ${error.message}. Veuillez reformuler votre question.`,
+          timestamp: new Date(),
+          isLoading: false
+        }];
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleQuickQuestion = async (question) => {
+    setInput(question);
+    // Small delay to show the question in input, then send
+    setTimeout(() => {
+      handleSend();
+    }, 100);
+  };
+
+  const quickQuestions = [
+    "Quelles sont les ventes totales?",
+    "Quelle pompe est la plus active?",
+    "Y a-t-il des anomalies dans les données?",
+    "Prévoir les ventes propane",
+    "Analyser l'efficacité des vendeurs"
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col shadow-2xl">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-700 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-blue-500 rounded-xl blur-lg opacity-50"></div>
+              <div className="relative bg-gradient-to-br from-blue-600 to-purple-600 p-3 rounded-xl">
+                <Brain size={28} />
+              </div>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">Assistant IA Local</h2>
+              <div className="flex items-center gap-2 text-sm text-gray-300">
+                <Zap size={14} />
+                <span>Transformers.js • 100% Local • Gratuit</span>
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${isInitialized ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}>
+                  {isInitialized ? '✅ Prêt' : '🔄 Chargement...'}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-800 transition"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Model Status */}
+        {!isInitialized && (
+          <div className="px-6 py-4 bg-gray-800/50 border-b border-gray-700">
+            <div className="flex items-center gap-3">
+              <Loader2 className="animate-spin" size={20} />
+              <div className="flex-1">
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Chargement des modèles IA locaux</span>
+                  <span>{modelProgress}%</span>
+                </div>
+                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
+                    style={{ width: `${modelProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Premier chargement: ~20MB • S'exécute ensuite entièrement localement
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-2xl p-4 ${msg.role === 'user'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700'
+                  : msg.isLoading
+                  ? 'bg-gray-800 border border-gray-700'
+                  : 'bg-gray-800/80 backdrop-blur-sm'
+                }`}
+              >
+                {msg.isLoading ? (
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <span className="text-gray-300">{msg.content}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 mb-2">
+                      {msg.role === 'assistant' ? (
+                        <>
+                          <Sparkles size={14} className="text-purple-400" />
+                          <span className="text-xs text-gray-400">AI Locale</span>
+                        </>
+                      ) : (
+                        <span className="text-xs text-blue-300">Vous</span>
+                      )}
+                      <span className="text-xs text-gray-500 ml-auto">
+                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Quick Questions */}
+        <div className="px-6 py-4 border-t border-gray-700">
+          <div className="flex flex-wrap gap-2 mb-4">
+            {quickQuestions.map((q, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleQuickQuestion(q)}
+                disabled={!isInitialized || isProcessing}
+                className="text-sm bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-2 rounded-lg transition flex items-center gap-2"
+              >
+                <Bot size={12} />
+                {q}
+              </button>
+            ))}
+          </div>
+
+          {/* Input */}
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                placeholder={isInitialized ? "Posez une question sur vos données..." : "Chargement des modèles en cours..."}
+                disabled={!isInitialized || isProcessing}
+                className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <div className="absolute left-4 top-3.5">
+                <Bot size={18} className="text-gray-500" />
+              </div>
+            </div>
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || !isInitialized || isProcessing}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 rounded-xl font-medium transition-all flex items-center gap-2"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Traitement
+                </>
+              ) : (
+                <>
+                  <Sparkles size={18} />
+                  Analyser
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Technical Info */}
+          <div className="mt-3 text-xs text-gray-500 flex justify-between">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                Modèles locaux
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                Aucun API key requis
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                Données 100% privées
+              </span>
+            </div>
+            <span>Shift: {contextData.shift}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PureAIAssistant;
