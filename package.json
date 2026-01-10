@@ -125,10 +125,10 @@
     "vite-plugin-svgr": "^4.2.0",
     "workbox-window": "^7.1.0",
     
-    // Correct polyfill packages
+    
     "vite-plugin-node-polyfills": "^0.22.0",
     
-    // Additional useful dev dependencies
+    
     "@types/lodash": "^4.14.202",
     "dotenv": "^16.4.5"
   }
