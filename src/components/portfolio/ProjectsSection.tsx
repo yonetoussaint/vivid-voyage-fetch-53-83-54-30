@@ -6,6 +6,64 @@ interface ProjectsSectionProps {
   projectsRef: React.RefObject<HTMLElement>;
 }
 
+// Tech logo mapping - using a public CDN (e.g., skillicons.dev or simpleicons.org)
+const getTechLogoUrl = (techName: string) => {
+  // Convert tech name to lowercase for consistent lookups
+  const tech = techName.toLowerCase().trim();
+  
+  // Map common tech names to skillicons
+  const iconMap: Record<string, string> = {
+    'react': 'react',
+    'typescript': 'typescript',
+    'javascript': 'javascript',
+    'nodejs': 'nodedotjs',
+    'node.js': 'nodedotjs',
+    'nextjs': 'nextdotjs',
+    'next.js': 'nextdotjs',
+    'vue': 'vuedotjs',
+    'angular': 'angular',
+    'python': 'python',
+    'django': 'django',
+    'flask': 'flask',
+    'java': 'openjdk',
+    'spring': 'spring',
+    'go': 'go',
+    'rust': 'rust',
+    'php': 'php',
+    'laravel': 'laravel',
+    'mysql': 'mysql',
+    'postgresql': 'postgresql',
+    'mongodb': 'mongodb',
+    'redis': 'redis',
+    'docker': 'docker',
+    'kubernetes': 'kubernetes',
+    'aws': 'amazonaws',
+    'azure': 'microsoftazure',
+    'gcp': 'googlecloud',
+    'firebase': 'firebase',
+    'graphql': 'graphql',
+    'tailwind': 'tailwindcss',
+    'sass': 'sass',
+    'redux': 'redux',
+    'jest': 'jest',
+    'webpack': 'webpack',
+    'vite': 'vite',
+    'git': 'git',
+    'github': 'github',
+    'gitlab': 'gitlab',
+    'figma': 'figma',
+    'adobe': 'adobephotoshop',
+    'photoshop': 'adobephotoshop',
+    'illustrator': 'adobeillustrator',
+    'xd': 'adobexd'
+  };
+
+  const iconName = iconMap[tech] || tech;
+  
+  // Using skillicons.dev CDN
+  return `https://skillicons.dev/icons?i=${iconName}`;
+};
+
 export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsRef }) => {
   return (
     <section ref={projectsRef} id="projects" className="scroll-mt-16 px-4 py-8 md:px-6 lg:px-8">
@@ -27,12 +85,12 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsRef })
             key={i} 
             className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-300 hover:shadow-lg"
           >
-            {/* Project Header with Gradient */}
-            <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+            {/* Project Header - Clean, no color */}
+            <div className="p-5 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 {/* App Logo/Badge */}
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-sm border border-gray-300">
                     {project.image ? (
                       <img 
                         src={project.image} 
@@ -40,7 +98,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsRef })
                         className="w-8 h-8 object-contain"
                       />
                     ) : (
-                      <span className="text-white font-bold text-lg">
+                      <span className="text-gray-700 font-bold text-lg">
                         {project.title.charAt(0)}
                       </span>
                     )}
@@ -56,7 +114,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsRef })
                 </div>
                 
                 {/* Star Rating - Compact */}
-                <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-lg">
+                <div className="flex items-center gap-1 bg-gray-50 backdrop-blur-sm px-2 py-1 rounded-lg border border-gray-200">
                   <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                   <span className="text-gray-700 font-medium text-sm">
                     {project.stars || "4.8"}
@@ -98,22 +156,44 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsRef })
                 )}
               </div>
 
-              {/* Tech Stack - Scrollable on Mobile */}
+              {/* Tech Stack - Grid layout with logos */}
               <div className="mb-5">
-                <h4 className="text-gray-700 text-sm font-semibold mb-2">Tech Stack</h4>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {project.tech?.slice(0, 4).map((tech, j) => (
-                    <span 
+                <h4 className="text-gray-700 text-sm font-semibold mb-3">Tech Stack</h4>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {project.tech?.slice(0, 6).map((tech, j) => (
+                    <div 
                       key={j}
-                      className="px-3 py-1.5 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 text-xs font-medium rounded-lg border border-gray-200 whitespace-nowrap"
+                      className="flex flex-col items-center p-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors group relative"
+                      title={tech}
                     >
-                      {tech}
-                    </span>
+                      <div className="w-8 h-8 mb-1 flex items-center justify-center">
+                        <img 
+                          src={getTechLogoUrl(tech)}
+                          alt={tech}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            // Fallback to text if icon fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.parentElement!.innerHTML = 
+                              `<span class="text-gray-700 font-medium text-xs">${tech.charAt(0).toUpperCase()}</span>`;
+                          }}
+                        />
+                      </div>
+                      <span className="text-gray-600 text-xs text-center truncate w-full">
+                        {tech.length > 10 ? `${tech.substring(0, 9)}...` : tech}
+                      </span>
+                    </div>
                   ))}
-                  {project.tech && project.tech.length > 4 && (
-                    <span className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-lg">
-                      +{project.tech.length - 4} more
-                    </span>
+                  {project.tech && project.tech.length > 6 && (
+                    <div className="flex flex-col items-center justify-center p-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                      <div className="w-8 h-8 mb-1 flex items-center justify-center">
+                        <span className="text-gray-500 font-bold text-lg">+</span>
+                      </div>
+                      <span className="text-gray-500 text-xs">
+                        {project.tech.length - 6} more
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
