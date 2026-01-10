@@ -9,7 +9,7 @@ interface TechStackProps {
   className?: string;
 }
 
-export const TechStack: React.FC<TechStackProps> = ({ 
+export default const TechStack: React.FC<TechStackProps> = ({ 
   techs, 
   maxDisplay = 6,
   size = 'md',
