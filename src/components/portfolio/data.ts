@@ -20,12 +20,67 @@ export const tabs = [
 // Projects data
 export const projects = [
   {
+    title: "Mima Marketplace",
+    desc: "Online public marketplace for selling/requesting products with a private mall section for quality-curated items",
+    tech: ["Next.js", "Node.js", "PostgreSQL", "Stripe", "Redis"],
+    stars: 157,
+    forks: 28,
+    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop",
+    category: "E-Commerce"
+  },
+  {
+    title: "EduFlow Academy",
+    desc: "Comprehensive online learning platform with interactive courses, live classes, progress tracking, and certification",
+    tech: ["React", "Node.js", "MongoDB", "WebRTC", "Stripe"],
+    stars: 342,
+    forks: 67,
+    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=600&fit=crop",
+    category: "EdTech"
+  },
+  {
+    title: "Bet509",
+    desc: "Real-time online sports betting platform with live odds, secure transactions, and multiplayer features",
+    tech: ["React", "Node.js", "Socket.io", "Payment API", "Redis"],
+    stars: 289,
+    forks: 51,
+    image: "https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&h=600&fit=crop",
+    category: "Gaming & Betting"
+  },
+  {
+    title: "Easy+",
+    desc: "Comprehensive gas station management system for inventory, fuel tracking, sales, and customer management",
+    tech: ["React", "Node.js", "MongoDB", "Express", "IoT Integration"],
+    stars: 134,
+    forks: 22,
+    image: "https://images.unsplash.com/photo-1611258623152-1703c5d4b3f3?w=800&h=600&fit=crop",
+    category: "Enterprise SaaS"
+  },
+  {
+    title: "TransfèPam",
+    desc: "Money transfer platform for sending funds to Haiti with local cash distribution network",
+    tech: ["React Native", "Node.js", "PostgreSQL", "REST API", "Payment Gateway"],
+    stars: 89,
+    forks: 16,
+    image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop",
+    category: "FinTech"
+  },
+  {
+    title: "Authentication SDK",
+    desc: "Node.js/Express authentication system published on npm and GitHub with multiple auth strategies",
+    tech: ["Node.js", "Express.js", "JWT", "OAuth2", "npm", "GitHub"],
+    stars: 213,
+    forks: 47,
+    image: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=600&fit=crop",
+    category: "Developer Tools"
+  },
+  {
     title: "E-Commerce Platform",
     desc: "Full-stack marketplace with real-time inventory, payment processing, and admin dashboard",
     tech: ["Next.js", "PostgreSQL", "Stripe", "Redis"],
     stars: 234,
     forks: 45,
-    image: "https://images.unsplash.com/photo-1557821552-17105176677c?w=800&h=600&fit=crop"
+    image: "https://images.unsplash.com/photo-1557821552-17105176677c?w=800&h=600&fit=crop",
+    category: "E-Commerce"
   },
   {
     title: "DevOps Dashboard",
@@ -33,7 +88,8 @@ export const projects = [
     tech: ["React", "Go", "Prometheus", "WebSocket"],
     stars: 189,
     forks: 32,
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop"
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
+    category: "DevOps"
   },
   {
     title: "AI Content Generator",
@@ -41,7 +97,8 @@ export const projects = [
     tech: ["Python", "FastAPI", "Transformers", "Docker"],
     stars: 567,
     forks: 98,
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop"
+    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
+    category: "AI/ML"
   },
   {
     title: "Real-Time Collaboration",
@@ -49,7 +106,8 @@ export const projects = [
     tech: ["TypeScript", "Yjs", "WebRTC", "Node.js"],
     stars: 423,
     forks: 76,
-    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop"
+    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
+    category: "Collaboration"
   },
   {
     title: "API Gateway",
@@ -57,7 +115,8 @@ export const projects = [
     tech: ["Rust", "Redis", "JWT", "Nginx"],
     stars: 312,
     forks: 54,
-    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop"
+    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop",
+    category: "Infrastructure"
   },
   {
     title: "Mobile Fitness App",
@@ -65,7 +124,8 @@ export const projects = [
     tech: ["React Native", "Firebase", "TensorFlow Lite"],
     stars: 198,
     forks: 41,
-    image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=600&fit=crop"
+    image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=600&fit=crop",
+    category: "HealthTech"
   }
 ];
 
