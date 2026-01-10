@@ -25,12 +25,12 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutRef, visibleSec
 
         <div className="bg-white rounded-[12px] p-6 border border-gray-100">
           <h2 className="text-2xl font-bold mb-3">Enchanté ✨</h2>
-          <p className="text-gray-600 leading-relaxed mb-4 font-serif italic">
+          <p className="text-gray-600 leading-relaxed mb-4">
             Ingénieur logiciel passionné par la création d'expériences numériques d'exception. 
             Je consacre mon art à concevoir des produits élégants, accessibles et centrés sur l'humain, 
             à l'échelle.
           </p>
-          <p className="text-gray-600 leading-relaxed font-serif">
+          <p className="text-gray-600 leading-relaxed">
             Fort de plus de cinq années d'expérience, j'ai eu le privilège de collaborer sur 
             des projets variés – des plateformes e-commerce aux outils de collaboration en temps réel. 
             Mon exigence : un code d'une pureté cristalline, maintenable, qui résout avec élégance 
