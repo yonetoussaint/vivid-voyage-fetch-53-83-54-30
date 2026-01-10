@@ -1,5 +1,5 @@
 import React from 'react';
-import { getTechIconUrl, getTechDisplayName } from './techIcons';
+import { getTechIconUrl, getTechDisplayName } from '@/utils/techIcons';
 
 interface TechIconProps {
   tech: string;
