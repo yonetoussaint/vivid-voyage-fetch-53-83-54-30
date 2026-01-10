@@ -25,22 +25,24 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Fix for onnxruntime-web - tell Vite to treat it as external
-      'onnxruntime-web': path.resolve(__dirname, './src/utils/onnx-shim.js'),
+      // Use the actual installed package
+      'onnxruntime-web': path.resolve(__dirname, 'node_modules/onnxruntime-web'),
     },
   },
   build: {
+    target: 'es2020', // Important for WASM support
     chunkSizeWarningLimit: 1500,
     commonjsOptions: {
       transformMixedEsModules: true
     },
     rollupOptions: {
-      // Mark onnxruntime-web as external so it's not bundled
-      external: ['onnxruntime-web'],
       output: {
         manualChunks(id) {
           if (id.includes('node_modules/@xenova')) {
             return 'transformers';
+          }
+          if (id.includes('node_modules/onnxruntime-web')) {
+            return 'onnxruntime';
           }
         }
       }
@@ -49,8 +51,11 @@ export default defineConfig(({ mode }) => ({
   define: {
     global: 'globalThis',
   },
-  // Optimize dependencies to exclude onnxruntime-web
   optimizeDeps: {
-    exclude: ['onnxruntime-web']
+    // Exclude heavy libraries from optimization
+    exclude: ['@xenova/transformers', 'onnxruntime-web'],
+    esbuildOptions: {
+      target: 'es2020'
+    }
   }
 }));
