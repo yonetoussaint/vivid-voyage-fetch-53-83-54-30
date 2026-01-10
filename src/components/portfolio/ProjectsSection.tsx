@@ -100,7 +100,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsRef })
               {/* Tech Stack - Using reusable component */}
               <div className="mb-5">
                 <h4 className="text-gray-700 text-sm font-semibold mb-3">Tech Stack</h4>
-                <TechStack 
+                <TekStack 
                   techs={project.tech || []}
                   maxDisplay={6}
                   size="md"
