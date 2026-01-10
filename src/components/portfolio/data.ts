@@ -20,7 +20,7 @@ export const tabs = [
 // Projects data
 export const projects = [
   {
-    title: "Mima Marketplace",
+    title: "Mima",
     desc: "Online public marketplace for selling/requesting products with a private mall section for quality-curated items",
     tech: ["Next.js", "Node.js", "PostgreSQL", "Stripe", "Redis"],
     stars: 157,
@@ -29,7 +29,7 @@ export const projects = [
     category: "E-Commerce"
   },
   {
-    title: "EduFlow Academy",
+    title: "LekolPam",
     desc: "Comprehensive online learning platform with interactive courses, live classes, progress tracking, and certification",
     tech: ["React", "Node.js", "MongoDB", "WebRTC", "Stripe"],
     stars: 342,
@@ -74,58 +74,13 @@ export const projects = [
     category: "Developer Tools"
   },
   {
-    title: "E-Commerce Platform",
-    desc: "Full-stack marketplace with real-time inventory, payment processing, and admin dashboard",
-    tech: ["Next.js", "PostgreSQL", "Stripe", "Redis"],
-    stars: 234,
-    forks: 45,
-    image: "https://images.unsplash.com/photo-1557821552-17105176677c?w=800&h=600&fit=crop",
-    category: "E-Commerce"
-  },
-  {
-    title: "DevOps Dashboard",
-    desc: "Kubernetes cluster monitoring with real-time metrics, alerts, and deployment management",
-    tech: ["React", "Go", "Prometheus", "WebSocket"],
-    stars: 189,
-    forks: 32,
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    category: "DevOps"
-  },
-  {
-    title: "AI Content Generator",
-    desc: "ML-powered content creation tool with fine-tuned models and custom training pipeline",
-    tech: ["Python", "FastAPI", "Transformers", "Docker"],
-    stars: 567,
-    forks: 98,
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
-    category: "AI/ML"
-  },
-  {
-    title: "Real-Time Collaboration",
-    desc: "Collaborative document editor with CRDT synchronization and presence awareness",
-    tech: ["TypeScript", "Yjs", "WebRTC", "Node.js"],
-    stars: 423,
-    forks: 76,
-    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
-    category: "Collaboration"
-  },
-  {
-    title: "API Gateway",
+    title: "Mima API",
     desc: "High-performance API gateway with rate limiting, caching, and authentication",
     tech: ["Rust", "Redis", "JWT", "Nginx"],
     stars: 312,
     forks: 54,
     image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop",
     category: "Infrastructure"
-  },
-  {
-    title: "Mobile Fitness App",
-    desc: "Cross-platform fitness tracking with workout plans, progress analytics, and social features",
-    tech: ["React Native", "Firebase", "TensorFlow Lite"],
-    stars: 198,
-    forks: 41,
-    image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=600&fit=crop",
-    category: "HealthTech"
   }
 ];
 
