@@ -12,7 +12,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "node scripts/setup-transformers.js"
   },
   "dependencies": {
     "@babel/standalone": "^7.28.3",
@@ -61,6 +62,7 @@
     "@remotion/animated-emoji": "^4.0.362",
     "@supabase/supabase-js": "^2.75.0",
     "@tanstack/react-query": "^5.56.2",
+    "@xenova/transformers": "^2.17.2",  // ADD THIS LINE
     "axios": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
