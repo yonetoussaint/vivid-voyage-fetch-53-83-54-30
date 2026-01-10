@@ -274,5 +274,3 @@ export const hasTechIcon = (techName: string): boolean => {
   return allSkills.some(skill => normalizeTechName(skill.name) === normalized);
 };
 
-// Import skills data to use for fallback
-import { skills } from './your-skills-file-path'; // Update this path to where your skills data is defined
