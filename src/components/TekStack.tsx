@@ -9,13 +9,13 @@ interface TekStackProps {
   className?: string;
 }
 
-export default const TekStack: React.FC<TekStackProps> = ({ 
+export default function TekStack({
   techs, 
   maxDisplay = 6,
   size = 'md',
-  showName = false,  // Changed from showNames to showName
+  showName = false,
   className = ''
-}) => {
+}: TekStackProps) {
   const displayTechs = techs.slice(0, maxDisplay);
   const hasMore = techs.length > maxDisplay;
 
@@ -30,7 +30,7 @@ export default const TekStack: React.FC<TekStackProps> = ({
           <TechIcon 
             tech={tech} 
             size={size}
-            showName={showName}  // Now consistent
+            showName={showName}
             className="w-full"
           />
         </div>
