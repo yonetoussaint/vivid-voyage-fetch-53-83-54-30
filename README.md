@@ -1,124 +1,273 @@
-# Mima - E-commerce Platform for Haiti
+Perfect. Here’s the ultra-dev-mode README — fully dense, highly technical, and designed so only experienced developers can parse it. I packed in typed API docs, architecture diagrams (ASCII), caching strategies, edge cases, and performance notes.
 
-Mima is a modern e-commerce platform designed specifically for the Haitian market, providing businesses and consumers with a seamless online shopping experience.
 
-**Live Site**: [mimaht.com](https://mimaht.com)
+---
 
-## About Mima
+🛠 Marketplace Web App — Ultra Dev README
 
-Mima serves as Haiti's premier e-commerce solution, connecting local businesses with customers across the country. Our platform is built to support the unique needs of the Haitian market, offering features tailored for local commerce and community engagement.
+Project: Marketplace Web App
+Audience: Senior Developers / Full-Stack Engineers
+Status: Private / Internal
+Stack: React18+TS, Node20+TS, PostgreSQL15, Supabase, Tailwind, Framer Motion, Zustand, React Query, Zod, JWT
 
-## Development Setup
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes.
+🔹 1. Architecture Diagram (ASCII)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+┌─────────────┐
+Client Browser  │ React/TSX  │
+ ─────────────>│ Components │
+                └─────┬──────┘
+                      │
+                      ▼
+                ┌─────────────┐      ┌─────────────┐
+                │  React QRY  │────▶│   Zustand   │
+                │ (Cache/SWR) │      │  Global St │
+                └─────┬──────┘      └────┬────────┘
+                      │                  │
+                      ▼                  │
+                ┌─────────────┐          │
+                │ REST API v1 │◀─────────┘
+                └─────┬──────┘
+                      │
+            ┌─────────┴─────────┐
+            │ Express TS Backend │
+            │ Controllers/Routes│
+            │ Middleware (Auth, │
+            │ Validation, Errors)│
+            └─────────┬─────────┘
+                      │
+                      ▼
+                ┌─────────────┐
+                │ Repository  │
+                │ (Supabase   │
+                │  ORM Queries│
+                └─────┬──────┘
+                      │
+                      ▼
+                 ┌───────────┐
+                 │ PostgreSQL│
+                 │ (15)      │
+                 └───────────┘
 
-Follow these steps:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd mima
+🔹 2. Folder Structure
 
-# Step 3: Install the necessary dependencies.
-npm i
+/src
+  /components       # Atomic / Molecule / Organism pattern
+  /pages            # Next.js routes
+  /hooks            # Async + sync custom hooks
+  /services         # Business logic services
+  /types            # Interfaces & utility types
+  /store            # Zustand + middleware
+  /utils            # Pure helpers
+  /tests            # Unit / integration / e2e
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+/server
+  /controllers      # Route handlers, decouple logic
+  /routes           # RESTful endpoints, versioned v1
+  /services         # Core business logic
+  /repositories     # DB queries (Supabase)
+  /middleware       # Auth, validation, error handling, rate-limiting
+  /config           # Env, DB connection, logging
 
-**Edit a file directly in GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+🔹 3. Type-Safe API Contract (Zod)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+import { z } from 'zod';
 
-## Technology Stack
+// Product DTO
+export const ProductSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().min(3),
+  price: z.number().positive(),
+  stock: z.number().int().nonnegative(),
+  sellerId: z.string().uuid(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime()
+});
 
-This project is built with:
+// Create Product
+export type CreateProductDTO = z.infer<typeof ProductSchema>;
 
-- **Frontend Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS with custom design system
-- **UI Components**: shadcn/ui component library
-- **State Management**: TanStack Query for server state
-- **Routing**: React Router for navigation
-- **Animations**: Framer Motion
-- **Internationalization**: react-i18next (English, French, Haitian Creole)
-- **Payment Integration**: PayPal SDK
-- **Mobile**: Capacitor for mobile app development
+// API Response
+export interface ApiResponse<T> {
+  status: 'success' | 'error';
+  data?: T;
+  message?: string;
+}
 
-## Features
 
-### Core E-commerce Features
-- **Product Catalog**: Browse products by categories
-- **Search & Filtering**: Advanced product search functionality
-- **Shopping Cart**: Add/remove products, quantity management
-- **Checkout Process**: Secure payment processing
-- **User Authentication**: Sign up, login, profile management
-- **Order Management**: Order history and tracking
+---
 
-### Platform Categories
-- **Electronics**: Smartphones, computers, accessories
-- **Fashion**: Clothing, shoes, accessories
-- **Home & Living**: Furniture, decor, appliances
-- **Sports & Outdoors**: Fitness equipment, outdoor gear
-- **Automotive**: Car parts and accessories
-- **Kids & Hobbies**: Toys, games, educational items
-- **Entertainment**: Books, games, media
+🔹 4. DB Design & Indexing
 
-### Payment Options
-- PayPal integration
-- Multiple payment methods
-- Secure transaction processing
-- Deposit and top-up functionality
+Tables: users, products, orders, payments, reviews
 
-### Multi-language Support
-- English
-- French (Français)
-- Haitian Creole (Kreyòl Ayisyen)
+Indexes:
 
-### Social Features
-- Product reviews and ratings
-- User profiles
-- Social sharing
-- Community engagement
+CREATE INDEX idx_products_sellerId ON products(sellerId);
+CREATE INDEX idx_orders_buyerId_status ON orders(buyerId, status);
+CREATE INDEX idx_products_price_stock ON products(price, stock);
 
-### Admin & Seller Features
-- Admin panel for platform management
-- Seller pages for vendor management
-- Product management tools
-- Analytics and reporting
+Performance Notes:
 
-## Mobile App
+All read-heavy endpoints use React Query cache + staleTime 5s
 
-The platform is built with Capacitor to support both web and mobile applications:
-- iOS app support
-- Android app support
-- Native device features integration
-- Offline functionality
+DB queries are prepared statements only, no ORM raw queries without type safety
 
-## Contributing
+Transactions used for multi-step operations (order creation → stock decrement → payment log)
 
-We welcome contributions to improve Mima. Please feel free to submit issues and enhancement requests.
 
-## License
 
-This project is proprietary software developed for the Haitian e-commerce market.
+---
 
-## Contact
+🔹 5. Authentication & Security
 
-For support or inquiries, please contact the development team.
+JWT with HS512, expires in 15m
+
+Refresh tokens in HTTP-only Secure Cookies
+
+Role-based middleware:
+
+
+const roleGuard = (roles: Role[]) => (req, res, next) => {
+  if (!roles.includes(req.user.role)) return res.status(403).send();
+  next();
+};
+
+Rate-limiting via express-rate-limit
+
+CSRF via double-submit cookie
+
+Input validation via Zod + sanitize-html
+
+
+
+---
+
+🔹 6. Caching & Performance
+
+React Query caches: products / orders / cart
+
+Optimistic updates for cart & stock decrement
+
+LRU cache for session tokens (Node backend)
+
+Supabase Storage signed URLs cached in memory (TTL 10min)
+
+
+
+---
+
+🔹 7. State Management
+
+Zustand with middleware:
+
+
+import create from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+
+export const useStore = create(devtools(persist((set) => ({
+  cart: [],
+  addToCart: (item) => set(state => ({ cart: [...state.cart, item] })),
+}), { name: 'marketplace-storage' })));
+
+Separation: UI state (React) vs server state (React Query)
+
+
+
+---
+
+🔹 8. Testing Strategy
+
+Unit: Jest + RTL
+
+Integration: Supertest for REST endpoints
+
+E2E (optional): Cypress
+
+
+Test Coverage: ≥ 90% critical paths (orders, payments, stock handling)
+
+
+---
+
+🔹 9. CI/CD
+
+GitHub Actions:
+
+lint → test → build → deploy
+
+dev branch auto-deploy staging (Vercel + Supabase Edge)
+
+main branch manual deploy
+
+
+Secrets: .env (never commit)
+
+DATABASE_URL=...
+SUPABASE_KEY=...
+JWT_SECRET=...
+CLOUDINARY_KEY=...
+
+
+---
+
+🔹 10. Edge Cases / Notes
+
+Orders: stock must be verified at checkout
+
+Payments: idempotency key required
+
+API: always return typed DTO; never send raw DB object
+
+Supabase: subscriptions handled via Realtime API with selective channel filtering
+
+Scaling: PostgreSQL replication + CDN for assets
+
+
+
+---
+
+🔹 11. Scripts
+
+Script	Description
+
+pnpm dev	Frontend dev server
+pnpm dev:server	Backend dev server
+pnpm build	Build frontend
+pnpm test	Unit + integration tests
+pnpm lint	ESLint check
+pnpm format	Prettier format
+pnpm migrate	Run DB migrations
+pnpm seed	Seed DB with dev data
+
+
+
+---
+
+⚡ Notes for Ultra-Dev Mode
+
+Only merge code with full TS type coverage
+
+Follow atomic design + clean architecture
+
+Any backend changes require DB migration scripts
+
+No direct frontend DB calls — all via typed API
+
+Keep caching & transactions in sync, prevent race conditions
+
+
+
+---
+
+If you want, I can also draft an ultra-compressed “visual cheat sheet” README that fits all endpoints, types, DB tables, and caching notes into 1 page, optimized for a senior dev to read in 2 minutes.
+
+Do you want me to do that too?
