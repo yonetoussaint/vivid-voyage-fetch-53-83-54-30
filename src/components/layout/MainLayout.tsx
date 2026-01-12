@@ -56,15 +56,14 @@ function MainLayoutContent() {
   // Determine if we're on the communes route
   const isCommunesRoute = location.pathname === '/communes';
 
-  // Prepare header props conditionally
+  // Prepare header props - ONLY override mall-specific props
   const finalHeaderProps = {
     ...headerProps,
-    // Override header props for mall route
+    // Only override what's specific to mall route
     ...(isMallRoute ? {
-      showCategoryTabs: false, // Hide category tabs on mall
       showSearchList: true,    // Show search list on mall
-      flatBorders: true,
-      // Optional: Custom search items for mall
+      // Note: The hook already sets showCategoryTabs to false for mall routes
+      // via !pageFlags.isMallPage in the showCategoryTabs logic
       searchListItems: [
         "Luxury watches", 
         "Designer bags", 
@@ -74,13 +73,19 @@ function MainLayoutContent() {
         "Designer shoes",
         "Luxury jewelry"
       ]
-    } : {
-      showCategoryTabs: true,  // Show category tabs everywhere else
-      showSearchList: false,   // Hide search list everywhere else
-    }),
+    } : {}),
     // Pass the function to open locations panel
     onOpenLocationsPanel: () => setIsLocationsPanelOpen(true)
   };
+
+  // Debug: Log what's happening with category tabs
+  console.log('MainLayout debug:', {
+    pathname: location.pathname,
+    showCategoryTabs: finalHeaderProps.showCategoryTabs,
+    isMallRoute,
+    isMessagesPage: pageFlags?.isMessagesPage,
+    isProfilePage: pageFlags?.isProfilePage
+  });
 
   return (
     <div className="app-container">
