@@ -520,32 +520,36 @@ const layoutHeightStyle = useMemo(() => {
     layoutHeightStyle, // <-- THIS IS CRITICAL
 
     // Header props
-    headerProps: {
-      activeTabId: activeTab,
-      showCategoryTabs: (pageFlags.isRootHomePage || pageFlags.isForYouPage || pageFlags.isCategoryRoute) && !pageFlags.isMallPage,
-      showSearchList: pageFlags.isMallPage,
-      flatBorders: true,
-      searchListItems: pageFlags.isMallPage ? [
-        { term: "Luxury watches", trend: 'hot' as const },
-        { term: "Designer bags", trend: 'trending-up' as const },
-        { term: "Premium electronics", trend: 'hot' as const },
-        { term: "High-end fashion", trend: 'popular' as const },
-        { term: "Branded cosmetics", trend: 'trending-up' as const },
-        { term: "Smart home devices", trend: 'trending-down' as const },
-        { term: "Gaming accessories", trend: 'popular' as const }
-      ] : undefined,
-      showFilterBar,
-      filterCategories,
-      selectedFilters,
-      onFilterSelect,
-      onFilterClear,
-      onClearAll,
-      onFilterButtonClick,
-      isFilterDisabled,
-      cityName: selectedCity,
-      locationOptions: locationOptions,
-      onLocationChange: handleLocationChange,
-    },
+    // Header props
+headerProps: {
+  activeTabId: activeTab,
+  showCategoryTabs: (pageFlags.isRootHomePage || pageFlags.isForYouPage || pageFlags.isCategoryRoute) && 
+                    !pageFlags.isMallPage && 
+                    !pageFlags.isMessagesPage && 
+                    !pageFlags.isProfilePage,
+  showSearchList: pageFlags.isMallPage,
+  flatBorders: true,
+  searchListItems: pageFlags.isMallPage ? [
+    { term: "Luxury watches", trend: 'hot' as const },
+    { term: "Designer bags", trend: 'trending-up' as const },
+    { term: "Premium electronics", trend: 'hot' as const },
+    { term: "High-end fashion", trend: 'popular' as const },
+    { term: "Branded cosmetics", trend: 'trending-up' as const },
+    { term: "Smart home devices", trend: 'trending-down' as const },
+    { term: "Gaming accessories", trend: 'popular' as const }
+  ] : undefined,
+  showFilterBar,
+  filterCategories,
+  selectedFilters,
+  onFilterSelect,
+  onFilterClear,
+  onClearAll,
+  onFilterButtonClick,
+  isFilterDisabled,
+  cityName: selectedCity,
+  locationOptions: locationOptions,
+  onLocationChange: handleLocationChange,
+},
 
     // Context values
     isAuthOverlayOpen,
