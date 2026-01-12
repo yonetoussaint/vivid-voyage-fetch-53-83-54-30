@@ -69,7 +69,7 @@ export default function ProfileHeader({
               <ChevronLeft className="h-5 w-5 text-gray-700" />
             </button>
           ) : (
-            <div className="w-10" /> {/* Spacer for alignment */}
+            <div className="w-10" /> // Spacer for alignment
           )}
         </div>
 
@@ -84,7 +84,8 @@ export default function ProfileHeader({
                   alt={displayName}
                   className="h-full w-full object-cover"
                   onError={(e) => {
-                    e.currentTarget.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=profile';
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=profile';
                   }}
                 />
               </div>
