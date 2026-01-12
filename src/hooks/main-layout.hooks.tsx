@@ -122,8 +122,8 @@ const shouldShowHeader = [
   '/addresses', '/help', '/products', '/mall', '/mall/', '/categories',
   '/categories/electronics', '/categories/home-living', '/categories/fashion',
   '/categories/entertainment', '/categories/kids-hobbies', '/categories/sports-outdoors',
-  '/categories/automotive', '/categories/women', '/categories/men', '/categories/books'
-  // Removed '/profile' from the array
+  '/categories/automotive', '/categories/women', '/categories/men', '/categories/books',
+  '/profile' // Profile route restored here
 ].includes(pathname) || isMessagesListPage || isMallPage; // Removed isProfilePage
 
     // Determine if we should show the bottom nav
