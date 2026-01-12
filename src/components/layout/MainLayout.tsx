@@ -3,6 +3,7 @@ import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import IndexBottomNav from "@/components/layout/IndexBottomNav";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
+import ProfileHeader from "@/components/profile/ProfileHeader"; // NEW IMPORT
 import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
 import LocationScreen from "@/components/home/header/LocationScreen";
 import LocationListScreen from "@/components/home/header/LocationListScreen";
@@ -91,10 +92,19 @@ function MainLayoutContent() {
     <div className="app-container">
       <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle || '' }} />
 
-      {/* Header - Now hidden on conversation detail pages */}
+      {/* Header - Conditionally render ProfileHeader on profile routes */}
       {pageFlags?.shouldShowHeader && (
         <div ref={headerRef} className="app-header">
-          <AliExpressHeader {...finalHeaderProps} />
+          {pageFlags?.isProfilePage ? (
+            <ProfileHeader 
+              showBackButton={!pageFlags.isRootHomePage && location.pathname !== '/profile'}
+              // Note: ProfileHeader will use user data from AuthContext by default
+              // You can pass custom user data here if needed:
+              // user={{ name: "John Doe", avatar: "url", isVerified: true }}
+            />
+          ) : (
+            <AliExpressHeader {...finalHeaderProps} />
+          )}
         </div>
       )}
 
