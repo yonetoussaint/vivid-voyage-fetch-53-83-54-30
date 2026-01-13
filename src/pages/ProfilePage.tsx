@@ -108,6 +108,7 @@ const sellerData = {
   name: "John Doe",
   username: "johndoe",
   image_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+  banner_url: "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&h=300&fit=crop", // Add banner image URL
   verified: true,
   bio: "Living my best life 🌟 | Shop owner 🛍️ | Premium quality products at affordable prices",
   business_type: "E-commerce",
@@ -118,6 +119,7 @@ const sellerData = {
   total_sales: 89200,
   join_date: "2020-01-15T00:00:00.000Z",
   followers_count: 12800,
+  following_count: 342,
   mentions: ["premium", "quality", "affordable"],
   social_media: {
     whatsapp: "https://wa.me/639123456789",
@@ -158,23 +160,23 @@ const getStoriesRing = () => {
           <stop offset="100%" stopColor="#FCAF45" />
         </linearGradient>
       </defs>
-      
+
       {Array.from({ length: storiesCount }).map((_, index) => {
         const startAngle = index * (segmentAngle + gapAngle);
         const endAngle = startAngle + segmentAngle;
-        
+
         const startRad = (startAngle * Math.PI) / 180;
         const endRad = (endAngle * Math.PI) / 180;
-        
+
         const x1 = center + radius * Math.cos(startRad);
         const y1 = center + radius * Math.sin(startRad);
         const x2 = center + radius * Math.cos(endRad);
         const y2 = center + radius * Math.sin(endRad);
-        
+
         const largeArcFlag = segmentAngle > 180 ? 1 : 0;
-        
+
         const pathData = `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
-        
+
         return (
           <path
             key={index}
@@ -235,21 +237,42 @@ export default function TikTokProfile() {
     console.log('Share clicked');
   };
 
+  const handleEditBanner = () => {
+    console.log('Edit banner clicked');
+  };
+
   return (
-  <div className="min-h-screen bg-slate-50 max-w-2xl mx-auto">
-    {/* Hero Section - Using SellerInfoSection design */}
-    <div className="bg-white text-gray-900 relative overflow-hidden">
-      {/* Profile Info */}
-      <div className="px-4 pt-6 pb-3 relative z-10">
-        <div className="flex items-start gap-3 mb-3">
-          {/* Small Avatar with Stories Ring */}
-          <div className="relative flex-shrink-0">
-            <div className="relative p-0.5 rounded-full">
+    <div className="min-h-screen bg-slate-50 max-w-2xl mx-auto">
+      {/* Hero Section with Banner */}
+      <div className="bg-white text-gray-900 relative overflow-hidden">
+        {/* Banner Section */}
+        <div className="relative h-40 bg-gradient-to-r from-blue-500 to-purple-600">
+          {sellerData.banner_url && (
+            <img 
+              src={sellerData.banner_url} 
+              alt="Banner" 
+              className="w-full h-full object-cover"
+            />
+          )}
+          
+          {/* Banner Edit Button (for own profile) */}
+          {isOwnProfile && (
+            <button
+              onClick={handleEditBanner}
+              className="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full transition-colors z-20"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Profile Picture Container - Positioned at bottom left of banner */}
+          <div className="absolute bottom-0 left-4 transform translate-y-1/2 z-10">
+            <div className="relative">
               {/* Stories Ring */}
               {sellerStories.length > 0 && getStoriesRing()}
 
-              <div className="bg-white rounded-full p-0.5">
-                <div className="w-12 h-12 rounded-full overflow-hidden">
+              <div className="bg-white rounded-full p-1">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg">
                   <img 
                     src={sellerData.image_url} 
                     alt="Profile" 
@@ -257,33 +280,28 @@ export default function TikTokProfile() {
                   />
                 </div>
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+              
+              {/* Online Status Indicator */}
+              <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></div>
+              
+              {/* Edit Profile Picture Button (for own profile) */}
+              {isOwnProfile && (
+                <button
+                  onClick={handleEditProfile}
+                  className="absolute -bottom-1 -right-1 bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-full shadow-lg transition-colors z-20"
+                >
+                  <Camera className="w-3 h-3" />
+                </button>
+              )}
             </div>
           </div>
+        </div>
 
-          <div className="flex items-start justify-between w-full h-12">
-            <div className="flex flex-col gap-0.5 flex-1 min-w-0 h-full justify-center">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-lg font-bold truncate">{sellerData.name}</h1>
-                {sellerData.verified && (
-                  <div className="w-4 h-4">
-                    <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-
-              {/* Location */}
-              <div className="flex items-center gap-1 text-xs text-gray-500">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                </svg>
-                <span className="truncate">{sellerData.location || 'Location not set'}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-center">
+        {/* Profile Info Section (Below Banner) */}
+        <div className="px-4 pt-16 pb-3 relative z-0">
+          {/* Action Buttons (Right side) */}
+          <div className="flex justify-end mb-4">
+            <div className="flex items-center gap-2">
               {isOwnProfile ? (
                 <button
                   onClick={handleEditProfile}
@@ -315,269 +333,334 @@ export default function TikTokProfile() {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Bio */}
-        <div className="mb-2">
-          <p className="text-gray-900 text-sm leading-relaxed">
-            {sellerData.bio}
-            {sellerData.mentions && sellerData.mentions.length > 0 && (
-              <span className="text-blue-500">
-                {' '}{sellerData.mentions.map((m: string) => `@${m}`).join(' ')}
-              </span>
+          {/* User Info */}
+          <div className="mb-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <h1 className="text-xl font-bold">{sellerData.name}</h1>
+              {sellerData.verified && (
+                <div className="w-5 h-5">
+                  <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            {/* Username */}
+            <div className="text-gray-600 text-sm mb-2">
+              @{sellerData.username}
+            </div>
+
+            {/* Location */}
+            <div className="flex items-center gap-1 text-sm text-gray-500 mb-3">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+              <span>{sellerData.location || 'Location not set'}</span>
+            </div>
+
+            {/* Bio */}
+            <div className="mb-3">
+              <p className="text-gray-800 text-sm leading-relaxed">
+                {sellerData.bio}
+                {sellerData.mentions && sellerData.mentions.length > 0 && (
+                  <span className="text-blue-500">
+                    {' '}{sellerData.mentions.map((m: string) => `@${m}`).join(' ')}
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {/* Website */}
+            {sellerData.website && (
+              <div className="mb-3">
+                <a 
+                  href={sellerData.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                >
+                  <Link2 className="w-4 h-4" />
+                  <span className="truncate">{sellerData.website.replace(/^https?:\/\//, '')}</span>
+                </a>
+              </div>
             )}
-          </p>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-4 gap-2 mb-3">
+            <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
+              <div className="font-bold text-black text-sm">
+                {formatNumber(sellerData.followers_count)}
+              </div>
+              <div className="text-gray-600 text-xs">Followers</div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
+              <div className="font-bold text-black text-sm">
+                {formatNumber(sellerData.following_count || 0)}
+              </div>
+              <div className="text-gray-600 text-xs">Following</div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
+              <div className="font-bold text-black text-sm">
+                {formatNumber(sellerData.total_sales)}
+              </div>
+              <div className="text-gray-600 text-xs">Orders</div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
+              <div className="font-bold text-black text-sm">
+                {sellerData.store_age_years}
+              </div>
+              <div className="text-gray-600 text-xs">Years</div>
+            </div>
+          </div>
+
+          {/* Social Media Links */}
+          <div className="flex items-center gap-3 mb-3">
+            {(sellerData.social_media.whatsapp || sellerData.social_media.instagram || sellerData.social_media.facebook) && (
+              <button
+                onClick={() => setShowSocialPanel(true)}
+                className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                <Share2Icon className="w-4 h-4" />
+                <span>Social Links</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Stats - Updated */}
-        <div className="grid grid-cols-4 gap-2 mb-2">
-          <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
-            <div className="font-bold text-black text-sm">
-              {formatNumber(sellerData.followers_count)}
+        {/* Verification Banner */}
+        {!sellerData.verified && isOwnProfile && (
+          <div className="mx-4 mb-3">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-1">
+                  <ShieldIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-sm font-medium text-gray-900">Get verified to build trust</span>
+                </div>
+                <button
+                  onClick={handleVerifySeller}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+                >
+                  <CheckCircle className="w-3 h-3" />
+                  Verify Now
+                </button>
+              </div>
             </div>
-            <div className="text-gray-600 text-xs">Followers</div>
           </div>
+        )}
+      </div>
 
-          <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
-            <div className="font-bold text-black text-sm">
-              {formatNumber(sellerData.following_count || 0)}
-            </div>
-            <div className="text-gray-600 text-xs">Following</div>
+      {/* Tab Navigation */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div className="flex items-center px-4">
+          <TabButton 
+            active={activeTab === 'products'} 
+            onClick={() => setActiveTab('products')}
+            icon={<ShoppingBag className="w-4 h-4" />}
+          >
+            Products
+          </TabButton>
+          <TabButton 
+            active={activeTab === 'saved'} 
+            onClick={() => setActiveTab('saved')}
+            icon={<Bookmark className="w-4 h-4" />}
+          >
+            Saved
+          </TabButton>
+          <TabButton 
+            active={activeTab === 'liked'} 
+            onClick={() => setActiveTab('liked')}
+            icon={<Heart className="w-4 h-4" />}
+          >
+            Liked
+          </TabButton>
+        </div>
+      </div>
+
+      {/* Rest of the component remains the same */}
+      {/* Tab Header Info */}
+      <div className="bg-white border-b border-slate-200 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-medium text-slate-900 capitalize">{activeTab}</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {activeTab === 'products' && "Your product listings"}
+              {activeTab === 'saved' && "Products you've saved for later"}
+              {activeTab === 'liked' && "Products you've liked"}
+            </p>
           </div>
-
-          <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
-            <div className="font-bold text-black text-sm">
-              {formatNumber(sellerData.total_sales)}
-            </div>
-            <div className="text-gray-600 text-xs">Orders</div>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
-            <div className="font-bold text-black text-sm">
-              {sellerData.store_age_years}
-            </div>
-            <div className="text-gray-600 text-xs">Years</div>
+          <div className="text-xs text-slate-500">
+            {/* You could add a count here if you track total items */}
           </div>
         </div>
       </div>
 
-      {/* Verification Banner */}
-      {!sellerData.verified && isOwnProfile && (
-        <div className="mx-4 mb-3">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-3 py-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 flex-1">
-                <ShieldIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-900">Get verified to build trust</span>
-              </div>
+      {/* Content Sections - All using InfiniteContentGrid */}
+      <div className="pb-20">
+        {/* Products Tab */}
+        {activeTab === 'products' && (
+          <InfiniteContentGrid 
+            category="user-products"
+            filters={tabFilters.products}
+          />
+        )}
+
+        {/* Saved Tab */}
+        {activeTab === 'saved' && (
+          <InfiniteContentGrid 
+            category="saved"
+            filters={tabFilters.saved}
+          />
+        )}
+
+        {/* Liked Tab */}
+        {activeTab === 'liked' && (
+          <InfiniteContentGrid 
+            category="liked"
+            filters={tabFilters.liked}
+          />
+        )}
+      </div>
+
+      {/* Social Media Panel */}
+      {showSocialPanel && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl shadow-lg p-6 animate-slide-up">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">Social Links</h2>
               <button
-                onClick={handleVerifySeller}
-                className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+                onClick={() => setShowSocialPanel(false)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <CheckCircle className="w-3 h-3" />
-                Verify Now
+                <X className="w-5 h-5" />
               </button>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
 
-    {/* Tab Navigation */}
-    <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-      <div className="flex items-center px-4">
-        <TabButton 
-          active={activeTab === 'products'} 
-          onClick={() => setActiveTab('products')}
-          icon={<ShoppingBag className="w-4 h-4" />}
-        >
-          Products
-        </TabButton>
-        <TabButton 
-          active={activeTab === 'saved'} 
-          onClick={() => setActiveTab('saved')}
-          icon={<Bookmark className="w-4 h-4" />}
-        >
-          Saved
-        </TabButton>
-        <TabButton 
-          active={activeTab === 'liked'} 
-          onClick={() => setActiveTab('liked')}
-          icon={<Heart className="w-4 h-4" />}
-        >
-          Liked
-        </TabButton>
-      </div>
-    </div>
+            <div className="flex justify-center gap-6 pb-4">
+              {sellerData.social_media.whatsapp && (
+                <a 
+                  href={sellerData.social_media.whatsapp} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 text-green-600 hover:text-green-700 transition-colors"
+                >
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <WhatsAppIcon className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs font-medium">WhatsApp</span>
+                </a>
+              )}
 
-    {/* Tab Header Info */}
-    <div className="bg-white border-b border-slate-200 px-4 py-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-medium text-slate-900 capitalize">{activeTab}</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {activeTab === 'products' && "Your product listings"}
-            {activeTab === 'saved' && "Products you've saved for later"}
-            {activeTab === 'liked' && "Products you've liked"}
-          </p>
-        </div>
-        <div className="text-xs text-slate-500">
-          {/* You could add a count here if you track total items */}
-        </div>
-      </div>
-    </div>
+              {sellerData.social_media.facebook && (
+                <a 
+                  href={sellerData.social_media.facebook} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Facebook className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs font-medium">Facebook</span>
+                </a>
+              )}
 
-    {/* Content Sections - All using InfiniteContentGrid */}
-    <div className="pb-20">
-      {/* Products Tab */}
-      {activeTab === 'products' && (
-        <InfiniteContentGrid 
-          category="user-products"
-          filters={tabFilters.products}
-        />
-      )}
+              {sellerData.social_media.instagram && (
+                <a 
+                  href={sellerData.social_media.instagram} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors"
+                >
+                  <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
+                    <Instagram className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs font-medium">Instagram</span>
+                </a>
+              )}
 
-      {/* Saved Tab */}
-      {activeTab === 'saved' && (
-        <InfiniteContentGrid 
-          category="saved"
-          filters={tabFilters.saved}
-        />
-      )}
+              {sellerData.social_media.x && (
+                <a 
+                  href={sellerData.social_media.x} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 text-black hover:text-gray-800 transition-colors"
+                >
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <XIcon className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs font-medium">X</span>
+                </a>
+              )}
 
-      {/* Liked Tab */}
-      {activeTab === 'liked' && (
-        <InfiniteContentGrid 
-          category="liked"
-          filters={tabFilters.liked}
-        />
-      )}
-    </div>
+              {sellerData.social_media.tiktok && (
+                <a 
+                  href={sellerData.social_media.tiktok} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 text-black hover:text-gray-800 transition-colors"
+                >
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <TikTokIcon className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs font-medium">TikTok</span>
+                </a>
+              )}
+            </div>
 
-    {/* Social Media Panel */}
-    {showSocialPanel && (
-      <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center">
-        <div className="bg-white w-full max-w-md rounded-t-2xl shadow-lg p-6 animate-slide-up">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Social Links</h2>
             <button
               onClick={() => setShowSocialPanel(false)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+              className="w-full mt-4 py-3 bg-gray-100 text-gray-900 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
             >
-              <X className="w-5 h-5" />
+              Close
             </button>
           </div>
-
-          <div className="flex justify-center gap-6 pb-4">
-            <a 
-              href={sellerData.social_media.whatsapp} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 text-green-600 hover:text-green-700 transition-colors"
-            >
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <WhatsAppIcon className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-medium">WhatsApp</span>
-            </a>
-
-            <a 
-              href={sellerData.social_media.facebook} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Facebook className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-medium">Facebook</span>
-            </a>
-
-            <a 
-              href={sellerData.social_media.instagram} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors"
-            >
-              <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
-                <Instagram className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-medium">Instagram</span>
-            </a>
-
-            <a 
-              href={sellerData.social_media.x} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 text-black hover:text-gray-800 transition-colors"
-            >
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                <XIcon className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-medium">X</span>
-            </a>
-
-            <a 
-              href={sellerData.social_media.tiktok} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 text-black hover:text-gray-800 transition-colors"
-            >
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                <TikTokIcon className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-medium">TikTok</span>
-            </a>
-          </div>
-
-          <button
-            onClick={() => setShowSocialPanel(false)}
-            className="w-full mt-4 py-3 bg-gray-100 text-gray-900 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-          >
-            Close
-          </button>
         </div>
-      </div>
-    )}
+      )}
 
-    {/* Custom Empty State Component */}
-    <EmptyStateHandler 
-      activeTab={activeTab}
-      onAction={handleEmptyStateAction}
-    />
+      {/* Custom Empty State Component */}
+      <EmptyStateHandler 
+        activeTab={activeTab}
+        onAction={handleEmptyStateAction}
+      />
 
-    {/* Floating Action Button */}
-    <FloatingActionButton 
-      activeTab={activeTab}
-      onProductsClick={() => console.log('Add product')}
-      onSavedClick={() => setActiveTab('products')}
-      onLikedClick={() => setActiveTab('products')}
-    />
+      {/* Floating Action Button */}
+      <FloatingActionButton 
+        activeTab={activeTab}
+        onProductsClick={() => console.log('Add product')}
+        onSavedClick={() => setActiveTab('products')}
+        onLikedClick={() => setActiveTab('products')}
+      />
 
-    {/* Add animation style */}
-    <style jsx global>{`
-      @keyframes slide-up {
-        from {
-          transform: translateY(100%);
+      {/* Add animation style */}
+      <style jsx global>{`
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
         }
-        to {
-          transform: translateY(0);
+
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
         }
-      }
 
-      .animate-slide-up {
-        animation: slide-up 0.3s ease-out;
-      }
-
-      .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-    `}</style>
-  </div>
-);
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
+    </div>
+  );
 }
 
 // Empty State Handler Component
