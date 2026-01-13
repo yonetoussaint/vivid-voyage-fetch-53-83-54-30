@@ -53,17 +53,15 @@ export default function TikTokProfile() {
           />
         )}
 
-        {/* Profile Picture */}
-        <div className="absolute bottom-0 left-4 transform translate-y-1/2 z-10">
+        {/* Profile Picture - Centered */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 z-10">
           <div className="relative">
-            <div className="bg-white rounded-full p-1">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                <img 
-                  src={sellerData.image_url} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-white shadow-lg">
+              <img 
+                src={sellerData.image_url} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
             </div>
 
             <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
@@ -71,11 +69,11 @@ export default function TikTokProfile() {
         </div>
       </div>
 
-      {/* Profile Info Section */}
-      <div className="px-4 pt-16 pb-4">
-        {/* User Info */}
+      {/* Profile Info Section - Centered Content */}
+      <div className="px-4 pt-20 pb-4 text-center">
+        {/* User Info - Centered */}
         <div className="mb-4">
-          <div className="flex items-center gap-1.5 mb-1">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
             <h1 className="text-xl font-bold">{sellerData.name}</h1>
             {sellerData.verified && (
               <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
@@ -88,14 +86,14 @@ export default function TikTokProfile() {
             @{sellerData.username}
           </div>
 
-          <div className="flex items-center gap-1 text-sm text-gray-500 mb-3">
+          <div className="flex items-center justify-center gap-1 text-sm text-gray-500 mb-3">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
             </svg>
             <span>{sellerData.location}</span>
           </div>
 
-          <div className="mb-3">
+          <div className="mb-3 max-w-md mx-auto">
             <p className="text-gray-800 text-sm leading-relaxed">
               {sellerData.bio}
             </p>
@@ -107,7 +105,7 @@ export default function TikTokProfile() {
                 href={sellerData.website} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-block"
               >
                 {sellerData.website.replace(/^https?:\/\//, '')}
               </a>
@@ -115,8 +113,8 @@ export default function TikTokProfile() {
           )}
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
+        {/* Stats - Centered Grid */}
+        <div className="grid grid-cols-4 gap-2 mb-4 max-w-xs mx-auto">
           {[
             { label: 'Followers', value: sellerData.followers_count },
             { label: 'Following', value: sellerData.following_count },
@@ -132,10 +130,10 @@ export default function TikTokProfile() {
           ))}
         </div>
 
-        {/* Follow Button */}
+        {/* Follow Button - Centered */}
         {!isOwnProfile && (
           <button
-            className={`w-full py-2.5 text-sm font-bold rounded-lg transition-colors mb-4 ${
+            className={`py-2.5 px-8 text-sm font-bold rounded-lg transition-colors mb-4 mx-auto ${
               isFollowing 
                 ? 'bg-gray-900 text-white hover:bg-gray-800' 
                 : 'bg-red-600 text-white hover:bg-red-700'
@@ -149,7 +147,7 @@ export default function TikTokProfile() {
 
       {/* Products Section */}
       <div className="px-4 pb-20">
-        <div className="mb-4">
+        <div className="mb-4 text-center">
           <h2 className="text-lg font-semibold text-slate-900">Products</h2>
           <p className="text-sm text-slate-500 mt-0.5">
             Product listings from {sellerData.name}
