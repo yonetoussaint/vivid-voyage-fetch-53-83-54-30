@@ -1,301 +1,416 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
-export interface Message {
+// ==================== INTERFACES AND TYPES ====================
+
+export interface ConversationWithDetails {
   id: string;
-  conversation_id: string;
-  sender_id: string;
-  content: string;
-  created_at: string;
-  is_read: boolean;
-  sender?: {
+  last_message_at: string;
+  is_archived: boolean;
+  other_user: {
     id: string;
     full_name: string;
+    email: string;
+    avatar_url: string | null;
+  };
+  last_message: {
+    content: string;
+    created_at: string;
+    sender_id: string;
+  } | null;
+  unread_count: number;
+}
+
+export interface ConversationListItem {
+  id: string;
+  name: string;
+  preview: string;
+  lastOnline: string;
+  avatar: string;
+  unreadCount: number;
+  isOnline: boolean;
+  isRead: boolean;
+  messageType: string;
+  deliveryStatus: string | null;
+  sentByYou: boolean;
+  isTyping: boolean;
+  isVerified: boolean;
+  otherUser: {
+    id: string;
+    full_name: string;
+    email: string;
     avatar_url: string | null;
   };
 }
 
-export function useMessages(conversationId: string | null, currentUserId: string) {
-  const [messages, setMessages] = useState<Message[]>([]);
+export interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+// ==================== CONVERSATIONS HOOK ====================
+
+export function useConversations(userId: string, filter: 'all' | 'unread' | 'archived' = 'all') {
+  const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchMessages = useCallback(async (isInitial: boolean = false) => {
-    if (!conversationId) return;
-
+  const fetchConversations = useCallback(async (isInitial: boolean = false) => {
     try {
-      if (isInitial) {
-        setLoading(true);
+      if (isInitial) setLoading(true);
+
+      const { data: participantData } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id, last_read_at, conversations!inner(*)')
+        .eq('user_id', userId);
+
+      if (!participantData) {
+        setConversations([]);
+        setLoading(false);
+        return;
       }
 
-      const { data, error: fetchError } = await supabase
-        .from('messages')
-        .select(`
-          id,
-          conversation_id,
-          sender_id,
-          content,
-          created_at,
-          is_read,
-          profiles!messages_sender_id_fkey (
-            id,
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
+      const conversationIds = participantData.map((p: any) => p.conversation_id);
+      if (conversationIds.length === 0) {
+        setConversations([]);
+        setLoading(false);
+        return;
+      }
 
-      if (fetchError) throw fetchError;
+      const [otherParticipantsResult, lastMessagesResult] = await Promise.all([
+        supabase
+          .from('conversation_participants')
+          .select('conversation_id, user_id, profiles!inner(id, full_name, email, avatar_url)')
+          .in('conversation_id', conversationIds)
+          .neq('user_id', userId),
+        supabase
+          .from('messages')
+          .select('conversation_id, content, created_at, sender_id, is_read')
+          .in('conversation_id', conversationIds)
+          .order('created_at', { ascending: false })
+      ]);
 
-      const messagesWithSender = (data || []).map((msg: any) => ({
-        id: msg.id,
-        conversation_id: msg.conversation_id,
-        sender_id: msg.sender_id,
-        content: msg.content,
-        created_at: msg.created_at,
-        is_read: msg.is_read,
-        sender: msg.profiles ? {
-          id: msg.profiles.id,
-          full_name: msg.profiles.full_name || 'Unknown',
-          avatar_url: msg.profiles.avatar_url,
-        } : undefined,
-      }));
+      const conversationsMap = new Map();
 
-      setMessages(messagesWithSender);
+      participantData.forEach((participant: any) => {
+        const conversation = participant.conversations;
+        const otherParticipant = otherParticipantsResult.data?.find(
+          (op: any) => op.conversation_id === conversation.id
+        );
+
+        const conversationMessages = lastMessagesResult.data?.filter(
+          (msg: any) => msg.conversation_id === conversation.id
+        ) || [];
+
+        const lastMessage = conversationMessages[0] || null;
+        const unreadCount = conversationMessages.filter(
+          (msg: any) => !msg.is_read && msg.sender_id !== userId
+        ).length;
+
+        // Apply filters
+        if (filter === 'archived' && !conversation.is_archived) return;
+        if (filter === 'all' && conversation.is_archived) return;
+        if (filter === 'unread' && unreadCount === 0) return;
+
+        if (otherParticipant) {
+          conversationsMap.set(conversation.id, {
+            id: conversation.id,
+            last_message_at: conversation.last_message_at,
+            is_archived: conversation.is_archived,
+            other_user: otherParticipant.profiles,
+            last_message: lastMessage,
+            unread_count: unreadCount,
+          });
+        }
+      });
+
+      const conversationsList = Array.from(conversationsMap.values()).sort(
+        (a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
+      );
+
+      setConversations(conversationsList);
       setError(null);
-      
-      await markMessagesAsRead();
     } catch (err) {
-      console.error('Error fetching messages:', err);
+      console.error('Error fetching conversations:', err);
       setError(err as Error);
     } finally {
-      if (isInitial) {
-        setLoading(false);
-      }
+      if (isInitial) setLoading(false);
     }
-  }, [conversationId, currentUserId]);
-
-  const markMessagesAsRead = useCallback(async () => {
-    if (!conversationId || !currentUserId) return;
-
-    try {
-      await supabase
-        .from('messages')
-        .update({ is_read: true })
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', currentUserId)
-        .eq('is_read', false);
-
-      await supabase
-        .from('conversation_participants')
-        .update({ last_read_at: new Date().toISOString() })
-        .eq('conversation_id', conversationId)
-        .eq('user_id', currentUserId);
-    } catch (err) {
-      console.error('Error marking messages as read:', err);
-    }
-  }, [conversationId, currentUserId]);
+  }, [userId, filter]);
 
   const setupRealtimeSubscription = useCallback(() => {
-    if (!conversationId) return;
+    if (!userId) return;
 
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
     }
 
-    console.log('Setting up real-time subscription for conversation:', conversationId);
-
     const channel = supabase
-      .channel(`messages-${conversationId}-${Date.now()}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          console.log('New message received via real-time:', payload);
-          
-          setMessages((current) => {
-            // Check if message already exists to prevent duplicates
-            const exists = current.some(msg => msg.id === payload.new.id);
-            if (exists) {
-              console.log('Message already exists, skipping:', payload.new.id);
-              // Update the message to ensure we have latest data
-              return current.map(msg =>
-                msg.id === payload.new.id
-                  ? { ...msg, is_read: payload.new.is_read }
-                  : msg
-              );
-            }
-            
-            // Add new message
-            console.log('Adding new message from real-time:', payload.new.id);
-            const newMessage: Message = {
-              id: payload.new.id,
-              conversation_id: payload.new.conversation_id,
-              sender_id: payload.new.sender_id,
-              content: payload.new.content,
-              created_at: payload.new.created_at,
-              is_read: payload.new.is_read,
-            };
-            
-            return [...current, newMessage];
-          });
-          
-          if (payload.new.sender_id !== currentUserId) {
-            markMessagesAsRead();
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          console.log('Message updated via real-time:', payload);
-          setMessages((current) =>
-            current.map((msg) =>
-              msg.id === payload.new.id
-                ? { ...msg, ...payload.new }
-                : msg
-            )
-          );
-        }
-      )
+      .channel(`conversations-${userId}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'messages' 
+      }, () => fetchConversations(false))
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'conversations' 
+      }, () => fetchConversations(false))
       .subscribe((status) => {
-        console.log('Real-time subscription status:', status);
+        setIsConnected(status === 'SUBSCRIBED');
         
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to messages');
-          setIsConnected(true);
-          setError(null);
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-          console.error(`❌ Subscription issue: ${status} - attempting retry`);
-          setIsConnected(false);
-          
-          if (retryTimeoutRef.current) {
-            clearTimeout(retryTimeoutRef.current);
-          }
-          retryTimeoutRef.current = setTimeout(() => {
-            console.log('Retrying subscription after', status);
-            setupRealtimeSubscription();
-          }, 3000);
+        if (status === 'CHANNEL_ERROR') {
+          retryTimeoutRef.current = setTimeout(() => setupRealtimeSubscription(), 3000);
         }
       });
 
     channelRef.current = channel;
-  }, [conversationId, currentUserId, markMessagesAsRead]);
+
+    return () => {
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+    };
+  }, [userId, fetchConversations]);
 
   useEffect(() => {
-    if (!conversationId) {
-      setMessages([]);
+    if (!userId) {
       setLoading(false);
-      setIsConnected(false);
       return;
     }
 
-    fetchMessages(true);
-    setupRealtimeSubscription();
+    fetchConversations(true);
+    const cleanup = setupRealtimeSubscription();
 
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
-    };
-  }, [conversationId, fetchMessages, setupRealtimeSubscription]);
+    return cleanup;
+  }, [userId, filter, fetchConversations, setupRealtimeSubscription]);
 
-  const sendMessage = async (content: string) => {
-    if (!conversationId || !content.trim()) return false;
+  return { conversations, loading, error, isConnected, refetch: () => fetchConversations(true) };
+}
 
-    try {
-      const { error: insertError } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversationId,
-          sender_id: currentUserId,
-          content: content.trim(),
-        });
+// ==================== USER SELECTION HOOK ====================
 
-      if (insertError) throw insertError;
+export function useUserSelection() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
 
-      await supabase
-        .from('conversations')
-        .update({ 
-          last_message_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', conversationId);
-
-      // Defensive refetch to ensure message appears even if real-time is lagging
-      setTimeout(() => fetchMessages(false), 100);
-
-      return true;
-    } catch (err) {
-      console.error('Error sending message:', err);
-      setError(err as Error);
-      return false;
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredUsers(users);
+    } else {
+      const query = searchQuery.toLowerCase();
+      setFilteredUsers(
+        users.filter(user =>
+          user.full_name?.toLowerCase().includes(query) ||
+          user.email?.toLowerCase().includes(query)
+        )
+      );
     }
-  };
+  }, [searchQuery, users]);
 
-  const blockUser = async (userIdToBlock: string) => {
-    try {
-      const { error: blockError } = await supabase
-        .from('blocked_users')
-        .insert({
-          blocker_id: currentUserId,
-          blocked_id: userIdToBlock,
-        });
-
-      if (blockError) throw blockError;
-      return true;
-    } catch (err) {
-      setError(err as Error);
-      return false;
+  const fetchUsers = async (currentUserId: string) => {
+    if (!currentUserId) {
+      console.error('No current user ID available');
+      setLoading(false);
+      return;
     }
-  };
-
-  const archiveConversation = async () => {
-    if (!conversationId) return false;
 
     try {
-      const { error: archiveError } = await supabase
-        .from('conversations')
-        .update({ is_archived: true })
-        .eq('id', conversationId);
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url')
+        .neq('id', currentUserId)
+        .order('full_name', { ascending: true });
 
-      if (archiveError) throw archiveError;
-      return true;
-    } catch (err) {
-      setError(err as Error);
-      return false;
+      if (error) throw error;
+
+      setUsers(data || []);
+      setFilteredUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return {
-    messages,
+    users,
+    filteredUsers,
+    searchQuery,
     loading,
-    error,
-    isConnected,
-    sendMessage,
-    blockUser,
-    archiveConversation,
-    refetch: () => fetchMessages(true),
+    setSearchQuery,
+    fetchUsers
+  };
+}
+
+// ==================== CONVERSATION UTILITIES ====================
+
+export function formatLastOnlineTime(lastMessageAt: string): string {
+  const now = new Date();
+  const messageDate = new Date(lastMessageAt);
+  const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
+  
+  if (diffInHours < 24) {
+    return formatDistanceToNow(messageDate, { addSuffix: true });
+  }
+  
+  return messageDate.toLocaleDateString('en-US', { 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
+}
+
+export function mapConversationToListItem(
+  conv: ConversationWithDetails, 
+  currentUserId: string
+): ConversationListItem {
+  const lastMessageTime = conv.last_message?.created_at || conv.last_message_at;
+  const lastOnlineTime = formatLastOnlineTime(lastMessageTime);
+  
+  return {
+    id: conv.id,
+    name: conv.other_user.full_name,
+    preview: conv.last_message?.content || 'Start a conversation',
+    lastOnline: lastOnlineTime,
+    avatar: conv.other_user.avatar_url || '',
+    unreadCount: conv.unread_count || 0,
+    isOnline: Math.random() > 0.5,
+    isRead: conv.unread_count === 0,
+    messageType: 'text',
+    deliveryStatus: conv.last_message?.sender_id === currentUserId ? 'read' : null,
+    sentByYou: conv.last_message?.sender_id === currentUserId,
+    isTyping: false,
+    isVerified: Math.random() > 0.7,
+    otherUser: conv.other_user
+  };
+}
+
+export function filterConversationsByTab(
+  conversations: ConversationListItem[],
+  activeTab: 'all' | 'unread' | 'archived'
+): ConversationListItem[] {
+  switch(activeTab) {
+    case 'unread':
+      return conversations.filter(c => c.unreadCount > 0);
+    case 'archived':
+      return conversations.filter(c => false);
+    default:
+      return conversations;
+  }
+}
+
+// ==================== USER SELECTION LOGIC ====================
+
+export async function handleUserSelect(
+  selectedUserId: string,
+  currentUserId: string,
+  navigate: ReturnType<typeof useNavigate>
+) {
+  try {
+    // Check for existing conversation
+    const { data: myConversations } = await supabase
+      .from('conversation_participants')
+      .select('conversation_id')
+      .eq('user_id', currentUserId);
+
+    if (myConversations && myConversations.length > 0) {
+      const conversationIds = myConversations.map(c => c.conversation_id);
+      const { data: sharedConversation } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', selectedUserId)
+        .in('conversation_id', conversationIds)
+        .limit(1)
+        .single();
+
+      if (sharedConversation) {
+        navigate(`/messages/${sharedConversation.conversation_id}`);
+        return;
+      }
+    }
+
+    // Create new conversation
+    const { data: newConversation } = await supabase
+      .from('conversations')
+      .insert({ last_message_at: new Date().toISOString(), is_archived: false })
+      .select()
+      .single();
+
+    if (newConversation) {
+      await supabase
+        .from('conversation_participants')
+        .insert([
+          { 
+            conversation_id: newConversation.id, 
+            user_id: currentUserId, 
+            last_read_at: new Date().toISOString() 
+          },
+          { 
+            conversation_id: newConversation.id, 
+            user_id: selectedUserId, 
+            last_read_at: new Date().toISOString() 
+          },
+        ]);
+
+      navigate(`/messages/${newConversation.id}`);
+    }
+  } catch (error) {
+    console.error('Error in handleUserSelect:', error);
+  }
+}
+
+// ==================== MESSAGES LIST HOOK ====================
+
+export function useMessagesList() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'archived';
+  const [showUserSelection, setShowUserSelection] = useState(false);
+  
+  const { user, isLoading } = useAuth();
+  const { openAuthOverlay } = useAuthOverlay();
+
+  const currentUserId = user?.id || '';
+  const { conversations, loading } = useConversations(currentUserId, activeTab);
+
+  const mappedConversations = conversations.map(conv => 
+    mapConversationToListItem(conv, currentUserId)
+  );
+
+  const filteredConversations = filterConversationsByTab(mappedConversations, activeTab);
+
+  const handleConversationClick = (convId: string) => {
+    navigate(`/messages/${convId}`);
+  };
+
+  return {
+    // State
+    activeTab,
+    showUserSelection,
+    setShowUserSelection,
+    
+    // Data
+    user,
+    isLoading,
+    loading,
+    conversations: filteredConversations,
+    currentUserId,
+    
+    // Actions
+    openAuthOverlay,
+    handleConversationClick,
+    navigate
   };
 }
