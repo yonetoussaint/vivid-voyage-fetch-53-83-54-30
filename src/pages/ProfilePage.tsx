@@ -210,7 +210,7 @@ export default function InstagramProfile() {
       </div>
 
       {/* ADDED YOUR COMPONENTS HERE - After carousel */}
-      <div className="max-w-md mx-auto px-4">
+      <div className="max-w-md mx-auto">
         
         {/* Favourite Channels Component */}
         <div className="pt-2">
