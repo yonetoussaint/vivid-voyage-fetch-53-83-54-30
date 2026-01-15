@@ -24,12 +24,7 @@ export function AuthRoutes() { // Changed from UserRoutes to AuthRoutes
         </CachedRoute>
       } />
 
-      {/* Chat detail page - Use ChatPage from Messages.tsx */}
-      <Route path="messages/:conversationId" element={
-        <CachedRoute>
-          <ChatPage />
-        </CachedRoute>
-      } />
+      
 
       <Route path="profile/*" element={
         <CachedRoute>
