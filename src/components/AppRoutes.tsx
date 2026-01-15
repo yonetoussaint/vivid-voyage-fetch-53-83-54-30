@@ -124,12 +124,7 @@ export function AppRoutes() {
           }
         />
 
-        <Route
-          path="messages/:conversationId"
-          element={
-            <ChatPage />
-          }
-        />
+       
 
         <Route
           path="profile/*"
