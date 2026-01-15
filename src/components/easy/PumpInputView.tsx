@@ -25,6 +25,7 @@ const PumpInputView = ({
   prixPropane
 }) => {
   const [showDataContext, setShowDataContext] = useState(false);
+  const [showStatsCards, setShowStatsCards] = useState(false);
   const [quickAnalytics, setQuickAnalytics] = useState(null);
 
   const lecturesCourantes = toutesDonnees[shift];
@@ -121,42 +122,102 @@ const PumpInputView = ({
 
   return (
     <div className="space-y-3">
-      {/* Stats Cards */}
-      <StatsCards 
-        shift={shift}
-        totaux={totaux}
-        tauxUSD={tauxUSD}
-      />
+      {/* Stats Cards Section - Collapsible */}
+      <div className="mb-2">
+        <button
+          onClick={() => setShowStatsCards(!showStatsCards)}
+          className="flex items-center justify-between w-full p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition"
+        >
+          <span className="text-white font-medium">Statistiques du Shift {shift}</span>
+          {showStatsCards ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </button>
 
-      {/* Quick Analytics Summary */}
-      {quickAnalytics && (
-        <div className="mb-6 p-4 bg-gray-800 rounded-xl border border-gray-700 shadow-lg">
-          <h3 className="text-lg font-bold text-white mb-4">Résumé du Shift {shift}</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-gray-700/50 p-3 rounded-lg">
-              <div className="text-sm text-gray-400 mb-1">Volume Total</div>
-              <div className="text-xl font-bold text-white">{quickAnalytics.totalVolume} L</div>
-            </div>
-
-            <div className="bg-gray-700/50 p-3 rounded-lg">
-              <div className="text-sm text-gray-400 mb-1">Ventes Total</div>
-              <div className="text-xl font-bold text-white">{quickAnalytics.totalSales} USD</div>
-            </div>
-
-            <div className="bg-gray-700/50 p-3 rounded-lg">
-              <div className="text-sm text-gray-400 mb-1">Pompe la plus Active</div>
-              <div className="text-xl font-bold text-white">
-                {quickAnalytics.mostActivePump || 'N/A'}
-              </div>
-            </div>
-
-            <div className="bg-gray-700/50 p-3 rounded-lg">
-              <div className="text-sm text-gray-400 mb-1">Carburant Principal</div>
-              <div className="text-xl font-bold text-white">
-                {quickAnalytics.mostSoldFuel || 'N/A'}
-              </div>
-            </div>
+        {showStatsCards && (
+          <div className="mt-2">
+            <StatsCards 
+              shift={shift}
+              totaux={totaux}
+              tauxUSD={tauxUSD}
+            />
           </div>
+        )}
+      </div>
+
+      {/* Quick Analytics Summary - Also Collapsible */}
+      {quickAnalytics && (
+        <div className="mb-2">
+          <button
+            onClick={() => setShowDataContext(!showDataContext)}
+            className="flex items-center justify-between w-full p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition"
+          >
+            <span className="text-white font-medium">Résumé Rapide</span>
+            {showDataContext ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+
+          {showDataContext && (
+            <div className="mt-2 p-4 bg-gray-900/50 rounded-lg border border-gray-800">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-gray-800/50 p-3 rounded-lg">
+                  <div className="text-sm text-gray-400 mb-1">Volume Total</div>
+                  <div className="text-xl font-bold text-white">{quickAnalytics.totalVolume} L</div>
+                </div>
+
+                <div className="bg-gray-800/50 p-3 rounded-lg">
+                  <div className="text-sm text-gray-400 mb-1">Ventes Total</div>
+                  <div className="text-xl font-bold text-white">{quickAnalytics.totalSales} USD</div>
+                </div>
+
+                <div className="bg-gray-800/50 p-3 rounded-lg">
+                  <div className="text-sm text-gray-400 mb-1">Pompe Active</div>
+                  <div className="text-xl font-bold text-white">
+                    {quickAnalytics.mostActivePump || 'N/A'}
+                  </div>
+                </div>
+
+                <div className="bg-gray-800/50 p-3 rounded-lg">
+                  <div className="text-sm text-gray-400 mb-1">Carburant Principal</div>
+                  <div className="text-xl font-bold text-white">
+                    {quickAnalytics.mostSoldFuel || 'N/A'}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Detailed Data View inside the expanded section */}
+              <div className="mt-4 pt-4 border-t border-gray-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-400 mb-2">Données Shift {shift}</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Pompes:</span>
+                        <span className="text-white">{quickAnalytics.pumpCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Pistolets Actifs:</span>
+                        <span className="text-white">{quickAnalytics.activeGuns}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Vendeurs:</span>
+                        <span className="text-white">{vendeurs?.length || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-400 mb-2">Répartition Carburants</h4>
+                    <div className="space-y-2">
+                      {Object.entries(quickAnalytics.fuelTypes).map(([fuel, volume]) => (
+                        <div key={fuel} className="flex justify-between">
+                          <span className="text-gray-300">{fuel}:</span>
+                          <span className="text-white">{parseFloat(volume).toFixed(2)} L</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -219,71 +280,6 @@ const PumpInputView = ({
           );
         })
       )}
-
-      {/* Data Context Panel (Collapsible) */}
-      <div className="mt-6">
-        <button
-          onClick={() => setShowDataContext(!showDataContext)}
-          className="flex items-center justify-between w-full p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition"
-        >
-          <span className="text-white font-medium">Aperçu des Données</span>
-          {showDataContext ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-        </button>
-
-        {showDataContext && quickAnalytics && (
-          <div className="mt-2 p-4 bg-gray-900/50 rounded-lg border border-gray-800">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-sm font-medium text-gray-400 mb-2">Données Shift {shift}</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Pompes:</span>
-                    <span className="text-white">{quickAnalytics.pumpCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Pistolets Actifs:</span>
-                    <span className="text-white">{quickAnalytics.activeGuns}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Vendeurs:</span>
-                    <span className="text-white">{vendeurs?.length || 0}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium text-gray-400 mb-2">Statistiques</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Volume Total:</span>
-                    <span className="text-white">{quickAnalytics.totalVolume} L</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Ventes Total:</span>
-                    <span className="text-white">{quickAnalytics.totalSales} USD</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Taux USD:</span>
-                    <span className="text-white">{tauxUSD}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-gray-800">
-              <h4 className="text-sm font-medium text-gray-400 mb-2">Répartition par Carburant</h4>
-              <div className="space-y-1">
-                {Object.entries(quickAnalytics.fuelTypes).map(([fuel, volume]) => (
-                  <div key={fuel} className="flex justify-between">
-                    <span className="text-gray-300">{fuel}:</span>
-                    <span className="text-white">{volume.toFixed(2)} L</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
