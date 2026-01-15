@@ -121,95 +121,112 @@ const PumpInputView = ({
   }, [lecturesCourantes, propaneDonneesCourantes, shift]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Stats Cards Section - Collapsible */}
-      <div className="mb-2">
+      <div className="border border-gray-200 rounded-lg">
         <button
           onClick={() => setShowStatsCards(!showStatsCards)}
-          className="flex items-center justify-between w-full p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition"
+          className="flex items-center justify-between w-full p-4 hover:bg-gray-50 transition-colors"
         >
-          <span className="text-white font-medium">Statistiques du Shift {shift}</span>
-          {showStatsCards ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Statistiques du Shift {shift}</h3>
+            <p className="text-sm text-gray-500">Cliquez pour afficher les détails</p>
+          </div>
+          {showStatsCards ? (
+            <ChevronUp className="text-gray-500" size={20} />
+          ) : (
+            <ChevronDown className="text-gray-500" size={20} />
+          )}
         </button>
 
         {showStatsCards && (
-          <div className="mt-2">
-            <StatsCards 
-              shift={shift}
-              totaux={totaux}
-              tauxUSD={tauxUSD}
-            />
+          <div className="px-4 pb-4">
+            <div className="border-t border-gray-200 pt-4">
+              <StatsCards 
+                shift={shift}
+                totaux={totaux}
+                tauxUSD={tauxUSD}
+              />
+            </div>
           </div>
         )}
       </div>
 
-      {/* Quick Analytics Summary - Also Collapsible */}
+      {/* Quick Analytics Summary - Collapsible */}
       {quickAnalytics && (
-        <div className="mb-2">
+        <div className="border border-gray-200 rounded-lg">
           <button
             onClick={() => setShowDataContext(!showDataContext)}
-            className="flex items-center justify-between w-full p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition"
+            className="flex items-center justify-between w-full p-4 hover:bg-gray-50 transition-colors"
           >
-            <span className="text-white font-medium">Résumé Rapide</span>
-            {showDataContext ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Résumé Rapide</h3>
+              <p className="text-sm text-gray-500">Aperçu des performances du shift</p>
+            </div>
+            {showDataContext ? (
+              <ChevronUp className="text-gray-500" size={20} />
+            ) : (
+              <ChevronDown className="text-gray-500" size={20} />
+            )}
           </button>
 
           {showDataContext && (
-            <div className="mt-2 p-4 bg-gray-900/50 rounded-lg border border-gray-800">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-gray-800/50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-400 mb-1">Volume Total</div>
-                  <div className="text-xl font-bold text-white">{quickAnalytics.totalVolume} L</div>
-                </div>
+            <div className="px-4 pb-4">
+              <div className="border-t border-gray-200 pt-4 space-y-4">
+                {/* Key Metrics Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-gray-600 mb-1">Volume Total</div>
+                    <div className="text-xl font-bold text-gray-900">{quickAnalytics.totalVolume} L</div>
+                  </div>
 
-                <div className="bg-gray-800/50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-400 mb-1">Ventes Total</div>
-                  <div className="text-xl font-bold text-white">{quickAnalytics.totalSales} USD</div>
-                </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-gray-600 mb-1">Ventes Total</div>
+                    <div className="text-xl font-bold text-gray-900">{quickAnalytics.totalSales} USD</div>
+                  </div>
 
-                <div className="bg-gray-800/50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-400 mb-1">Pompe Active</div>
-                  <div className="text-xl font-bold text-white">
-                    {quickAnalytics.mostActivePump || 'N/A'}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-gray-600 mb-1">Pompe Active</div>
+                    <div className="text-xl font-bold text-gray-900">
+                      {quickAnalytics.mostActivePump || 'N/A'}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-gray-600 mb-1">Carburant Principal</div>
+                    <div className="text-xl font-bold text-gray-900">
+                      {quickAnalytics.mostSoldFuel || 'N/A'}
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-800/50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-400 mb-1">Carburant Principal</div>
-                  <div className="text-xl font-bold text-white">
-                    {quickAnalytics.mostSoldFuel || 'N/A'}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Detailed Data View inside the expanded section */}
-              <div className="mt-4 pt-4 border-t border-gray-700">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Detailed Data */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="text-sm font-medium text-gray-400 mb-2">Données Shift {shift}</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Détails du Shift</h4>
                     <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Pompes:</span>
-                        <span className="text-white">{quickAnalytics.pumpCount}</span>
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Pompes</span>
+                        <span className="font-medium text-gray-900">{quickAnalytics.pumpCount}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Pistolets Actifs:</span>
-                        <span className="text-white">{quickAnalytics.activeGuns}</span>
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Pistolets Actifs</span>
+                        <span className="font-medium text-gray-900">{quickAnalytics.activeGuns}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Vendeurs:</span>
-                        <span className="text-white">{vendeurs?.length || 0}</span>
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Vendeurs</span>
+                        <span className="font-medium text-gray-900">{vendeurs?.length || 0}</span>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="text-sm font-medium text-gray-400 mb-2">Répartition Carburants</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Répartition par Carburant</h4>
                     <div className="space-y-2">
                       {Object.entries(quickAnalytics.fuelTypes).map(([fuel, volume]) => (
-                        <div key={fuel} className="flex justify-between">
-                          <span className="text-gray-300">{fuel}:</span>
-                          <span className="text-white">{parseFloat(volume).toFixed(2)} L</span>
+                        <div key={fuel} className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="text-gray-600">{fuel}</span>
+                          <span className="font-medium text-gray-900">{parseFloat(volume).toFixed(2)} L</span>
                         </div>
                       ))}
                     </div>
@@ -222,64 +239,73 @@ const PumpInputView = ({
       )}
 
       {/* Pump Selector */}
-      <PumpSelector 
-        pompes={pompes}
-        pompeEtendue={pompeEtendue}
-        setPompeEtendue={setPompeEtendue}
-        showPropane={showPropane}
-      />
+      <div className="border border-gray-200 rounded-lg p-4 bg-white">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Sélection de Pompe</h3>
+        <PumpSelector 
+          pompes={pompes}
+          pompeEtendue={pompeEtendue}
+          setPompeEtendue={setPompeEtendue}
+          showPropane={showPropane}
+        />
+      </div>
 
       {/* Render content based on selected tab */}
-      {pompeEtendue === 'propane' ? (
-        <>
-          <PumpHeader
-            pompe="Propane"
-            shift={shift}
-            isPropane={true}
-            propaneData={propaneDonneesCourantes}
-            prixPropane={prixPropane}
-            vendeurs={vendeurs}
-            vendeurDepots={depotsActuels}
-            tauxUSD={tauxUSD}
-            mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
-            donneesPompe={{}}
-            prix={prix}
-          />
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        {pompeEtendue === 'propane' ? (
+          <>
+            <PumpHeader
+              pompe="Propane"
+              shift={shift}
+              isPropane={true}
+              propaneData={propaneDonneesCourantes}
+              prixPropane={prixPropane}
+              vendeurs={vendeurs}
+              vendeurDepots={depotsActuels}
+              tauxUSD={tauxUSD}
+              mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
+              donneesPompe={{}}
+              prix={prix}
+            />
 
-          <PropaneManager
-            shift={shift}
-            propaneDonnees={propaneDonneesCourantes}
-            mettreAJourPropane={(field, value) => mettreAJourPropane(field, value, shift)}
-            prixPropane={prixPropane}
-          />
-        </>
-      ) : (
-        Object.entries(lecturesCourantes).map(([pompe, donneesPompe]) => {
-          if (pompe !== pompeEtendue) return null;
-
-          return (
-            <div key={pompe} className="space-y-3">
-              <PumpHeader
-                pompe={pompe}
+            <div className="p-4">
+              <PropaneManager
                 shift={shift}
-                donneesPompe={donneesPompe}
-                vendeurs={vendeurs}
-                mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
-                prix={prix}
-                vendeurDepots={depotsActuels}
-                tauxUSD={tauxUSD}
-              />
-
-              <PumpPistolets
-                pompe={pompe}
-                donneesPompe={donneesPompe}
-                mettreAJourLecture={mettreAJourLecture}
-                prix={prix}
+                propaneDonnees={propaneDonneesCourantes}
+                mettreAJourPropane={(field, value) => mettreAJourPropane(field, value, shift)}
+                prixPropane={prixPropane}
               />
             </div>
-          );
-        })
-      )}
+          </>
+        ) : (
+          Object.entries(lecturesCourantes).map(([pompe, donneesPompe]) => {
+            if (pompe !== pompeEtendue) return null;
+
+            return (
+              <div key={pompe}>
+                <PumpHeader
+                  pompe={pompe}
+                  shift={shift}
+                  donneesPompe={donneesPompe}
+                  vendeurs={vendeurs}
+                  mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
+                  prix={prix}
+                  vendeurDepots={depotsActuels}
+                  tauxUSD={tauxUSD}
+                />
+
+                <div className="p-4">
+                  <PumpPistolets
+                    pompe={pompe}
+                    donneesPompe={donneesPompe}
+                    mettreAJourLecture={mettreAJourLecture}
+                    prix={prix}
+                  />
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 };
