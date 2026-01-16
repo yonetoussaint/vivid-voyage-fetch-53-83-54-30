@@ -1,10 +1,43 @@
-import React from 'react';
-import { DollarSign, User, Plus, Minus, Globe } from 'lucide-react';
+import React, { useState } from 'react';
+import { DollarSign, User, Plus, Minus, Globe, ChevronDown } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJourDepot, ajouterDepot, supprimerDepot }) => {
   const TAUX_DE_CHANGE = 132; // Fixed exchange rate: 1 USD = 132 HTG
   const depotsActuels = tousDepots[shift] || {};
+
+  // State for each vendor's input
+  const [vendorInputs, setVendorInputs] = useState({});
+  const [vendorPresets, setVendorPresets] = useState({});
+  const [showPresetsForVendor, setShowPresetsForVendor] = useState(null);
+
+  // Preset options for HTG (Gourdes)
+  const htgPresets = [
+    { value: '5', label: '5' },
+    { value: '10', label: '10' },
+    { value: '20', label: '20' },
+    { value: '25', label: '25' },
+    { value: '50', label: '50' },
+    { value: '100', label: '100' },
+    { value: '250', label: '250' },
+    { value: '500', label: '500' },
+    { value: '1000', label: '1,000' },
+    { value: '5000', label: '5,000' },
+    { value: '10000', label: '10k' },
+    { value: '25000', label: '25k' },
+    { value: '50000', label: '50k' },
+    { value: '100000', label: '100k' }
+  ];
+
+  // Preset options for USD
+  const usdPresets = [
+    { value: '1', label: '1' },
+    { value: '5', label: '5' },
+    { value: '10', label: '10' },
+    { value: '20', label: '20' },
+    { value: '50', label: '50' },
+    { value: '100', label: '100' }
+  ];
 
   // Function to convert USD to HTG
   const convertirUSDversHTG = (montantUSD) => {
@@ -42,12 +75,168 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   // Helper to get original deposit amount (not converted)
   const getOriginalDepotAmount = (depot) => {
     if (!depot) return 0;
-    
+
     if (typeof depot === 'object' && depot.devise === 'USD') {
       return parseFloat(depot.montant) || 0;
     }
-    
+
     return parseFloat(depot) || 0;
+  };
+
+  // Initialize vendor state
+  const initializeVendorState = (vendeur, currency) => {
+    if (!vendorInputs[vendeur]) {
+      setVendorInputs(prev => ({
+        ...prev,
+        [vendeur]: ''
+      }));
+    }
+    if (!vendorPresets[vendeur]) {
+      setVendorPresets(prev => ({
+        ...prev,
+        [vendeur]: {
+          currency: currency,
+          preset: 'aucune'
+        }
+      }));
+    }
+  };
+
+  // Handle currency selection for a vendor
+  const handleCurrencySelect = (vendeur, currency) => {
+    setVendorPresets(prev => ({
+      ...prev,
+      [vendeur]: {
+        currency: currency,
+        preset: 'aucune'
+      }
+    }));
+    setVendorInputs(prev => ({
+      ...prev,
+      [vendeur]: ''
+    }));
+  };
+
+  // Handle preset selection for a vendor
+  const handlePresetSelect = (vendeur, presetValue) => {
+    setVendorPresets(prev => ({
+      ...prev,
+      [vendeur]: {
+        ...prev[vendeur],
+        preset: presetValue
+      }
+    }));
+    setShowPresetsForVendor(null);
+    
+    // Auto-focus input when selecting a preset
+    setTimeout(() => {
+      const input = document.querySelector(`input[data-vendor="${vendeur}"]`);
+      if (input) input.focus();
+    }, 100);
+  };
+
+  // Calculate amount based on preset multiplier
+  const calculatePresetAmount = (vendeur) => {
+    const vendorState = vendorPresets[vendeur];
+    if (!vendorState || vendorState.preset === 'aucune') {
+      return parseFloat(vendorInputs[vendeur] || 0);
+    }
+    
+    const multiplier = parseFloat(vendorInputs[vendeur] || 1);
+    const presetValue = parseFloat(vendorState.preset);
+    return presetValue * multiplier;
+  };
+
+  // Handle adding a new deposit with preset system
+  const handleAddDepotWithPreset = (vendeur) => {
+    const vendorState = vendorPresets[vendeur];
+    const inputValue = vendorInputs[vendeur];
+    
+    if (!vendorState) return;
+
+    let amount = 0;
+    let currency = vendorState.currency;
+
+    if (vendorState.preset === 'aucune') {
+      // Direct amount entry mode
+      amount = parseFloat(inputValue) || 0;
+    } else {
+      // Preset multiplier mode
+      if (inputValue && !isNaN(parseFloat(inputValue))) {
+        // Calculate amount based on preset
+        const multiplier = parseFloat(inputValue);
+        const presetValue = parseFloat(vendorState.preset);
+        amount = presetValue * multiplier;
+      } else {
+        // If no input value, just use the preset value
+        amount = parseFloat(vendorState.preset);
+      }
+    }
+
+    // Round to 2 decimal places for USD
+    if (currency === 'USD') {
+      amount = parseFloat(amount.toFixed(2));
+    }
+
+    if (amount > 0) {
+      // Add the deposit
+      if (currency === 'USD') {
+        ajouterDepot(vendeur, 'USD', amount);
+      } else {
+        ajouterDepot(vendeur, 'HTG', amount);
+      }
+      
+      // Reset input
+      setVendorInputs(prev => ({
+        ...prev,
+        [vendeur]: ''
+      }));
+      
+      // Reset to "aucune" after adding a sequence with multiplier
+      if (vendorState.preset !== 'aucune' && inputValue) {
+        setVendorPresets(prev => ({
+          ...prev,
+          [vendeur]: {
+            ...prev[vendeur],
+            preset: 'aucune'
+          }
+        }));
+      }
+    }
+  };
+
+  // Handle input change for a vendor
+  const handleInputChange = (vendeur, value) => {
+    setVendorInputs(prev => ({
+      ...prev,
+      [vendeur]: value
+    }));
+  };
+
+  // Get current presets based on currency
+  const getCurrentPresets = (vendeur) => {
+    const vendorState = vendorPresets[vendeur];
+    if (!vendorState) return htgPresets;
+    
+    return vendorState.currency === 'HTG' ? htgPresets : usdPresets;
+  };
+
+  // Get selected preset text
+  const getSelectedPresetText = (vendeur) => {
+    const vendorState = vendorPresets[vendeur];
+    if (!vendorState || vendorState.preset === 'aucune') {
+      return 'Entrer montant libre';
+    }
+    
+    const currentPresets = getCurrentPresets(vendeur);
+    const preset = currentPresets.find(p => p.value === vendorState.preset);
+    return preset ? `× ${preset.label} ${vendorState.currency}` : 'Sélectionner';
+  };
+
+  // Check if vendor is in direct amount mode
+  const isDirectAmount = (vendeur) => {
+    const vendorState = vendorPresets[vendeur];
+    return !vendorState || vendorState.preset === 'aucune';
   };
 
   return (
@@ -83,9 +272,18 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
               const donneesVendeur = totauxVendeurs[vendeur];
               const totalDepotHTG = donneesVendeur?.depot || 0;
               const especesAttendues = donneesVendeur ? donneesVendeur.especesAttendues : 0;
-              
+
               // Get actual deposits array for editing
               const depots = depotsActuels[vendeur] || [];
+
+              // Initialize vendor state if needed
+              if (!vendorPresets[vendeur]) {
+                initializeVendorState(vendeur, 'HTG');
+              }
+
+              const vendorState = vendorPresets[vendeur];
+              const currentPresets = getCurrentPresets(vendeur);
+              const isDirectMode = isDirectAmount(vendeur);
 
               return (
                 <div key={vendeur} className="bg-white bg-opacity-15 rounded-lg p-3 space-y-3">
@@ -126,15 +324,29 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       <span className="text-sm font-semibold">Entrées Dépôts</span>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => ajouterDepot(vendeur, 'HTG')}
-                          className="bg-white text-indigo-600 px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition"
+                          onClick={() => {
+                            handleCurrencySelect(vendeur, 'HTG');
+                            setShowPresetsForVendor(showPresetsForVendor === vendeur ? null : vendeur);
+                          }}
+                          className={`px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition ${
+                            vendorState?.currency === 'HTG'
+                              ? 'bg-white text-indigo-600'
+                              : 'bg-white bg-opacity-20 text-white'
+                          }`}
                         >
                           <Plus size={14} />
                           HTG
                         </button>
                         <button
-                          onClick={() => ajouterDepot(vendeur, 'USD')}
-                          className="bg-green-500 text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition"
+                          onClick={() => {
+                            handleCurrencySelect(vendeur, 'USD');
+                            setShowPresetsForVendor(showPresetsForVendor === vendeur ? null : vendeur);
+                          }}
+                          className={`px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition ${
+                            vendorState?.currency === 'USD'
+                              ? 'bg-green-500 text-white'
+                              : 'bg-green-500 bg-opacity-20 text-white'
+                          }`}
                         >
                           <Plus size={14} />
                           USD
@@ -142,6 +354,160 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       </div>
                     </div>
 
+                    {/* Preset selector and input */}
+                    {vendorState && (
+                      <div className="space-y-2">
+                        {/* Preset selector */}
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowPresetsForVendor(showPresetsForVendor === vendeur ? null : vendeur)}
+                            className={`w-full px-3 py-2 text-left rounded-lg flex items-center justify-between transition-colors ${
+                              vendorState.currency === 'HTG'
+                                ? 'bg-blue-500 bg-opacity-20 hover:bg-opacity-30 border border-blue-400 border-opacity-30'
+                                : 'bg-green-500 bg-opacity-20 hover:bg-opacity-30 border border-green-400 border-opacity-30'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs font-bold ${
+                                vendorState.currency === 'HTG' ? 'text-blue-300' : 'text-green-300'
+                              }`}>
+                                {getSelectedPresetText(vendeur)}
+                              </span>
+                              {!isDirectMode && vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) !== 1 && (
+                                <span className="text-[10px] opacity-70">
+                                  × {vendorInputs[vendeur]} = {formaterArgent(calculatePresetAmount(vendeur))} {vendorState.currency}
+                                </span>
+                              )}
+                            </div>
+                            <ChevronDown 
+                              size={12} 
+                              className={`transition-transform ${showPresetsForVendor === vendeur ? 'rotate-180' : ''} ${
+                                vendorState.currency === 'HTG' ? 'text-blue-300' : 'text-green-300'
+                              }`} 
+                            />
+                          </button>
+                          
+                          {/* Dropdown menu */}
+                          {showPresetsForVendor === vendeur && (
+                            <div className={`absolute z-20 w-full mt-1 rounded-lg shadow-lg overflow-hidden border ${
+                              vendorState.currency === 'HTG'
+                                ? 'bg-blue-900 border-blue-700'
+                                : 'bg-green-900 border-green-700'
+                            }`}>
+                              {/* "Aucune" option - full width */}
+                              <button
+                                onClick={() => handlePresetSelect(vendeur, 'aucune')}
+                                className={`w-full px-3 py-3 text-left text-xs hover:bg-opacity-50 transition-colors flex items-center justify-between border-b ${
+                                  vendorState.currency === 'HTG' ? 'border-blue-700' : 'border-green-700'
+                                } ${
+                                  vendorState.preset === 'aucune'
+                                    ? vendorState.currency === 'HTG'
+                                      ? 'bg-blue-700 text-white'
+                                      : 'bg-green-700 text-white'
+                                    : vendorState.currency === 'HTG'
+                                      ? 'hover:bg-blue-800 text-blue-100'
+                                      : 'hover:bg-green-800 text-green-100'
+                                }`}
+                              >
+                                <span>Entrer montant libre</span>
+                                {isDirectMode && (
+                                  <span className="text-[10px] opacity-70">✓</span>
+                                )}
+                              </button>
+                              
+                              {/* Grid of presets - SAME STYLE AS QUICK ADD BUTTONS */}
+                              <div className="p-2">
+                                <div className="grid grid-cols-3 gap-1.5">
+                                  {currentPresets.map((preset) => (
+                                    <button
+                                      key={preset.value}
+                                      onClick={() => handlePresetSelect(vendeur, preset.value)}
+                                      className={`px-2 py-2 text-xs font-medium rounded border transition-colors flex items-center justify-center ${
+                                        vendorState.currency === 'HTG'
+                                          ? 'bg-blue-500 bg-opacity-10 hover:bg-opacity-20 border-blue-400 border-opacity-30 text-blue-300'
+                                          : 'bg-green-500 bg-opacity-10 hover:bg-opacity-20 border-green-400 border-opacity-30 text-green-300'
+                                      } ${vendorState.preset === preset.value ? 'ring-1 ring-white ring-opacity-50' : ''}`}
+                                      title={`${preset.label} ${vendorState.currency}`}
+                                    >
+                                      {preset.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Helper text */}
+                        <p className="text-[10px] opacity-70 text-center">
+                          {isDirectMode 
+                            ? "Entrez directement le montant" 
+                            : `Sélectionnez un montant et entrez un multiplicateur (ex: 33 × ${vendorState.preset})`}
+                        </p>
+
+                        {/* Input with Add button */}
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-white font-bold text-xs">
+                              {isDirectMode ? (
+                                vendorState.currency === 'HTG' ? 'HTG' : 'USD'
+                              ) : (
+                                '×'
+                              )}
+                            </span>
+                          </div>
+                          <input
+                            type="number"
+                            data-vendor={vendeur}
+                            value={vendorInputs[vendeur] || ''}
+                            onChange={(e) => handleInputChange(vendeur, e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleAddDepotWithPreset(vendeur);
+                              }
+                            }}
+                            placeholder={
+                              isDirectMode 
+                                ? `Montant en ${vendorState.currency}...` 
+                                : 'Multiplicateur (ex: 33)...'
+                            }
+                            className="w-full pl-10 pr-20 py-2.5 text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-1">
+                            <button
+                              onClick={() => handleAddDepotWithPreset(vendeur)}
+                              disabled={!vendorInputs[vendeur] || parseFloat(vendorInputs[vendeur]) <= 0}
+                              className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 ${
+                                vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0
+                                  ? vendorState.currency === 'HTG' 
+                                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                                    : 'bg-green-500 hover:bg-green-600 text-white'
+                                  : 'bg-gray-400 bg-opacity-30 text-gray-300 cursor-not-allowed'
+                              } transition-colors`}
+                            >
+                              <Plus size={12} />
+                              Ajouter
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Preview of calculation */}
+                        {!isDirectMode && vendorInputs[vendeur] && !isNaN(parseFloat(vendorInputs[vendeur])) && vendorState.preset && vendorState.preset !== 'aucune' && (
+                          <div className="mt-2 bg-white bg-opacity-10 rounded p-2 text-center">
+                            <p className="text-xs opacity-90">
+                              {vendorInputs[vendeur]} × {vendorState.preset} {vendorState.currency} = {formaterArgent(calculatePresetAmount(vendeur))} {vendorState.currency}
+                            </p>
+                            {vendorState.currency === 'USD' && (
+                              <p className="text-[10px] opacity-70">
+                                ({formaterArgent(calculatePresetAmount(vendeur) * TAUX_DE_CHANGE)} HTG)
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Existing deposits */}
                     {depots.length === 0 ? (
                       <div className="text-center py-3 text-white text-opacity-70 text-sm">
                         Aucun dépôt ajouté
