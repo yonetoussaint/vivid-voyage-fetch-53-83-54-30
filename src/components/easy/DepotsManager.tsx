@@ -285,67 +285,63 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     const sequences = depositSequences[vendeur] || [];
     return sequences.reduce((total, seq) => total + seq.amount, 0);
   };
+const handleAddCompleteDeposit = (vendeur) => {
+  const sequences = depositSequences[vendeur] || [];
+  const vendorState = vendorPresets[vendeur];
 
-  // FIXED: This was the main issue - handleAddCompleteDeposit
-  const handleAddCompleteDeposit = (vendeur) => {
-    const sequences = depositSequences[vendeur] || [];
-    const vendorState = vendorPresets[vendeur];
-    
-    if (sequences.length === 0) {
-      console.log("No sequences to add");
-      return;
-    }
-    
-    const totalAmount = calculateSequencesTotal(vendeur);
-    const currency = vendorState?.currency || 'HTG';
-    
-    console.log(`DEBUG: Adding deposit for ${vendeur}: ${totalAmount} ${currency}`);
-    
-    // Create breakdown description
-    const breakdown = sequences.map(seq => seq.note).join(', ');
-    
-    // Get current deposits
-    const currentDepots = depotsActuels[vendeur] || [];
-    const newIndex = currentDepots.length;
-    
-    console.log(`DEBUG: Current deposits count: ${currentDepots.length}, new index: ${newIndex}`);
-    
-    if (currency === 'USD') {
-      // Create USD deposit with amount
-      const deposit = {
-        montant: totalAmount.toFixed(2),
-        devise: 'USD',
-        breakdown: breakdown,
-        sequences: sequences
-      };
-      
-      console.log(`DEBUG: Creating USD deposit:`, deposit);
-      
-      // Use mettreAJourDepot to add the deposit at the new index
-      mettreAJourDepot(vendeur, newIndex, deposit);
-    } else {
-      // Create HTG deposit with amount
-      const deposit = {
-        value: totalAmount.toString(),
-        breakdown: breakdown,
-        sequences: sequences
-      };
-      
-      console.log(`DEBUG: Creating HTG deposit:`, deposit);
-      
-      // Use mettreAJourDepot to add the deposit at the new index
-      mettreAJourDepot(vendeur, newIndex, deposit);
-    }
-    
-    // Mark as recently added for highlighting
-    markAsRecentlyAdded(vendeur, newIndex);
-    
-    // Clear sequences after adding deposit
-    handleClearSequences(vendeur);
-    setShowSequenceManager(null);
-    
-    console.log(`DEBUG: Deposit added successfully`);
-  };
+  if (sequences.length === 0) {
+    console.log("No sequences to add");
+    return;
+  }
+
+  const totalAmount = calculateSequencesTotal(vendeur);
+  const currency = vendorState?.currency || 'HTG';
+
+  console.log(`DEBUG: Adding deposit for ${vendeur}: ${totalAmount} ${currency}`);
+
+  // Create breakdown description
+  const breakdown = sequences.map(seq => seq.note).join(', ');
+
+  // Get current deposits
+  const currentDepots = depotsActuels[vendeur] || [];
+  const newIndex = currentDepots.length;
+
+  if (currency === 'USD') {
+    // Create USD deposit object
+    const deposit = {
+      montant: totalAmount.toFixed(2),
+      devise: 'USD',
+      breakdown: breakdown,
+      sequences: sequences
+    };
+
+    console.log(`DEBUG: Creating USD deposit:`, deposit);
+
+    // Add deposit at the new index
+    mettreAJourDepot(vendeur, newIndex, deposit);
+  } else {
+    // Create HTG deposit object
+    const deposit = {
+      value: totalAmount.toString(),
+      breakdown: breakdown,
+      sequences: sequences
+    };
+
+    console.log(`DEBUG: Creating HTG deposit:`, deposit);
+
+    // Add deposit at the new index
+    mettreAJourDepot(vendeur, newIndex, deposit);
+  }
+
+  // Mark as recently added for highlighting
+  markAsRecentlyAdded(vendeur, newIndex);
+
+  // Clear sequences after adding deposit
+  handleClearSequences(vendeur);
+  setShowSequenceManager(null);
+
+  console.log(`DEBUG: Deposit added successfully`);
+};
 
   const toggleSequenceManager = (vendeur) => {
     setShowSequenceManager(showSequenceManager === vendeur ? null : vendeur);
