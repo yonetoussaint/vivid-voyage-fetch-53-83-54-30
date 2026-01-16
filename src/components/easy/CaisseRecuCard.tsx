@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, AlertCircle, Plus, Trash2, Globe, ChevronDown } from 'lucide-react';
+import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, AlertCircle, Plus, Trash2, Globe, ChevronDown, Hash } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 import { generateChangeCombinations, getMaximumGivableAmount } from '@/utils/changeCalculator';
 import ChangeCombinations from './ChangeCombinations';
@@ -16,12 +16,12 @@ const CaisseRecuCard = ({
   const [inputValue, setInputValue] = useState('');
   const [currencyType, setCurrencyType] = useState('HTG'); // 'HTG' or 'USD'
   const [cashSequences, setCashSequences] = useState([]);
-  const [selectedPreset, setSelectedPreset] = useState('100'); // Default preset for HTG
+  const [selectedPreset, setSelectedPreset] = useState('aucune'); // 'aucune' or preset value
   const [showPresets, setShowPresets] = useState(false);
   
   // Preset options for HTG (Gourdes) - including coin values
   const htgPresets = [
-    { value: '1', label: '1 HTG (pièce)' },
+    { value: 'aucune', label: 'Aucune (entrer montant libre)' },
     { value: '5', label: '5 HTG (pièce)' },
     { value: '10', label: '10 HTG (pièce)' },
     { value: '20', label: '20 HTG (pièce)' },
@@ -43,6 +43,7 @@ const CaisseRecuCard = ({
 
   // Preset options for USD
   const usdPresets = [
+    { value: 'aucune', label: 'Aucune (enter amount freely)' },
     { value: '1', label: '1 USD' },
     { value: '5', label: '5 USD' },
     { value: '10', label: '10 USD' },
@@ -53,6 +54,9 @@ const CaisseRecuCard = ({
 
   // Get current presets based on currency
   const currentPresets = currencyType === 'HTG' ? htgPresets : usdPresets;
+
+  // Check if "Aucune" is selected (direct amount entry)
+  const isDirectAmount = selectedPreset === 'aucune';
 
   // Calculate total cash received from all sequences (converted to HTG)
   const totalCashRecuHTG = useMemo(() => {
@@ -81,34 +85,38 @@ const CaisseRecuCard = ({
   const shouldGiveChange = changeNeeded > 0;
   const isShort = changeNeeded < 0;
 
-  // Calculate amount based on preset multiplier
-  const calculatePresetAmount = () => {
-    const multiplier = parseFloat(inputValue) || 1;
-    const presetValue = parseFloat(selectedPreset);
-    return (presetValue * multiplier).toString();
-  };
-
-  // Handle adding a new cash sequence with preset calculation
+  // Handle adding a new cash sequence
   const handleAddSequence = () => {
     let amount = 0;
     let displayAmount = '';
+    let note = '';
 
-    if (inputValue && !isNaN(parseFloat(inputValue))) {
-      // Calculate amount based on preset
-      const multiplier = parseFloat(inputValue);
-      const presetValue = parseFloat(selectedPreset);
-      amount = presetValue * multiplier;
+    if (isDirectAmount) {
+      // Direct amount entry mode
+      amount = parseFloat(inputValue) || 0;
       displayAmount = amount.toString();
-      
-      // Round to 2 decimal places for USD
-      if (currencyType === 'USD') {
-        amount = parseFloat(amount.toFixed(2));
-        displayAmount = amount.toFixed(2);
-      }
+      note = `${amount} ${currencyType}`;
     } else {
-      // If no input value, just use the preset value
-      amount = parseFloat(selectedPreset);
-      displayAmount = amount.toString();
+      // Preset multiplier mode
+      if (inputValue && !isNaN(parseFloat(inputValue))) {
+        // Calculate amount based on preset
+        const multiplier = parseFloat(inputValue);
+        const presetValue = parseFloat(selectedPreset);
+        amount = presetValue * multiplier;
+        displayAmount = amount.toString();
+        note = multiplier !== 1 ? `${multiplier} × ${selectedPreset} ${currencyType}` : `${selectedPreset} ${currencyType}`;
+      } else {
+        // If no input value, just use the preset value
+        amount = parseFloat(selectedPreset);
+        displayAmount = amount.toString();
+        note = `${selectedPreset} ${currencyType}`;
+      }
+    }
+
+    // Round to 2 decimal places for USD
+    if (currencyType === 'USD') {
+      amount = parseFloat(amount.toFixed(2));
+      displayAmount = amount.toFixed(2);
     }
 
     if (amount > 0) {
@@ -118,9 +126,7 @@ const CaisseRecuCard = ({
         currency: currencyType,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         convertedToHTG: currencyType === 'USD' ? amount * tauxUSD : amount,
-        note: inputValue && parseFloat(inputValue) !== 1 
-          ? `${inputValue} × ${selectedPreset} ${currencyType}` 
-          : `${selectedPreset} ${currencyType}`
+        note: note
       };
       setCashSequences(prev => [...prev, newSequence]);
       setInputValue('');
@@ -146,8 +152,6 @@ const CaisseRecuCard = ({
   const handleCurrencyToggle = () => {
     setCurrencyType(prev => {
       const newCurrency = prev === 'HTG' ? 'USD' : 'HTG';
-      // Reset to first preset of new currency
-      setSelectedPreset(newCurrency === 'HTG' ? '100' : '1');
       return newCurrency;
     });
   };
@@ -172,6 +176,10 @@ const CaisseRecuCard = ({
   const handlePresetSelect = (presetValue) => {
     setSelectedPreset(presetValue);
     setShowPresets(false);
+    // Clear input when switching modes
+    if (presetValue === 'aucune') {
+      setInputValue('');
+    }
   };
 
   const formatDepositDisplay = (depot) => {
@@ -307,55 +315,54 @@ const CaisseRecuCard = ({
           <p className="text-sm font-bold text-blue-300">1 USD = {tauxUSD} HTG</p>
         </div>
 
+        {/* Total Cash Received Summary */}
+        {cashSequences.length > 0 && (
+          <div className="bg-green-500 bg-opacity-20 rounded-lg p-2 mb-2 border border-green-400 border-opacity-30">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1">
+                <DollarSign size={12} className="text-green-300" />
+                <p className="text-xs font-bold text-green-300">Total reçu:</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-green-300">{formaterArgent(totalCashRecuHTG)} HTG</p>
+                <button
+                  onClick={handleClearAll}
+                  className="p-1 hover:bg-red-500 hover:bg-opacity-30 rounded text-red-300 hover:text-red-200 transition-colors"
+                  title="Effacer toutes les séquences"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
 
-{/* Total Cash Received Summary */}
-{cashSequences.length > 0 && (
-  <div className="bg-green-500 bg-opacity-20 rounded-lg p-2 mb-2 border border-green-400 border-opacity-30">
-    <div className="flex items-center justify-between mb-2">
-      <div className="flex items-center gap-1">
-        <DollarSign size={12} className="text-green-300" />
-        <p className="text-xs font-bold text-green-300">Total reçu:</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <p className="text-sm font-bold text-green-300">{formaterArgent(totalCashRecuHTG)} HTG</p>
-        <button
-          onClick={handleClearAll}
-          className="p-1 hover:bg-red-500 hover:bg-opacity-30 rounded text-red-300 hover:text-red-200 transition-colors"
-          title="Effacer toutes les séquences"
-        >
-          <Trash2 size={12} />
-        </button>
-      </div>
-    </div>
+            {/* Breakdown by currency - VERTICAL LAYOUT */}
+            <div className="space-y-1.5 text-[10px]">
+              <div className="bg-blue-500 bg-opacity-10 rounded p-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="opacity-80">Total HTG:</span>
+                  <span className="font-bold text-blue-300">{formaterArgent(totalHTG)} HTG</span>
+                </div>
+              </div>
+              <div className="bg-green-500 bg-opacity-10 rounded p-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="opacity-80">Total USD:</span>
+                  <div className="flex flex-col items-end">
+                    <span className="font-bold text-green-300">
+                      {totalUSD.toFixed(2)} USD
+                    </span>
+                    <span className="text-[9px] opacity-70 mt-0.5">
+                      ({formaterArgent(totalUSD * tauxUSD)} HTG)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-    {/* Breakdown by currency - VERTICAL LAYOUT */}
-    <div className="space-y-1.5 text-[10px]">
-      <div className="bg-blue-500 bg-opacity-10 rounded p-1.5">
-        <div className="flex items-center justify-between">
-          <span className="opacity-80">Total HTG:</span>
-          <span className="font-bold text-blue-300">{formaterArgent(totalHTG)} HTG</span>
-        </div>
-      </div>
-      <div className="bg-green-500 bg-opacity-10 rounded p-1.5">
-        <div className="flex items-center justify-between">
-          <span className="opacity-80">Total USD:</span>
-          <div className="flex flex-col items-end">
-            <span className="font-bold text-green-300">
-              {totalUSD.toFixed(2)} USD
-            </span>
-            <span className="text-[9px] opacity-70 mt-0.5">
-              ({formaterArgent(totalUSD * tauxUSD)} HTG)
-            </span>
+            <p className="text-[10px] opacity-80 mt-2 text-green-300">
+              {cashSequences.length} séquence{cashSequences.length !== 1 ? 's' : ''} ajoutée{cashSequences.length !== 1 ? 's' : ''}
+            </p>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <p className="text-[10px] opacity-80 mt-2 text-green-300">
-      {cashSequences.length} séquence{cashSequences.length !== 1 ? 's' : ''} ajoutée{cashSequences.length !== 1 ? 's' : ''}
-    </p>
-  </div>
-)}
+        )}
 
         {/* Cash Sequences List */}
         {cashSequences.length > 0 && (
@@ -460,9 +467,11 @@ const CaisseRecuCard = ({
                   }`}>
                     {selectedPresetLabel}
                   </span>
-                  <span className="text-[10px] opacity-70">
-                    {inputValue && parseFloat(inputValue) !== 1 ? `× ${inputValue} = ${formaterArgent(calculatePresetAmount())} ${currencyType}` : ''}
-                  </span>
+                  {!isDirectAmount && inputValue && parseFloat(inputValue) !== 1 && (
+                    <span className="text-[10px] opacity-70">
+                      × {inputValue} = {formaterArgent(parseFloat(selectedPreset) * parseFloat(inputValue))} {currencyType}
+                    </span>
+                  )}
                 </div>
                 <ChevronDown 
                   size={12} 
@@ -495,7 +504,7 @@ const CaisseRecuCard = ({
                         }`}
                       >
                         <span>{preset.label}</span>
-                        {inputValue && parseFloat(inputValue) !== 1 && (
+                        {preset.value !== 'aucune' && inputValue && parseFloat(inputValue) !== 1 && (
                           <span className="text-[10px] opacity-70">
                             = {formaterArgent(parseFloat(preset.value) * (parseFloat(inputValue) || 1))} {currencyType}
                           </span>
@@ -509,15 +518,21 @@ const CaisseRecuCard = ({
             
             {/* Helper text */}
             <p className="text-[10px] opacity-70 mt-1 text-center">
-              Sélectionnez un billet/pièce et entrez un multiplicateur
+              {isDirectAmount 
+                ? "Entrez directement le montant" 
+                : "Sélectionnez un billet/pièce et entrez un multiplicateur"}
             </p>
           </div>
 
-          {/* Input with Add button */}
+          {/* Input with Add button - Different layout based on mode */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <span className="text-white font-bold text-xs">
-                ×
+                {isDirectAmount ? (
+                  currencyType === 'HTG' ? 'HTG' : 'USD'
+                ) : (
+                  '×'
+                )}
               </span>
             </div>
             <input
@@ -525,15 +540,19 @@ const CaisseRecuCard = ({
               value={inputValue}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
-              placeholder="Multiplicateur (ex: 33)..."
+              placeholder={
+                isDirectAmount 
+                  ? `Montant en ${currencyType}...` 
+                  : 'Multiplicateur (ex: 33)...'
+              }
               className="w-full pl-10 pr-20 py-2.5 text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
             />
             <div className="absolute inset-y-0 right-0 flex items-center pr-1">
               <button
                 onClick={handleAddSequence}
-                disabled={!selectedPreset}
+                disabled={!inputValue || parseFloat(inputValue) <= 0}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 ${
-                  selectedPreset
+                  inputValue && parseFloat(inputValue) > 0
                     ? currencyType === 'HTG' 
                       ? 'bg-blue-500 hover:bg-blue-600 text-white'
                       : 'bg-green-500 hover:bg-green-600 text-white'
@@ -547,46 +566,48 @@ const CaisseRecuCard = ({
           </div>
           
           {/* Preview of calculation */}
-          {inputValue && !isNaN(parseFloat(inputValue)) && selectedPreset && (
+          {!isDirectAmount && inputValue && !isNaN(parseFloat(inputValue)) && selectedPreset && selectedPreset !== 'aucune' && (
             <div className="mt-2 bg-white bg-opacity-10 rounded p-2 text-center">
               <p className="text-xs opacity-90">
-                {inputValue} × {selectedPreset} {currencyType} = {formaterArgent(calculatePresetAmount())} {currencyType}
+                {inputValue} × {selectedPreset} {currencyType} = {formaterArgent(parseFloat(selectedPreset) * parseFloat(inputValue))} {currencyType}
               </p>
               {currencyType === 'USD' && (
                 <p className="text-[10px] opacity-70">
-                  ({formaterArgent(parseFloat(calculatePresetAmount()) * tauxUSD)} HTG)
+                  ({formaterArgent(parseFloat(selectedPreset) * parseFloat(inputValue) * tauxUSD)} HTG)
                 </p>
               )}
             </div>
           )}
         </div>
         
-        {/* Quick add buttons (with direct preset amounts) */}
-        <div className="grid grid-cols-4 gap-1 mb-2">
-          {getQuickAddAmounts().map((amount) => (
-            <button
-              key={amount}
-              onClick={() => {
-                // Set the preset to this amount
-                const preset = currentPresets.find(p => parseFloat(p.value) === amount);
-                if (preset) {
-                  setSelectedPreset(preset.value);
-                  // Set input to 1 and auto-add
-                  setInputValue('1');
-                  setTimeout(handleAddSequence, 50);
-                }
-              }}
-              className={`px-2 py-1.5 text-xs font-medium rounded border transition-colors ${
-                currencyType === 'USD'
-                  ? 'bg-green-500 bg-opacity-10 hover:bg-opacity-20 border-green-400 border-opacity-30 text-green-300'
-                  : 'bg-blue-500 bg-opacity-10 hover:bg-opacity-20 border-blue-400 border-opacity-30 text-blue-300'
-              }`}
-              title={`Ajouter 1 × ${amount} ${currencyType}`}
-            >
-              +{currencyType === 'USD' ? '$' : ''}{amount}
-            </button>
-          ))}
-        </div>
+        {/* Quick add buttons (only show when in preset mode) */}
+        {!isDirectAmount && (
+          <div className="grid grid-cols-4 gap-1 mb-2">
+            {getQuickAddAmounts().map((amount) => (
+              <button
+                key={amount}
+                onClick={() => {
+                  // Set the preset to this amount
+                  const preset = currentPresets.find(p => parseFloat(p.value) === amount);
+                  if (preset) {
+                    setSelectedPreset(preset.value);
+                    // Set input to 1 and auto-add
+                    setInputValue('1');
+                    setTimeout(handleAddSequence, 50);
+                  }
+                }}
+                className={`px-2 py-1.5 text-xs font-medium rounded border transition-colors ${
+                  currencyType === 'USD'
+                    ? 'bg-green-500 bg-opacity-10 hover:bg-opacity-20 border-green-400 border-opacity-30 text-green-300'
+                    : 'bg-blue-500 bg-opacity-10 hover:bg-opacity-20 border-blue-400 border-opacity-30 text-blue-300'
+                }`}
+                title={`Ajouter 1 × ${amount} ${currencyType}`}
+              >
+                +{currencyType === 'USD' ? '$' : ''}{amount}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Change calculation */}
@@ -670,13 +691,14 @@ const CaisseRecuCard = ({
       {cashSequences.length === 0 && (
         <div className="bg-white bg-opacity-5 rounded-lg p-2 text-center">
           <p className="text-[10px] opacity-70">
-            Sélectionnez un billet/pièce et entrez un multiplicateur
+            {selectedPreset === 'aucune' 
+              ? 'Entrez directement le montant' 
+              : 'Sélectionnez un billet/pièce et entrez un multiplicateur'}
           </p>
           <p className="text-[9px] opacity-50 mt-0.5">
-            Ex: Sélectionnez "1,000 HTG", entrez "33" → 33,000 HTG
-          </p>
-          <p className="text-[9px] opacity-50 mt-0.5">
-            Ex: Sélectionnez "100 HTG", entrez "5" → 500 HTG
+            {selectedPreset === 'aucune'
+              ? 'Ex: Entrez "1250" pour ajouter 1,250 HTG'
+              : 'Ex: Sélectionnez "1,000 HTG", entrez "33" → 33,000 HTG'}
           </p>
         </div>
       )}
