@@ -257,10 +257,14 @@ const CaisseRecuCard = ({
       <div className="bg-green-500 bg-opacity-10 rounded p-1.5">
         <div className="flex items-center justify-between">
           <span className="opacity-80">Total USD:</span>
-          <span className="font-bold text-green-300">
-            {totalUSD.toFixed(2)} USD
-            <span className="text-[9px] opacity-70 ml-1">({formaterArgent(totalUSD * tauxUSD)} HTG)</span>
-          </span>
+          <div className="flex flex-col items-end">
+            <span className="font-bold text-green-300">
+              {totalUSD.toFixed(2)} USD
+            </span>
+            <span className="text-[9px] opacity-70 mt-0.5">
+              ({formaterArgent(totalUSD * tauxUSD)} HTG)
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -270,7 +274,6 @@ const CaisseRecuCard = ({
     </p>
   </div>
 )}
-
 
         {/* Cash Sequences List */}
         {cashSequences.length > 0 && (
