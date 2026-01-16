@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Edit2, Trash2 } from 'lucide-react';
 import VendorDepositCard from './VendorDepositCard';
 import SequenceManager from './SequenceManager';
 import DepositInputsSection from './DepositInputsSection';
@@ -12,14 +12,15 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const TAUX_DE_CHANGE = 132;
   const depotsActuels = tousDepots[shift] || {};
 
-  // State - Simplified for sequential-only deposits
+  // State
   const [vendorInputs, setVendorInputs] = useState({});
   const [vendorPresets, setVendorPresets] = useState({});
   const [showPresetsForVendor, setShowPresetsForVendor] = useState(null);
   const [depositSequences, setDepositSequences] = useState({});
   const [recentlyAdded, setRecentlyAdded] = useState({});
+  const [editingDeposit, setEditingDeposit] = useState(null); // { vendeur: string, index: number }
 
-  // Presets remain the same
+  // Presets
   const htgPresets = [
     { value: '5', label: '5' },
     { value: '10', label: '10' },
@@ -46,7 +47,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     { value: '100', label: '100' }
   ];
 
-  // Helper Functions - Same as before
+  // Helper Functions
   const convertirUSDversHTG = (montantUSD) => {
     return (parseFloat(montantUSD) || 0) * TAUX_DE_CHANGE;
   };
@@ -60,18 +61,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       return parseFloat(depot.value) || 0;
     }
     return parseFloat(depot) || 0;
-  };
-
-  const getDisplayValue = (depot) => {
-    if (!depot) return '';
-    if (typeof depot === 'object') {
-      if (depot.devise === 'USD') {
-        return depot.montant !== undefined ? depot.montant.toString() : '';
-      } else if (depot.value) {
-        return depot.value.toString();
-      }
-    }
-    return depot !== undefined ? depot.toString() : '';
   };
 
   const isUSDDepot = (depot) => {
@@ -142,16 +131,104 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }, 2000);
   };
 
-  // Event Handlers - Removed simple deposit functions
-  const handleCurrencySelect = (vendeur, currency) => {
+  // Edit deposit functionality
+  const handleEditDeposit = (vendeur, index) => {
+    const depot = depotsActuels[vendeur]?.[index];
+    
+    if (!depot) return;
+    
+    // Set editing state
+    setEditingDeposit({ vendeur, index });
+    
+    // Load sequences from deposit if they exist
+    if (depot.sequences && Array.isArray(depot.sequences)) {
+      setDepositSequences(prev => ({
+        ...prev,
+        [vendeur]: depot.sequences.map(seq => ({
+          id: Date.now() + Math.random(), // New IDs for editing
+          amount: seq.amount,
+          currency: seq.currency || (isUSDDepot(depot) ? 'USD' : 'HTG'),
+          note: seq.note || seq.text || `${seq.amount} ${seq.currency || (isUSDDepot(depot) ? 'USD' : 'HTG')}`,
+          timestamp: seq.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }))
+      }));
+    } else {
+      // Convert simple deposit to sequence
+      const currency = isUSDDepot(depot) ? 'USD' : 'HTG';
+      const amount = getOriginalDepotAmount(depot);
+      
+      setDepositSequences(prev => ({
+        ...prev,
+        [vendeur]: [{
+          id: Date.now(),
+          amount,
+          currency,
+          note: `${amount} ${currency}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]
+      }));
+    }
+    
+    // Set currency in vendor state
+    const currency = isUSDDepot(depot) ? 'USD' : 'HTG';
     setVendorPresets(prev => ({
       ...prev,
-      [vendeur]: { currency, preset: 'aucune' }
+      [vendeur]: { 
+        ...prev[vendeur], 
+        currency,
+        preset: 'aucune'
+      }
     }));
+    
+    // Clear input
     setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
-    setShowPresetsForVendor(null);
   };
 
+  const cancelEdit = (vendeur) => {
+    setEditingDeposit(null);
+    setDepositSequences(prev => ({ ...prev, [vendeur]: [] }));
+  };
+
+  const saveEditedDeposit = (vendeur) => {
+    const sequences = depositSequences[vendeur] || [];
+    const vendorState = vendorPresets[vendeur];
+    const { index } = editingDeposit;
+
+    if (sequences.length === 0) {
+      // If no sequences, delete the deposit
+      supprimerDepot(vendeur, index);
+      cancelEdit(vendeur);
+      return;
+    }
+
+    const totalAmount = sequences.reduce((total, seq) => total + seq.amount, 0);
+    const currency = vendorState?.currency || 'HTG';
+    const breakdown = sequences.map(seq => seq.note).join(', ');
+
+    if (currency === 'USD') {
+      // Create USD deposit object
+      const deposit = {
+        montant: totalAmount.toFixed(2),
+        devise: 'USD',
+        breakdown: breakdown,
+        sequences: sequences
+      };
+      mettreAJourDepot(vendeur, index, deposit);
+    } else {
+      // Create HTG deposit object
+      const deposit = {
+        value: totalAmount.toString(),
+        breakdown: breakdown,
+        sequences: sequences
+      };
+      mettreAJourDepot(vendeur, index, deposit);
+    }
+
+    markAsRecentlyAdded(vendeur, index);
+    cancelEdit(vendeur);
+  };
+
+  // Event Handlers
   const handleCurrencyButtonClick = (vendeur, currency) => {
     if (!vendorPresets[vendeur]) {
       initializeVendorState(vendeur, currency);
@@ -246,7 +323,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     if (amount > 0) {
       initializeSequences(vendeur);
       const newSequence = {
-        id: Date.now(),
+        id: Date.now() + Math.random(),
         amount,
         currency,
         note,
@@ -296,10 +373,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
     const totalAmount = calculateSequencesTotal(vendeur);
     const currency = vendorState?.currency || 'HTG';
-
-    console.log(`DEBUG: Adding deposit for ${vendeur}: ${totalAmount} ${currency}`);
-
-    // Create breakdown description
     const breakdown = sequences.map(seq => seq.note).join(', ');
 
     // Get current deposits
@@ -307,43 +380,32 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     const newIndex = currentDepots.length;
 
     if (currency === 'USD') {
-      // Create USD deposit object
       const deposit = {
         montant: totalAmount.toFixed(2),
         devise: 'USD',
         breakdown: breakdown,
         sequences: sequences
       };
-
-      console.log(`DEBUG: Creating USD deposit:`, deposit);
-
-      // Add deposit at the new index
       mettreAJourDepot(vendeur, newIndex, deposit);
     } else {
-      // Create HTG deposit object
       const deposit = {
         value: totalAmount.toString(),
         breakdown: breakdown,
         sequences: sequences
       };
-
-      console.log(`DEBUG: Creating HTG deposit:`, deposit);
-
-      // Add deposit at the new index
       mettreAJourDepot(vendeur, newIndex, deposit);
     }
 
-    // Mark as recently added for highlighting
     markAsRecentlyAdded(vendeur, newIndex);
-
-    // Clear sequences after adding deposit
     handleClearSequences(vendeur);
-
-    console.log(`DEBUG: Deposit added successfully`);
   };
 
   const isRecentlyAdded = (vendeur, index) => {
     return recentlyAdded[`${vendeur}-${index}`] || false;
+  };
+
+  const isEditingThisDeposit = (vendeur, index) => {
+    return editingDeposit?.vendeur === vendeur && editingDeposit?.index === index;
   };
 
   return (
@@ -380,6 +442,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
               const isDirectMode = isDirectAmount(vendeur);
               const sequences = depositSequences[vendeur] || [];
               const sequencesTotal = calculateSequencesTotal(vendeur);
+              const isEditingMode = editingDeposit?.vendeur === vendeur;
 
               return (
                 <VendorDepositCard
@@ -392,7 +455,11 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                   {/* SEQUENTIAL DEPOSITS ONLY - Always Visible */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-semibold">Ajouter Dépôt (Séquentiel)</span>
+                      <span className="text-sm font-semibold">
+                        {isEditingMode ? 
+                          `Éditer Dépôt #${editingDeposit.index + 1}` : 
+                          'Ajouter Nouveau Dépôt (Séquentiel)'}
+                      </span>
                       <div className="flex flex-wrap gap-1">
                         <button
                           onClick={() => handleCurrencyButtonClick(vendeur, 'HTG')}
@@ -414,6 +481,14 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                         >
                           USD
                         </button>
+                        {isEditingMode && (
+                          <button
+                            onClick={() => cancelEdit(vendeur)}
+                            className="px-2 py-1.5 rounded-lg font-bold text-xs bg-red-500 text-white active:scale-95 transition"
+                          >
+                            Annuler
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -423,19 +498,21 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       vendorState={vendorState}
                       sequences={sequences}
                       sequencesTotal={sequencesTotal}
-                      isSequenceManagerOpen={true} // Always open
+                      isSequenceManagerOpen={true}
                       vendorInputs={vendorInputs}
                       isDirectMode={isDirectMode}
                       showPresetsForVendor={showPresetsForVendor}
                       currentPresets={currentPresets}
-                      toggleSequenceManager={() => {}} // No-op since always open
+                      toggleSequenceManager={() => {}}
                       handleClearSequences={handleClearSequences}
                       handleRemoveSequence={handleRemoveSequence}
                       setShowPresetsForVendor={setShowPresetsForVendor}
                       handlePresetSelect={handlePresetSelect}
                       handleInputChange={handleInputChange}
                       handleAddSequence={handleAddSequence}
-                      handleAddCompleteDeposit={handleAddCompleteDeposit}
+                      handleAddCompleteDeposit={isEditingMode ? 
+                        () => saveEditedDeposit(vendeur) : 
+                        () => handleAddCompleteDeposit(vendeur)}
                       getSelectedPresetText={getSelectedPresetText}
                       calculatePresetAmount={calculatePresetAmount}
                       htgPresets={htgPresets}
@@ -443,19 +520,87 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                     />
                   </div>
 
-                  <ExistingDepositsList
-                    vendeur={vendeur}
-                    depots={depots}
-                    mettreAJourDepot={mettreAJourDepot}
-                    supprimerDepot={supprimerDepot}
-                    isRecentlyAdded={isRecentlyAdded}
-                    getDisplayValue={getDisplayValue}
-                    isUSDDepot={isUSDDepot}
-                    getMontantHTG={getMontantHTG}
-                    getDepositDisplay={getDepositDisplay}
-                    hasBreakdown={hasBreakdown}
-                    getOriginalDepotAmount={getOriginalDepotAmount}
-                  />
+                  {/* EXISTING DEPOSITS LIST - READ ONLY WITH ACTIONS */}
+                  {depots.length === 0 ? (
+                    <div className="text-center py-3 text-white text-opacity-70 text-sm">
+                      Aucun dépôt ajouté
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium opacity-90 mb-2">
+                        Dépôts existants ({depots.length})
+                      </div>
+                      {depots.map((depot, index) => {
+                        const isUSD = isUSDDepot(depot);
+                        const montantHTG = getMontantHTG(depot);
+                        const displayText = getDepositDisplay(depot);
+                        const isRecent = isRecentlyAdded(vendeur, index);
+                        const isEditing = isEditingThisDeposit(vendeur, index);
+
+                        return (
+                          <div 
+                            key={index} 
+                            className={`p-3 rounded-lg transition-all duration-300 ${
+                              isEditing
+                                ? 'ring-2 ring-amber-400 bg-amber-500 bg-opacity-10'
+                                : isRecent
+                                ? 'bg-green-500 bg-opacity-10 border border-green-400 border-opacity-30'
+                                : 'bg-white bg-opacity-10'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div className={`
+                                      flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
+                                      ${isUSD 
+                                        ? 'bg-green-600 text-green-50' 
+                                        : 'bg-white/20 text-white'
+                                      }
+                                    `}>
+                                      {index + 1}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="font-semibold truncate text-sm">
+                                        {displayText}
+                                      </div>
+                                      {isUSD && (
+                                        <div className="text-xs opacity-70">
+                                          = {formaterArgent(montantHTG)} HTG
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleEditDeposit(vendeur, index)}
+                                  className={`p-2 rounded-lg transition-colors ${
+                                    isEditing
+                                      ? 'bg-amber-500 text-white'
+                                      : 'bg-blue-500 bg-opacity-20 text-blue-300 hover:bg-opacity-30'
+                                  }`}
+                                  title="Éditer ce dépôt"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  onClick={() => supprimerDepot(vendeur, index)}
+                                  className="p-2 bg-red-500 bg-opacity-20 text-red-300 hover:bg-opacity-30 rounded-lg transition-colors"
+                                  title="Supprimer ce dépôt"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   <DepositsSummary
                     vendeur={vendeur}
