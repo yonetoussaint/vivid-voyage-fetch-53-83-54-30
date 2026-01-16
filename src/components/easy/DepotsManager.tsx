@@ -281,44 +281,71 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     const sequences = depositSequences[vendeur] || [];
     const vendorState = vendorPresets[vendeur];
     
-    if (sequences.length === 0) return;
+    if (sequences.length === 0) {
+      console.log("No sequences to add");
+      return;
+    }
     
     const totalAmount = calculateSequencesTotal(vendeur);
     const currency = vendorState?.currency || 'HTG';
     
+    console.log(`Adding deposit: ${totalAmount} ${currency} with ${sequences.length} sequences`);
+    
     // Create breakdown description
     const breakdown = sequences.map(seq => seq.note).join(', ');
     
-    // Get current deposits
-    const currentDepots = depotsActuels[vendeur] || [];
-    const newIndex = currentDepots.length;
+    let deposit;
     
     if (currency === 'USD') {
       // Create USD deposit object
-      const deposit = {
+      deposit = {
         montant: totalAmount.toFixed(2),
         devise: 'USD',
         breakdown: breakdown,
         sequences: sequences
       };
-      
-      // Add the deposit directly
-      mettreAJourDepot(vendeur, newIndex, deposit);
     } else {
       // Create HTG deposit object
-      const deposit = {
+      deposit = {
         value: totalAmount.toString(),
         breakdown: breakdown,
         sequences: sequences
       };
-      
-      // Add the deposit directly
-      mettreAJourDepot(vendeur, newIndex, deposit);
+    }
+    
+    // Use ajouterDepot to add the deposit with the amount directly
+    // First, we need to check what parameters ajouterDepot expects
+    // Based on the original code, it seems to expect (vendeur, currency)
+    // Let's modify our approach
+    
+    // Get current deposits to find the next index
+    const currentDepots = depotsActuels[vendeur] || [];
+    const newIndex = currentDepots.length;
+    
+    console.log(`Adding deposit at index ${newIndex}:`, deposit);
+    
+    // Try to use mettreAJourDepot with the deposit object
+    // This should create the deposit at the specified index
+    if (currency === 'USD') {
+      mettreAJourDepot(vendeur, newIndex, {
+        montant: totalAmount.toFixed(2),
+        devise: 'USD',
+        breakdown: breakdown,
+        sequences: sequences
+      });
+    } else {
+      mettreAJourDepot(vendeur, newIndex, {
+        value: totalAmount.toString(),
+        breakdown: breakdown,
+        sequences: sequences
+      });
     }
     
     // Clear sequences after adding deposit
     handleClearSequences(vendeur);
     setShowSequenceManager(null);
+    
+    console.log("Deposit added successfully");
   };
 
   // Get deposit display with breakdown
@@ -414,9 +441,22 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     if (amount > 0) {
       const currentDepots = depotsActuels[vendeur] || [];
       const newIndex = currentDepots.length;
+      
+      // Add the deposit directly
       mettreAJourDepot(vendeur, newIndex, amount.toString());
       input.value = '';
     }
+  };
+
+  // Debug function to check what's happening
+  const debugDepositCreation = (vendeur) => {
+    console.log("=== DEBUG DEPOSIT CREATION ===");
+    console.log("Vendor:", vendeur);
+    console.log("Sequences:", depositSequences[vendeur]);
+    console.log("Total:", calculateSequencesTotal(vendeur));
+    console.log("Current deposits:", depotsActuels[vendeur]);
+    console.log("Vendor state:", vendorPresets[vendeur]);
+    console.log("=============================");
   };
 
   return (
@@ -543,7 +583,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       </div>
                     </div>
 
-                    {/* Sequence Manager - MOBILE FRIENDLY VERSION */}
+                    {/* Sequence Manager */}
                     {isSequenceManagerOpen && (
                       <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-2">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -570,7 +610,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           </div>
                         </div>
 
-                        {/* Current sequences list - MOBILE FRIENDLY */}
+                        {/* Current sequences list */}
                         <div className="space-y-1 max-h-32 overflow-y-auto">
                           {sequences.length === 0 ? (
                             <div className="text-center py-2 text-white text-opacity-50 text-xs sm:text-sm">
@@ -605,7 +645,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           )}
                         </div>
 
-                        {/* Add sequence section - MOBILE FRIENDLY */}
+                        {/* Add sequence section */}
                         <div className="space-y-2">
                           {/* Preset selector */}
                           <div className="relative">
@@ -665,7 +705,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                   )}
                                 </button>
                                 
-                                {/* Grid of presets - MOBILE FRIENDLY (2 columns on mobile) */}
+                                {/* Grid of presets */}
                                 <div className="p-1.5 sm:p-2">
                                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                                     {currentPresets.map((preset) => (
@@ -688,7 +728,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                             )}
                           </div>
 
-                          {/* Input with Add Sequence button - MOBILE FRIENDLY */}
+                          {/* Input with Add Sequence button */}
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                               <span className="text-white font-bold text-xs">
@@ -735,11 +775,14 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                             </div>
                           </div>
 
-                          {/* Add Complete Deposit Button - MOBILE FRIENDLY */}
+                          {/* Add Complete Deposit Button - FIXED */}
                           {sequences.length > 0 && (
                             <div className="pt-1">
                               <button
-                                onClick={() => handleAddCompleteDeposit(vendeur)}
+                                onClick={() => {
+                                  debugDepositCreation(vendeur);
+                                  handleAddCompleteDeposit(vendeur);
+                                }}
                                 className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity text-sm sm:text-base"
                               >
                                 <Plus size={14} />
@@ -796,7 +839,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       </div>
                     )}
 
-                    {/* Existing deposits - MOBILE FRIENDLY */}
+                    {/* Existing deposits */}
                     {depots.length === 0 ? (
                       <div className="text-center py-3 text-white text-opacity-70 text-sm">
                         Aucun dépôt ajouté
@@ -813,7 +856,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
                           return (
                             <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                              {/* Input container - MOBILE FRIENDLY */}
+                              {/* Input container */}
                               <div className="flex-1 w-full">
                                 <div className="flex items-center bg-white bg-opacity-20 rounded-lg overflow-hidden">
                                   <input
@@ -826,7 +869,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                           montant: e.target.value,
                                           devise: 'USD',
                                           ...(depot.breakdown && { breakdown: depot.breakdown }),
-                                          ...(depot.sequences && { sequences: depot.sequences })
+                                          ...(depot.sequences && { sequences: deposit.sequences })
                                         });
                                       } else if (typeof depot === 'object' && depot.value) {
                                         // HTG deposit with breakdown
@@ -877,7 +920,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                     )}
                   </div>
 
-                  {/* Résumé Dépôts - MOBILE FRIENDLY */}
+                  {/* Résumé Dépôts */}
                   {depots.length > 0 && (
                     <div className="pt-3 border-t border-white border-opacity-30">
                       <div className="flex flex-col gap-1">
