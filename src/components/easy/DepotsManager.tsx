@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Edit2, Trash2 } from 'lucide-react';
+import { DollarSign } from 'lucide-react';
 import VendorDepositCard from './VendorDepositCard';
 import SequenceManager from './SequenceManager';
 import DepositInputsSection from './DepositInputsSection';
-import ExistingDepositsList from './ExistingDepositsList';
 import DepositsSummary from './DepositsSummary';
 import ExchangeRateBanner from './ExchangeRateBanner';
 import { formaterArgent } from '@/utils/formatters';
@@ -520,88 +519,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                     />
                   </div>
 
-                  {/* EXISTING DEPOSITS LIST - READ ONLY WITH ACTIONS */}
-                  {depots.length === 0 ? (
-                    <div className="text-center py-3 text-white text-opacity-70 text-sm">
-                      Aucun dépôt ajouté
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="text-xs font-medium opacity-90 mb-2">
-                        Dépôts existants ({depots.length})
-                      </div>
-                      {depots.map((depot, index) => {
-                        const isUSD = isUSDDepot(depot);
-                        const montantHTG = getMontantHTG(depot);
-                        const displayText = getDepositDisplay(depot);
-                        const isRecent = isRecentlyAdded(vendeur, index);
-                        const isEditing = isEditingThisDeposit(vendeur, index);
-
-                        return (
-                          <div 
-                            key={index} 
-                            className={`p-3 rounded-lg transition-all duration-300 ${
-                              isEditing
-                                ? 'ring-2 ring-amber-400 bg-amber-500 bg-opacity-10'
-                                : isRecent
-                                ? 'bg-green-500 bg-opacity-10 border border-green-400 border-opacity-30'
-                                : 'bg-white bg-opacity-10'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <div className={`
-                                      flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
-                                      ${isUSD 
-                                        ? 'bg-green-600 text-green-50' 
-                                        : 'bg-white/20 text-white'
-                                      }
-                                    `}>
-                                      {index + 1}
-                                    </div>
-                                    <div className="min-w-0">
-                                      <div className="font-semibold truncate text-sm">
-                                        {displayText}
-                                      </div>
-                                      {isUSD && (
-                                        <div className="text-xs opacity-70">
-                                          = {formaterArgent(montantHTG)} HTG
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => handleEditDeposit(vendeur, index)}
-                                  className={`p-2 rounded-lg transition-colors ${
-                                    isEditing
-                                      ? 'bg-amber-500 text-white'
-                                      : 'bg-blue-500 bg-opacity-20 text-blue-300 hover:bg-opacity-30'
-                                  }`}
-                                  title="Éditer ce dépôt"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button
-                                  onClick={() => supprimerDepot(vendeur, index)}
-                                  className="p-2 bg-red-500 bg-opacity-20 text-red-300 hover:bg-opacity-30 rounded-lg transition-colors"
-                                  title="Supprimer ce dépôt"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
+                  {/* Use DepositsSummary with edit/delete actions */}
                   <DepositsSummary
                     vendeur={vendeur}
                     depots={depots}
@@ -610,6 +528,10 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                     isUSDDepot={isUSDDepot}
                     getOriginalDepotAmount={getOriginalDepotAmount}
                     getDepositDisplay={getDepositDisplay}
+                    onEditDeposit={handleEditDeposit}
+                    onDeleteDeposit={supprimerDepot}
+                    editingDeposit={editingDeposit}
+                    isEditingThisDeposit={isEditingThisDeposit}
                   />
                 </VendorDepositCard>
               );
