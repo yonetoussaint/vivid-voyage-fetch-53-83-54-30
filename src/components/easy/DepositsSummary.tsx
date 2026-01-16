@@ -61,7 +61,7 @@ const DepositsSummary = ({
     const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + seq.value, 0);
 
     return (
-      <div className="mt-2 ml-1 pl-2 border-l border-white border-opacity-20">
+      <div className="mt-2">
         <div className="flex items-center justify-between mb-1.5">
           <div className="text-[11px] font-medium opacity-80 flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
@@ -82,7 +82,7 @@ const DepositsSummary = ({
               }`}
             >
               {/* Left column - Description */}
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <div className="relative">
                   <div className={`w-2 h-2 rounded-full ${
                     seq.isUSD 
@@ -99,7 +99,7 @@ const DepositsSummary = ({
               </div>
               
               {/* Right column - Total */}
-              <div className={`text-[10px] font-medium px-2 py-0.5 rounded ml-2 ${
+              <div className={`text-[10px] font-medium px-2 py-0.5 rounded ${
                 seq.isUSD 
                   ? 'bg-green-900 bg-opacity-40 text-green-200' 
                   : 'bg-white bg-opacity-15'
@@ -186,57 +186,51 @@ const DepositsSummary = ({
                   hover:bg-opacity-40 hover:scale-[1.02] hover:shadow-md
                 `}
               >
-                <div className="flex items-start gap-3">
-                  {/* Number badge */}
-                  <div className={`
-                    flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
-                    ${isUSD 
-                      ? 'bg-green-600 text-green-50' 
-                      : 'bg-white/20 text-white'
-                    }
-                    ${isRecent ? 'animate-bounce-subtle' : ''}
-                  `}>
-                    {originalIndex + 1}
+                {/* Main deposit info - Removed the gap-3 container that was adding padding */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-3 mb-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className={`
+                      flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
+                      ${isUSD 
+                        ? 'bg-green-600 text-green-50' 
+                        : 'bg-white/20 text-white'
+                      }
+                      ${isRecent ? 'animate-bounce-subtle' : ''}
+                    `}>
+                      {originalIndex + 1}
+                    </div>
+                    <span className="font-semibold truncate">{displayText}</span>
+                    {isRecent && (
+                      <Check size={10} className="text-green-300 flex-shrink-0 animate-pulse" />
+                    )}
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    {/* Main deposit info */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-3 mb-1">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="font-semibold truncate">{displayText}</span>
-                        {isRecent && (
-                          <Check size={10} className="text-green-300 flex-shrink-0 animate-pulse" />
-                        )}
+                  <div className="flex items-center gap-2 mt-1 sm:mt-0">
+                    {/* Show total for deposits with breakdown */}
+                    {hasBreakdown && (
+                      <div className="text-xs opacity-80 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                        <span className="opacity-70">Total:</span>
+                        <span className="font-medium">
+                          {isUSD 
+                            ? `${montantOriginal} USD` 
+                            : `${formaterArgent(montantOriginal)} HTG`
+                          }
+                        </span>
                       </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {/* Show total for deposits with breakdown */}
-                        {hasBreakdown && (
-                          <div className="text-xs opacity-80 px-2 py-0.5 rounded inline-flex items-center gap-1">
-                            <span className="opacity-70">Total:</span>
-                            <span className="font-medium">
-                              {isUSD 
-                                ? `${montantOriginal} USD` 
-                                : `${formaterArgent(montantOriginal)} HTG`
-                              }
-                            </span>
-                          </div>
-                        )}
-                        
-                        {/* USD conversion for USD deposits */}
-                        {isUSD && (
-                          <div className="text-xs opacity-80 bg-green-900/30 px-2 py-1 rounded inline-flex items-center gap-1">
-                            <span className="opacity-70">≈</span>
-                            <span>{formaterArgent(montantHTG)} HTG</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    )}
                     
-                    {/* Render breakdown as beautiful vertical list */}
-                    {renderBreakdown(depot)}
+                    {/* USD conversion for USD deposits */}
+                    {isUSD && (
+                      <div className="text-xs opacity-80 bg-green-900/30 px-2 py-1 rounded inline-flex items-center gap-1">
+                        <span className="opacity-70">≈</span>
+                        <span>{formaterArgent(montantHTG)} HTG</span>
+                      </div>
+                    )}
                   </div>
                 </div>
+                
+                {/* Render breakdown - Now this will align properly under the main content */}
+                {renderBreakdown(depot)}
               </div>
             );
           })}
