@@ -140,7 +140,7 @@ const PumpInputView = ({
         </button>
 
         {showStatsCards && (
-          <div className="px-4 pb-4">
+          <div className=" pb-4">
             <div className="border-t border-gray-200 pt-4">
               <StatsCards 
                 shift={shift}
