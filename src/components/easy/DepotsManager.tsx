@@ -115,6 +115,8 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       ...prev,
       [vendeur]: ''
     }));
+    // Close any open dropdowns
+    setShowPresetsForVendor(null);
   };
 
   // Handle preset selection for a vendor
@@ -152,7 +154,11 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     const vendorState = vendorPresets[vendeur];
     const inputValue = vendorInputs[vendeur];
     
-    if (!vendorState) return;
+    if (!vendorState) {
+      // Initialize if somehow not set
+      initializeVendorState(vendeur, 'HTG');
+      return;
+    }
 
     let amount = 0;
     let currency = vendorState.currency;
@@ -179,11 +185,26 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }
 
     if (amount > 0) {
-      // Add the deposit
+      // Add the deposit - based on original ajouterDepot function signature
+      // The original expects (vendeur, currency) without amount
+      // We need to update the function or handle it differently
+      
+      // For now, let's use the original function signature
+      // Then immediately update the deposit with the calculated amount
+      ajouterDepot(vendeur, currency);
+      
+      // Get the newly added deposit index
+      const currentDepots = depotsActuels[vendeur] || [];
+      const newIndex = currentDepots.length;
+      
+      // Update the newly added deposit with the calculated amount
       if (currency === 'USD') {
-        ajouterDepot(vendeur, 'USD', amount);
+        mettreAJourDepot(vendeur, newIndex, {
+          montant: amount.toString(),
+          devise: 'USD'
+        });
       } else {
-        ajouterDepot(vendeur, 'HTG', amount);
+        mettreAJourDepot(vendeur, newIndex, amount.toString());
       }
       
       // Reset input
@@ -237,6 +258,19 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const isDirectAmount = (vendeur) => {
     const vendorState = vendorPresets[vendeur];
     return !vendorState || vendorState.preset === 'aucune';
+  };
+
+  // Handle the currency button click - simplified version
+  const handleCurrencyButtonClick = (vendeur, currency) => {
+    // Just set the currency and show the dropdown
+    setVendorPresets(prev => ({
+      ...prev,
+      [vendeur]: {
+        ...(prev[vendeur] || { preset: 'aucune' }),
+        currency: currency
+      }
+    }));
+    setShowPresetsForVendor(showPresetsForVendor === vendeur ? null : vendeur);
   };
 
   return (
@@ -324,12 +358,9 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       <span className="text-sm font-semibold">Entrées Dépôts</span>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => {
-                            handleCurrencySelect(vendeur, 'HTG');
-                            setShowPresetsForVendor(showPresetsForVendor === vendeur ? null : vendeur);
-                          }}
+                          onClick={() => handleCurrencyButtonClick(vendeur, 'HTG')}
                           className={`px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition ${
-                            vendorState?.currency === 'HTG'
+                            (!vendorState || vendorState.currency === 'HTG')
                               ? 'bg-white text-indigo-600'
                               : 'bg-white bg-opacity-20 text-white'
                           }`}
@@ -338,10 +369,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           HTG
                         </button>
                         <button
-                          onClick={() => {
-                            handleCurrencySelect(vendeur, 'USD');
-                            setShowPresetsForVendor(showPresetsForVendor === vendeur ? null : vendeur);
-                          }}
+                          onClick={() => handleCurrencyButtonClick(vendeur, 'USD')}
                           className={`px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition ${
                             vendorState?.currency === 'USD'
                               ? 'bg-green-500 text-white'
@@ -354,7 +382,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       </div>
                     </div>
 
-                    {/* Preset selector and input */}
+                    {/* Preset selector and input - Only show if vendorState exists */}
                     {vendorState && (
                       <div className="space-y-2">
                         {/* Preset selector */}
