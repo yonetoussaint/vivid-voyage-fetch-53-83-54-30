@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { List, Trash2, X, Plus, Check, ChevronDown, Edit2, Save, RotateCcw, ChevronUp, ChevronRight } from 'lucide-react';
+import { List, Trash2, X, Plus, Check, ChevronDown, Edit2, Save, RotateCcw } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const SequenceManager = ({
@@ -9,7 +9,6 @@ const SequenceManager = ({
   sequencesTotal,
   isSequenceManagerOpen,
   vendorInputs,
-  isDirectMode,
   currentPresets,
 
   // Functions
@@ -23,7 +22,6 @@ const SequenceManager = ({
   setVendorPresets,
 
   // Helper functions
-  getSelectedPresetText,
   calculatePresetAmount,
 
   // Configuration
@@ -46,6 +44,14 @@ const SequenceManager = ({
   const getPresets = () => {
     if (!vendorState) return [];
     return vendorState.currency === 'HTG' ? htgPresets : usdPresets;
+  };
+
+  // Get selected preset label
+  const getSelectedPresetLabel = () => {
+    if (!vendorState || vendorState.preset === 'aucune') return 'Montant libre';
+    const presets = getPresets();
+    const preset = presets.find(p => p.value === vendorState.preset);
+    return preset ? preset.label : 'Montant libre';
   };
 
   // Handle wheel dragging
@@ -247,9 +253,8 @@ const SequenceManager = ({
 
   // Check if we're in edit mode
   const isEditingMode = editingSequenceId !== null;
-  const presets = getPresets();
-  const selectedPresetLabel = vendorState?.preset === 'aucune' ? 'Montant libre' : 
-    presets.find(p => p.value === vendorState?.preset)?.label || '';
+  const selectedPresetLabel = getSelectedPresetLabel();
+  const isDirectMode = vendorState?.preset === 'aucune';
 
   return (
     <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-2">
@@ -367,17 +372,6 @@ const SequenceManager = ({
       <div className="space-y-2">
         {/* Compact input with integrated preset selector */}
         <div className="relative">
-          {/* Input with dropdown arrow */}
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-white font-bold text-xs">
-              {vendorState?.preset === 'aucune' ? (
-                vendorState?.currency === 'HTG' ? 'HTG' : 'USD'
-              ) : (
-                '×'
-              )}
-            </span>
-          </div>
-          
           <div className="flex">
             <div className="relative flex-1">
               <input
@@ -397,24 +391,34 @@ const SequenceManager = ({
                 }}
                 onClick={() => setShowPresetWheel(false)}
                 placeholder={
-                  vendorState?.preset === 'aucune'
+                  isDirectMode
                     ? `Montant en ${vendorState?.currency}...`
-                    : `× ${selectedPresetLabel} ${vendorState?.currency}...`
+                    : `Multiplicateur...`
                 }
-                className="w-full pl-10 pr-12 py-2.5 text-sm sm:text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-l-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
+                className="w-full pl-4 pr-32 py-2.5 text-sm sm:text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-l-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
               />
               
-              {/* Dropdown arrow inside input */}
-              <button
-                onClick={togglePresetWheel}
-                className={`absolute inset-y-0 right-0 px-2 flex items-center justify-center border-l border-white border-opacity-30 ${
-                  vendorState?.currency === 'HTG'
-                    ? 'hover:bg-blue-500 hover:bg-opacity-20 text-blue-300'
-                    : 'hover:bg-green-500 hover:bg-opacity-20 text-green-300'
-                }`}
-              >
-                <ChevronDown size={12} className={`transition-transform ${showPresetWheel ? 'rotate-180' : ''}`} />
-              </button>
+              {/* Selected preset and dropdown arrow inside input */}
+              <div className="absolute inset-y-0 right-0 flex items-center">
+                {/* Selected preset label */}
+                <div className={`px-2 text-xs font-medium ${
+                  vendorState?.currency === 'HTG' ? 'text-blue-300' : 'text-green-300'
+                }`}>
+                  {isDirectMode ? vendorState?.currency : `× ${selectedPresetLabel}`}
+                </div>
+                
+                {/* Dropdown arrow */}
+                <button
+                  onClick={togglePresetWheel}
+                  className={`h-full px-2 flex items-center justify-center border-l border-white border-opacity-30 ${
+                    vendorState?.currency === 'HTG'
+                      ? 'hover:bg-blue-500 hover:bg-opacity-20 text-blue-300'
+                      : 'hover:bg-green-500 hover:bg-opacity-20 text-green-300'
+                  }`}
+                >
+                  <ChevronDown size={12} className={`transition-transform ${showPresetWheel ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
             </div>
 
             {/* Minimal add/update button */}
@@ -470,7 +474,12 @@ const SequenceManager = ({
                     : 'hover:bg-gray-700 text-gray-100'
                 }`}
               >
-                <span>Montant libre</span>
+                <div className="flex items-center gap-2">
+                  <span>Montant libre</span>
+                  <span className="text-[10px] opacity-70">
+                    ({vendorState?.currency})
+                  </span>
+                </div>
                 {vendorState?.preset === 'aucune' && (
                   <Check size={10} />
                 )}
@@ -483,7 +492,7 @@ const SequenceManager = ({
                 onMouseDown={handleWheelMouseDown}
                 style={{ cursor: isDraggingWheel ? 'grabbing' : 'grab' }}
               >
-                {presets.map((preset) => (
+                {getPresets().map((preset) => (
                   <button
                     key={preset.value}
                     onClick={() => handleWheelPresetSelect(preset.value)}
@@ -497,7 +506,12 @@ const SequenceManager = ({
                           : 'hover:bg-green-800 text-green-100'
                     }`}
                   >
-                    <span>{preset.label} {vendorState?.currency}</span>
+                    <div className="flex items-center gap-2">
+                      <span>{preset.label}</span>
+                      <span className="text-[10px] opacity-70">
+                        ({vendorState?.currency})
+                      </span>
+                    </div>
                     {vendorState?.preset === preset.value && (
                       <Check size={10} />
                     )}
@@ -505,18 +519,16 @@ const SequenceManager = ({
                 ))}
               </div>
               
-              {/* Wheel scroll indicators */}
-              <div className="flex items-center justify-center py-1 bg-gray-900 bg-opacity-50">
-                <ChevronUp size={10} className="text-gray-400" />
-                <span className="text-[10px] text-gray-400 mx-2">Glisser pour faire défiler</span>
-                <ChevronDown size={10} className="text-gray-400" />
+              {/* Wheel scroll indicator */}
+              <div className="py-1.5 bg-gray-900 bg-opacity-50 text-center">
+                <span className="text-[10px] text-gray-400">Glisser pour faire défiler</span>
               </div>
             </div>
           )}
         </div>
 
         {/* Quick calculation preview */}
-        {vendorState?.preset !== 'aucune' && vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0 && (
+        {!isDirectMode && vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0 && (
           <div className="text-center">
             <div className="text-xs opacity-70">
               {vendorInputs[vendeur]} × {selectedPresetLabel} {vendorState?.currency} = 
