@@ -104,9 +104,9 @@ const CaisseRecuCard = ({
         const presetValue = parseFloat(selectedPreset);
         amount = presetValue * multiplier;
         displayAmount = amount.toString();
-        note = multiplier !== 1 ? `${multiplier} × ${selectedPreset} ${currencyType}` : `${selectedPreset} ${currencyType}`;
+        note = `${multiplier} × ${selectedPreset} ${currencyType}`;
       } else {
-        // If no input value, just use the preset value
+        // If no input value, just use the preset value (as single item)
         amount = parseFloat(selectedPreset);
         displayAmount = amount.toString();
         note = `${selectedPreset} ${currencyType}`;
@@ -130,6 +130,11 @@ const CaisseRecuCard = ({
       };
       setCashSequences(prev => [...prev, newSequence]);
       setInputValue('');
+      
+      // RESET to "aucune" after adding a sequence with multiplier
+      if (!isDirectAmount && inputValue) {
+        setSelectedPreset('aucune');
+      }
     }
   };
 
@@ -152,6 +157,9 @@ const CaisseRecuCard = ({
   const handleCurrencyToggle = () => {
     setCurrencyType(prev => {
       const newCurrency = prev === 'HTG' ? 'USD' : 'HTG';
+      // Reset to "aucune" when changing currency
+      setSelectedPreset('aucune');
+      setInputValue('');
       return newCurrency;
     });
   };
@@ -222,7 +230,7 @@ const CaisseRecuCard = ({
       return 'Entrer montant libre';
     }
     const preset = currentPresets.find(p => p.value === selectedPreset);
-    return preset ? `${preset.label} ${currencyType}` : 'Sélectionner';
+    return preset ? `× ${preset.label} ${currencyType}` : 'Sélectionner';
   };
 
   return (
@@ -483,11 +491,6 @@ const CaisseRecuCard = ({
                   }`}>
                     {getSelectedPresetText()}
                   </span>
-                  {!isDirectAmount && inputValue && parseFloat(inputValue) !== 1 && (
-                    <span className="text-[10px] opacity-70">
-                      × {inputValue} = {formaterArgent(parseFloat(selectedPreset) * parseFloat(inputValue))} {currencyType}
-                    </span>
-                  )}
                 </div>
                 <ChevronDown 
                   size={12} 
@@ -497,7 +500,7 @@ const CaisseRecuCard = ({
                 />
               </button>
               
-              {/* Dropdown menu with grid layout */}
+              {/* Dropdown menu with grid layout - SIMILAR STYLE TO QUICK ADD BUTTONS */}
               {showPresets && (
                 <div className={`absolute z-20 w-full mt-1 rounded-lg shadow-lg overflow-hidden border ${
                   currencyType === 'HTG'
@@ -525,31 +528,21 @@ const CaisseRecuCard = ({
                     )}
                   </button>
                   
-                  {/* Grid of presets */}
+                  {/* Grid of presets - SAME STYLE AS QUICK ADD BUTTONS */}
                   <div className="p-2">
                     <div className="grid grid-cols-3 gap-1.5">
                       {currentPresets.map((preset) => (
                         <button
                           key={preset.value}
                           onClick={() => handlePresetSelect(preset.value)}
-                          className={`px-2 py-2 text-xs hover:bg-opacity-50 transition-colors flex flex-col items-center justify-center rounded ${
-                            selectedPreset === preset.value
-                              ? currencyType === 'HTG'
-                                ? 'bg-blue-700 text-white'
-                                : 'bg-green-700 text-white'
-                              : currencyType === 'HTG'
-                                ? 'hover:bg-blue-800 text-blue-100'
-                                : 'hover:bg-green-800 text-green-100'
-                          }`}
-                          title={`${preset.value} ${currencyType}`}
+                          className={`px-2 py-2 text-xs font-medium rounded border transition-colors flex items-center justify-center ${
+                            currencyType === 'HTG'
+                              ? 'bg-blue-500 bg-opacity-10 hover:bg-opacity-20 border-blue-400 border-opacity-30 text-blue-300'
+                              : 'bg-green-500 bg-opacity-10 hover:bg-opacity-20 border-green-400 border-opacity-30 text-green-300'
+                          } ${selectedPreset === preset.value ? 'ring-1 ring-white ring-opacity-50' : ''}`}
+                          title={`${preset.label} ${currencyType}`}
                         >
-                          <span className="font-bold">{preset.label}</span>
-                          <span className="text-[10px] opacity-70 mt-0.5">{currencyType}</span>
-                          {inputValue && parseFloat(inputValue) > 1 && (
-                            <span className="text-[9px] opacity-60 mt-0.5">
-                              = {formaterArgent(parseFloat(preset.value) * parseFloat(inputValue))}
-                            </span>
-                          )}
+                          {preset.label}
                         </button>
                       ))}
                     </div>
