@@ -57,20 +57,11 @@ const DepositsSummary = ({
     // Sort by value descending (largest first)
     const sortedSequences = [...parsedSequences].sort((a, b) => b.value - a.value);
 
-    // Calculate total of all sequences
-    const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + seq.value, 0);
-
     return (
       <div className="mt-2">
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="text-[11px] font-medium opacity-80 flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
-            <span>Composition</span>
-          </div>
-          <div className="text-[11px] opacity-70">
-            <span className="opacity-60 mr-1">Total:</span>
-            <span className="font-semibold">{formaterArgent(sequencesTotal)}</span>
-          </div>
+        <div className="text-[11px] font-medium opacity-80 flex items-center gap-1.5 mb-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
+          <span>Composition</span>
         </div>
         
         <div className="space-y-1.5">
@@ -186,7 +177,7 @@ const DepositsSummary = ({
                   hover:bg-opacity-40 hover:scale-[1.02] hover:shadow-md
                 `}
               >
-                {/* Main deposit info - Removed the gap-3 container that was adding padding */}
+                {/* Main deposit info */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-3 mb-1">
                   <div className="flex items-center gap-2 min-w-0">
                     <div className={`
@@ -199,38 +190,32 @@ const DepositsSummary = ({
                     `}>
                       {originalIndex + 1}
                     </div>
-                    <span className="font-semibold truncate">{displayText}</span>
-                    {isRecent && (
-                      <Check size={10} className="text-green-300 flex-shrink-0 animate-pulse" />
-                    )}
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold truncate">{displayText}</span>
+                      {isRecent && (
+                        <Check size={10} className="text-green-300 flex-shrink-0 animate-pulse" />
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 mt-1 sm:mt-0">
-                    {/* Show total for deposits with breakdown */}
-                    {hasBreakdown && (
-                      <div className="text-xs opacity-80 px-2 py-0.5 rounded inline-flex items-center gap-1">
-                        <span className="opacity-70">Total:</span>
-                        <span className="font-medium">
-                          {isUSD 
-                            ? `${montantOriginal} USD` 
-                            : `${formaterArgent(montantOriginal)} HTG`
-                          }
-                        </span>
-                      </div>
-                    )}
-                    
-                    {/* USD conversion for USD deposits */}
-                    {isUSD && (
-                      <div className="text-xs opacity-80 bg-green-900/30 px-2 py-1 rounded inline-flex items-center gap-1">
-                        <span className="opacity-70">≈</span>
-                        <span>{formaterArgent(montantHTG)} HTG</span>
-                      </div>
-                    )}
-                  </div>
+                  {/* Show only one total: either HTG total or USD conversion */}
+                  {isUSD ? (
+                    <div className="text-xs opacity-80 bg-green-900/30 px-2 py-1 rounded inline-flex items-center gap-1 mt-1 sm:mt-0">
+                      <span className="opacity-70">≈</span>
+                      <span>{formaterArgent(montantHTG)} HTG</span>
+                    </div>
+                  ) : hasBreakdown ? (
+                    <div className="text-xs opacity-80 px-2 py-0.5 rounded inline-flex items-center gap-1 mt-1 sm:mt-0">
+                      <span className="opacity-70">Total:</span>
+                      <span className="font-medium">
+                        {formaterArgent(montantOriginal)} HTG
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
                 
-                {/* Render breakdown - Now this will align properly under the main content */}
-                {renderBreakdown(depot)}
+                {/* Render breakdown - Only show for deposits with breakdown */}
+                {hasBreakdown && renderBreakdown(depot)}
               </div>
             );
           })}
