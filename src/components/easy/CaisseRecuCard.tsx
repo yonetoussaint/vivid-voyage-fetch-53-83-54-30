@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, AlertCircle, Plus, Trash2, Globe, ChevronDown, Hash } from 'lucide-react';
+import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, AlertCircle, Plus, Trash2, Globe, ChevronDown } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 import { generateChangeCombinations, getMaximumGivableAmount } from '@/utils/changeCalculator';
 import ChangeCombinations from './ChangeCombinations';
@@ -21,36 +21,36 @@ const CaisseRecuCard = ({
   
   // Preset options for HTG (Gourdes) - including coin values
   const htgPresets = [
-    { value: 'aucune', label: 'Aucune (entrer montant libre)' },
-    { value: '5', label: '5 HTG (pièce)' },
-    { value: '10', label: '10 HTG (pièce)' },
-    { value: '20', label: '20 HTG (pièce)' },
-    { value: '25', label: '25 HTG (pièce)' },
-    { value: '50', label: '50 HTG (pièce/billet)' },
-    { value: '100', label: '100 HTG' },
-    { value: '250', label: '250 HTG' },
-    { value: '500', label: '500 HTG' },
-    { value: '1000', label: '1,000 HTG' },
-    { value: '5000', label: '5,000 HTG' },
-    { value: '10000', label: '10,000 HTG' },
-    { value: '25000', label: '25,000 HTG' },
-    { value: '50000', label: '50,000 HTG' },
-    { value: '100000', label: '100,000 HTG' },
-    { value: '250000', label: '250,000 HTG' },
-    { value: '500000', label: '500,000 HTG' },
-    { value: '1000000', label: '1,000,000 HTG' }
+    { value: '5', label: '5' },
+    { value: '10', label: '10' },
+    { value: '20', label: '20' },
+    { value: '25', label: '25' },
+    { value: '50', label: '50' },
+    { value: '100', label: '100' },
+    { value: '250', label: '250' },
+    { value: '500', label: '500' },
+    { value: '1000', label: '1,000' },
+    { value: '5000', label: '5,000' },
+    { value: '10000', label: '10k' },
+    { value: '25000', label: '25k' },
+    { value: '50000', label: '50k' },
+    { value: '100000', label: '100k' }
   ];
 
   // Preset options for USD
   const usdPresets = [
-    { value: 'aucune', label: 'Aucune (enter amount freely)' },
-    { value: '1', label: '1 USD' },
-    { value: '5', label: '5 USD' },
-    { value: '10', label: '10 USD' },
-    { value: '20', label: '20 USD' },
-    { value: '50', label: '50 USD' },
-    { value: '100', label: '100 USD' }
+    { value: '1', label: '1' },
+    { value: '5', label: '5' },
+    { value: '10', label: '10' },
+    { value: '20', label: '20' },
+    { value: '50', label: '50' },
+    { value: '100', label: '100' }
   ];
+
+  // Quick add amounts (original functionality - adds directly)
+  const htgQuickAdds = [100, 250, 500, 1000];
+  const usdQuickAdds = [1, 5, 10, 20];
+  const quickAddAmounts = currencyType === 'HTG' ? htgQuickAdds : usdQuickAdds;
 
   // Get current presets based on currency
   const currentPresets = currencyType === 'HTG' ? htgPresets : usdPresets;
@@ -163,22 +163,32 @@ const CaisseRecuCard = ({
     }
   };
 
-  // Quick add amounts based on currency - using most common presets
-  const getQuickAddAmounts = () => {
-    if (currencyType === 'USD') {
-      return [1, 5, 10, 20]; // Common USD bills
-    }
-    // Most commonly used HTG amounts
-    return [100, 250, 500, 1000];
+  // Handle quick add button click (ORIGINAL FUNCTIONALITY - adds directly)
+  const handleQuickAdd = (amount) => {
+    const newSequence = {
+      id: Date.now(),
+      amount: amount,
+      currency: currencyType,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      convertedToHTG: currencyType === 'USD' ? amount * tauxUSD : amount,
+      note: `${amount} ${currencyType}`
+    };
+    setCashSequences(prev => [...prev, newSequence]);
   };
 
   // Handle preset selection
   const handlePresetSelect = (presetValue) => {
     setSelectedPreset(presetValue);
     setShowPresets(false);
-    // Clear input when switching modes
+    // Clear input when switching to direct amount mode
     if (presetValue === 'aucune') {
       setInputValue('');
+    } else {
+      // Auto-focus input when selecting a preset
+      setTimeout(() => {
+        const input = document.querySelector('input[type="number"]');
+        if (input) input.focus();
+      }, 100);
     }
   };
 
@@ -206,8 +216,14 @@ const CaisseRecuCard = ({
   const remainder = changeNeeded - givableAmount;
   const hasRemainder = remainder > 0;
 
-  // Get selected preset label
-  const selectedPresetLabel = currentPresets.find(p => p.value === selectedPreset)?.label || selectedPreset;
+  // Get selected preset display text
+  const getSelectedPresetText = () => {
+    if (selectedPreset === 'aucune') {
+      return 'Entrer montant libre';
+    }
+    const preset = currentPresets.find(p => p.value === selectedPreset);
+    return preset ? `${preset.label} ${currencyType}` : 'Sélectionner';
+  };
 
   return (
     <div className={`rounded-xl p-3 shadow-lg mb-3 ${
@@ -450,7 +466,7 @@ const CaisseRecuCard = ({
             </span>
           </div>
 
-          {/* Preset selector row */}
+          {/* Preset selector */}
           <div className="mb-2">
             <div className="relative">
               <button
@@ -465,7 +481,7 @@ const CaisseRecuCard = ({
                   <span className={`text-xs font-bold ${
                     currencyType === 'HTG' ? 'text-blue-300' : 'text-green-300'
                   }`}>
-                    {selectedPresetLabel}
+                    {getSelectedPresetText()}
                   </span>
                   {!isDirectAmount && inputValue && parseFloat(inputValue) !== 1 && (
                     <span className="text-[10px] opacity-70">
@@ -481,36 +497,62 @@ const CaisseRecuCard = ({
                 />
               </button>
               
-              {/* Dropdown menu */}
+              {/* Dropdown menu with grid layout */}
               {showPresets && (
-                <div className={`absolute z-10 w-full mt-1 rounded-lg shadow-lg overflow-hidden border ${
+                <div className={`absolute z-20 w-full mt-1 rounded-lg shadow-lg overflow-hidden border ${
                   currencyType === 'HTG'
                     ? 'bg-blue-900 border-blue-700'
                     : 'bg-green-900 border-green-700'
                 }`}>
-                  <div className="max-h-48 overflow-y-auto">
-                    {currentPresets.map((preset) => (
-                      <button
-                        key={preset.value}
-                        onClick={() => handlePresetSelect(preset.value)}
-                        className={`w-full px-3 py-2 text-left text-xs hover:bg-opacity-50 transition-colors flex items-center justify-between ${
-                          selectedPreset === preset.value
-                            ? currencyType === 'HTG'
-                              ? 'bg-blue-700 text-white'
-                              : 'bg-green-700 text-white'
-                            : currencyType === 'HTG'
-                              ? 'hover:bg-blue-800 text-blue-100'
-                              : 'hover:bg-green-800 text-green-100'
-                        }`}
-                      >
-                        <span>{preset.label}</span>
-                        {preset.value !== 'aucune' && inputValue && parseFloat(inputValue) !== 1 && (
-                          <span className="text-[10px] opacity-70">
-                            = {formaterArgent(parseFloat(preset.value) * (parseFloat(inputValue) || 1))} {currencyType}
-                          </span>
-                        )}
-                      </button>
-                    ))}
+                  {/* "Aucune" option - full width */}
+                  <button
+                    onClick={() => handlePresetSelect('aucune')}
+                    className={`w-full px-3 py-3 text-left text-xs hover:bg-opacity-50 transition-colors flex items-center justify-between border-b ${
+                      currencyType === 'HTG' ? 'border-blue-700' : 'border-green-700'
+                    } ${
+                      selectedPreset === 'aucune'
+                        ? currencyType === 'HTG'
+                          ? 'bg-blue-700 text-white'
+                          : 'bg-green-700 text-white'
+                        : currencyType === 'HTG'
+                          ? 'hover:bg-blue-800 text-blue-100'
+                          : 'hover:bg-green-800 text-green-100'
+                    }`}
+                  >
+                    <span>Entrer montant libre</span>
+                    {isDirectAmount && (
+                      <span className="text-[10px] opacity-70">✓</span>
+                    )}
+                  </button>
+                  
+                  {/* Grid of presets */}
+                  <div className="p-2">
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {currentPresets.map((preset) => (
+                        <button
+                          key={preset.value}
+                          onClick={() => handlePresetSelect(preset.value)}
+                          className={`px-2 py-2 text-xs hover:bg-opacity-50 transition-colors flex flex-col items-center justify-center rounded ${
+                            selectedPreset === preset.value
+                              ? currencyType === 'HTG'
+                                ? 'bg-blue-700 text-white'
+                                : 'bg-green-700 text-white'
+                              : currencyType === 'HTG'
+                                ? 'hover:bg-blue-800 text-blue-100'
+                                : 'hover:bg-green-800 text-green-100'
+                          }`}
+                          title={`${preset.value} ${currencyType}`}
+                        >
+                          <span className="font-bold">{preset.label}</span>
+                          <span className="text-[10px] opacity-70 mt-0.5">{currencyType}</span>
+                          {inputValue && parseFloat(inputValue) > 1 && (
+                            <span className="text-[9px] opacity-60 mt-0.5">
+                              = {formaterArgent(parseFloat(preset.value) * parseFloat(inputValue))}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -520,7 +562,7 @@ const CaisseRecuCard = ({
             <p className="text-[10px] opacity-70 mt-1 text-center">
               {isDirectAmount 
                 ? "Entrez directement le montant" 
-                : "Sélectionnez un billet/pièce et entrez un multiplicateur"}
+                : `Sélectionnez un montant et entrez un multiplicateur (ex: 33 × ${selectedPreset})`}
             </p>
           </div>
 
@@ -580,34 +622,23 @@ const CaisseRecuCard = ({
           )}
         </div>
         
-        {/* Quick add buttons (only show when in preset mode) */}
-        {!isDirectAmount && (
-          <div className="grid grid-cols-4 gap-1 mb-2">
-            {getQuickAddAmounts().map((amount) => (
-              <button
-                key={amount}
-                onClick={() => {
-                  // Set the preset to this amount
-                  const preset = currentPresets.find(p => parseFloat(p.value) === amount);
-                  if (preset) {
-                    setSelectedPreset(preset.value);
-                    // Set input to 1 and auto-add
-                    setInputValue('1');
-                    setTimeout(handleAddSequence, 50);
-                  }
-                }}
-                className={`px-2 py-1.5 text-xs font-medium rounded border transition-colors ${
-                  currencyType === 'USD'
-                    ? 'bg-green-500 bg-opacity-10 hover:bg-opacity-20 border-green-400 border-opacity-30 text-green-300'
-                    : 'bg-blue-500 bg-opacity-10 hover:bg-opacity-20 border-blue-400 border-opacity-30 text-blue-300'
-                }`}
-                title={`Ajouter 1 × ${amount} ${currencyType}`}
-              >
-                +{currencyType === 'USD' ? '$' : ''}{amount}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Quick add buttons (ORIGINAL FUNCTIONALITY - adds directly) */}
+        <div className="grid grid-cols-4 gap-1 mb-2">
+          {quickAddAmounts.map((amount) => (
+            <button
+              key={amount}
+              onClick={() => handleQuickAdd(amount)}
+              className={`px-2 py-1.5 text-xs font-medium rounded border transition-colors ${
+                currencyType === 'USD'
+                  ? 'bg-green-500 bg-opacity-10 hover:bg-opacity-20 border-green-400 border-opacity-30 text-green-300'
+                  : 'bg-blue-500 bg-opacity-10 hover:bg-opacity-20 border-blue-400 border-opacity-30 text-blue-300'
+              }`}
+              title={`Ajouter ${amount} ${currencyType}`}
+            >
+              +{currencyType === 'USD' ? '$' : ''}{amount}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Change calculation */}
@@ -692,13 +723,13 @@ const CaisseRecuCard = ({
         <div className="bg-white bg-opacity-5 rounded-lg p-2 text-center">
           <p className="text-[10px] opacity-70">
             {selectedPreset === 'aucune' 
-              ? 'Entrez directement le montant' 
-              : 'Sélectionnez un billet/pièce et entrez un multiplicateur'}
+              ? 'Entrez directement le montant ou utilisez les boutons rapides' 
+              : 'Sélectionnez un montant, entrez un multiplicateur ou utilisez les boutons rapides'}
           </p>
           <p className="text-[9px] opacity-50 mt-0.5">
             {selectedPreset === 'aucune'
               ? 'Ex: Entrez "1250" pour ajouter 1,250 HTG'
-              : 'Ex: Sélectionnez "1,000 HTG", entrez "33" → 33,000 HTG'}
+              : `Ex: Sélectionnez "1,000", entrez "33" → 33,000 ${currencyType}`}
           </p>
         </div>
       )}
