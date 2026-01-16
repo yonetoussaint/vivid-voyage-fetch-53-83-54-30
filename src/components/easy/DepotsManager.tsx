@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, User, Plus, Minus, Globe, ChevronDown, List, X } from 'lucide-react';
+import { DollarSign, User, Plus, Minus, Globe, ChevronDown, List, X, Trash2 } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJourDepot, ajouterDepot, supprimerDepot }) => {
@@ -54,6 +54,11 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       return convertirUSDversHTG(depot.montant);
     }
 
+    // For HTG deposits with breakdown
+    if (typeof depot === 'object' && depot.value) {
+      return parseFloat(depot.value) || 0;
+    }
+
     // Always return a number for HTG deposits
     return parseFloat(depot) || 0;
   };
@@ -62,8 +67,12 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const getDisplayValue = (depot) => {
     if (!depot) return '';
 
-    if (typeof depot === 'object' && depot.devise === 'USD') {
-      return depot.montant !== undefined ? depot.montant.toString() : '';
+    if (typeof depot === 'object') {
+      if (depot.devise === 'USD') {
+        return depot.montant !== undefined ? depot.montant.toString() : '';
+      } else if (depot.value) {
+        return depot.value.toString();
+      }
     }
 
     return depot !== undefined ? depot.toString() : '';
@@ -74,12 +83,21 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return typeof depot === 'object' && depot.devise === 'USD';
   };
 
+  // Check if deposit has breakdown
+  const hasBreakdown = (depot) => {
+    return typeof depot === 'object' && (depot.breakdown || depot.sequences);
+  };
+
   // Helper to get original deposit amount (not converted)
   const getOriginalDepotAmount = (depot) => {
     if (!depot) return 0;
 
-    if (typeof depot === 'object' && depot.devise === 'USD') {
-      return parseFloat(depot.montant) || 0;
+    if (typeof depot === 'object') {
+      if (depot.devise === 'USD') {
+        return parseFloat(depot.montant) || 0;
+      } else if (depot.value) {
+        return parseFloat(depot.value) || 0;
+      }
     }
 
     return parseFloat(depot) || 0;
@@ -129,8 +147,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }));
     // Close any open dropdowns
     setShowPresetsForVendor(null);
-    // Close sequence manager if open
-    setShowSequenceManager(null);
   };
 
   // Handle preset selection for a vendor
@@ -260,7 +276,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return sequences.reduce((total, seq) => total + seq.amount, 0);
   };
 
-  // Handle adding the complete deposit with all sequences
+  // Handle adding the complete deposit with all sequences - FIXED VERSION
   const handleAddCompleteDeposit = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
     const vendorState = vendorPresets[vendeur];
@@ -273,32 +289,30 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     // Create breakdown description
     const breakdown = sequences.map(seq => seq.note).join(', ');
     
-    // For USD deposits, create object with breakdown
+    // Get current deposits
+    const currentDepots = depotsActuels[vendeur] || [];
+    const newIndex = currentDepots.length;
+    
     if (currency === 'USD') {
+      // Create USD deposit object
       const deposit = {
-        montant: totalAmount.toString(),
+        montant: totalAmount.toFixed(2),
         devise: 'USD',
         breakdown: breakdown,
         sequences: sequences
       };
       
-      // Get current deposits length for the new index
-      const currentDepots = depotsActuels[vendeur] || [];
-      const newIndex = currentDepots.length;
-      
+      // Add the deposit directly
       mettreAJourDepot(vendeur, newIndex, deposit);
     } else {
-      // For HTG, we need to store breakdown separately since deposit is just a string
-      // We'll store it as an object with the string value
+      // Create HTG deposit object
       const deposit = {
         value: totalAmount.toString(),
         breakdown: breakdown,
         sequences: sequences
       };
       
-      const currentDepots = depotsActuels[vendeur] || [];
-      const newIndex = currentDepots.length;
-      
+      // Add the deposit directly
       mettreAJourDepot(vendeur, newIndex, deposit);
     }
     
@@ -380,10 +394,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     
     // Toggle the dropdown visibility
     setShowPresetsForVendor(showPresetsForVendor === vendeur ? null : vendeur);
-    // Close sequence manager if open
-    if (showSequenceManager === vendeur) {
-      setShowSequenceManager(null);
-    }
   };
 
   // Toggle sequence manager
@@ -395,12 +405,18 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }
   };
 
-  // Format sequences for display
-  const formatSequencesDisplay = (vendeur) => {
-    const sequences = depositSequences[vendeur] || [];
-    if (sequences.length === 0) return 'Aucune séquence';
+  // Handle simple deposit addition
+  const handleSimpleDeposit = (vendeur) => {
+    const input = document.querySelector(`input[data-simple="${vendeur}"]`);
+    if (!input) return;
     
-    return sequences.map(seq => seq.note).join(' + ');
+    const amount = parseFloat(input.value);
+    if (amount > 0) {
+      const currentDepots = depotsActuels[vendeur] || [];
+      const newIndex = currentDepots.length;
+      mettreAJourDepot(vendeur, newIndex, amount.toString());
+      input.value = '';
+    }
   };
 
   return (
@@ -489,48 +505,48 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-semibold">Entrées Dépôts</span>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-1">
                         <button
                           onClick={() => handleCurrencyButtonClick(vendeur, 'HTG')}
-                          className={`px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition ${
+                          className={`px-2 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 active:scale-95 transition ${
                             (!vendorState || vendorState.currency === 'HTG')
                               ? 'bg-white text-indigo-600'
                               : 'bg-white bg-opacity-20 text-white'
                           }`}
                         >
-                          <Plus size={14} />
+                          <Plus size={12} />
                           HTG
                         </button>
                         <button
                           onClick={() => handleCurrencyButtonClick(vendeur, 'USD')}
-                          className={`px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition ${
+                          className={`px-2 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 active:scale-95 transition ${
                             vendorState?.currency === 'USD'
                               ? 'bg-green-500 text-white'
                               : 'bg-green-500 bg-opacity-20 text-white'
                           }`}
                         >
-                          <Plus size={14} />
+                          <Plus size={12} />
                           USD
                         </button>
                         <button
                           onClick={() => toggleSequenceManager(vendeur)}
-                          className={`px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition ${
+                          className={`px-2 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 active:scale-95 transition ${
                             isSequenceManagerOpen
                               ? 'bg-amber-500 text-white'
                               : 'bg-amber-500 bg-opacity-20 text-white'
                           }`}
                           title="Gérer les séquences de dépôt"
                         >
-                          <List size={14} />
+                          <List size={12} />
                           Séq.
                         </button>
                       </div>
                     </div>
 
-                    {/* Sequence Manager - Shows when sequence mode is active */}
+                    {/* Sequence Manager - MOBILE FRIENDLY VERSION */}
                     {isSequenceManagerOpen && (
-                      <div className="bg-white bg-opacity-10 rounded-lg p-3 space-y-3">
-                        <div className="flex items-center justify-between">
+                      <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
                             <List size={14} className="text-amber-300" />
                             <span className="text-sm font-bold text-amber-300">Séquences de Dépôt</span>
@@ -542,35 +558,37 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                             <button
                               onClick={() => handleClearSequences(vendeur)}
                               disabled={sequences.length === 0}
-                              className={`px-2 py-1 rounded text-xs flex items-center gap-1 ${
+                              className={`p-1.5 rounded text-xs flex items-center gap-1 ${
                                 sequences.length === 0
                                   ? 'bg-gray-500 bg-opacity-30 text-gray-300 cursor-not-allowed'
                                   : 'bg-red-500 bg-opacity-30 hover:bg-opacity-40 text-red-300'
                               }`}
                             >
-                              <X size={10} />
-                              Effacer
+                              <Trash2 size={10} />
+                              <span className="hidden sm:inline">Effacer</span>
                             </button>
                           </div>
                         </div>
 
-                        {/* Current sequences list */}
-                        <div className="space-y-1">
+                        {/* Current sequences list - MOBILE FRIENDLY */}
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
                           {sequences.length === 0 ? (
-                            <div className="text-center py-2 text-white text-opacity-50 text-sm">
+                            <div className="text-center py-2 text-white text-opacity-50 text-xs sm:text-sm">
                               Aucune séquence ajoutée
                             </div>
                           ) : (
                             sequences.map((sequence) => (
-                              <div key={sequence.id} className="flex items-center justify-between bg-white bg-opacity-5 rounded p-2">
+                              <div key={sequence.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white bg-opacity-5 rounded p-1.5 sm:p-2 gap-1 sm:gap-2">
                                 <div className="flex items-center gap-2">
                                   <div className={`w-2 h-2 rounded-full ${
                                     sequence.currency === 'USD' ? 'bg-green-400' : 'bg-blue-400'
                                   }`}></div>
-                                  <span className="text-xs">{sequence.note}</span>
-                                  <span className="text-[10px] opacity-60">{sequence.timestamp}</span>
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                    <span className="text-xs truncate max-w-[120px] sm:max-w-none">{sequence.note}</span>
+                                    <span className="text-[10px] opacity-60">{sequence.timestamp}</span>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-between sm:justify-end gap-2">
                                   <span className="text-xs font-bold">
                                     {formaterArgent(sequence.amount)} {sequence.currency}
                                   </span>
@@ -587,7 +605,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           )}
                         </div>
 
-                        {/* Add sequence section */}
+                        {/* Add sequence section - MOBILE FRIENDLY */}
                         <div className="space-y-2">
                           {/* Preset selector */}
                           <div className="relative">
@@ -599,7 +617,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                   : 'bg-green-500 bg-opacity-20 hover:bg-opacity-30 border border-green-400 border-opacity-30'
                               }`}
                             >
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                                 <span className={`text-xs font-bold ${
                                   vendorState?.currency === 'HTG' ? 'text-blue-300' : 'text-green-300'
                                 }`}>
@@ -647,9 +665,9 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                   )}
                                 </button>
                                 
-                                {/* Grid of presets */}
-                                <div className="p-2">
-                                  <div className="grid grid-cols-3 gap-1.5">
+                                {/* Grid of presets - MOBILE FRIENDLY (2 columns on mobile) */}
+                                <div className="p-1.5 sm:p-2">
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                                     {currentPresets.map((preset) => (
                                       <button
                                         key={preset.value}
@@ -670,7 +688,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                             )}
                           </div>
 
-                          {/* Input with Add Sequence button */}
+                          {/* Input with Add Sequence button - MOBILE FRIENDLY */}
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                               <span className="text-white font-bold text-xs">
@@ -696,7 +714,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                   ? `Montant en ${vendorState?.currency}...` 
                                   : 'Multiplicateur (ex: 33)...'
                               }
-                              className="w-full pl-10 pr-24 py-2.5 text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
+                              className="w-full pl-10 pr-28 sm:pr-24 py-2.5 text-sm sm:text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
                             />
                             <div className="absolute inset-y-0 right-0 flex items-center pr-1">
                               <button
@@ -710,24 +728,29 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                     : 'bg-gray-400 bg-opacity-30 text-gray-300 cursor-not-allowed'
                                 } transition-colors`}
                               >
-                                <Plus size={12} />
-                                Ajouter séquence
+                                <Plus size={10} />
+                                <span className="hidden sm:inline">Ajouter séquence</span>
+                                <span className="sm:hidden">Ajouter</span>
                               </button>
                             </div>
                           </div>
 
-                          {/* Add Complete Deposit Button */}
+                          {/* Add Complete Deposit Button - MOBILE FRIENDLY */}
                           {sequences.length > 0 && (
-                            <div className="pt-2">
+                            <div className="pt-1">
                               <button
                                 onClick={() => handleAddCompleteDeposit(vendeur)}
-                                className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                                className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity text-sm sm:text-base"
                               >
                                 <Plus size={14} />
-                                Ajouter dépôt complet ({formaterArgent(sequencesTotal)} {vendorState?.currency})
+                                <span className="hidden sm:inline">Ajouter dépôt complet</span>
+                                <span className="sm:hidden">Ajouter dépôt</span>
+                                <span className="text-xs sm:text-sm">
+                                  ({formaterArgent(sequencesTotal)} {vendorState?.currency})
+                                </span>
                               </button>
-                              <p className="text-[10px] text-center opacity-70 mt-1">
-                                {sequences.length} séquence{sequences.length !== 1 ? 's' : ''} • {formatSequencesDisplay(vendeur)}
+                              <p className="text-[10px] text-center opacity-70 mt-1 truncate">
+                                {sequences.length} séquence{sequences.length !== 1 ? 's' : ''} • {sequences.map(seq => seq.note).join(' + ')}
                               </p>
                             </div>
                           )}
@@ -751,33 +774,18 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           </div>
                           <input
                             type="number"
+                            data-simple={vendeur}
                             placeholder="Montant simple..."
-                            className="w-full pl-10 pr-20 py-2.5 text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
+                            className="w-full pl-10 pr-20 py-2.5 text-sm sm:text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
                             onKeyPress={(e) => {
                               if (e.key === 'Enter') {
-                                const input = e.target;
-                                const amount = parseFloat(input.value);
-                                if (amount > 0) {
-                                  const currentDepots = depotsActuels[vendeur] || [];
-                                  const newIndex = currentDepots.length;
-                                  mettreAJourDepot(vendeur, newIndex, amount.toString());
-                                  input.value = '';
-                                }
+                                handleSimpleDeposit(vendeur);
                               }
                             }}
                           />
                           <div className="absolute inset-y-0 right-0 flex items-center pr-1">
                             <button
-                              onClick={(e) => {
-                                const input = e.target.closest('.relative').querySelector('input');
-                                const amount = parseFloat(input.value);
-                                if (amount > 0) {
-                                  const currentDepots = depotsActuels[vendeur] || [];
-                                  const newIndex = currentDepots.length;
-                                  mettreAJourDepot(vendeur, newIndex, amount.toString());
-                                  input.value = '';
-                                }
-                              }}
+                              onClick={() => handleSimpleDeposit(vendeur)}
                               className="px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white transition-colors"
                             >
                               <Plus size={12} />
@@ -788,7 +796,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       </div>
                     )}
 
-                    {/* Existing deposits */}
+                    {/* Existing deposits - MOBILE FRIENDLY */}
                     {depots.length === 0 ? (
                       <div className="text-center py-3 text-white text-opacity-70 text-sm">
                         Aucun dépôt ajouté
@@ -801,10 +809,11 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           const montantHTG = getMontantHTG(depot);
                           const montantOriginal = getOriginalDepotAmount(depot);
                           const displayText = getDepositDisplay(depot);
+                          const hasBd = hasBreakdown(depot);
 
                           return (
                             <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                              {/* Input container */}
+                              {/* Input container - MOBILE FRIENDLY */}
                               <div className="flex-1 w-full">
                                 <div className="flex items-center bg-white bg-opacity-20 rounded-lg overflow-hidden">
                                   <input
@@ -815,7 +824,9 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                       if (isUSD) {
                                         mettreAJourDepot(vendeur, index, {
                                           montant: e.target.value,
-                                          devise: 'USD'
+                                          devise: 'USD',
+                                          ...(depot.breakdown && { breakdown: depot.breakdown }),
+                                          ...(depot.sequences && { sequences: depot.sequences })
                                         });
                                       } else if (typeof depot === 'object' && depot.value) {
                                         // HTG deposit with breakdown
@@ -828,20 +839,25 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                       }
                                     }}
                                     placeholder="Montant"
-                                    className="flex-1 w-0 px-3 py-2 bg-transparent text-white text-right font-semibold placeholder-white placeholder-opacity-50 focus:outline-none"
+                                    className="flex-1 w-0 px-3 py-2 bg-transparent text-white text-right font-semibold placeholder-white placeholder-opacity-50 focus:outline-none text-sm sm:text-base"
                                   />
-                                  <span className={`px-3 py-2 font-bold text-sm w-20 text-center ${
+                                  <span className={`px-3 py-2 font-bold text-xs sm:text-sm w-16 sm:w-20 text-center ${
                                     isUSD ? 'bg-green-500 bg-opacity-50' : ''
                                   }`}>
                                     {isUSD ? 'USD' : 'HTG'}
                                   </span>
                                 </div>
                                 <div className="text-xs text-right opacity-75 mt-1">
-                                  {displayText}
+                                  <div className="truncate">{displayText}</div>
                                   {isUSD && (
-                                    <span className="block">
+                                    <div className="text-[10px] sm:text-xs">
                                       = {formaterArgent(montantHTG)} HTG
-                                    </span>
+                                    </div>
+                                  )}
+                                  {hasBd && !isUSD && (
+                                    <div className="text-[10px] opacity-60 mt-0.5">
+                                      {depot.breakdown}
+                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -852,7 +868,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                 className="bg-red-500 text-white p-2 rounded-lg font-bold active:scale-95 transition self-end sm:self-center"
                                 aria-label={`Supprimer dépôt ${index + 1}`}
                               >
-                                <Minus size={16} />
+                                <Minus size={14} className="sm:size-[16px]" />
                               </button>
                             </div>
                           );
@@ -861,7 +877,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                     )}
                   </div>
 
-                  {/* Résumé Dépôts */}
+                  {/* Résumé Dépôts - MOBILE FRIENDLY */}
                   {depots.length > 0 && (
                     <div className="pt-3 border-t border-white border-opacity-30">
                       <div className="flex flex-col gap-1">
@@ -876,16 +892,16 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                             return (
                               <div 
                                 key={idx} 
-                                className={`px-2 py-1 rounded text-xs flex items-center gap-1 ${
+                                className={`px-2 py-1 rounded text-xs flex flex-col sm:flex-row sm:items-center gap-1 ${
                                   isUSD 
                                     ? 'bg-green-500 bg-opacity-30 text-green-100' 
                                     : 'bg-white bg-opacity-20'
                                 }`}
                               >
                                 <span className="font-bold">{idx + 1}.</span>
-                                <span>{displayText}</span>
+                                <span className="truncate max-w-[150px] sm:max-w-none">{displayText}</span>
                                 {isUSD && (
-                                  <span className="text-xs opacity-75 ml-1">
+                                  <span className="text-[10px] opacity-75 sm:ml-1">
                                     ({formaterArgent(montantOriginal)} USD)
                                   </span>
                                 )}
