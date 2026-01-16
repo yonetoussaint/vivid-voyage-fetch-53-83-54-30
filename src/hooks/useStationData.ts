@@ -145,29 +145,38 @@ export const useStationData = (date, shift) => {
     }
   }, [shift]);
 
-  // FIXED: Handle both HTG and USD deposits
-  const mettreAJourDepot = useCallback((nomVendeur, index, valeur) => {
-    setTousDepots(prev => {
-      const nouveauxDepots = { ...prev };
-      if (!nouveauxDepots[shift][nomVendeur]) {
-        nouveauxDepots[shift][nomVendeur] = [];
-      }
+  // FIXED: Handle both HTG and USD deposits with all properties
+const mettreAJourDepot = useCallback((nomVendeur, index, valeur) => {
+  setTousDepots(prev => {
+    const nouveauxDepots = { ...prev };
+    if (!nouveauxDepots[shift][nomVendeur]) {
+      nouveauxDepots[shift][nomVendeur] = [];
+    }
 
-      // Handle both string values (HTG) and object values (USD)
-      if (typeof valeur === 'object' && valeur.devise === 'USD') {
-        // For USD deposits, store the object
+    // Handle the different types of deposits
+    if (typeof valeur === 'object') {
+      if (valeur.devise === 'USD') {
+        // For USD deposits - preserve all properties
         nouveauxDepots[shift][nomVendeur][index] = {
-          montant: valeur.montant === '' ? '' : parseFloat(valeur.montant) || 0,
-          devise: 'USD'
+          ...valeur,
+          montant: valeur.montant === '' ? '' : parseFloat(valeur.montant) || 0
         };
       } else {
-        // For HTG deposits, store string/number
-        nouveauxDepots[shift][nomVendeur][index] = valeur === '' ? '' : parseFloat(valeur) || 0;
+        // For HTG deposit objects with breakdown and sequences
+        const hasValue = 'value' in valeur;
+        nouveauxDepots[shift][nomVendeur][index] = {
+          ...valeur,
+          ...(hasValue && { value: valeur.value === '' ? '' : parseFloat(valeur.value) || 0 })
+        };
       }
+    } else {
+      // For simple HTG deposits (string/number)
+      nouveauxDepots[shift][nomVendeur][index] = valeur === '' ? '' : parseFloat(valeur) || 0;
+    }
 
-      return nouveauxDepots;
-    });
-  }, [shift]);
+    return nouveauxDepots;
+  });
+}, [shift]);
 
   // FIXED: Add deposit with currency type
   const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
