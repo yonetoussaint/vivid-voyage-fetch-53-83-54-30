@@ -19,144 +19,155 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
   const isRoundedUp = adjustment > 0;
 
   // Calculate total gallons (essence + diesel)
-  const totalGallons = parseFloat(totaux.totalGallonsEssence || 0) + parseFloat(totaux.totalGallonsDiesel || 0);
+// Calculate total gallons (essence + diesel) as a NUMBER
+const totalGallons = parseFloat(totaux.totalGallonsEssence || 0) + parseFloat(totaux.totalGallonsDiesel || 0);
 
   return (
     <>
-      {/* Fuel Statistics */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-            <p className="text-sm font-medium text-gray-700">Essence ({shift})</p>
+      {/* Statistiques Rapides - Mobile Optimized */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl p-3 shadow-lg">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+            <p className="text-xs font-medium opacity-90">Essence ({shift})</p>
           </div>
-          <p className="text-lg font-semibold text-gray-900 mb-1">{formaterGallons(totaux.totalGallonsEssence)}</p>
-          <p className="text-xs text-gray-500">gallons</p>
+          <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterGallons(totaux.totalGallonsEssence)}</p>
+          <p className="text-[10px] opacity-90">gallons</p>
         </div>
-        
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-            <p className="text-sm font-medium text-gray-700">Diesel ({shift})</p>
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-xl p-3 shadow-lg">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-amber-300"></div>
+            <p className="text-xs font-medium opacity-90">Diesel ({shift})</p>
           </div>
-          <p className="text-lg font-semibold text-gray-900 mb-1">{formaterGallons(totaux.totalGallonsDiesel)}</p>
-          <p className="text-xs text-gray-500">gallons</p>
+          <p className="text-lg sm:text-xl font-bold mb-0.5">{formaterGallons(totaux.totalGallonsDiesel)}</p>
+          <p className="text-[10px] opacity-90">gallons</p>
         </div>
       </div>
 
-      {/* Total Gallons */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-            <Fuel size={20} className="text-blue-600" />
+      {/* TOTAL GALLONS CARD - Add this below the essence/diesel cards */}
+      <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-3 shadow-lg mb-3">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+            <Fuel size={16} className="text-white" />
           </div>
           <div>
-            <p className="font-semibold text-gray-900">Total Gallons ({shift})</p>
-            <p className="text-sm text-gray-500">Essence + Diesel</p>
+            <p className="text-sm font-bold">TOTAL GALLONS ({shift})</p>
+            <p className="text-[10px] opacity-80">Essence + Diesel</p>
           </div>
         </div>
-        
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-2xl font-semibold text-gray-900 mb-1">{formaterGallons(totalGallons)}</p>
-            <p className="text-sm text-gray-500">gallons totaux</p>
+            <p className="text-2xl sm:text-3xl font-bold mb-0.5">{formaterGallons(totalGallons)}</p>
+            <p className="text-[10px] opacity-90">gallons totaux</p>
           </div>
           <div className="text-right">
-            <div className="space-y-1">
-              <div className="flex items-center justify-end gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                <span className="text-sm text-gray-600">Essence: {formaterGallons(totaux.totalGallonsEssence)}</span>
+            <div className="text-xs opacity-80 mb-1">Détail:</div>
+            <div className="text-xs opacity-90">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+                <span>Essence: {formaterGallons(totaux.totalGallonsEssence)}</span>
               </div>
-              <div className="flex items-center justify-end gap-2">
-                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                <span className="text-sm text-gray-600">Diesel: {formaterGallons(totaux.totalGallonsDiesel)}</span>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-amber-300"></div>
+                <span>Diesel: {formaterGallons(totaux.totalGallonsDiesel)}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sales Summary */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-        <div className="flex items-center justify-between mb-4">
+      {/* TOTAL SALES - Most Prominent Card */}
+      <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl p-4 shadow-xl mb-3">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-              <DollarSign size={18} className="text-blue-600" />
-            </div>
-            <p className="font-semibold text-gray-900">Ventes ({shift})</p>
+            <div className="w-3 h-3 rounded-full bg-white bg-opacity-80"></div>
+            <p className="text-sm font-bold">TOTAL VENTES ({shift})</p>
           </div>
-          <Calculator size={18} className="text-gray-400" />
+          <Calculator size={18} className="opacity-80" />
         </div>
 
-        <div className="space-y-3">
-          {/* Gross Sales */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="text-sm font-medium text-gray-700 mb-2">Ventes Brutes</p>
+        <div className="space-y-2">
+          {/* Main Total Sales - Most Prominent */}
+          <div className="bg-white bg-opacity-15 rounded-lg p-3 border border-white border-opacity-20">
+            <p className="text-xs opacity-90 mb-1">VENTES BRUTES (Essence + Diesel)</p>
             <div className="flex items-end justify-between">
-              <p className="text-xl font-semibold text-gray-900">{formaterArgent(totaux.totalBrut)}</p>
-              <span className="text-sm text-gray-600">HTG</span>
+              <p className="text-2xl sm:text-3xl font-bold tracking-tight">{formaterArgent(totaux.totalBrut)}</p>
+              <span className="text-sm font-medium opacity-90">HTG</span>
             </div>
           </div>
 
-          {/* USD Conversion */}
-          <div className="border border-gray-100 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-700">USD Converti</p>
-              <p className="text-sm font-medium text-gray-900">${formaterArgent(totaux.totalUSD)}</p>
+          {/* USD Adjustment - Less Prominent */}
+          <div className="bg-white bg-opacity-10 rounded-lg p-2">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1">
+                <TrendingDown size={12} className="text-amber-300" />
+                <p className="text-xs opacity-90">USD converti</p>
+              </div>
+              <p className="text-xs font-medium opacity-90">${formaterArgent(totaux.totalUSD)}</p>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">= {formaterArgent(totaux.totalHTGenUSD)} HTG</span>
-              <span className="text-xs text-gray-500">1 USD = {tauxUSD} HTG</span>
+              <span className="text-xs opacity-80">= {formaterArgent(totaux.totalHTGenUSD)} HTG</span>
+              <span className="text-[10px] opacity-70">1 USD = {tauxUSD} HTG</span>
             </div>
           </div>
 
-          {/* Final Adjusted Total */}
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-white border border-blue-200 flex items-center justify-center">
-                <DollarSign size={20} className="text-blue-600" />
+          {/* Final Adjusted Total - ROUNDED */}
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3 relative overflow-hidden">
+            {/* Decorative corner */}
+            <div className="absolute top-0 right-0 w-16 h-16 bg-white bg-opacity-10 rounded-full -translate-y-8 translate-x-8"></div>
+
+            <div className="flex items-center justify-between mb-2 relative z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                  <DollarSign size={16} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">TOTAL AJUSTÉ (CAISSE)</p>
+                  <p className="text-[10px] opacity-80">Arrondi au 0 ou 5 le plus proche</p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-gray-900">Total Ajusté (Caisse)</p>
-                <p className="text-sm text-gray-500">Arrondi au 0 ou 5 le plus proche</p>
+              <div className="bg-white bg-opacity-25 px-3 py-1 rounded-full">
+                <p className="text-xs font-bold">FINAL</p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="mb-2">
+            <div className="relative z-10">
+              {/* Main rounded amount with HTG */}
+              <div className="mb-1">
                 <div className="flex items-end justify-between">
-                  <p className="text-2xl font-semibold text-gray-900">{formaterCaisse(totaux.totalAjuste)}</p>
-                  <span className="text-lg font-semibold text-gray-700 ml-2">HTG</span>
+                  <p className="text-2xl sm:text-3xl font-bold">{formaterCaisse(totaux.totalAjuste)}</p>
+                  <span className="text-xl font-bold ml-2">HTG</span>
                 </div>
               </div>
 
-              {hasAdjustment && (
-                <div className="flex items-center justify-between pt-2 border-t border-blue-100">
-                  <p className="text-sm text-gray-600">Valeur arrondie</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">Écart:</span>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      isRoundedUp ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+              {/* Valeur arrondie label with adjustment on far right */}
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-xs opacity-80">Valeur arrondie</p>
+                {hasAdjustment && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs opacity-80">Écart:</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      isRoundedUp ? 'bg-amber-500' : 'bg-blue-500'
                     }`}>
                       {isRoundedUp ? `+${adjustment.toFixed(2)}` : `${adjustment.toFixed(2)}`}
                     </span>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Summary */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <p className="text-xs text-gray-500 mb-1">USD Sales</p>
-          <p className="text-base font-semibold text-gray-900">${formaterArgent(totaux.totalUSD)}</p>
+      {/* Quick Summary Row - Mobile Optimized */}
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <div className="bg-slate-800 text-white rounded-lg p-2">
+          <p className="text-[10px] opacity-90 mb-0.5">USD Sales</p>
+          <p className="text-sm font-bold">${formaterArgent(totaux.totalUSD)}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <p className="text-xs text-gray-500 mb-1">HTG (USD)</p>
-          <p className="text-base font-semibold text-gray-900">{formaterArgent(totaux.totalHTGenUSD)}</p>
+        <div className="bg-slate-800 text-white rounded-lg p-2">
+          <p className="text-[10px] opacity-90 mb-0.5">HTG (USD)</p>
+          <p className="text-sm font-bold">{formaterArgent(totaux.totalHTGenUSD)}</p>
         </div>
       </div>
     </>
