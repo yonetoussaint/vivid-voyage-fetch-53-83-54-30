@@ -16,11 +16,18 @@ const CaisseRecuCard = ({
   const [inputValue, setInputValue] = useState('');
   const [currencyType, setCurrencyType] = useState('HTG'); // 'HTG' or 'USD'
   const [cashSequences, setCashSequences] = useState([]);
-  const [selectedPreset, setSelectedPreset] = useState('250'); // Default preset
+  const [selectedPreset, setSelectedPreset] = useState('100'); // Default preset for HTG
   const [showPresets, setShowPresets] = useState(false);
   
-  // Preset options for HTG
+  // Preset options for HTG (Gourdes) - including coin values
   const htgPresets = [
+    { value: '1', label: '1 HTG (pièce)' },
+    { value: '5', label: '5 HTG (pièce)' },
+    { value: '10', label: '10 HTG (pièce)' },
+    { value: '20', label: '20 HTG (pièce)' },
+    { value: '25', label: '25 HTG (pièce)' },
+    { value: '50', label: '50 HTG (pièce/billet)' },
+    { value: '100', label: '100 HTG' },
     { value: '250', label: '250 HTG' },
     { value: '500', label: '500 HTG' },
     { value: '1000', label: '1,000 HTG' },
@@ -28,7 +35,10 @@ const CaisseRecuCard = ({
     { value: '10000', label: '10,000 HTG' },
     { value: '25000', label: '25,000 HTG' },
     { value: '50000', label: '50,000 HTG' },
-    { value: '100000', label: '100,000 HTG' }
+    { value: '100000', label: '100,000 HTG' },
+    { value: '250000', label: '250,000 HTG' },
+    { value: '500000', label: '500,000 HTG' },
+    { value: '1000000', label: '1,000,000 HTG' }
   ];
 
   // Preset options for USD
@@ -108,7 +118,9 @@ const CaisseRecuCard = ({
         currency: currencyType,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         convertedToHTG: currencyType === 'USD' ? amount * tauxUSD : amount,
-        note: inputValue ? `${inputValue} × ${selectedPreset} ${currencyType}` : `${selectedPreset} ${currencyType}`
+        note: inputValue && parseFloat(inputValue) !== 1 
+          ? `${inputValue} × ${selectedPreset} ${currencyType}` 
+          : `${selectedPreset} ${currencyType}`
       };
       setCashSequences(prev => [...prev, newSequence]);
       setInputValue('');
@@ -135,7 +147,7 @@ const CaisseRecuCard = ({
     setCurrencyType(prev => {
       const newCurrency = prev === 'HTG' ? 'USD' : 'HTG';
       // Reset to first preset of new currency
-      setSelectedPreset(newCurrency === 'HTG' ? '250' : '1');
+      setSelectedPreset(newCurrency === 'HTG' ? '100' : '1');
       return newCurrency;
     });
   };
@@ -147,12 +159,13 @@ const CaisseRecuCard = ({
     }
   };
 
-  // Quick add amounts based on currency
+  // Quick add amounts based on currency - using most common presets
   const getQuickAddAmounts = () => {
     if (currencyType === 'USD') {
       return [1, 5, 10, 20]; // Common USD bills
     }
-    return [100, 250, 500, 1000]; // Common HTG bills
+    // Most commonly used HTG amounts
+    return [100, 250, 500, 1000];
   };
 
   // Handle preset selection
@@ -184,6 +197,9 @@ const CaisseRecuCard = ({
   const givableAmount = getMaximumGivableAmount(changeNeeded);
   const remainder = changeNeeded - givableAmount;
   const hasRemainder = remainder > 0;
+
+  // Get selected preset label
+  const selectedPresetLabel = currentPresets.find(p => p.value === selectedPreset)?.label || selectedPreset;
 
   return (
     <div className={`rounded-xl p-3 shadow-lg mb-3 ${
@@ -366,7 +382,7 @@ const CaisseRecuCard = ({
                       <span className={`font-medium ${
                         sequence.currency === 'USD' ? 'text-green-300' : 'text-blue-300'
                       }`}>
-                        {sequence.currency === 'USD' ? '$' : ''}{sequence.amount} {sequence.currency}
+                        {sequence.currency === 'USD' ? '$' : ''}{formaterArgent(sequence.amount)} {sequence.currency}
                       </span>
                       {sequence.currency === 'USD' && (
                         <p className="text-[10px] opacity-60">
@@ -442,10 +458,10 @@ const CaisseRecuCard = ({
                   <span className={`text-xs font-bold ${
                     currencyType === 'HTG' ? 'text-blue-300' : 'text-green-300'
                   }`}>
-                    {currentPresets.find(p => p.value === selectedPreset)?.label || 'Sélectionner'}
+                    {selectedPresetLabel}
                   </span>
                   <span className="text-[10px] opacity-70">
-                    {inputValue ? `× ${inputValue} = ${calculatePresetAmount()} ${currencyType}` : ''}
+                    {inputValue && parseFloat(inputValue) !== 1 ? `× ${inputValue} = ${formaterArgent(calculatePresetAmount())} ${currencyType}` : ''}
                   </span>
                 </div>
                 <ChevronDown 
@@ -463,7 +479,7 @@ const CaisseRecuCard = ({
                     ? 'bg-blue-900 border-blue-700'
                     : 'bg-green-900 border-green-700'
                 }`}>
-                  <div className="max-h-40 overflow-y-auto">
+                  <div className="max-h-48 overflow-y-auto">
                     {currentPresets.map((preset) => (
                       <button
                         key={preset.value}
@@ -479,9 +495,9 @@ const CaisseRecuCard = ({
                         }`}
                       >
                         <span>{preset.label}</span>
-                        {inputValue && (
+                        {inputValue && parseFloat(inputValue) !== 1 && (
                           <span className="text-[10px] opacity-70">
-                            = {parseFloat(preset.value) * (parseFloat(inputValue) || 1)} {currencyType}
+                            = {formaterArgent(parseFloat(preset.value) * (parseFloat(inputValue) || 1))} {currencyType}
                           </span>
                         )}
                       </button>
@@ -493,7 +509,7 @@ const CaisseRecuCard = ({
             
             {/* Helper text */}
             <p className="text-[10px] opacity-70 mt-1 text-center">
-              Sélectionnez un billet et entrez un multiplicateur (ex: 1000 × 33 = 33,000 HTG)
+              Sélectionnez un billet/pièce et entrez un multiplicateur
             </p>
           </div>
 
@@ -534,7 +550,7 @@ const CaisseRecuCard = ({
           {inputValue && !isNaN(parseFloat(inputValue)) && selectedPreset && (
             <div className="mt-2 bg-white bg-opacity-10 rounded p-2 text-center">
               <p className="text-xs opacity-90">
-                {inputValue} × {selectedPreset} {currencyType} = {calculatePresetAmount()} {currencyType}
+                {inputValue} × {selectedPreset} {currencyType} = {formaterArgent(calculatePresetAmount())} {currencyType}
               </p>
               {currencyType === 'USD' && (
                 <p className="text-[10px] opacity-70">
@@ -567,7 +583,7 @@ const CaisseRecuCard = ({
               }`}
               title={`Ajouter 1 × ${amount} ${currencyType}`}
             >
-              +{amount} {currencyType === 'USD' ? '$' : ''}
+              +{currencyType === 'USD' ? '$' : ''}{amount}
             </button>
           ))}
         </div>
@@ -654,10 +670,13 @@ const CaisseRecuCard = ({
       {cashSequences.length === 0 && (
         <div className="bg-white bg-opacity-5 rounded-lg p-2 text-center">
           <p className="text-[10px] opacity-70">
-            Sélectionnez un billet et entrez un multiplicateur
+            Sélectionnez un billet/pièce et entrez un multiplicateur
           </p>
           <p className="text-[9px] opacity-50 mt-0.5">
             Ex: Sélectionnez "1,000 HTG", entrez "33" → 33,000 HTG
+          </p>
+          <p className="text-[9px] opacity-50 mt-0.5">
+            Ex: Sélectionnez "100 HTG", entrez "5" → 500 HTG
           </p>
         </div>
       )}
