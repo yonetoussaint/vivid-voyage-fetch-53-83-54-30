@@ -13,7 +13,7 @@ const DepositsSummary = ({
 }) => {
   if (depots.length === 0) return null;
 
-  // Helper function to parse breakdown and create sorted list items
+  // Helper function to parse breakdown and create sorted list items with totals
   const renderBreakdown = (depot) => {
     if (!depot || typeof depot !== 'object') return null;
     
@@ -26,24 +26,30 @@ const DepositsSummary = ({
       
       // Extract numeric value from different patterns
       let numericValue = 0;
+      let displayTotal = '';
       
       // Pattern: "5 × 20 USD" or "5 × 20 HTG"
       const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
       if (multiplierMatch) {
-        const [, multiplier, value] = multiplierMatch;
-        numericValue = parseFloat(multiplier) * parseFloat(value);
+        const [, multiplier, value, currency] = multiplierMatch;
+        const total = parseFloat(multiplier) * parseFloat(value);
+        numericValue = total;
+        displayTotal = `${formaterArgent(total)} ${currency}`;
       } 
       // Pattern: "20 USD" or "100 HTG"
       else {
         const valueMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
         if (valueMatch) {
-          numericValue = parseFloat(valueMatch[1]);
+          const [, value, currency] = valueMatch;
+          numericValue = parseFloat(value);
+          displayTotal = `${formaterArgent(numericValue)} ${currency}`;
         }
       }
       
       return {
         text: trimmed,
         value: numericValue,
+        displayTotal: displayTotal,
         isUSD: /USD/i.test(trimmed)
       };
     });
@@ -51,17 +57,26 @@ const DepositsSummary = ({
     // Sort by value descending (largest first)
     const sortedSequences = [...parsedSequences].sort((a, b) => b.value - a.value);
 
+    // Calculate total of all sequences
+    const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + seq.value, 0);
+
     return (
       <div className="mt-1.5 ml-3 pl-2 border-l border-white border-opacity-20">
-        <div className="text-[11px] font-medium opacity-80 mb-1.5 flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
-          <span>Séquences</span>
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="text-[11px] font-medium opacity-80 flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
+            <span>Séquences</span>
+          </div>
+          <div className="text-[11px] opacity-70">
+            Total: <span className="font-semibold">{formaterArgent(sequencesTotal)}</span>
+          </div>
         </div>
+        
         <div className="space-y-1.5">
           {sortedSequences.map((seq, idx) => (
             <div 
               key={idx} 
-              className={`text-[11px] opacity-90 pl-1 flex items-start gap-2 group ${
+              className={`text-[11px] opacity-90 pl-1 flex items-center justify-between gap-2 group ${
                 seq.isUSD ? 'text-green-200' : ''
               }`}
             >
@@ -80,15 +95,16 @@ const DepositsSummary = ({
                 </div>
                 <span className="truncate">{seq.text}</span>
               </div>
-              {seq.value > 0 && (
-                <div className={`text-[10px] px-1.5 py-0.5 rounded ${
+              
+              <div className="flex items-center gap-2">
+                <div className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                   seq.isUSD 
-                    ? 'bg-green-900 bg-opacity-30 text-green-300' 
-                    : 'bg-white bg-opacity-10'
+                    ? 'bg-green-900 bg-opacity-40 text-green-200' 
+                    : 'bg-white bg-opacity-15'
                 }`}>
-                  {seq.isUSD ? 'USD' : 'HTG'}
+                  {seq.displayTotal}
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
@@ -138,6 +154,9 @@ const DepositsSummary = ({
         <div className="text-xs font-medium opacity-90 flex items-center gap-2 mb-2">
           <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
           <span>Dépôts individuels</span>
+          <span className="text-[11px] opacity-60 ml-auto">
+            {depots.length} dépôt{depots.length !== 1 ? 's' : ''}
+          </span>
         </div>
         <div className="flex flex-col gap-2">
           {sortedDepots.map((depot, idx) => {
@@ -179,7 +198,7 @@ const DepositsSummary = ({
                   
                   <div className="flex-1 min-w-0">
                     {/* Main deposit info */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-1">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <span className="font-semibold truncate">{displayText}</span>
                         {isRecent && (
@@ -187,12 +206,24 @@ const DepositsSummary = ({
                         )}
                       </div>
                       
+                      {/* Show total for deposits with breakdown */}
+                      {hasBreakdown && (
+                        <div className="text-xs opacity-80 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                          <span className="opacity-70">Total:</span>
+                          <span className="font-medium">
+                            {isUSD 
+                              ? `${montantOriginal} USD` 
+                              : `${formaterArgent(montantOriginal)} HTG`
+                            }
+                          </span>
+                        </div>
+                      )}
+                      
                       {/* USD conversion for USD deposits */}
                       {isUSD && (
                         <div className="text-xs opacity-80 bg-green-900/30 px-2 py-1 rounded inline-flex items-center gap-1">
                           <span className="opacity-70">≈</span>
                           <span>{formaterArgent(montantHTG)} HTG</span>
-                          <span className="text-[10px] opacity-60 ml-1">({montantOriginal} USD)</span>
                         </div>
                       )}
                     </div>
