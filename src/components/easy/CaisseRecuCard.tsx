@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, AlertCircle, Plus, Trash2, Globe, ChevronDown } from 'lucide-react';
+import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, AlertCircle, Plus, Trash2, Globe, ChevronDown, RefreshCw, ArrowRightLeft } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 import { generateChangeCombinations, getMaximumGivableAmount } from '@/utils/changeCalculator';
 import ChangeCombinations from './ChangeCombinations';
@@ -18,6 +18,8 @@ const CaisseRecuCard = ({
   const [cashSequences, setCashSequences] = useState([]);
   const [selectedPreset, setSelectedPreset] = useState('aucune'); // 'aucune' or preset value
   const [showPresets, setShowPresets] = useState(false);
+  const [showRoundAmount, setShowRoundAmount] = useState(false);
+  const [roundAmount, setRoundAmount] = useState('');
   
   // Preset options for HTG (Gourdes) - including coin values
   const htgPresets = [
@@ -55,6 +57,9 @@ const CaisseRecuCard = ({
   // Get current presets based on currency
   const currentPresets = currencyType === 'HTG' ? htgPresets : usdPresets;
 
+  // Common round amounts for HTG
+  const commonRoundAmounts = [50, 100, 250, 500, 1000, 2000, 5000, 10000];
+
   // Check if "Aucune" is selected (direct amount entry)
   const isDirectAmount = selectedPreset === 'aucune';
 
@@ -84,6 +89,29 @@ const CaisseRecuCard = ({
   const changeNeeded = totalCashRecuHTG - especesAttendues;
   const shouldGiveChange = changeNeeded > 0;
   const isShort = changeNeeded < 0;
+
+  // Calculate round amount details
+  const roundAmountDetails = useMemo(() => {
+    if (!roundAmount || !shouldGiveChange || changeNeeded <= 0) return null;
+    
+    const desiredAmount = parseFloat(roundAmount);
+    const currentChange = changeNeeded;
+    
+    if (isNaN(desiredAmount) || desiredAmount <= 0) return null;
+    
+    // Customer wants to receive more than they're owed
+    const customerAdds = desiredAmount - currentChange;
+    
+    return {
+      desiredAmount,
+      currentChange,
+      customerAdds,
+      isValid: customerAdds >= 0, // Customer must add, not subtract
+      message: customerAdds >= 0 
+        ? `Le client vous donne ${formaterArgent(customerAdds)} HTG de plus pour recevoir ${formaterArgent(desiredAmount)} HTG`
+        : `Impossible: ${formaterArgent(desiredAmount)} HTG est moins que ${formaterArgent(currentChange)} HTG dû`
+    };
+  }, [roundAmount, changeNeeded, shouldGiveChange]);
 
   // Handle adding a new cash sequence
   const handleAddSequence = () => {
@@ -198,6 +226,39 @@ const CaisseRecuCard = ({
         if (input) input.focus();
       }, 100);
     }
+  };
+
+  // Handle round amount selection
+  const handleRoundAmountSelect = (amount) => {
+    setRoundAmount(amount.toString());
+    setShowRoundAmount(true);
+  };
+
+  // Reset round amount
+  const handleResetRoundAmount = () => {
+    setRoundAmount('');
+  };
+
+  // Apply round amount to cash sequences
+  const handleApplyRoundAmount = () => {
+    if (!roundAmountDetails || !roundAmountDetails.isValid) return;
+    
+    // Add the extra amount the customer gives
+    const extraAmount = roundAmountDetails.customerAdds;
+    if (extraAmount > 0) {
+      const newSequence = {
+        id: Date.now(),
+        amount: extraAmount,
+        currency: 'HTG',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        convertedToHTG: extraAmount,
+        note: `Client ajoute pour arrondir à ${formaterArgent(roundAmountDetails.desiredAmount)} HTG`
+      };
+      setCashSequences(prev => [...prev, newSequence]);
+    }
+    
+    // Reset round amount
+    setRoundAmount('');
   };
 
   const formatDepositDisplay = (depot) => {
@@ -682,10 +743,122 @@ const CaisseRecuCard = ({
 
           {/* Use the refactored ChangeCombinations component */}
           {shouldGiveChange && (
-            <ChangeCombinations 
-              changeNeeded={changeNeeded}
-              shouldGiveChange={shouldGiveChange}
-            />
+            <>
+              <ChangeCombinations 
+                changeNeeded={changeNeeded}
+                shouldGiveChange={shouldGiveChange}
+              />
+              
+              {/* Round Amount Preference Section */}
+              <div className="border-t border-white border-opacity-20 pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1">
+                    <ArrowRightLeft size={12} className="text-purple-300" />
+                    <p className="text-xs font-bold text-purple-300">Arrondir le montant</p>
+                  </div>
+                  {roundAmount ? (
+                    <button
+                      onClick={handleResetRoundAmount}
+                      className="p-1 hover:bg-gray-500 hover:bg-opacity-30 rounded text-gray-300 hover:text-gray-200 transition-colors"
+                      title="Réinitialiser"
+                    >
+                      <RefreshCw size={10} />
+                    </button>
+                  ) : null}
+                </div>
+                
+                <p className="text-[10px] opacity-80 mb-2 text-center">
+                  Le client veut recevoir un montant rond (ex: 50 au lieu de 45 HTG)
+                </p>
+                
+                {/* Input for round amount */}
+                <div className="relative mb-2">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <DollarSign size={12} className="text-purple-300" />
+                  </div>
+                  <input
+                    type="number"
+                    value={roundAmount}
+                    onChange={(e) => setRoundAmount(e.target.value)}
+                    placeholder="Montant désiré par le client (ex: 50, 100, 500)..."
+                    className="w-full pl-10 pr-20 py-2 text-sm font-bold bg-white bg-opacity-15 border border-purple-400 border-opacity-50 rounded-lg text-white placeholder-purple-200 placeholder-opacity-70 focus:outline-none focus:ring-1 focus:ring-purple-400 focus:border-purple-400"
+                  />
+                  {roundAmountDetails && roundAmountDetails.isValid && (
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-1">
+                      <button
+                        onClick={handleApplyRoundAmount}
+                        className="px-2 py-1.5 rounded-md text-xs font-bold bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-1 transition-colors"
+                        title="Appliquer cet arrangement"
+                      >
+                        <Plus size={10} />
+                        Appliquer
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Quick round amount buttons */}
+                <div className="grid grid-cols-4 gap-1 mb-2">
+                  {commonRoundAmounts.map((amount) => (
+                    <button
+                      key={amount}
+                      onClick={() => handleRoundAmountSelect(amount)}
+                      className="px-1 py-1.5 text-xs font-medium rounded bg-purple-500 bg-opacity-10 hover:bg-opacity-20 border border-purple-400 border-opacity-30 text-purple-300 transition-colors"
+                      title={`Arrondir à ${amount} HTG`}
+                    >
+                      {amount}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Calculation result */}
+                {roundAmountDetails && (
+                  <div className={`rounded-lg p-2 ${
+                    roundAmountDetails.isValid
+                      ? 'bg-purple-500 bg-opacity-20 border border-purple-400 border-opacity-30'
+                      : 'bg-red-500 bg-opacity-20 border border-red-400 border-opacity-30'
+                  }`}>
+                    <div className="flex items-start gap-1.5">
+                      {roundAmountDetails.isValid ? (
+                        <ArrowRightLeft size={12} className="text-purple-300 mt-0.5" />
+                      ) : (
+                        <AlertCircle size={12} className="text-red-300 mt-0.5" />
+                      )}
+                      <div className="flex-1">
+                        <p className={`text-xs font-bold mb-0.5 ${
+                          roundAmountDetails.isValid ? 'text-purple-300' : 'text-red-300'
+                        }`}>
+                          {roundAmountDetails.isValid ? 'Échange proposé:' : 'Impossible:'}
+                        </p>
+                        <div className="space-y-1 text-[10px]">
+                          <div className="flex justify-between items-center">
+                            <span className="opacity-80">Actuellement dû:</span>
+                            <span className="font-bold">{formaterArgent(roundAmountDetails.currentChange)} HTG</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="opacity-80">Le client veut recevoir:</span>
+                            <span className="font-bold text-purple-300">{formaterArgent(roundAmountDetails.desiredAmount)} HTG</span>
+                          </div>
+                          <div className="flex justify-between items-center pt-1 border-t border-white border-opacity-10">
+                            <span className="opacity-80">Le client doit vous donner:</span>
+                            <span className={`font-bold ${
+                              roundAmountDetails.isValid ? 'text-green-300' : 'text-red-300'
+                            }`}>
+                              {roundAmountDetails.isValid ? '+' : ''}{formaterArgent(Math.abs(roundAmountDetails.customerAdds))} HTG
+                            </span>
+                          </div>
+                          <p className={`text-[10px] mt-1 pt-1 border-t border-white border-opacity-10 ${
+                            roundAmountDetails.isValid ? 'text-purple-200' : 'text-red-300'
+                          }`}>
+                            {roundAmountDetails.message}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           {/* No change needed */}
