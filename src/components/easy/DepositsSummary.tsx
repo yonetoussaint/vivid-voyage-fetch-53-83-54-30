@@ -57,11 +57,20 @@ const DepositsSummary = ({
     // Sort by value descending (largest first)
     const sortedSequences = [...parsedSequences].sort((a, b) => b.value - a.value);
 
+    // Calculate total of all sequences
+    const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + seq.value, 0);
+
     return (
       <div className="mt-2">
-        <div className="text-[11px] font-medium opacity-80 flex items-center gap-1.5 mb-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
-          <span>Composition</span>
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="text-[11px] font-medium opacity-80 flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
+            <span>Composition</span>
+          </div>
+          <div className="text-[11px] opacity-70">
+            <span className="opacity-60 mr-1">Total:</span>
+            <span className="font-semibold">{formaterArgent(sequencesTotal)}</span>
+          </div>
         </div>
         
         <div className="space-y-1.5">
@@ -198,20 +207,13 @@ const DepositsSummary = ({
                     </div>
                   </div>
                   
-                  {/* Show only one total: either HTG total or USD conversion */}
-                  {isUSD ? (
+                  {/* Show only USD conversion for USD deposits */}
+                  {isUSD && (
                     <div className="text-xs opacity-80 bg-green-900/30 px-2 py-1 rounded inline-flex items-center gap-1 mt-1 sm:mt-0">
                       <span className="opacity-70">≈</span>
                       <span>{formaterArgent(montantHTG)} HTG</span>
                     </div>
-                  ) : hasBreakdown ? (
-                    <div className="text-xs opacity-80 px-2 py-0.5 rounded inline-flex items-center gap-1 mt-1 sm:mt-0">
-                      <span className="opacity-70">Total:</span>
-                      <span className="font-medium">
-                        {formaterArgent(montantOriginal)} HTG
-                      </span>
-                    </div>
-                  ) : null}
+                  )}
                 </div>
                 
                 {/* Render breakdown - Only show for deposits with breakdown */}
