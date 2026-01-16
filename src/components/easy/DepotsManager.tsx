@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { DollarSign, User, Plus, Minus, Globe, ChevronDown, List, X, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DollarSign, User, Plus, Minus, Globe, ChevronDown, List, X, Trash2, Check } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJourDepot, ajouterDepot, supprimerDepot }) => {
@@ -12,6 +12,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const [showPresetsForVendor, setShowPresetsForVendor] = useState(null);
   const [depositSequences, setDepositSequences] = useState({});
   const [showSequenceManager, setShowSequenceManager] = useState(null);
+  const [recentlyAdded, setRecentlyAdded] = useState({});
 
   // Preset options for HTG (Gourdes)
   const htgPresets = [
@@ -130,6 +131,21 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         [vendeur]: []
       }));
     }
+  };
+
+  // Mark deposit as recently added
+  const markAsRecentlyAdded = (vendeur, index) => {
+    const key = `${vendeur}-${index}`;
+    setRecentlyAdded(prev => ({ ...prev, [key]: true }));
+    
+    // Remove highlight after 2 seconds
+    setTimeout(() => {
+      setRecentlyAdded(prev => {
+        const newState = { ...prev };
+        delete newState[key];
+        return newState;
+      });
+    }, 2000);
   };
 
   // Handle currency selection for a vendor
@@ -276,7 +292,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return sequences.reduce((total, seq) => total + seq.amount, 0);
   };
 
-  // Handle adding the complete deposit with all sequences - FIXED VERSION
+  // Handle adding the complete deposit with all sequences
   const handleAddCompleteDeposit = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
     const vendorState = vendorPresets[vendeur];
@@ -294,52 +310,35 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     // Create breakdown description
     const breakdown = sequences.map(seq => seq.note).join(', ');
     
-    let deposit;
-    
-    if (currency === 'USD') {
-      // Create USD deposit object
-      deposit = {
-        montant: totalAmount.toFixed(2),
-        devise: 'USD',
-        breakdown: breakdown,
-        sequences: sequences
-      };
-    } else {
-      // Create HTG deposit object
-      deposit = {
-        value: totalAmount.toString(),
-        breakdown: breakdown,
-        sequences: sequences
-      };
-    }
-    
-    // Use ajouterDepot to add the deposit with the amount directly
-    // First, we need to check what parameters ajouterDepot expects
-    // Based on the original code, it seems to expect (vendeur, currency)
-    // Let's modify our approach
-    
     // Get current deposits to find the next index
     const currentDepots = depotsActuels[vendeur] || [];
     const newIndex = currentDepots.length;
     
-    console.log(`Adding deposit at index ${newIndex}:`, deposit);
-    
-    // Try to use mettreAJourDepot with the deposit object
-    // This should create the deposit at the specified index
     if (currency === 'USD') {
-      mettreAJourDepot(vendeur, newIndex, {
+      // Create USD deposit object
+      const deposit = {
         montant: totalAmount.toFixed(2),
         devise: 'USD',
         breakdown: breakdown,
         sequences: sequences
-      });
+      };
+      
+      console.log(`Creating USD deposit at index ${newIndex}:`, deposit);
+      mettreAJourDepot(vendeur, newIndex, deposit);
     } else {
-      mettreAJourDepot(vendeur, newIndex, {
+      // Create HTG deposit object
+      const deposit = {
         value: totalAmount.toString(),
         breakdown: breakdown,
         sequences: sequences
-      });
+      };
+      
+      console.log(`Creating HTG deposit at index ${newIndex}:`, deposit);
+      mettreAJourDepot(vendeur, newIndex, deposit);
     }
+    
+    // Mark as recently added for highlighting
+    markAsRecentlyAdded(vendeur, newIndex);
     
     // Clear sequences after adding deposit
     handleClearSequences(vendeur);
@@ -444,19 +443,17 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       
       // Add the deposit directly
       mettreAJourDepot(vendeur, newIndex, amount.toString());
+      
+      // Mark as recently added for highlighting
+      markAsRecentlyAdded(vendeur, newIndex);
+      
       input.value = '';
     }
   };
 
-  // Debug function to check what's happening
-  const debugDepositCreation = (vendeur) => {
-    console.log("=== DEBUG DEPOSIT CREATION ===");
-    console.log("Vendor:", vendeur);
-    console.log("Sequences:", depositSequences[vendeur]);
-    console.log("Total:", calculateSequencesTotal(vendeur));
-    console.log("Current deposits:", depotsActuels[vendeur]);
-    console.log("Vendor state:", vendorPresets[vendeur]);
-    console.log("=============================");
+  // Check if a deposit is recently added
+  const isRecentlyAdded = (vendeur, index) => {
+    return recentlyAdded[`${vendeur}-${index}`] || false;
   };
 
   return (
@@ -775,14 +772,11 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                             </div>
                           </div>
 
-                          {/* Add Complete Deposit Button - FIXED */}
+                          {/* Add Complete Deposit Button */}
                           {sequences.length > 0 && (
                             <div className="pt-1">
                               <button
-                                onClick={() => {
-                                  debugDepositCreation(vendeur);
-                                  handleAddCompleteDeposit(vendeur);
-                                }}
+                                onClick={() => handleAddCompleteDeposit(vendeur)}
                                 className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity text-sm sm:text-base"
                               >
                                 <Plus size={14} />
@@ -839,7 +833,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       </div>
                     )}
 
-                    {/* Existing deposits */}
+                    {/* Existing deposits with highlight effect */}
                     {depots.length === 0 ? (
                       <div className="text-center py-3 text-white text-opacity-70 text-sm">
                         Aucun dépôt ajouté
@@ -853,9 +847,25 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           const montantOriginal = getOriginalDepotAmount(depot);
                           const displayText = getDepositDisplay(depot);
                           const hasBd = hasBreakdown(depot);
+                          const isRecent = isRecentlyAdded(vendeur, index);
 
                           return (
-                            <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                            <div 
+                              key={index} 
+                              className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 transition-all duration-300 ${
+                                isRecent 
+                                  ? 'bg-green-500 bg-opacity-20 rounded-lg p-2 border border-green-400 border-opacity-30' 
+                                  : ''
+                              }`}
+                            >
+                              {/* Highlight indicator */}
+                              {isRecent && (
+                                <div className="absolute -left-2 top-1/2 transform -translate-y-1/2">
+                                  <div className="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+                                  <div className="w-2 h-2 bg-green-400 rounded-full absolute top-0"></div>
+                                </div>
+                              )}
+
                               {/* Input container */}
                               <div className="flex-1 w-full">
                                 <div className="flex items-center bg-white bg-opacity-20 rounded-lg overflow-hidden">
@@ -869,7 +879,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                           montant: e.target.value,
                                           devise: 'USD',
                                           ...(depot.breakdown && { breakdown: depot.breakdown }),
-                                          ...(depot.sequences && { sequences: deposit.sequences })
+                                          ...(depot.sequences && { sequences: depot.sequences })
                                         });
                                       } else if (typeof depot === 'object' && depot.value) {
                                         // HTG deposit with breakdown
@@ -891,7 +901,12 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                   </span>
                                 </div>
                                 <div className="text-xs text-right opacity-75 mt-1">
-                                  <div className="truncate">{displayText}</div>
+                                  <div className="truncate flex items-center justify-end gap-1">
+                                    {displayText}
+                                    {isRecent && (
+                                      <Check size={10} className="text-green-300" />
+                                    )}
+                                  </div>
                                   {isUSD && (
                                     <div className="text-[10px] sm:text-xs">
                                       = {formaterArgent(montantHTG)} HTG
@@ -931,6 +946,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                             const isUSD = isUSDDepot(depot);
                             const montantOriginal = getOriginalDepotAmount(depot);
                             const displayText = getDepositDisplay(depot);
+                            const isRecent = isRecentlyAdded(vendeur, idx);
 
                             return (
                               <div 
@@ -939,10 +955,15 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                                   isUSD 
                                     ? 'bg-green-500 bg-opacity-30 text-green-100' 
                                     : 'bg-white bg-opacity-20'
-                                }`}
+                                } ${isRecent ? 'ring-1 ring-green-400 ring-opacity-50' : ''}`}
                               >
                                 <span className="font-bold">{idx + 1}.</span>
-                                <span className="truncate max-w-[150px] sm:max-w-none">{displayText}</span>
+                                <span className="truncate max-w-[150px] sm:max-w-none flex items-center gap-1">
+                                  {displayText}
+                                  {isRecent && (
+                                    <Check size={8} className="text-green-300" />
+                                  )}
+                                </span>
                                 {isUSD && (
                                   <span className="text-[10px] opacity-75 sm:ml-1">
                                     ({formaterArgent(montantOriginal)} USD)
