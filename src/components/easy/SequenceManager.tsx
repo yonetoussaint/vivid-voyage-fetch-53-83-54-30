@@ -7,7 +7,6 @@ const SequenceManager = ({
   vendorState,
   sequences,
   sequencesTotal,
-  isSequenceManagerOpen,
   vendorInputs,
   currentPresets,
 
@@ -28,14 +27,13 @@ const SequenceManager = ({
   htgPresets,
   usdPresets
 }) => {
-  if (!isSequenceManagerOpen || !vendorState) return null;
-
   // Local state
   const [editingSequenceId, setEditingSequenceId] = useState(null);
   const [showPresetWheel, setShowPresetWheel] = useState(false);
   
   const wheelRef = useRef(null);
   const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   // Get current presets based on currency
   const getPresets = () => {
@@ -54,8 +52,7 @@ const SequenceManager = ({
   // Close wheel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (wheelRef.current && !wheelRef.current.contains(event.target) && 
-          inputRef.current && !inputRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowPresetWheel(false);
       }
     };
@@ -202,7 +199,8 @@ const SequenceManager = ({
   };
 
   // Toggle preset wheel
-  const togglePresetWheel = () => {
+  const togglePresetWheel = (e) => {
+    e.stopPropagation();
     setShowPresetWheel(!showPresetWheel);
   };
 
@@ -317,7 +315,7 @@ const SequenceManager = ({
       {/* Input Section - Mobile Optimized */}
       <div className="space-y-2">
         {/* Compact Input Row */}
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
             {/* Input Field */}
             <div className="flex-1">
@@ -349,8 +347,8 @@ const SequenceManager = ({
                 onClick={togglePresetWheel}
                 className={`h-full px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
                   vendorState.currency === 'HTG'
-                    ? 'bg-blue-500 bg-opacity-20 text-blue-300'
-                    : 'bg-green-500 bg-opacity-20 text-green-300'
+                    ? 'bg-blue-500 bg-opacity-20 text-blue-300 hover:bg-blue-500 hover:bg-opacity-30'
+                    : 'bg-green-500 bg-opacity-20 text-green-300 hover:green-500 hover:bg-opacity-30'
                 }`}
               >
                 <div className="flex items-center gap-1">
@@ -359,17 +357,18 @@ const SequenceManager = ({
                 </div>
               </button>
               
-              {/* Preset Wheel */}
+              {/* Preset Wheel - FIXED POSITIONING */}
               {showPresetWheel && (
                 <div 
                   ref={wheelRef}
-                  className="absolute z-50 right-0 mt-1 w-32 max-h-48 overflow-y-auto rounded-lg shadow-lg border border-white border-opacity-20 bg-gray-800"
+                  className="absolute z-50 right-0 mt-1 w-40 max-h-48 overflow-y-auto rounded-lg shadow-xl border border-white border-opacity-20 bg-gray-800"
+                  style={{ top: '100%' }}
                 >
                   {getPresets().map((preset) => (
                     <button
                       key={preset.value}
                       onClick={() => handleWheelPresetSelect(preset.value)}
-                      className={`w-full px-3 py-2.5 text-left text-xs hover:bg-opacity-50 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
+                      className={`w-full px-4 py-3 text-left text-sm hover:bg-opacity-50 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
                         vendorState.preset === preset.value
                           ? vendorState.currency === 'HTG'
                             ? 'bg-blue-700 text-white'
@@ -377,9 +376,9 @@ const SequenceManager = ({
                           : 'hover:bg-gray-700 text-gray-100'
                       }`}
                     >
-                      <span>{preset.label}</span>
+                      <span>{preset.label} {vendorState.currency}</span>
                       {vendorState.preset === preset.value && (
-                        <div className={`w-1.5 h-1.5 rounded-full ${vendorState.currency === 'HTG' ? 'bg-blue-300' : 'bg-green-300'}`}></div>
+                        <div className={`w-2 h-2 rounded-full ${vendorState.currency === 'HTG' ? 'bg-blue-300' : 'bg-green-300'}`}></div>
                       )}
                     </button>
                   ))}
@@ -395,7 +394,7 @@ const SequenceManager = ({
                   disabled={!vendorInputs[vendeur] || parseFloat(vendorInputs[vendeur]) <= 0}
                   className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
                     vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-green-500 text-white hover:bg-green-600'
                       : 'bg-gray-600 text-gray-300'
                   }`}
                   title="Mettre à jour"
@@ -404,7 +403,7 @@ const SequenceManager = ({
                 </button>
                 <button
                   onClick={handleCancelEdit}
-                  className="px-2 bg-red-500 text-white flex items-center justify-center"
+                  className="px-3 bg-red-500 text-white hover:bg-red-600 flex items-center justify-center"
                   title="Annuler"
                 >
                   <RotateCcw size={12} />
@@ -417,8 +416,8 @@ const SequenceManager = ({
                 className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
                   vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0
                     ? vendorState.currency === 'HTG'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-green-500 text-white'
+                      ? 'bg-blue-500 text-white hover:bg-blue-600'
+                      : 'bg-green-500 text-white hover:bg-green-600'
                     : 'bg-gray-600 text-gray-300'
                 }`}
                 title="Ajouter"
