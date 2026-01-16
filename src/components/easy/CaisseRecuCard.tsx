@@ -225,50 +225,52 @@ const CaisseRecuCard = ({
           <p className="text-sm font-bold text-blue-300">1 USD = {tauxUSD} HTG</p>
         </div>
 
-        {/* Total Cash Received Summary */}
-        {cashSequences.length > 0 && (
-          <div className="bg-green-500 bg-opacity-20 rounded-lg p-2 mb-2 border border-green-400 border-opacity-30">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1">
-                <DollarSign size={12} className="text-green-300" />
-                <p className="text-xs font-bold text-green-300">Total reçu:</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-green-300">{formaterArgent(totalCashRecuHTG)} HTG</p>
-                <button
-                  onClick={handleClearAll}
-                  className="p-1 hover:bg-red-500 hover:bg-opacity-30 rounded text-red-300 hover:text-red-200 transition-colors"
-                  title="Effacer toutes les séquences"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            </div>
-            
-            {/* Breakdown by currency */}
-            <div className="grid grid-cols-2 gap-2 text-[10px]">
-              <div className="bg-blue-500 bg-opacity-10 rounded p-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="opacity-80">Total HTG:</span>
-                  <span className="font-bold text-blue-300">{formaterArgent(totalHTG)} HTG</span>
-                </div>
-              </div>
-              <div className="bg-green-500 bg-opacity-10 rounded p-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="opacity-80">Total USD:</span>
-                  <span className="font-bold text-green-300">
-                    {totalUSD.toFixed(2)} USD
-                    <span className="text-[9px] opacity-70 ml-1">({formaterArgent(totalUSD * tauxUSD)} HTG)</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <p className="text-[10px] opacity-80 mt-2 text-green-300">
-              {cashSequences.length} séquence{cashSequences.length !== 1 ? 's' : ''} ajoutée{cashSequences.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-        )}
+
+{/* Total Cash Received Summary */}
+{cashSequences.length > 0 && (
+  <div className="bg-green-500 bg-opacity-20 rounded-lg p-2 mb-2 border border-green-400 border-opacity-30">
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center gap-1">
+        <DollarSign size={12} className="text-green-300" />
+        <p className="text-xs font-bold text-green-300">Total reçu:</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-bold text-green-300">{formaterArgent(totalCashRecuHTG)} HTG</p>
+        <button
+          onClick={handleClearAll}
+          className="p-1 hover:bg-red-500 hover:bg-opacity-30 rounded text-red-300 hover:text-red-200 transition-colors"
+          title="Effacer toutes les séquences"
+        >
+          <Trash2 size={12} />
+        </button>
+      </div>
+    </div>
+
+    {/* Breakdown by currency - VERTICAL LAYOUT */}
+    <div className="space-y-1.5 text-[10px]">
+      <div className="bg-blue-500 bg-opacity-10 rounded p-1.5">
+        <div className="flex items-center justify-between">
+          <span className="opacity-80">Total HTG:</span>
+          <span className="font-bold text-blue-300">{formaterArgent(totalHTG)} HTG</span>
+        </div>
+      </div>
+      <div className="bg-green-500 bg-opacity-10 rounded p-1.5">
+        <div className="flex items-center justify-between">
+          <span className="opacity-80">Total USD:</span>
+          <span className="font-bold text-green-300">
+            {totalUSD.toFixed(2)} USD
+            <span className="text-[9px] opacity-70 ml-1">({formaterArgent(totalUSD * tauxUSD)} HTG)</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <p className="text-[10px] opacity-80 mt-2 text-green-300">
+      {cashSequences.length} séquence{cashSequences.length !== 1 ? 's' : ''} ajoutée{cashSequences.length !== 1 ? 's' : ''}
+    </p>
+  </div>
+)}
+
 
         {/* Cash Sequences List */}
         {cashSequences.length > 0 && (
