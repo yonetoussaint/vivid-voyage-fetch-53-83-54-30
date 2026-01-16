@@ -17,7 +17,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const [vendorPresets, setVendorPresets] = useState({});
   const [showPresetsForVendor, setShowPresetsForVendor] = useState(null);
   const [depositSequences, setDepositSequences] = useState({});
-  const [showSequenceManager, setShowSequenceManager] = useState(null);
   const [recentlyAdded, setRecentlyAdded] = useState({});
 
   // Presets
@@ -215,7 +214,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const handleAddSequence = (vendeur) => {
     const vendorState = vendorPresets[vendeur];
     const inputValue = vendorInputs[vendeur];
-    
+
     if (!vendorState) {
       initializeVendorState(vendeur, 'HTG');
       return;
@@ -253,14 +252,14 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         note,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      
+
       setDepositSequences(prev => ({
         ...prev,
         [vendeur]: [...(prev[vendeur] || []), newSequence]
       }));
-      
+
       setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
-      
+
       if (vendorState.preset !== 'aucune') {
         setVendorPresets(prev => ({
           ...prev,
@@ -285,90 +284,62 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     const sequences = depositSequences[vendeur] || [];
     return sequences.reduce((total, seq) => total + seq.amount, 0);
   };
-const handleAddCompleteDeposit = (vendeur) => {
-  const sequences = depositSequences[vendeur] || [];
-  const vendorState = vendorPresets[vendeur];
 
-  if (sequences.length === 0) {
-    console.log("No sequences to add");
-    return;
-  }
+  const handleAddCompleteDeposit = (vendeur) => {
+    const sequences = depositSequences[vendeur] || [];
+    const vendorState = vendorPresets[vendeur];
 
-  const totalAmount = calculateSequencesTotal(vendeur);
-  const currency = vendorState?.currency || 'HTG';
-
-  console.log(`DEBUG: Adding deposit for ${vendeur}: ${totalAmount} ${currency}`);
-
-  // Create breakdown description
-  const breakdown = sequences.map(seq => seq.note).join(', ');
-
-  // Get current deposits
-  const currentDepots = depotsActuels[vendeur] || [];
-  const newIndex = currentDepots.length;
-
-  if (currency === 'USD') {
-    // Create USD deposit object
-    const deposit = {
-      montant: totalAmount.toFixed(2),
-      devise: 'USD',
-      breakdown: breakdown,
-      sequences: sequences
-    };
-
-    console.log(`DEBUG: Creating USD deposit:`, deposit);
-
-    // Add deposit at the new index
-    mettreAJourDepot(vendeur, newIndex, deposit);
-  } else {
-    // Create HTG deposit object
-    const deposit = {
-      value: totalAmount.toString(),
-      breakdown: breakdown,
-      sequences: sequences
-    };
-
-    console.log(`DEBUG: Creating HTG deposit:`, deposit);
-
-    // Add deposit at the new index
-    mettreAJourDepot(vendeur, newIndex, deposit);
-  }
-
-  // Mark as recently added for highlighting
-  markAsRecentlyAdded(vendeur, newIndex);
-
-  // Clear sequences after adding deposit
-  handleClearSequences(vendeur);
-  setShowSequenceManager(null);
-
-  console.log(`DEBUG: Deposit added successfully`);
-};
-
-  const toggleSequenceManager = (vendeur) => {
-    setShowSequenceManager(showSequenceManager === vendeur ? null : vendeur);
-    if (showPresetsForVendor === vendeur) {
-      setShowPresetsForVendor(null);
+    if (sequences.length === 0) {
+      console.log("No sequences to add");
+      return;
     }
-  };
 
-  const handleSimpleDeposit = (vendeur) => {
-    const input = document.querySelector(`input[data-simple="${vendeur}"]`);
-    if (!input) return;
-    
-    const amount = parseFloat(input.value);
-    if (amount > 0) {
-      const currentDepots = depotsActuels[vendeur] || [];
-      const newIndex = currentDepots.length;
-      
-      // Add the deposit directly with amount
-      mettreAJourDepot(vendeur, newIndex, amount.toString());
-      
-      markAsRecentlyAdded(vendeur, newIndex);
-      input.value = '';
+    const totalAmount = calculateSequencesTotal(vendeur);
+    const currency = vendorState?.currency || 'HTG';
+
+    console.log(`DEBUG: Adding deposit for ${vendeur}: ${totalAmount} ${currency}`);
+
+    // Create breakdown description
+    const breakdown = sequences.map(seq => seq.note).join(', ');
+
+    // Get current deposits
+    const currentDepots = depotsActuels[vendeur] || [];
+    const newIndex = currentDepots.length;
+
+    if (currency === 'USD') {
+      // Create USD deposit object
+      const deposit = {
+        montant: totalAmount.toFixed(2),
+        devise: 'USD',
+        breakdown: breakdown,
+        sequences: sequences
+      };
+
+      console.log(`DEBUG: Creating USD deposit:`, deposit);
+
+      // Add deposit at the new index
+      mettreAJourDepot(vendeur, newIndex, deposit);
+    } else {
+      // Create HTG deposit object
+      const deposit = {
+        value: totalAmount.toString(),
+        breakdown: breakdown,
+        sequences: sequences
+      };
+
+      console.log(`DEBUG: Creating HTG deposit:`, deposit);
+
+      // Add deposit at the new index
+      mettreAJourDepot(vendeur, newIndex, deposit);
     }
-  };
 
-  const isRecentlyAdded = (vendeur, index) => {
-    return recentlyAdded[`${vendeur}-${index}`] || false;
+    // Mark as recently added for highlighting
+    markAsRecentlyAdded(vendeur, newIndex);
+
+    // Clear sequences after adding deposit
+    handleClearSequences(vendeur);
+
+    console.log(`DEBUG: Deposit added successfully`);
   };
 
   return (
@@ -404,7 +375,6 @@ const handleAddCompleteDeposit = (vendeur) => {
               const isDirectMode = isDirectAmount(vendeur);
               const sequences = depositSequences[vendeur] || [];
               const sequencesTotal = calculateSequencesTotal(vendeur);
-              const isSequenceManagerOpen = showSequenceManager === vendeur;
 
               return (
                 <VendorDepositCard
@@ -417,36 +387,29 @@ const handleAddCompleteDeposit = (vendeur) => {
                   <DepositInputsSection
                     vendeur={vendeur}
                     vendorState={vendorState}
-                    isSequenceManagerOpen={isSequenceManagerOpen}
                     handleCurrencyButtonClick={handleCurrencyButtonClick}
-                    toggleSequenceManager={toggleSequenceManager}
-                    handleSimpleDeposit={handleSimpleDeposit}
                   >
-                    {isSequenceManagerOpen && (
-                      <SequenceManager
-                        vendeur={vendeur}
-                        vendorState={vendorState}
-                        sequences={sequences}
-                        sequencesTotal={sequencesTotal}
-                        isSequenceManagerOpen={isSequenceManagerOpen}
-                        vendorInputs={vendorInputs}
-                        isDirectMode={isDirectMode}
-                        showPresetsForVendor={showPresetsForVendor}
-                        currentPresets={currentPresets}
-                        toggleSequenceManager={toggleSequenceManager}
-                        handleClearSequences={handleClearSequences}
-                        handleRemoveSequence={handleRemoveSequence}
-                        setShowPresetsForVendor={setShowPresetsForVendor}
-                        handlePresetSelect={handlePresetSelect}
-                        handleInputChange={handleInputChange}
-                        handleAddSequence={handleAddSequence}
-                        handleAddCompleteDeposit={handleAddCompleteDeposit}
-                        getSelectedPresetText={getSelectedPresetText}
-                        calculatePresetAmount={calculatePresetAmount}
-                        htgPresets={htgPresets}
-                        usdPresets={usdPresets}
-                      />
-                    )}
+                    <SequenceManager
+                      vendeur={vendeur}
+                      vendorState={vendorState}
+                      sequences={sequences}
+                      sequencesTotal={sequencesTotal}
+                      vendorInputs={vendorInputs}
+                      isDirectMode={isDirectMode}
+                      showPresetsForVendor={showPresetsForVendor}
+                      currentPresets={currentPresets}
+                      handleClearSequences={handleClearSequences}
+                      handleRemoveSequence={handleRemoveSequence}
+                      setShowPresetsForVendor={setShowPresetsForVendor}
+                      handlePresetSelect={handlePresetSelect}
+                      handleInputChange={handleInputChange}
+                      handleAddSequence={handleAddSequence}
+                      handleAddCompleteDeposit={handleAddCompleteDeposit}
+                      getSelectedPresetText={getSelectedPresetText}
+                      calculatePresetAmount={calculatePresetAmount}
+                      htgPresets={htgPresets}
+                      usdPresets={usdPresets}
+                    />
                   </DepositInputsSection>
 
                   <ExistingDepositsList
