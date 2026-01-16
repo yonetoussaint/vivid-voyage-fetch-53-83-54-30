@@ -227,6 +227,16 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     cancelEdit(vendeur);
   };
 
+  // Sequence editing functionality
+  const handleUpdateSequence = (vendeur, sequenceId, updatedSequence) => {
+    setDepositSequences(prev => ({
+      ...prev,
+      [vendeur]: (prev[vendeur] || []).map(seq => 
+        seq.id === sequenceId ? { ...updatedSequence, id: sequenceId } : seq
+      )
+    }));
+  };
+
   // Event Handlers
   const handleCurrencyButtonClick = (vendeur, currency) => {
     if (!vendorPresets[vendeur]) {
@@ -505,6 +515,9 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       toggleSequenceManager={() => {}}
                       handleClearSequences={handleClearSequences}
                       handleRemoveSequence={handleRemoveSequence}
+                      handleUpdateSequence={(sequenceId, updatedSequence) => 
+                        handleUpdateSequence(vendeur, sequenceId, updatedSequence)
+                      }
                       setShowPresetsForVendor={setShowPresetsForVendor}
                       handlePresetSelect={handlePresetSelect}
                       handleInputChange={handleInputChange}
@@ -516,6 +529,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       calculatePresetAmount={calculatePresetAmount}
                       htgPresets={htgPresets}
                       usdPresets={usdPresets}
+                      setVendorPresets={setVendorPresets}
                     />
                   </div>
 
