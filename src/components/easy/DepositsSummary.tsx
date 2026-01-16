@@ -61,14 +61,15 @@ const DepositsSummary = ({
     const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + seq.value, 0);
 
     return (
-      <div className="mt-1.5 ml-3 pl-2 border-l border-white border-opacity-20">
+      <div className="mt-2 ml-1 pl-2 border-l border-white border-opacity-20">
         <div className="flex items-center justify-between mb-1.5">
           <div className="text-[11px] font-medium opacity-80 flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
-            <span>Séquences</span>
+            <span>Composition</span>
           </div>
           <div className="text-[11px] opacity-70">
-            Total: <span className="font-semibold">{formaterArgent(sequencesTotal)}</span>
+            <span className="opacity-60 mr-1">Total:</span>
+            <span className="font-semibold">{formaterArgent(sequencesTotal)}</span>
           </div>
         </div>
         
@@ -76,11 +77,12 @@ const DepositsSummary = ({
           {sortedSequences.map((seq, idx) => (
             <div 
               key={idx} 
-              className={`text-[11px] opacity-90 pl-1 flex items-center justify-between gap-2 group ${
+              className={`flex items-center justify-between w-full group ${
                 seq.isUSD ? 'text-green-200' : ''
               }`}
             >
-              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              {/* Left column - Description */}
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
                 <div className="relative">
                   <div className={`w-2 h-2 rounded-full ${
                     seq.isUSD 
@@ -93,17 +95,16 @@ const DepositsSummary = ({
                       : 'bg-white bg-opacity-20'
                   } group-hover:scale-125 transition-transform`}></div>
                 </div>
-                <span className="truncate">{seq.text}</span>
+                <span className="text-[11px] opacity-90 truncate">{seq.text}</span>
               </div>
               
-              <div className="flex items-center gap-2">
-                <div className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                  seq.isUSD 
-                    ? 'bg-green-900 bg-opacity-40 text-green-200' 
-                    : 'bg-white bg-opacity-15'
-                }`}>
-                  {seq.displayTotal}
-                </div>
+              {/* Right column - Total */}
+              <div className={`text-[10px] font-medium px-2 py-0.5 rounded ml-2 ${
+                seq.isUSD 
+                  ? 'bg-green-900 bg-opacity-40 text-green-200' 
+                  : 'bg-white bg-opacity-15'
+              }`}>
+                {seq.displayTotal}
               </div>
             </div>
           ))}
@@ -151,10 +152,12 @@ const DepositsSummary = ({
   return (
     <div className="pt-3 border-t border-white border-opacity-30">
       <div className="flex flex-col gap-1">
-        <div className="text-xs font-medium opacity-90 flex items-center gap-2 mb-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
-          <span>Dépôts individuels</span>
-          <span className="text-[11px] opacity-60 ml-auto">
+        <div className="text-xs font-medium opacity-90 flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
+            <span>Dépôts individuels</span>
+          </div>
+          <span className="text-[11px] opacity-60">
             {depots.length} dépôt{depots.length !== 1 ? 's' : ''}
           </span>
         </div>
@@ -198,7 +201,7 @@ const DepositsSummary = ({
                   
                   <div className="flex-1 min-w-0">
                     {/* Main deposit info */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-3 mb-1">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <span className="font-semibold truncate">{displayText}</span>
                         {isRecent && (
@@ -206,26 +209,28 @@ const DepositsSummary = ({
                         )}
                       </div>
                       
-                      {/* Show total for deposits with breakdown */}
-                      {hasBreakdown && (
-                        <div className="text-xs opacity-80 px-2 py-0.5 rounded inline-flex items-center gap-1">
-                          <span className="opacity-70">Total:</span>
-                          <span className="font-medium">
-                            {isUSD 
-                              ? `${montantOriginal} USD` 
-                              : `${formaterArgent(montantOriginal)} HTG`
-                            }
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* USD conversion for USD deposits */}
-                      {isUSD && (
-                        <div className="text-xs opacity-80 bg-green-900/30 px-2 py-1 rounded inline-flex items-center gap-1">
-                          <span className="opacity-70">≈</span>
-                          <span>{formaterArgent(montantHTG)} HTG</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {/* Show total for deposits with breakdown */}
+                        {hasBreakdown && (
+                          <div className="text-xs opacity-80 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                            <span className="opacity-70">Total:</span>
+                            <span className="font-medium">
+                              {isUSD 
+                                ? `${montantOriginal} USD` 
+                                : `${formaterArgent(montantOriginal)} HTG`
+                              }
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* USD conversion for USD deposits */}
+                        {isUSD && (
+                          <div className="text-xs opacity-80 bg-green-900/30 px-2 py-1 rounded inline-flex items-center gap-1">
+                            <span className="opacity-70">≈</span>
+                            <span>{formaterArgent(montantHTG)} HTG</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
                     {/* Render breakdown as beautiful vertical list */}
