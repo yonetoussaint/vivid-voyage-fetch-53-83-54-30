@@ -149,7 +149,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return presetValue * multiplier;
   };
 
-  // Handle adding a new deposit with preset system
+  // Handle adding a new deposit with preset system - FIXED VERSION
   const handleAddDepotWithPreset = (vendeur) => {
     const vendorState = vendorPresets[vendeur];
     const inputValue = vendorInputs[vendeur];
@@ -185,19 +185,124 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }
 
     if (amount > 0) {
-      // Add the deposit - based on original ajouterDepot function signature
-      // The original expects (vendeur, currency) without amount
-      // We need to update the function or handle it differently
+      // Create the deposit object with the correct format
+      let newDeposit;
+      if (currency === 'USD') {
+        newDeposit = {
+          montant: amount.toString(),
+          devise: 'USD'
+        };
+      } else {
+        newDeposit = amount.toString();
+      }
       
-      // For now, let's use the original function signature
-      // Then immediately update the deposit with the calculated amount
+      // Add the deposit directly with the amount
+      // First, get current deposits for this vendor
+      const currentDepots = depotsActuels[vendeur] || [];
+      
+      // Create updated deposits array
+      const updatedDepots = [...currentDepots, newDeposit];
+      
+      // We need to use mettreAJourDepot to update the entire array
+      // Since we don't have direct access to set tousDepots, we'll simulate
+      // by updating each existing deposit and then adding the new one
+      
+      // For existing deposits, keep them as they are
+      currentDepots.forEach((depot, index) => {
+        // These are already in the state, so we don't need to update them
+      });
+      
+      // Add the new deposit - since mettreAJourDepot expects an index,
+      // we need a different approach
+      
+      // Let's update the parent state by calling mettreAJourDepot for each existing deposit
+      // and then for the new one
+      
+      // Actually, let's modify the ajouterDepot function to accept amount
+      // But for now, let's work with what we have
+      
+      // Call ajouterDepot to add a new empty deposit first
       ajouterDepot(vendeur, currency);
       
-      // Get the newly added deposit index
+      // Now get the updated depots array
+      setTimeout(() => {
+        const updatedDepotsAfterAdd = depotsActuels[vendeur] || [];
+        const newIndex = updatedDepotsAfterAdd.length - 1;
+        
+        // Update the newly added deposit with the actual amount
+        if (currency === 'USD') {
+          mettreAJourDepot(vendeur, newIndex, {
+            montant: amount.toString(),
+            devise: 'USD'
+          });
+        } else {
+          mettreAJourDepot(vendeur, newIndex, amount.toString());
+        }
+        
+        // Reset input
+        setVendorInputs(prev => ({
+          ...prev,
+          [vendeur]: ''
+        }));
+        
+        // Reset to "aucune" after adding a sequence with multiplier
+        if (vendorState.preset !== 'aucune' && inputValue) {
+          setVendorPresets(prev => ({
+            ...prev,
+            [vendeur]: {
+              ...prev[vendeur],
+              preset: 'aucune'
+            }
+          }));
+        }
+      }, 10); // Small delay to ensure state is updated
+    }
+  };
+
+  // NEW: Improved version that adds deposit with amount directly
+  const handleAddDepotDirect = (vendeur) => {
+    const vendorState = vendorPresets[vendeur];
+    const inputValue = vendorInputs[vendeur];
+    
+    if (!vendorState) return;
+
+    let amount = 0;
+    let currency = vendorState.currency;
+
+    if (vendorState.preset === 'aucune') {
+      // Direct amount entry mode
+      amount = parseFloat(inputValue) || 0;
+    } else {
+      // Preset multiplier mode
+      if (inputValue && !isNaN(parseFloat(inputValue))) {
+        // Calculate amount based on preset
+        const multiplier = parseFloat(inputValue);
+        const presetValue = parseFloat(vendorState.preset);
+        amount = presetValue * multiplier;
+      } else {
+        // If no input value, just use the preset value
+        amount = parseFloat(vendorState.preset);
+      }
+    }
+
+    // Round to 2 decimal places for USD
+    if (currency === 'USD') {
+      amount = parseFloat(amount.toFixed(2));
+    }
+
+    if (amount > 0) {
+      // Create the deposit with amount
+      const deposit = currency === 'USD' 
+        ? { montant: amount.toString(), devise: 'USD' }
+        : amount.toString();
+      
+      // Get current deposits
       const currentDepots = depotsActuels[vendeur] || [];
+      
+      // Find the next available index (should be current length)
       const newIndex = currentDepots.length;
       
-      // Update the newly added deposit with the calculated amount
+      // Add the deposit at the new index
       if (currency === 'USD') {
         mettreAJourDepot(vendeur, newIndex, {
           montant: amount.toString(),
@@ -260,16 +365,22 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return !vendorState || vendorState.preset === 'aucune';
   };
 
-  // Handle the currency button click - simplified version
+  // Handle the currency button click
   const handleCurrencyButtonClick = (vendeur, currency) => {
-    // Just set the currency and show the dropdown
-    setVendorPresets(prev => ({
-      ...prev,
-      [vendeur]: {
-        ...(prev[vendeur] || { preset: 'aucune' }),
-        currency: currency
-      }
-    }));
+    // Initialize or update the vendor state
+    if (!vendorPresets[vendeur]) {
+      initializeVendorState(vendeur, currency);
+    } else {
+      setVendorPresets(prev => ({
+        ...prev,
+        [vendeur]: {
+          ...prev[vendeur],
+          currency: currency
+        }
+      }));
+    }
+    
+    // Toggle the dropdown visibility
     setShowPresetsForVendor(showPresetsForVendor === vendeur ? null : vendeur);
   };
 
@@ -491,7 +602,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                             onChange={(e) => handleInputChange(vendeur, e.target.value)}
                             onKeyPress={(e) => {
                               if (e.key === 'Enter') {
-                                handleAddDepotWithPreset(vendeur);
+                                handleAddDepotDirect(vendeur);
                               }
                             }}
                             placeholder={
@@ -503,7 +614,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           />
                           <div className="absolute inset-y-0 right-0 flex items-center pr-1">
                             <button
-                              onClick={() => handleAddDepotWithPreset(vendeur)}
+                              onClick={() => handleAddDepotDirect(vendeur)}
                               disabled={!vendorInputs[vendeur] || parseFloat(vendorInputs[vendeur]) <= 0}
                               className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 ${
                                 vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0
