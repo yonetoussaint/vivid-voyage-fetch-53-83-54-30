@@ -273,7 +273,7 @@ const SystemeStationService = () => {
 
       <ShiftManager shift={shift} />
 
-      <div className="p-4 max-w-2xl mx-auto">
+      <div className="p-2 max-w-2xl mx-auto">
         {renderView()}
       </div>
 
