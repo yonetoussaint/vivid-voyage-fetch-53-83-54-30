@@ -178,27 +178,28 @@ const mettreAJourDepot = useCallback((nomVendeur, index, valeur) => {
   });
 }, [shift]);
 
-  // FIXED: Add deposit with currency type
-  const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
-    setTousDepots(prev => {
-      const nouveauxDepots = { ...prev };
-      if (!nouveauxDepots[shift][nomVendeur]) {
-        nouveauxDepots[shift][nomVendeur] = [];
-      }
+  // FIXED: Add deposit with proper structure
+const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
+  setTousDepots(prev => {
+    const nouveauxDepots = { ...prev };
+    if (!nouveauxDepots[shift][nomVendeur]) {
+      nouveauxDepots[shift][nomVendeur] = [];
+    }
 
-      // Add empty deposit based on currency type
-      if (typeDevise === 'USD') {
-        nouveauxDepots[shift][nomVendeur].push({
-          montant: '',
-          devise: 'USD'
-        });
-      } else {
-        nouveauxDepots[shift][nomVendeur].push('');
-      }
+    // Add empty deposit based on currency type with proper structure
+    if (typeDevise === 'USD') {
+      nouveauxDepots[shift][nomVendeur].push({
+        montant: '',
+        devise: 'USD'
+      });
+    } else {
+      // For HTG, use empty string for simple deposits
+      nouveauxDepots[shift][nomVendeur].push('');
+    }
 
-      return nouveauxDepots;
-    });
-  }, [shift]);
+    return nouveauxDepots;
+  });
+}, [shift]);
 
   const supprimerDepot = useCallback((nomVendeur, index) => {
     setTousDepots(prev => {
