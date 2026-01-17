@@ -467,7 +467,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
               const especesAttendues = donneesVendeur ? donneesVendeur.especesAttendues : 0;
               const depots = depotsActuels[vendeur] || [];
 
-              // Initialize vendor state if not exists
+              // Initialize vendor state if not exists - IMPORTANT: This must run
               if (!vendorPresets[vendeur]) {
                 initializeVendorState(vendeur, 'HTG');
               }
@@ -478,6 +478,23 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
               const sequences = depositSequences[vendeur] || [];
               const sequencesTotal = calculateSequencesTotal(vendeur);
               const isEditingMode = editingDeposit?.vendeur === vendeur;
+
+              // Don't render SequenceManager until vendorState is properly initialized
+              if (!vendorState) {
+                return (
+                  <VendorDepositCard
+                    key={vendeur}
+                    vendeur={vendeur}
+                    donneesVendeur={donneesVendeur}
+                    especesAttendues={especesAttendues}
+                    totalDepotHTG={totalDepotHTG}
+                  >
+                    <div className="text-center py-4 text-white text-opacity-70">
+                      Initialisation...
+                    </div>
+                  </VendorDepositCard>
+                );
+              }
 
               return (
                 <VendorDepositCard
@@ -496,7 +513,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                           'Ajouter Nouveau Dépôt (Séquentiel)'}
                       </span>
                       <div className="flex flex-wrap gap-1">
-                        {/* REMOVED THE OLD CURRENCY BUTTONS FROM HERE */}
                         {isEditingMode && (
                           <button
                             onClick={() => cancelEdit(vendeur)}
