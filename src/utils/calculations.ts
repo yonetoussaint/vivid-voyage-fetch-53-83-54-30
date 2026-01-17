@@ -102,38 +102,60 @@ const updateVendeurTotals = (donneesVendeur) => {
   donneesVendeur.ventesTotales = parseFloat((donneesVendeur.ventesEssence + donneesVendeur.ventesDiesel).toFixed(2));
 };
 
-// Mettre à jour les dépôts du vendeur - FIXED
+// FIXED: Mettre à jour les dépôts du vendeur
 const updateDepotsForVendeur = (totauxVendeurs, shiftKey, vendeur, tousDepots, tauxUSD = 132) => {
   const depots = (tousDepots[shiftKey]?.[vendeur] || []);
   const depotsValides = depots.filter(depot => {
     if (!depot) return false;
-    if (typeof depot === 'object' && depot.devise === 'USD') {
-      return depot.montant !== '' && depot.montant !== null && depot.montant !== undefined;
+    if (typeof depot === 'object') {
+      if (depot.devise === 'USD') {
+        return depot.montant !== '' && depot.montant !== null && depot.montant !== undefined;
+      } else {
+        // Check for HTG deposit object with 'value' property
+        return depot.value !== '' && depot.value !== null && depot.value !== undefined;
+      }
     }
+    // Old simple HTG deposit (string/number)
     return depot !== '' && depot !== null && depot !== undefined;
   });
 
   // Calculate total deposits in HTG
   const totalDepot = depotsValides.reduce((sum, depot) => {
-    if (typeof depot === 'object' && depot.devise === 'USD') {
-      // Convert USD to HTG
-      const montantUSD = parseFloat(depot.montant) || 0;
-      return sum + (montantUSD * tauxUSD);
+    if (typeof depot === 'object') {
+      if (depot.devise === 'USD') {
+        // Convert USD to HTG
+        const montantUSD = parseFloat(depot.montant) || 0;
+        return sum + (montantUSD * tauxUSD);
+      } else {
+        // HTG deposit object with 'value' property
+        const montantHTG = parseFloat(depot.value) || 0;
+        return sum + montantHTG;
+      }
     } else {
-      // HTG deposit
+      // Old simple HTG deposit (string/number)
       return sum + (parseFloat(depot) || 0);
     }
   }, 0);
 
   // Store deposit details for display
   const depotsDetails = depotsValides.map(depot => {
-    if (typeof depot === 'object' && depot.devise === 'USD') {
-      return {
-        montant: parseFloat(depot.montant) || 0,
-        devise: 'USD',
-        montantHTG: (parseFloat(depot.montant) || 0) * tauxUSD
-      };
+    if (typeof depot === 'object') {
+      if (depot.devise === 'USD') {
+        return {
+          montant: parseFloat(depot.montant) || 0,
+          devise: 'USD',
+          montantHTG: (parseFloat(depot.montant) || 0) * tauxUSD
+        };
+      } else {
+        // HTG deposit object
+        return {
+          montant: parseFloat(depot.value) || 0,
+          devise: 'HTG',
+          montantHTG: parseFloat(depot.value) || 0
+        };
+      }
     } else {
+      // Old simple HTG deposit
       return {
         montant: parseFloat(depot) || 0,
         devise: 'HTG',
