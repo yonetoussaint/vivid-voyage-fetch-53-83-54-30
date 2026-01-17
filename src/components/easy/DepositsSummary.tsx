@@ -50,11 +50,11 @@ const DepositsSummary = ({
   // Helper function to get display text for sequence
   const getSequenceDisplay = (text, multiplier, singleValue, currency, value) => {
     const multiplierDisplay = getMultiplierDisplay(multiplier, singleValue, currency);
-    
+
     if (multiplierDisplay) {
       return multiplierDisplay;
     }
-    
+
     // For single items, return the original text
     return text;
   };
@@ -69,7 +69,7 @@ const DepositsSummary = ({
     // Parse sequences and extract numeric values for sorting
     const parsedSequences = breakdown.split(',').map(item => {
       const trimmed = item.trim();
-      
+
       // Skip empty items
       if (!trimmed) return null;
 
@@ -188,7 +188,7 @@ const DepositsSummary = ({
             // Calculate HTG conversion for USD sequences
             const htgValue = seq.isUSD ? convertUSDToHTG(seq.value) : 0;
             const htgPerUnit = seq.isUSD ? convertUSDToHTG(seq.singleValue) : 0;
-            
+
             return (
               <div 
                 key={idx} 
@@ -231,7 +231,7 @@ const DepositsSummary = ({
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Total Amount */}
                     <div className={`
                       px-3 py-1.5 rounded-lg text-xs font-bold min-w-[70px] text-center
@@ -260,7 +260,7 @@ const DepositsSummary = ({
                             {safeFormatArgent(htgValue)} HTG
                           </div>
                         </div>
-                        
+
                         {seq.multiplier > 1 && seq.singleValue > 0 && htgPerUnit > 0 && (
                           <div className="flex items-center justify-between text-[10px] opacity-70 pl-2">
                             <div className="flex items-center gap-1">
@@ -355,7 +355,7 @@ const DepositsSummary = ({
             {(depots || []).length} dépôt{(depots || []).length !== 1 ? 's' : ''}
           </span>
         </div>
-        
+
         {/* Deposit Cards */}
         <div className="flex flex-col gap-3">
           {sortedDepots.map((depot, idx) => {
@@ -381,12 +381,12 @@ const DepositsSummary = ({
                     : 'bg-white/10 border border-white/15'
                   }
                   ${isRecent && !isEditing ? 'ring-2 ring-green-400/30 shadow-xl shadow-green-500/10' : ''}
-                  hover:shadow-lg hover:scale-[1.01]
+                  hover:shadow-lg hover:scale-[1.01]}
                 `}
               >
                 {/* Deposit Card Content */}
                 <div className="flex flex-col gap-3">
-                  {/* Deposit Header */}
+                  {/* Deposit Header - SIMPLIFIED LIKE HTG CARD */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className={`
@@ -407,17 +407,7 @@ const DepositsSummary = ({
                             <Check size={12} className="text-green-300 flex-shrink-0 animate-pulse" />
                           )}
                         </div>
-                        {isUSD && (
-                          <div className="flex items-center gap-2 mt-1.5">
-                            <div className="text-xs opacity-90 bg-green-900/40 px-2.5 py-1 rounded-full inline-flex items-center gap-1.5">
-                              <span className="opacity-70">≈</span>
-                              <span className="font-medium">{safeFormatArgent(montantHTG)} HTG</span>
-                            </div>
-                            <div className="text-[10px] opacity-60">
-                              1 USD = {exchangeRate} HTG
-                            </div>
-                          </div>
-                        )}
+                        {/* REMOVED THE CONVERSION AND RATE FROM USD CARD HEADER */}
                       </div>
                     </div>
 
@@ -445,6 +435,26 @@ const DepositsSummary = ({
                       </button>
                     </div>
                   </div>
+
+                  {/* HTG Conversion for USD deposits - Now only shown when breakdown exists */}
+                  {isUSD && hasBreakdown && (
+                    <div className="mt-2 pt-3 border-t border-green-800/30">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-1.5 opacity-90">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400/60"></div>
+                          <span>En Gourdes:</span>
+                        </div>
+                        <div className="font-semibold text-amber-300">
+                          {safeFormatArgent(montantHTG)} HTG
+                        </div>
+                      </div>
+                      <div className="flex justify-end mt-1">
+                        <div className="text-[10px] opacity-60">
+                          1 USD = {exchangeRate} HTG
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Render breakdown if exists */}
                   {hasBreakdown && renderBreakdown(depot)}
