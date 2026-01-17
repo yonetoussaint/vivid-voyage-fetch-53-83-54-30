@@ -131,6 +131,13 @@ const SequenceManager = ({
     };
   }, [isDraggingWheel, dragStartY, wheelScrollTop]);
 
+  // Blur input when dropdown opens
+  useEffect(() => {
+    if (showPresetWheel && inputRef.current) {
+      inputRef.current.blur();
+    }
+  }, [showPresetWheel]);
+
   // Handle editing a sequence
   const handleEditSequence = (sequence) => {
     setEditingSequenceId(sequence.id);
@@ -256,16 +263,16 @@ const SequenceManager = ({
     handlePresetSelect(vendeur, presetValue);
     setShowPresetWheel(false);
     
-    // Focus on input after selection
-    requestAnimationFrame(() => {
+    // Focus on input after selection with a small delay
+    setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
         inputRef.current.select();
       }
-    });
+    }, 150);
   };
 
-  // Toggle preset wheel
+  // Toggle preset wheel - PREVENT INPUT FOCUS WHEN OPENING
   const togglePresetWheel = (e) => {
     if (e) {
       e.preventDefault();
@@ -275,11 +282,36 @@ const SequenceManager = ({
     const newState = !showPresetWheel;
     setShowPresetWheel(newState);
     
-    // If opening, focus the input
+    // IMPORTANT: Don't focus input when opening dropdown
     if (newState && inputRef.current) {
+      // Blur the input to close keyboard
+      inputRef.current.blur();
+    } else if (!newState && inputRef.current) {
+      // When closing, focus back on input
       setTimeout(() => {
         inputRef.current.focus();
       }, 50);
+    }
+  };
+
+  // Handle input field focus - PREVENT FOCUS WHEN DROPDOWN IS OPEN
+  const handleInputFocus = () => {
+    if (showPresetWheel) {
+      // If dropdown is open, blur immediately
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+    }
+  };
+
+  // Handle input field click - PREVENT FOCUS WHEN DROPDOWN IS OPEN
+  const handleInputClick = (e) => {
+    if (showPresetWheel) {
+      // If dropdown is open, prevent focus
+      e.preventDefault();
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
     }
   };
 
@@ -395,7 +427,7 @@ const SequenceManager = ({
       <div className="space-y-2">
         <div className="relative" ref={dropdownContainerRef}>
           <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
-            {/* Input Field */}
+            {/* Input Field - ADDED ONCLICK AND ONFOCUS HANDLERS */}
             <div className="flex-1">
               <input
                 ref={inputRef}
@@ -405,6 +437,8 @@ const SequenceManager = ({
                 data-vendor={vendeur}
                 value={vendorInputs[vendeur] || ''}
                 onChange={(e) => handleInputChange(vendeur, e.target.value)}
+                onFocus={handleInputFocus} // NEW: Prevent focus when dropdown is open
+                onClick={handleInputClick} // NEW: Prevent focus when clicking input while dropdown is open
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     if (isEditingMode) {
