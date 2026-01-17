@@ -32,6 +32,7 @@ const SequenceManager = ({
   const [showPresetWheel, setShowPresetWheel] = useState(false);
   
   const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
   const dropdownButtonRef = useRef(null);
 
   // Get current presets based on currency
@@ -48,21 +49,31 @@ const SequenceManager = ({
     return preset ? preset.label : presets[0]?.label || '';
   };
 
-  // Close wheel when clicking outside
+  // Close wheel when clicking outside - FIXED FOR TOUCH
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Check if click is outside the dropdown area
-      if (!dropdownButtonRef.current?.contains(event.target)) {
+      // Check if click is outside both dropdown and dropdown button
+      const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(event.target);
+      const isOutsideButton = dropdownButtonRef.current && !dropdownButtonRef.current.contains(event.target);
+      
+      if (isOutsideDropdown && isOutsideButton) {
         setShowPresetWheel(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
+    // Use setTimeout to delay the check - allows click to register first
+    const handleClickOutsideDelayed = (event) => {
+      setTimeout(() => {
+        handleClickOutside(event);
+      }, 10);
+    };
+
+    document.addEventListener('mousedown', handleClickOutsideDelayed);
+    document.addEventListener('touchstart', handleClickOutsideDelayed, { passive: true });
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutsideDelayed);
+      document.removeEventListener('touchstart', handleClickOutsideDelayed);
     };
   }, []);
 
@@ -198,8 +209,12 @@ const SequenceManager = ({
     }, 50);
   };
 
-  // Toggle preset wheel
-  const togglePresetWheel = () => {
+  // Toggle preset wheel - FIXED FOR TOUCH
+  const togglePresetWheel = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setShowPresetWheel(!showPresetWheel);
   };
 
@@ -311,7 +326,7 @@ const SequenceManager = ({
         )}
       </div>
 
-      {/* Input Section - SIMPLIFIED FOR DEBUGGING */}
+      {/* Input Section - FIXED FOR TOUCH */}
       <div className="space-y-2">
         <div className="relative">
           <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
@@ -339,10 +354,11 @@ const SequenceManager = ({
               />
             </div>
             
-            {/* Preset Selector Button - SIMPLE VERSION */}
+            {/* Preset Selector Button */}
             <div className="relative" ref={dropdownButtonRef}>
               <button
                 onClick={togglePresetWheel}
+                onTouchStart={togglePresetWheel}
                 className={`h-full px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
                   vendorState.currency === 'HTG'
                     ? 'bg-blue-500 bg-opacity-20 text-blue-300 hover:bg-blue-500 hover:bg-opacity-30'
@@ -397,21 +413,28 @@ const SequenceManager = ({
             )}
           </div>
           
-          {/* DROPDOWN LIST - SEPARATE FROM BUTTON FOR DEBUGGING */}
+          {/* DROPDOWN LIST - SEPARATE FOR TOUCH FRIENDLY */}
           {showPresetWheel && (
-            <div className="absolute z-50 top-full left-0 right-0 mt-1">
+            <div 
+              ref={dropdownRef}
+              className="absolute z-50 top-full left-0 right-0 mt-1"
+              onMouseDown={(e) => e.stopPropagation()} // Prevent dropdown from closing when clicking inside
+              onTouchStart={(e) => e.stopPropagation()} // Prevent dropdown from closing when touching inside
+            >
               <div className="bg-gray-800 rounded-lg shadow-2xl border border-white border-opacity-20 overflow-hidden">
                 {getPresets().map((preset) => (
                   <button
                     key={preset.value}
                     onClick={() => handleWheelPresetSelect(preset.value)}
-                    className={`w-full px-4 py-3 text-left text-sm hover:bg-opacity-50 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
+                    onTouchStart={() => handleWheelPresetSelect(preset.value)}
+                    className={`w-full px-4 py-4 text-left text-sm hover:bg-opacity-50 active:bg-opacity-70 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
                       vendorState.preset === preset.value
                         ? vendorState.currency === 'HTG'
                           ? 'bg-blue-700 text-white'
                           : 'bg-green-700 text-white'
-                        : 'hover:bg-gray-700 text-gray-100'
+                        : 'hover:bg-gray-700 text-gray-100 active:bg-gray-600'
                     }`}
+                    style={{ touchAction: 'manipulation' }} // Better touch handling
                   >
                     <span>{preset.label} {vendorState.currency}</span>
                     {vendorState.preset === preset.value && (
@@ -440,7 +463,9 @@ const SequenceManager = ({
         {sequences.length > 0 && !isEditingMode && (
           <button
             onClick={() => handleAddCompleteDeposit(vendeur)}
-            className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity text-sm"
+            onTouchStart={() => handleAddCompleteDeposit(vendeur)}
+            className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 active:opacity-80 transition-opacity text-sm"
+            style={{ touchAction: 'manipulation' }}
           >
             <Plus size={14} />
             <span>Ajouter dépôt</span>
