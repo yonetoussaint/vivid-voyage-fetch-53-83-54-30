@@ -1,311 +1,281 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, X, Plus, ChevronDown, Edit2, Save, RotateCcw, Check, ChevronUp, DollarSign, Coins } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DollarSign } from 'lucide-react';
+import VendorDepositCard from './VendorDepositCard';
+import SequenceManager from './SequenceManager';
+import DepositInputsSection from './DepositInputsSection';
+import DepositsSummary from './DepositsSummary';
+import ExchangeRateBanner from './ExchangeRateBanner';
 import { formaterArgent } from '@/utils/formatters';
 
-const SequenceManager = ({
-  vendeur,
-  vendorState,
-  sequences,
-  sequencesTotal,
-  vendorInputs,
-  currentPresets,
+const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJourDepot, ajouterDepot, supprimerDepot }) => {
+  const TAUX_DE_CHANGE = 132;
+  const depotsActuels = tousDepots[shift] || {};
 
-  // Functions
-  handleClearSequences,
-  handleRemoveSequence,
-  handleUpdateSequence,
-  handlePresetSelect,
-  handleInputChange,
-  handleAddSequence,
-  handleAddCompleteDeposit,
-  setVendorPresets,
+  // State
+  const [vendorInputs, setVendorInputs] = useState({});
+  const [vendorPresets, setVendorPresets] = useState({});
+  const [depositSequences, setDepositSequences] = useState({});
+  const [recentlyAdded, setRecentlyAdded] = useState({});
+  const [editingDeposit, setEditingDeposit] = useState(null); // { vendeur: string, index: number }
 
-  // Helper functions
-  calculatePresetAmount,
+  // Presets - HTG from 1 to 1000, USD from 1 to 100
+  const htgPresets = [
+    { value: '1', label: '1' },
+    { value: '5', label: '5' },
+    { value: '10', label: '10' },
+    { value: '25', label: '25' },
+    { value: '50', label: '50' },
+    { value: '100', label: '100' },
+    { value: '250', label: '250' },
+    { value: '500', label: '500' },
+    { value: '1000', label: '1,000' }
+  ];
 
-  // Configuration
-  htgPresets,
-  usdPresets
-}) => {
-  // Local state
-  const [editingSequenceId, setEditingSequenceId] = useState(null);
-  const [showPresetWheel, setShowPresetWheel] = useState(false);
-  const [isDraggingWheel, setIsDraggingWheel] = useState(false);
-  const [dragStartY, setDragStartY] = useState(0);
-  const [wheelScrollTop, setWheelScrollTop] = useState(0);
+  const usdPresets = [
+    { value: '1', label: '1' },
+    { value: '5', label: '5' },
+    { value: '10', label: '10' },
+    { value: '20', label: '20' },
+    { value: '50', label: '50' },
+    { value: '100', label: '100' }
+  ];
 
-  const wheelRef = useRef(null);
-  const inputRef = useRef(null);
-  const dropdownContainerRef = useRef(null);
-  const dropdownButtonRef = useRef(null);
-
-  // Get current presets based on currency
-  const getPresets = () => {
-    if (!vendorState) return [];
-    return vendorState.currency === 'HTG' ? htgPresets : usdPresets;
+  // Helper Functions
+  const convertirUSDversHTG = (montantUSD) => {
+    return (parseFloat(montantUSD) || 0) * TAUX_DE_CHANGE;
   };
 
-  // Get selected preset label
-  const getSelectedPresetLabel = () => {
-    if (!vendorState) return '';
-    const presets = getPresets();
-    const preset = presets.find(p => p.value === vendorState.preset);
-    return preset ? preset.label : presets[0]?.label || '';
+  const getMontantHTG = (depot) => {
+    if (!depot) return 0;
+    if (typeof depot === 'object' && depot.devise === 'USD') {
+      return convertirUSDversHTG(depot.montant);
+    }
+    if (typeof depot === 'object' && depot.value) {
+      return parseFloat(depot.value) || 0;
+    }
+    return parseFloat(depot) || 0;
   };
 
-  // Handle wheel dragging
-  const handleWheelMouseDown = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingWheel(true);
-    setDragStartY(e.clientY);
-    if (wheelRef.current) {
-      setWheelScrollTop(wheelRef.current.scrollTop);
+  const isUSDDepot = (depot) => {
+    return typeof depot === 'object' && depot.devise === 'USD';
+  };
+
+  const hasBreakdown = (depot) => {
+    return typeof depot === 'object' && (depot.breakdown || depot.sequences);
+  };
+
+  const getOriginalDepotAmount = (depot) => {
+    if (!depot) return 0;
+    if (typeof depot === 'object') {
+      if (depot.devise === 'USD') {
+        return parseFloat(depot.montant) || 0;
+      } else if (depot.value) {
+        return parseFloat(depot.value) || 0;
+      }
+    }
+    return parseFloat(depot) || 0;
+  };
+
+  const getDepositDisplay = (depot) => {
+    if (!depot) return '';
+    if (typeof depot === 'object') {
+      if (depot.devise === 'USD') {
+        const amount = parseFloat(depot.montant) || 0;
+        const breakdown = depot.breakdown ? ` (${depot.breakdown})` : '';
+        return `${amount} USD${breakdown}`;
+      } else if (depot.value) {
+        const amount = parseFloat(depot.value) || 0;
+        const breakdown = depot.breakdown ? ` (${depot.breakdown})` : '';
+        return `${formaterArgent(amount)} HTG${breakdown}`;
+      }
+    }
+    const amount = parseFloat(depot) || 0;
+    return `${formaterArgent(amount)} HTG`;
+  };
+
+  // State Management Functions
+  const initializeVendorState = (vendeur, currency = 'HTG') => {
+    if (!vendorInputs[vendeur]) {
+      setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
+    }
+    if (!vendorPresets[vendeur]) {
+      // Auto-select smallest preset (1 HTG or 1 USD)
+      const presets = currency === 'HTG' ? htgPresets : usdPresets;
+      const smallestPreset = presets[0]?.value || '1';
+
+      setVendorPresets(prev => ({
+        ...prev,
+        [vendeur]: { currency, preset: smallestPreset }
+      }));
     }
   };
 
-  const handleWheelMouseMove = (e) => {
-    if (!isDraggingWheel || !wheelRef.current) return;
-
-    const deltaY = e.clientY - dragStartY;
-    wheelRef.current.scrollTop = wheelScrollTop - deltaY * 2;
+  const initializeSequences = (vendeur) => {
+    if (!depositSequences[vendeur]) {
+      setDepositSequences(prev => ({ ...prev, [vendeur]: [] }));
+    }
   };
 
-  const handleWheelMouseUp = () => {
-    setIsDraggingWheel(false);
-  };
-
-  // Click outside handler
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!showPresetWheel) return;
-
-      if (dropdownButtonRef.current && dropdownButtonRef.current.contains(event.target)) {
-        return;
-      }
-
-      if (dropdownContainerRef.current && dropdownContainerRef.current.contains(event.target)) {
-        return;
-      }
-
-      setShowPresetWheel(false);
-    };
-
-    const timer = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [showPresetWheel]);
-
-  // Handle wheel dragging events
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (isDraggingWheel) {
-        handleWheelMouseMove(e);
-      }
-    };
-
-    const handleMouseUp = () => {
-      handleWheelMouseUp();
-    };
-
-    if (isDraggingWheel) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDraggingWheel, dragStartY, wheelScrollTop]);
-
-  // Blur input when dropdown opens
-  useEffect(() => {
-    if (showPresetWheel && inputRef.current) {
-      inputRef.current.blur();
-    }
-  }, [showPresetWheel]);
-
-  // Handle editing a sequence
-  const handleEditSequence = (sequence) => {
-    setEditingSequenceId(sequence.id);
-
-    const note = sequence.note;
-
-    const multiplierMatch = note.match(/(\d+)\s*×\s*(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
-
-    if (multiplierMatch) {
-      const [, multiplier, presetValue, currency] = multiplierMatch;
-
-      const preset = getPresets().find(p => {
-        const presetNum = parseFloat(p.value);
-        const valueNum = parseFloat(presetValue);
-        return presetNum === valueNum;
-      });
-
-      if (preset) {
-        setVendorPresets(prev => ({
-          ...prev,
-          [vendeur]: { 
-            ...prev[vendeur], 
-            currency: currency.toUpperCase(),
-            preset: preset.value
-          }
-        }));
-        handleInputChange(vendeur, multiplier);
-      } else {
-        const presets = getPresets();
-        if (presets.length > 0) {
-          setVendorPresets(prev => ({
-            ...prev,
-            [vendeur]: { 
-              ...prev[vendeur], 
-              currency: currency.toUpperCase(),
-              preset: presets[0].value
-            }
-          }));
-        }
-        handleInputChange(vendeur, multiplier || '1');
-      }
-    } else {
-      const amountMatch = note.match(/(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
-
-      if (amountMatch) {
-        const [, amount, currency] = amountMatch;
-        const presets = currency.toUpperCase() === 'HTG' ? htgPresets : usdPresets;
-        if (presets.length > 0) {
-          setVendorPresets(prev => ({
-            ...prev,
-            [vendeur]: { 
-              ...prev[vendeur], 
-              currency: currency.toUpperCase(),
-              preset: presets[0].value
-            }
-          }));
-        }
-        handleInputChange(vendeur, '1');
-      }
-    }
-
+  const markAsRecentlyAdded = (vendeur, index) => {
+    const key = `${vendeur}-${index}`;
+    setRecentlyAdded(prev => ({ ...prev, [key]: true }));
     setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
-      }
-    }, 100);
+      setRecentlyAdded(prev => {
+        const newState = { ...prev };
+        delete newState[key];
+        return newState;
+      });
+    }, 2000);
   };
 
-  // Cancel editing
-  const handleCancelEdit = () => {
-    setEditingSequenceId(null);
-    const presets = getPresets();
-    const smallestPreset = presets[0]?.value || '1';
-    setVendorPresets(prev => ({
-      ...prev,
-      [vendeur]: { 
-        ...prev[vendeur], 
-        preset: smallestPreset
+  // Edit deposit functionality
+  const handleEditDeposit = (vendeur, index) => {
+    const depot = depotsActuels[vendeur]?.[index];
+
+    if (!depot) return;
+
+    // Set editing state
+    setEditingDeposit({ vendeur, index });
+
+    // Load sequences from deposit if they exist
+    if (depot.sequences && Array.isArray(depot.sequences)) {
+      setDepositSequences(prev => ({
+        ...prev,
+        [vendeur]: depot.sequences.map(seq => ({
+          id: Date.now() + Math.random(), // New IDs for editing
+          amount: seq.amount,
+          currency: seq.currency || (isUSDDepot(depot) ? 'USD' : 'HTG'),
+          note: seq.note || seq.text || `${seq.amount} ${seq.currency || (isUSDDepot(depot) ? 'USD' : 'HTG')}`,
+          timestamp: seq.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }))
+      }));
+    } else {
+      // Convert simple deposit to sequence
+      const currency = isUSDDepot(depot) ? 'USD' : 'HTG';
+      const amount = getOriginalDepotAmount(depot);
+
+      // Find best matching preset
+      const presets = currency === 'HTG' ? htgPresets : usdPresets;
+      let bestPreset = presets[0]; // Default to smallest
+      let bestMultiplier = 1;
+
+      // Try to find a preset that divides evenly into the amount
+      for (const preset of presets) {
+        const presetValue = parseFloat(preset.value);
+        if (presetValue > 0 && amount % presetValue === 0) {
+          const multiplier = amount / presetValue;
+          if (multiplier >= 1 && multiplier === Math.floor(multiplier)) {
+            bestPreset = preset;
+            bestMultiplier = multiplier;
+            break;
+          }
+        }
       }
-    }));
+
+      // Create sequence with preset notation
+      const note = bestMultiplier === 1 
+        ? `${bestPreset.value} ${currency}`
+        : `${bestMultiplier} × ${bestPreset.value} ${currency}`;
+
+      setDepositSequences(prev => ({
+        ...prev,
+        [vendeur]: [{
+          id: Date.now(),
+          amount,
+          currency,
+          note,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]
+      }));
+
+      // Set preset and multiplier in vendor state
+      setVendorPresets(prev => ({
+        ...prev,
+        [vendeur]: { 
+          ...prev[vendeur], 
+          currency,
+          preset: bestPreset.value
+        }
+      }));
+
+      // Set the multiplier in the input
+      handleInputChange(vendeur, bestMultiplier.toString());
+    }
+  };
+
+  const cancelEdit = (vendeur) => {
+    setEditingDeposit(null);
+    setDepositSequences(prev => ({ ...prev, [vendeur]: [] }));
+    // Reset to smallest preset
+    const vendorState = vendorPresets[vendeur];
+    if (vendorState) {
+      const presets = vendorState.currency === 'HTG' ? htgPresets : usdPresets;
+      const smallestPreset = presets[0]?.value || '1';
+      setVendorPresets(prev => ({
+        ...prev,
+        [vendeur]: { 
+          ...prev[vendeur], 
+          preset: smallestPreset
+        }
+      }));
+    }
     handleInputChange(vendeur, '');
   };
 
-  // Save edited sequence
-  const handleSaveEditedSequence = () => {
-    if (!editingSequenceId || !vendorState) return;
+  const saveEditedDeposit = (vendeur) => {
+    const sequences = depositSequences[vendeur] || [];
+    const vendorState = vendorPresets[vendeur];
+    const { index } = editingDeposit;
 
-    const inputValue = vendorInputs[vendeur];
+    if (sequences.length === 0) {
+      // If no sequences, delete the deposit
+      supprimerDepot(vendeur, index);
+      cancelEdit(vendeur);
+      return;
+    }
 
-    let amount = 0;
-    let currency = vendorState.currency;
-    let note = '';
-
-    const multiplier = parseFloat(inputValue) || 1;
-    const presetValue = parseFloat(vendorState.preset);
-    amount = presetValue * multiplier;
-    note = multiplier === 1 
-      ? `${presetValue} ${currency}`
-      : `${multiplier} × ${presetValue} ${currency}`;
+    const totalAmount = sequences.reduce((total, seq) => total + seq.amount, 0);
+    const currency = vendorState?.currency || 'HTG';
+    const breakdown = sequences.map(seq => seq.note).join(', ');
 
     if (currency === 'USD') {
-      amount = parseFloat(amount.toFixed(2));
-    }
-
-    if (amount > 0) {
-      const updatedSequence = {
-        id: editingSequenceId,
-        amount,
-        currency,
-        note,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      // Create USD deposit object
+      const deposit = {
+        montant: totalAmount.toFixed(2),
+        devise: 'USD',
+        breakdown: breakdown,
+        sequences: sequences
       };
-
-      handleUpdateSequence(editingSequenceId, updatedSequence);
-      handleCancelEdit();
+      mettreAJourDepot(vendeur, index, deposit);
+    } else {
+      // Create HTG deposit object
+      const deposit = {
+        value: totalAmount.toString(),
+        breakdown: breakdown,
+        sequences: sequences
+      };
+      mettreAJourDepot(vendeur, index, deposit);
     }
+
+    markAsRecentlyAdded(vendeur, index);
+    cancelEdit(vendeur);
   };
 
-  // Handle preset selection from wheel
-  const handleWheelPresetSelect = (presetValue) => {
-    handlePresetSelect(vendeur, presetValue);
-    setShowPresetWheel(false);
-    
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
-      }
-    }, 150);
+  // Sequence editing functionality
+  const handleUpdateSequence = (vendeur, sequenceId, updatedSequence) => {
+    setDepositSequences(prev => ({
+      ...prev,
+      [vendeur]: (prev[vendeur] || []).map(seq => 
+        seq.id === sequenceId ? { ...updatedSequence, id: sequenceId } : seq
+      )
+    }));
   };
 
-  // Toggle preset wheel
-  const togglePresetWheel = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    const newState = !showPresetWheel;
-    setShowPresetWheel(newState);
-    
-    if (newState && inputRef.current) {
-      inputRef.current.blur();
-    } else if (!newState && inputRef.current) {
-      setTimeout(() => {
-        inputRef.current.focus();
-      }, 50);
-    }
-  };
-
-  // Handle input field focus
-  const handleInputFocus = () => {
-    if (showPresetWheel) {
-      if (inputRef.current) {
-        inputRef.current.blur();
-      }
-    }
-  };
-
-  // Handle input field click
-  const handleInputClick = (e) => {
-    if (showPresetWheel) {
-      e.preventDefault();
-      if (inputRef.current) {
-        inputRef.current.blur();
-      }
-    }
-  };
-
-  // Handle currency change
-  const handleCurrencyChange = (currency) => {
-    if (vendorState) {
+  // Event Handlers
+  const handleCurrencyButtonClick = (vendeur, currency) => {
+    if (!vendorPresets[vendeur]) {
+      initializeVendorState(vendeur, currency);
+    } else {
       const presets = currency === 'HTG' ? htgPresets : usdPresets;
       const smallestPreset = presets[0]?.value || '1';
 
@@ -314,309 +284,278 @@ const SequenceManager = ({
         [vendeur]: { 
           ...prev[vendeur], 
           currency,
-          preset: smallestPreset
+          preset: smallestPreset // Auto-select smallest preset when switching currency
         }
       }));
-      handleInputChange(vendeur, '');
+    }
+    handleInputChange(vendeur, ''); // Clear input when switching currency
+  };
+
+  const handlePresetSelect = (vendeur, presetValue) => {
+    setVendorPresets(prev => ({
+      ...prev,
+      [vendeur]: { ...prev[vendeur], preset: presetValue }
+    }));
+    setTimeout(() => {
+      const input = document.querySelector(`input[data-vendor="${vendeur}"]`);
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 100);
+  };
+
+  const calculatePresetAmount = (vendeur) => {
+    const vendorState = vendorPresets[vendeur];
+    if (!vendorState) return 0;
+
+    const multiplier = parseFloat(vendorInputs[vendeur] || 1);
+    const presetValue = parseFloat(vendorState.preset);
+    return presetValue * multiplier;
+  };
+
+  const getCurrentPresets = (vendeur) => {
+    const vendorState = vendorPresets[vendeur];
+    if (!vendorState) return htgPresets;
+    return vendorState.currency === 'HTG' ? htgPresets : usdPresets;
+  };
+
+  const isDirectAmount = (vendeur) => {
+    // Always false now - only presets are allowed
+    return false;
+  };
+
+  const handleInputChange = (vendeur, value) => {
+    setVendorInputs(prev => ({ ...prev, [vendeur]: value }));
+  };
+
+  const handleAddSequence = (vendeur) => {
+    const vendorState = vendorPresets[vendeur];
+    const inputValue = vendorInputs[vendeur];
+
+    if (!vendorState) {
+      initializeVendorState(vendeur, 'HTG');
+      return;
+    }
+
+    // Always use preset mode (no direct amounts)
+    let amount = 0;
+    let currency = vendorState.currency;
+    let note = '';
+
+    if (inputValue && !isNaN(parseFloat(inputValue))) {
+      const multiplier = parseFloat(inputValue);
+      const presetValue = parseFloat(vendorState.preset);
+      amount = presetValue * multiplier;
+      note = multiplier === 1 
+        ? `${presetValue} ${currency}`
+        : `${multiplier} × ${presetValue} ${currency}`;
+    } else {
+      // Default to 1 × preset
+      const presetValue = parseFloat(vendorState.preset);
+      amount = presetValue;
+      note = `${presetValue} ${currency}`;
+    }
+
+    if (currency === 'USD') {
+      amount = parseFloat(amount.toFixed(2));
+    }
+
+    if (amount > 0) {
+      initializeSequences(vendeur);
+      const newSequence = {
+        id: Date.now() + Math.random(),
+        amount,
+        currency,
+        note,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+
+      setDepositSequences(prev => ({
+        ...prev,
+        [vendeur]: [...(prev[vendeur] || []), newSequence]
+      }));
+
+      // Clear input but keep same preset selected
+      setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
     }
   };
 
-  // Check if we're in edit mode
-  const isEditingMode = editingSequenceId !== null;
-  const selectedPresetLabel = getSelectedPresetLabel();
+  const handleRemoveSequence = (vendeur, sequenceId) => {
+    setDepositSequences(prev => ({
+      ...prev,
+      [vendeur]: (prev[vendeur] || []).filter(seq => seq.id !== sequenceId)
+    }));
+  };
+
+  const handleClearSequences = (vendeur) => {
+    setDepositSequences(prev => ({ ...prev, [vendeur]: [] }));
+  };
+
+  const calculateSequencesTotal = (vendeur) => {
+    const sequences = depositSequences[vendeur] || [];
+    return sequences.reduce((total, seq) => total + seq.amount, 0);
+  };
+
+  const handleAddCompleteDeposit = (vendeur) => {
+    const sequences = depositSequences[vendeur] || [];
+    const vendorState = vendorPresets[vendeur];
+
+    if (sequences.length === 0) {
+      console.log("No sequences to add");
+      return;
+    }
+
+    const totalAmount = calculateSequencesTotal(vendeur);
+    const currency = vendorState?.currency || 'HTG';
+    const breakdown = sequences.map(seq => seq.note).join(', ');
+
+    // Get current deposits
+    const currentDepots = depotsActuels[vendeur] || [];
+    const newIndex = currentDepots.length;
+
+    if (currency === 'USD') {
+      const deposit = {
+        montant: totalAmount.toFixed(2),
+        devise: 'USD',
+        breakdown: breakdown,
+        sequences: sequences
+      };
+      mettreAJourDepot(vendeur, newIndex, deposit);
+    } else {
+      const deposit = {
+        value: totalAmount.toString(),
+        breakdown: breakdown,
+        sequences: sequences
+      };
+      mettreAJourDepot(vendeur, newIndex, deposit);
+    }
+
+    markAsRecentlyAdded(vendeur, newIndex);
+    handleClearSequences(vendeur);
+  };
+
+  const isRecentlyAdded = (vendeur, index) => {
+    return recentlyAdded[`${vendeur}-${index}`] || false;
+  };
+
+  const isEditingThisDeposit = (vendeur, index) => {
+    return editingDeposit?.vendeur === vendeur && editingDeposit?.index === index;
+  };
 
   return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${vendorState.currency === 'HTG' ? 'bg-blue-400' : 'bg-green-400'}`}></div>
-          <span className="text-sm font-semibold">Séquences</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="text-xs opacity-80">
-            {formaterArgent(sequencesTotal)} {vendorState.currency}
+    <div className="space-y-4">
+      <ExchangeRateBanner tauxDeChange={TAUX_DE_CHANGE} />
+
+      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl p-4 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <DollarSign size={20} />
+            <h3 className="text-lg font-bold">Dépôts - Shift {shift}</h3>
           </div>
-          {sequences.length > 0 && (
-            <button
-              onClick={() => handleClearSequences(vendeur)}
-              className="p-1.5 rounded bg-red-500 bg-opacity-20 text-red-300 hover:bg-opacity-30"
-              title="Effacer toutes les séquences"
-            >
-              <Trash2 size={12} />
-            </button>
+        </div>
+
+        <div className="space-y-4">
+          {vendeurs.length === 0 ? (
+            <div className="text-center py-6 text-white text-opacity-70">
+              Aucun vendeur ajouté
+            </div>
+          ) : (
+            vendeurs.map(vendeur => {
+              const donneesVendeur = totauxVendeurs[vendeur];
+              const totalDepotHTG = donneesVendeur?.depot || 0;
+              const especesAttendues = donneesVendeur ? donneesVendeur.especesAttendues : 0;
+              const depots = depotsActuels[vendeur] || [];
+
+              // Initialize vendor state if not exists
+              if (!vendorPresets[vendeur]) {
+                initializeVendorState(vendeur, 'HTG');
+              }
+
+              const vendorState = vendorPresets[vendeur];
+              const currentPresets = getCurrentPresets(vendeur);
+              const isDirectMode = isDirectAmount(vendeur);
+              const sequences = depositSequences[vendeur] || [];
+              const sequencesTotal = calculateSequencesTotal(vendeur);
+              const isEditingMode = editingDeposit?.vendeur === vendeur;
+
+              return (
+                <VendorDepositCard
+                  key={vendeur}
+                  vendeur={vendeur}
+                  donneesVendeur={donneesVendeur}
+                  especesAttendues={especesAttendues}
+                  totalDepotHTG={totalDepotHTG}
+                >
+                  {/* SEQUENTIAL DEPOSITS ONLY - Always Visible */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold">
+                        {isEditingMode ? 
+                          `Éditer Dépôt #${editingDeposit.index + 1}` : 
+                          'Ajouter Nouveau Dépôt (Séquentiel)'}
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {/* REMOVED THE OLD CURRENCY BUTTONS FROM HERE */}
+                        {isEditingMode && (
+                          <button
+                            onClick={() => cancelEdit(vendeur)}
+                            className="px-2 py-1.5 rounded-lg font-bold text-xs bg-red-500 text-white active:scale-95 transition"
+                          >
+                            Annuler
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ALWAYS VISIBLE Sequence Manager - UPDATED PROPS */}
+                    <SequenceManager
+                      vendeur={vendeur}
+                      vendorState={vendorState}
+                      sequences={sequences}
+                      sequencesTotal={sequencesTotal}
+                      vendorInputs={vendorInputs}
+                      currentPresets={currentPresets}
+                      handleClearSequences={handleClearSequences}
+                      handleRemoveSequence={handleRemoveSequence}
+                      handleUpdateSequence={(sequenceId, updatedSequence) => 
+                        handleUpdateSequence(vendeur, sequenceId, updatedSequence)
+                      }
+                      handlePresetSelect={handlePresetSelect}
+                      handleInputChange={handleInputChange}
+                      handleAddSequence={handleAddSequence}
+                      handleAddCompleteDeposit={isEditingMode ? 
+                        () => saveEditedDeposit(vendeur) : 
+                        () => handleAddCompleteDeposit(vendeur)}
+                      calculatePresetAmount={calculatePresetAmount}
+                      htgPresets={htgPresets}
+                      usdPresets={usdPresets}
+                      setVendorPresets={setVendorPresets}
+                    />
+                  </div>
+
+                  {/* Use DepositsSummary with edit/delete actions */}
+                  <DepositsSummary
+                    vendeur={vendeur}
+                    depots={depots}
+                    isRecentlyAdded={isRecentlyAdded}
+                    getMontantHTG={getMontantHTG}
+                    isUSDDepot={isUSDDepot}
+                    getOriginalDepotAmount={getOriginalDepotAmount}
+                    getDepositDisplay={getDepositDisplay}
+                    onEditDeposit={handleEditDeposit}
+                    onDeleteDeposit={supprimerDepot}
+                    editingDeposit={editingDeposit}
+                    isEditingThisDeposit={isEditingThisDeposit}
+                  />
+                </VendorDepositCard>
+              );
+            })
           )}
         </div>
-      </div>
-
-      {/* TWO-COLUMN CURRENCY BUTTONS - COMPACT VERSION */}
-      <div className="grid grid-cols-2 gap-2">
-        {/* HTG Button - COMPACT */}
-        <button
-          onClick={() => handleCurrencyChange('HTG')}
-          className={`flex items-center justify-center gap-2 p-2 rounded-lg border transition-all active:scale-95 ${
-            vendorState.currency === 'HTG'
-              ? 'bg-blue-500 border-blue-400 text-white shadow-md'
-              : 'bg-white bg-opacity-10 border-white border-opacity-20 text-blue-200 hover:bg-opacity-20'
-          }`}
-        >
-          <Coins size={16} className={vendorState.currency === 'HTG' ? 'text-white' : 'text-blue-300'} />
-          <span className="font-bold text-sm">HTG</span>
-        </button>
-
-        {/* USD Button - COMPACT */}
-        <button
-          onClick={() => handleCurrencyChange('USD')}
-          className={`flex items-center justify-center gap-2 p-2 rounded-lg border transition-all active:scale-95 ${
-            vendorState.currency === 'USD'
-              ? 'bg-green-500 border-green-400 text-white shadow-md'
-              : 'bg-white bg-opacity-10 border-white border-opacity-20 text-green-200 hover:bg-opacity-20'
-          }`}
-        >
-          <DollarSign size={16} className={vendorState.currency === 'USD' ? 'text-white' : 'text-green-300'} />
-          <span className="font-bold text-sm">USD</span>
-        </button>
-      </div>
-
-      {/* Sequences List */}
-      <div className="space-y-1.5 max-h-40 overflow-y-auto">
-        {sequences.length === 0 ? (
-          <div className="text-center py-3 text-white text-opacity-50 text-xs">
-            Aucune séquence ajoutée
-          </div>
-        ) : (
-          sequences.map((sequence) => {
-            const isEditing = sequence.id === editingSequenceId;
-
-            return (
-              <div 
-                key={sequence.id} 
-                className={`flex items-center justify-between p-2 rounded-lg transition-all ${
-                  isEditing
-                    ? 'bg-amber-500 bg-opacity-15 border border-amber-400 border-opacity-30'
-                    : 'bg-white bg-opacity-5'
-                }`}
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className={`w-1.5 h-1.5 rounded-full ${sequence.currency === 'USD' ? 'bg-green-400' : 'bg-blue-400'}`}></div>
-                  <div className="min-w-0">
-                    <div className="text-xs truncate">{sequence.note}</div>
-                    <div className="text-[10px] opacity-60">{sequence.timestamp}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <div className="text-xs font-bold whitespace-nowrap">
-                    {formaterArgent(sequence.amount)} {sequence.currency}
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    {isEditing ? (
-                      <>
-                        <button
-                          onClick={handleSaveEditedSequence}
-                          disabled={!vendorInputs[vendeur] || parseFloat(vendorInputs[vendeur]) <= 0}
-                          className={`p-1 rounded ${
-                            vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0
-                              ? 'text-green-400 hover:bg-green-500 hover:bg-opacity-20'
-                              : 'text-gray-400'
-                          }`}
-                          title="Sauvegarder"
-                        >
-                          <Save size={10} />
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="p-1 text-red-400 hover:bg-red-500 hover:bg-opacity-20 rounded"
-                          title="Annuler"
-                        >
-                          <RotateCcw size={10} />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleEditSequence(sequence)}
-                          className="p-1 text-blue-400 hover:bg-blue-500 hover:bg-opacity-20 rounded"
-                          title="Éditer"
-                        >
-                          <Edit2 size={10} />
-                        </button>
-                        <button
-                          onClick={() => handleRemoveSequence(vendeur, sequence.id)}
-                          className="p-1 text-red-400 hover:bg-red-500 hover:bg-opacity-20 rounded"
-                          title="Supprimer"
-                        >
-                          <X size={10} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Input Section */}
-      <div className="space-y-2">
-        <div className="relative" ref={dropdownContainerRef}>
-          <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
-            {/* Input Field */}
-            <div className="flex-1">
-              <input
-                ref={inputRef}
-                type="number"
-                min="1"
-                step="1"
-                data-vendor={vendeur}
-                value={vendorInputs[vendeur] || ''}
-                onChange={(e) => handleInputChange(vendeur, e.target.value)}
-                onFocus={handleInputFocus}
-                onClick={handleInputClick}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    if (isEditingMode) {
-                      handleSaveEditedSequence();
-                    } else {
-                      handleAddSequence(vendeur);
-                    }
-                  }
-                }}
-                placeholder="Multiplicateur"
-                className="w-full px-3 py-3 text-sm bg-transparent text-white placeholder-white placeholder-opacity-50 focus:outline-none"
-              />
-            </div>
-
-            {/* Preset Selector Button */}
-            <button
-              ref={dropdownButtonRef}
-              data-dropdown-button
-              onClick={togglePresetWheel}
-              className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
-                vendorState.currency === 'HTG'
-                  ? 'bg-blue-500 bg-opacity-20 text-blue-300 hover:bg-blue-500 hover:bg-opacity-30'
-                  : 'bg-green-500 bg-opacity-20 text-green-300 hover:green-500 hover:bg-opacity-30'
-              }`}
-            >
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-medium">× {selectedPresetLabel}</span>
-                <ChevronDown size={12} className={`transition-transform ${showPresetWheel ? 'rotate-180' : ''}`} />
-              </div>
-            </button>
-
-            {/* Add/Update Button */}
-            {isEditingMode ? (
-              <div className="flex">
-                <button
-                  onClick={handleSaveEditedSequence}
-                  disabled={!vendorInputs[vendeur] || parseFloat(vendorInputs[vendeur]) <= 0}
-                  className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
-                    vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0
-                      ? 'bg-green-500 text-white hover:bg-green-600'
-                      : 'bg-gray-600 text-gray-300'
-                  }`}
-                  title="Mettre à jour"
-                >
-                  <Save size={14} />
-                </button>
-                <button
-                  onClick={handleCancelEdit}
-                  className="px-3 bg-red-500 text-white hover:bg-red-600 flex items-center justify-center"
-                  title="Annuler"
-                >
-                  <RotateCcw size={12} />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => handleAddSequence(vendeur)}
-                disabled={!vendorInputs[vendeur] || parseFloat(vendorInputs[vendeur]) <= 0}
-                className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
-                  vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0
-                    ? vendorState.currency === 'HTG'
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : 'bg-green-500 text-white hover:bg-green-600'
-                    : 'bg-gray-600 text-gray-300'
-                }`}
-                title="Ajouter"
-              >
-                <Plus size={14} />
-              </button>
-            )}
-          </div>
-
-          {/* Dropdown Wheel */}
-          {showPresetWheel && (
-            <div 
-              className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden border border-white border-opacity-30 bg-gray-800 top-full"
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <div 
-                ref={wheelRef}
-                className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
-                onMouseDown={handleWheelMouseDown}
-                style={{ cursor: isDraggingWheel ? 'grabbing' : 'grab' }}
-              >
-                {getPresets().map((preset) => (
-                  <button
-                    key={preset.value}
-                    onClick={() => handleWheelPresetSelect(preset.value)}
-                    className={`w-full px-3 py-2.5 text-left text-xs font-medium hover:bg-opacity-50 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
-                      vendorState.preset === preset.value
-                        ? vendorState.currency === 'HTG'
-                          ? 'bg-blue-700 text-white'
-                          : 'bg-green-700 text-white'
-                        : vendorState.currency === 'HTG'
-                          ? 'hover:bg-blue-800 text-blue-100'
-                          : 'hover:bg-green-800 text-green-100'
-                    }`}
-                  >
-                    <span>{preset.label} {vendorState.currency}</span>
-                    {vendorState.preset === preset.value && (
-                      <Check size={10} />
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-center py-1 bg-gray-900 bg-opacity-50">
-                <ChevronUp size={10} className="text-gray-400" />
-                <span className="text-[10px] text-gray-400 mx-2">Glisser pour faire défiler</span>
-                <ChevronDown size={10} className="text-gray-400" />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Quick Preview */}
-        {vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0 && (
-          <div className="text-center">
-            <div className="text-xs opacity-80">
-              {vendorInputs[vendeur]} × {selectedPresetLabel} {vendorState.currency} = 
-              <span className="font-bold ml-1">
-                {formaterArgent(calculatePresetAmount(vendeur))} {vendorState.currency}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Add Complete Deposit Button */}
-        {sequences.length > 0 && !isEditingMode && (
-          <button
-            onClick={() => handleAddCompleteDeposit(vendeur)}
-            className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 active:opacity-80 transition-opacity text-sm"
-          >
-            <Plus size={14} />
-            <span>Ajouter dépôt</span>
-            <span className="text-xs">
-              ({formaterArgent(sequencesTotal)} {vendorState.currency})
-            </span>
-          </button>
-        )}
       </div>
     </div>
   );
 };
 
-export default SequenceManager;
+export default DepotsManager;
