@@ -7,6 +7,8 @@ const SequenceManager = ({
   vendorState,
   sequences,
   sequencesTotal,
+  sequencesTotalByCurrency,
+  totalSequencesHTG,
   vendorInputs,
   currentPresets,
 
@@ -25,7 +27,8 @@ const SequenceManager = ({
 
   // Configuration
   htgPresets,
-  usdPresets
+  usdPresets,
+  TAUX_DE_CHANGE = 132
 }) => {
   // Local state
   const [editingSequenceId, setEditingSequenceId] = useState(null);
@@ -340,15 +343,31 @@ const SequenceManager = ({
 
   return (
     <div className="space-y-3">
-      {/* Header - WITH NULL CHECK */}
+      {/* Header - WITH CURRENCY TOTALS */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${currency === 'HTG' ? 'bg-blue-400' : 'bg-green-400'}`}></div>
           <span className="text-sm font-semibold">Séquences</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="text-xs opacity-80">
-            {formaterArgent(sequencesTotal || 0)} {currency}
+          <div className="text-xs opacity-80 flex flex-col items-end gap-0.5">
+            {/* Show totals by currency */}
+            {sequencesTotalByCurrency?.HTG > 0 && (
+              <div className="text-blue-300">
+                {formaterArgent(sequencesTotalByCurrency.HTG)} HTG
+              </div>
+            )}
+            {sequencesTotalByCurrency?.USD > 0 && (
+              <div className="text-green-300">
+                {formaterArgent(sequencesTotalByCurrency.USD)} USD
+              </div>
+            )}
+            {/* Show total in HTG if there are USD sequences */}
+            {sequencesTotalByCurrency?.USD > 0 && totalSequencesHTG > 0 && (
+              <div className="text-white opacity-70 text-[10px]">
+                ≈ {formaterArgent(totalSequencesHTG)} HTG total
+              </div>
+            )}
           </div>
           {sequences.length > 0 && (
             <button
@@ -362,7 +381,7 @@ const SequenceManager = ({
         </div>
       </div>
 
-      {/* TWO-COLUMN CURRENCY BUTTONS - COMPACT VERSION WITH NULL CHECK */}
+      {/* TWO-COLUMN CURRENCY BUTTONS - COMPACT VERSION */}
       <div className="grid grid-cols-2 gap-2">
         {/* HTG Button - COMPACT */}
         <button
@@ -501,7 +520,7 @@ const SequenceManager = ({
               />
             </div>
 
-            {/* Preset Selector Button - WITH NULL CHECK */}
+            {/* Preset Selector Button */}
             <button
               ref={dropdownButtonRef}
               data-dropdown-button
@@ -623,7 +642,16 @@ const SequenceManager = ({
             <Plus size={14} />
             <span>Ajouter dépôt</span>
             <span className="text-xs">
-              ({formaterArgent(sequencesTotal)} {currency})
+              {/* Show summary of what will be added */}
+              {sequencesTotalByCurrency?.HTG > 0 && (
+                <span>{formaterArgent(sequencesTotalByCurrency.HTG)} HTG</span>
+              )}
+              {sequencesTotalByCurrency?.HTG > 0 && sequencesTotalByCurrency?.USD > 0 && (
+                <span> + </span>
+              )}
+              {sequencesTotalByCurrency?.USD > 0 && (
+                <span>{formaterArgent(sequencesTotalByCurrency.USD)} USD</span>
+              )}
             </span>
           </button>
         )}
