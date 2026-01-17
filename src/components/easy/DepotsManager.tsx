@@ -540,34 +540,28 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
                     {/* ALWAYS VISIBLE Sequence Manager */}
                     <SequenceManager
-                      vendeur={vendeur}
-                      vendorState={vendorState}
-                      sequences={sequences}
-                      sequencesTotal={sequencesTotal}
-                      isSequenceManagerOpen={true}
-                      vendorInputs={vendorInputs}
-                      isDirectMode={isDirectMode}
-                      showPresetsForVendor={showPresetsForVendor}
-                      currentPresets={currentPresets}
-                      toggleSequenceManager={() => {}}
-                      handleClearSequences={handleClearSequences}
-                      handleRemoveSequence={handleRemoveSequence}
-                      handleUpdateSequence={(sequenceId, updatedSequence) => 
-                        handleUpdateSequence(vendeur, sequenceId, updatedSequence)
-                      }
-                      setShowPresetsForVendor={setShowPresetsForVendor}
-                      handlePresetSelect={handlePresetSelect}
-                      handleInputChange={handleInputChange}
-                      handleAddSequence={handleAddSequence}
-                      handleAddCompleteDeposit={isEditingMode ? 
-                        () => saveEditedDeposit(vendeur) : 
-                        () => handleAddCompleteDeposit(vendeur)}
-                      getSelectedPresetText={getSelectedPresetText}
-                      calculatePresetAmount={calculatePresetAmount}
-                      htgPresets={htgPresets}
-                      usdPresets={usdPresets}
-                      setVendorPresets={setVendorPresets}
-                    />
+  vendeur={vendeur}
+  vendorState={vendorState}
+  sequences={sequences}
+  sequencesTotal={sequencesTotal}
+  vendorInputs={vendorInputs}
+  currentPresets={currentPresets}
+  handleClearSequences={handleClearSequences}
+  handleRemoveSequence={handleRemoveSequence}
+  handleUpdateSequence={(sequenceId, updatedSequence) => 
+    handleUpdateSequence(vendeur, sequenceId, updatedSequence)
+  }
+  handlePresetSelect={handlePresetSelect}
+  handleInputChange={handleInputChange}
+  handleAddSequence={handleAddSequence}
+  handleAddCompleteDeposit={isEditingMode ? 
+    () => saveEditedDeposit(vendeur) : 
+    () => handleAddCompleteDeposit(vendeur)}
+  calculatePresetAmount={calculatePresetAmount}
+  htgPresets={htgPresets}
+  usdPresets={usdPresets}
+  setVendorPresets={setVendorPresets}
+/>
                   </div>
 
                   {/* Use DepositsSummary with edit/delete actions */}
