@@ -10,7 +10,7 @@ const VendorDepositCard = ({
   children 
 }) => {
   return (
-    <div className="bg-white bg-opacity-15 rounded-lg space-y-3">
+    <div className="bg-white bg-opacity-15 rounded-lg p-2 space-y-3">
       {/* En-tête Vendeur */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
