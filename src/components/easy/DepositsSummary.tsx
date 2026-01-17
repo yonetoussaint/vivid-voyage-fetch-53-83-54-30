@@ -8,26 +8,42 @@ const DepositsSummary = ({
   isRecentlyAdded,
   getMontantHTG,
   isUSDDepot,
-  getOriginalDepositAmount,
+  getOriginalDepotAmount,
   getDepositDisplay,
   onEditDeposit,
   onDeleteDeposit,
   editingDeposit,
   isEditingThisDeposit,
-  exchangeRate = 132 // Default exchange rate, should come from props/context
+  exchangeRate = 132
 }) => {
-  if (depots.length === 0) return null;
+  if (!depots || depots.length === 0) return null;
+
+  // Safe formatter function with error handling
+  const safeFormatArgent = (amount) => {
+    try {
+      if (typeof amount !== 'number') {
+        amount = parseFloat(amount) || 0;
+      }
+      return formaterArgent(amount);
+    } catch (error) {
+      console.error('Formatting error:', error);
+      return '0';
+    }
+  };
 
   // Helper function to parse breakdown and create sorted list items with totals
   const renderBreakdown = (depot) => {
     if (!depot || typeof depot !== 'object') return null;
 
     const breakdown = depot.breakdown;
-    if (!breakdown) return null;
+    if (!breakdown || typeof breakdown !== 'string') return null;
 
     // Parse sequences and extract numeric values for sorting
     const parsedSequences = breakdown.split(',').map(item => {
       const trimmed = item.trim();
+      
+      // Skip empty items
+      if (!trimmed) return null;
 
       // Extract numeric value from different patterns
       let numericValue = 0;
@@ -36,45 +52,77 @@ const DepositsSummary = ({
       let value = 0;
       let currency = '';
 
-      // Pattern: "5 × 20 USD" or "5 × 20 HTG"
-      const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
-      if (multiplierMatch) {
-        [, multiplier, value, currency] = multiplierMatch;
-        const total = parseFloat(multiplier) * parseFloat(value);
-        numericValue = total;
-        displayTotal = `${formaterArgent(total)} ${currency}`;
-      } 
-      // Pattern: "20 USD" or "100 HTG"
-      else {
-        const valueMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
-        if (valueMatch) {
-          [, value, currency] = valueMatch;
-          multiplier = 1;
-          numericValue = parseFloat(value);
-          displayTotal = `${formaterArgent(numericValue)} ${currency}`;
+      try {
+        // Pattern: "5 × 20 USD" or "5 × 20 HTG"
+        const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
+        if (multiplierMatch) {
+          [, multiplier, value, currency] = multiplierMatch;
+          const total = parseFloat(multiplier) * parseFloat(value);
+          numericValue = total;
+          displayTotal = `${safeFormatArgent(total)} ${currency}`;
+        } 
+        // Pattern: "20 USD" or "100 HTG"
+        else {
+          const valueMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
+          if (valueMatch) {
+            [, value, currency] = valueMatch;
+            multiplier = 1;
+            numericValue = parseFloat(value) || 0;
+            displayTotal = `${safeFormatArgent(numericValue)} ${currency}`;
+          } else {
+            // If no pattern matches, return the text as-is
+            return {
+              text: trimmed,
+              value: 0,
+              displayTotal: trimmed,
+              isUSD: false,
+              multiplier: 1,
+              singleValue: 0,
+              currency: ''
+            };
+          }
         }
-      }
 
-      return {
-        text: trimmed,
-        value: numericValue,
-        displayTotal: displayTotal,
-        isUSD: /USD/i.test(trimmed),
-        multiplier: parseFloat(multiplier),
-        singleValue: parseFloat(value),
-        currency: currency.toUpperCase()
-      };
-    });
+        return {
+          text: trimmed,
+          value: numericValue,
+          displayTotal: displayTotal,
+          isUSD: /USD/i.test(trimmed),
+          multiplier: parseFloat(multiplier) || 1,
+          singleValue: parseFloat(value) || 0,
+          currency: currency.toUpperCase()
+        };
+      } catch (error) {
+        console.error('Error parsing sequence:', error, 'item:', trimmed);
+        return {
+          text: trimmed,
+          value: 0,
+          displayTotal: trimmed,
+          isUSD: false,
+          multiplier: 1,
+          singleValue: 0,
+          currency: ''
+        };
+      }
+    }).filter(item => item !== null); // Remove null items
+
+    // Filter out invalid items
+    const validSequences = parsedSequences.filter(seq => 
+      seq && typeof seq === 'object' && seq.text
+    );
+
+    if (validSequences.length === 0) return null;
 
     // Sort by value descending (largest first)
-    const sortedSequences = [...parsedSequences].sort((a, b) => b.value - a.value);
+    const sortedSequences = [...validSequences].sort((a, b) => b.value - a.value);
 
     // Calculate total of all sequences
-    const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + seq.value, 0);
+    const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + (seq.value || 0), 0);
 
     // Function to convert USD to HTG
     const convertUSDToHTG = (usdAmount) => {
-      return usdAmount * exchangeRate;
+      const amount = parseFloat(usdAmount) || 0;
+      return amount * exchangeRate;
     };
 
     return (
@@ -87,7 +135,7 @@ const DepositsSummary = ({
           </div>
           <div className="text-xs opacity-80">
             <span className="opacity-60 mr-1">Total:</span>
-            <span className="font-semibold">{formaterArgent(sequencesTotal)}</span>
+            <span className="font-semibold">{safeFormatArgent(sequencesTotal)}</span>
           </div>
         </div>
 
@@ -130,9 +178,9 @@ const DepositsSummary = ({
                         <div className="text-xs font-medium opacity-90 truncate">
                           {seq.text}
                         </div>
-                        {seq.multiplier > 1 && (
+                        {seq.multiplier > 1 && seq.singleValue > 0 && (
                           <div className="text-[10px] opacity-70 mt-0.5">
-                            {seq.multiplier} × {formaterArgent(seq.singleValue)} {seq.currency}
+                            {seq.multiplier} × {safeFormatArgent(seq.singleValue)} {seq.currency}
                           </div>
                         )}
                       </div>
@@ -151,7 +199,7 @@ const DepositsSummary = ({
                   </div>
 
                   {/* HTG Conversion for USD sequences */}
-                  {seq.isUSD && (
+                  {seq.isUSD && htgValue > 0 && (
                     <div className={`
                       mt-2 pt-2 border-t border-dashed
                       ${seq.isUSD ? 'border-green-800/40' : 'border-white/20'}
@@ -163,15 +211,15 @@ const DepositsSummary = ({
                             <span>En Gourdes:</span>
                           </div>
                           <div className="font-semibold text-amber-300">
-                            {formaterArgent(htgValue)} HTG
+                            {safeFormatArgent(htgValue)} HTG
                           </div>
                         </div>
                         
-                        {seq.multiplier > 1 && (
+                        {seq.multiplier > 1 && seq.singleValue > 0 && htgPerUnit > 0 && (
                           <div className="flex items-center justify-between text-[10px] opacity-70 pl-2">
                             <div className="flex items-center gap-1">
                               <span className="opacity-60">×</span>
-                              <span>{formaterArgent(htgPerUnit)} HTG</span>
+                              <span>{safeFormatArgent(htgPerUnit)} HTG</span>
                               <span className="opacity-60">×</span>
                               <span>{seq.multiplier}</span>
                             </div>
@@ -196,38 +244,60 @@ const DepositsSummary = ({
   // Helper function to get display text without breakdown
   const getDisplayTextWithoutBreakdown = (depot) => {
     if (!depot) return '';
-    if (typeof depot === 'object') {
-      if (depot.devise === 'USD') {
-        const amount = parseFloat(depot.montant) || 0;
-        return `${amount} USD`;
-      } else if (depot.value) {
-        const amount = parseFloat(depot.value) || 0;
-        return `${formaterArgent(amount)} HTG`;
+    try {
+      if (typeof depot === 'object') {
+        if (depot.devise === 'USD') {
+          const amount = parseFloat(depot.montant) || 0;
+          return `${amount} USD`;
+        } else if (depot.value) {
+          const amount = parseFloat(depot.value) || 0;
+          return `${safeFormatArgent(amount)} HTG`;
+        }
       }
+      const amount = parseFloat(depot) || 0;
+      return `${safeFormatArgent(amount)} HTG`;
+    } catch (error) {
+      console.error('Error getting display text:', error);
+      return '';
     }
-    const amount = parseFloat(depot) || 0;
-    return `${formaterArgent(amount)} HTG`;
   };
 
   // Helper function to get total value for sorting deposits
   const getDepositValue = (depot) => {
     if (!depot) return 0;
-    if (typeof depot === 'object') {
-      if (depot.devise === 'USD') {
-        return parseFloat(depot.montant) || 0;
-      } else if (depot.value) {
-        return parseFloat(depot.value) || 0;
+    try {
+      if (typeof depot === 'object') {
+        if (depot.devise === 'USD') {
+          return parseFloat(depot.montant) || 0;
+        } else if (depot.value) {
+          return parseFloat(depot.value) || 0;
+        }
       }
+      return parseFloat(depot) || 0;
+    } catch (error) {
+      console.error('Error getting deposit value:', error);
+      return 0;
     }
-    return parseFloat(depot) || 0;
   };
 
   // Sort deposits by value (largest first)
-  const sortedDepots = [...depots].sort((a, b) => {
+  const sortedDepots = [...(depots || [])].sort((a, b) => {
     const valueA = getDepositValue(a);
     const valueB = getDepositValue(b);
     return valueB - valueA;
   });
+
+  // Check if formaterArgent is available
+  if (typeof formaterArgent !== 'function') {
+    console.error('formaterArgent is not a function');
+    return (
+      <div className="pt-3 border-t border-white border-opacity-30">
+        <div className="text-red-500 text-sm p-2">
+          Erreur: La fonction de formatage n'est pas disponible
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pt-3 border-t border-white border-opacity-30">
@@ -238,7 +308,7 @@ const DepositsSummary = ({
             <span>Dépôts individuels</span>
           </div>
           <span className="text-xs opacity-60 bg-white/10 px-2 py-1 rounded-full">
-            {depots.length} dépôt{depots.length !== 1 ? 's' : ''}
+            {(depots || []).length} dépôt{(depots || []).length !== 1 ? 's' : ''}
           </span>
         </div>
         
@@ -246,13 +316,12 @@ const DepositsSummary = ({
         <div className="flex flex-col gap-3">
           {sortedDepots.map((depot, idx) => {
             const originalIndex = depots.indexOf(depot);
-            const montantHTG = getMontantHTG(depot);
-            const isUSD = isUSDDepot(depot);
-            const montantOriginal = getOriginalDepositAmount(depot);
+            const montantHTG = getMontantHTG?.(depot) || 0;
+            const isUSD = isUSDDepot?.(depot) || false;
             const displayText = getDisplayTextWithoutBreakdown(depot);
-            const isRecent = isRecentlyAdded(vendeur, originalIndex);
+            const isRecent = isRecentlyAdded?.(vendeur, originalIndex) || false;
             const hasBreakdown = depot && typeof depot === 'object' && depot.breakdown;
-            const isEditing = isEditingThisDeposit(vendeur, originalIndex);
+            const isEditing = isEditingThisDeposit?.(vendeur, originalIndex) || false;
 
             return (
               <div 
@@ -298,7 +367,7 @@ const DepositsSummary = ({
                           <div className="flex items-center gap-2 mt-1.5">
                             <div className="text-xs opacity-90 bg-green-900/40 px-2.5 py-1 rounded-full inline-flex items-center gap-1.5">
                               <span className="opacity-70">≈</span>
-                              <span className="font-medium">{formaterArgent(montantHTG)} HTG</span>
+                              <span className="font-medium">{safeFormatArgent(montantHTG)} HTG</span>
                             </div>
                             <div className="text-[10px] opacity-60">
                               1 USD = {exchangeRate} HTG
@@ -311,7 +380,7 @@ const DepositsSummary = ({
                     {/* Action Buttons */}
                     <div className="flex items-center gap-1.5">
                       <button
-                        onClick={() => onEditDeposit(vendeur, originalIndex)}
+                        onClick={() => onEditDeposit?.(vendeur, originalIndex)}
                         className={`
                           p-2 rounded-lg transition-all duration-200
                           ${isEditing
@@ -324,7 +393,7 @@ const DepositsSummary = ({
                         <Edit2 size={14} />
                       </button>
                       <button
-                        onClick={() => onDeleteDeposit(vendeur, originalIndex)}
+                        onClick={() => onDeleteDeposit?.(vendeur, originalIndex)}
                         className="p-2 bg-red-500 bg-opacity-20 text-red-300 hover:bg-opacity-30 rounded-lg transition-all duration-200 hover:shadow-md"
                         title="Supprimer ce dépôt"
                       >
