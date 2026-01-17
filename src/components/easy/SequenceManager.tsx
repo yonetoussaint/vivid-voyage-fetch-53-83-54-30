@@ -33,10 +33,11 @@ const SequenceManager = ({
   const [isDraggingWheel, setIsDraggingWheel] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
   const [wheelScrollTop, setWheelScrollTop] = useState(0);
-  
+
   const wheelRef = useRef(null);
   const inputRef = useRef(null);
   const dropdownContainerRef = useRef(null);
+  const dropdownButtonRef = useRef(null);
 
   // Get current presets based on currency
   const getPresets = () => {
@@ -54,6 +55,8 @@ const SequenceManager = ({
 
   // Handle wheel dragging
   const handleWheelMouseDown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDraggingWheel(true);
     setDragStartY(e.clientY);
     if (wheelRef.current) {
@@ -63,7 +66,7 @@ const SequenceManager = ({
 
   const handleWheelMouseMove = (e) => {
     if (!isDraggingWheel || !wheelRef.current) return;
-    
+
     const deltaY = e.clientY - dragStartY;
     wheelRef.current.scrollTop = wheelScrollTop - deltaY * 2;
   };
@@ -72,52 +75,80 @@ const SequenceManager = ({
     setIsDraggingWheel(false);
   };
 
-  // Close wheel when clicking outside - FIXED VERSION
+  // Click outside handler - FIXED VERSION
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownContainerRef.current && 
-          !dropdownContainerRef.current.contains(event.target) &&
-          !event.target.closest('[data-dropdown-button]')) {
-        setShowPresetWheel(false);
+      // If dropdown is not showing, do nothing
+      if (!showPresetWheel) return;
+
+      // Check if click is on the dropdown button
+      if (dropdownButtonRef.current && dropdownButtonRef.current.contains(event.target)) {
+        return; // Click is on the button itself, let button handler manage
+      }
+
+      // Check if click is inside the dropdown
+      if (dropdownContainerRef.current && dropdownContainerRef.current.contains(event.target)) {
+        return; // Click is inside dropdown
+      }
+
+      // Click is outside, close dropdown
+      setShowPresetWheel(false);
+    };
+
+    // Add event listener with a slight delay to avoid interfering with button click
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showPresetWheel]);
+
+  // Handle wheel dragging events
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (isDraggingWheel) {
+        handleWheelMouseMove(e);
       }
     };
 
-    // Add with delay to allow click to register
-    const handleClick = (e) => {
-      setTimeout(() => handleClickOutside(e), 10);
+    const handleMouseUp = () => {
+      handleWheelMouseUp();
     };
 
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('touchstart', handleClick, { passive: true });
-    document.addEventListener('mouseup', handleWheelMouseUp);
-    document.addEventListener('mousemove', handleWheelMouseMove);
+    if (isDraggingWheel) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
 
     return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('touchstart', handleClick);
-      document.removeEventListener('mouseup', handleWheelMouseUp);
-      document.removeEventListener('mousemove', handleWheelMouseMove);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDraggingWheel]);
+  }, [isDraggingWheel, dragStartY, wheelScrollTop]);
 
   // Handle editing a sequence
   const handleEditSequence = (sequence) => {
     setEditingSequenceId(sequence.id);
-    
+
     const note = sequence.note;
-    
+
     // Parse sequence note
     const multiplierMatch = note.match(/(\d+)\s*×\s*(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
-    
+
     if (multiplierMatch) {
       const [, multiplier, presetValue, currency] = multiplierMatch;
-      
+
       const preset = getPresets().find(p => {
         const presetNum = parseFloat(p.value);
         const valueNum = parseFloat(presetValue);
         return presetNum === valueNum;
       });
-      
+
       if (preset) {
         setVendorPresets(prev => ({
           ...prev,
@@ -144,7 +175,7 @@ const SequenceManager = ({
       }
     } else {
       const amountMatch = note.match(/(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
-      
+
       if (amountMatch) {
         const [, amount, currency] = amountMatch;
         const presets = currency.toUpperCase() === 'HTG' ? htgPresets : usdPresets;
@@ -161,7 +192,7 @@ const SequenceManager = ({
         handleInputChange(vendeur, '1');
       }
     }
-    
+
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
@@ -188,9 +219,9 @@ const SequenceManager = ({
   // Save edited sequence
   const handleSaveEditedSequence = () => {
     if (!editingSequenceId || !vendorState) return;
-    
+
     const inputValue = vendorInputs[vendeur];
-    
+
     let amount = 0;
     let currency = vendorState.currency;
     let note = '';
@@ -224,12 +255,14 @@ const SequenceManager = ({
   const handleWheelPresetSelect = (presetValue) => {
     handlePresetSelect(vendeur, presetValue);
     setShowPresetWheel(false);
-    setTimeout(() => {
+    
+    // Focus on input after selection
+    requestAnimationFrame(() => {
       if (inputRef.current) {
         inputRef.current.focus();
         inputRef.current.select();
       }
-    }, 50);
+    });
   };
 
   // Toggle preset wheel
@@ -238,7 +271,16 @@ const SequenceManager = ({
       e.preventDefault();
       e.stopPropagation();
     }
-    setShowPresetWheel(!showPresetWheel);
+    
+    const newState = !showPresetWheel;
+    setShowPresetWheel(newState);
+    
+    // If opening, focus the input
+    if (newState && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current.focus();
+      }, 50);
+    }
   };
 
   // Check if we're in edit mode
@@ -278,7 +320,7 @@ const SequenceManager = ({
         ) : (
           sequences.map((sequence) => {
             const isEditing = sequence.id === editingSequenceId;
-            
+
             return (
               <div 
                 key={sequence.id} 
@@ -295,7 +337,7 @@ const SequenceManager = ({
                     <div className="text-[10px] opacity-60">{sequence.timestamp}</div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                   <div className="text-xs font-bold whitespace-nowrap">
                     {formaterArgent(sequence.amount)} {sequence.currency}
@@ -349,7 +391,7 @@ const SequenceManager = ({
         )}
       </div>
 
-      {/* Input Section - WITH EXACT DROPDOWN FROM OLD CODE */}
+      {/* Input Section */}
       <div className="space-y-2">
         <div className="relative" ref={dropdownContainerRef}>
           <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
@@ -376,12 +418,12 @@ const SequenceManager = ({
                 className="w-full px-3 py-3 text-sm bg-transparent text-white placeholder-white placeholder-opacity-50 focus:outline-none"
               />
             </div>
-            
-            {/* Preset Selector Button */}
+
+            {/* Preset Selector Button - Fixed with ref */}
             <button
+              ref={dropdownButtonRef}
               data-dropdown-button
               onClick={togglePresetWheel}
-              onTouchStart={togglePresetWheel}
               className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
                 vendorState.currency === 'HTG'
                   ? 'bg-blue-500 bg-opacity-20 text-blue-300 hover:bg-blue-500 hover:bg-opacity-30'
@@ -393,7 +435,7 @@ const SequenceManager = ({
                 <ChevronDown size={12} className={`transition-transform ${showPresetWheel ? 'rotate-180' : ''}`} />
               </div>
             </button>
-            
+
             {/* Add/Update Button */}
             {isEditingMode ? (
               <div className="flex">
@@ -434,15 +476,14 @@ const SequenceManager = ({
               </button>
             )}
           </div>
-          
-          {/* EXACT DROPDOWN FROM OLD CODE */}
+
+          {/* Dropdown Wheel */}
           {showPresetWheel && (
             <div 
-              className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden border border-white border-opacity-30 bg-gray-800"
+              className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden border border-white border-opacity-30 bg-gray-800 top-full"
               onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
             >
-              {/* Scrollable wheel list - EXACT SAME STYLE */}
+              {/* Scrollable wheel list */}
               <div 
                 ref={wheelRef}
                 className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
@@ -453,7 +494,6 @@ const SequenceManager = ({
                   <button
                     key={preset.value}
                     onClick={() => handleWheelPresetSelect(preset.value)}
-                    onTouchStart={() => handleWheelPresetSelect(preset.value)}
                     className={`w-full px-3 py-2.5 text-left text-xs font-medium hover:bg-opacity-50 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
                       vendorState.preset === preset.value
                         ? vendorState.currency === 'HTG'
@@ -471,8 +511,8 @@ const SequenceManager = ({
                   </button>
                 ))}
               </div>
-              
-              {/* Wheel scroll indicators - EXACT SAME */}
+
+              {/* Wheel scroll indicators */}
               <div className="flex items-center justify-center py-1 bg-gray-900 bg-opacity-50">
                 <ChevronUp size={10} className="text-gray-400" />
                 <span className="text-[10px] text-gray-400 mx-2">Glisser pour faire défiler</span>
@@ -498,9 +538,7 @@ const SequenceManager = ({
         {sequences.length > 0 && !isEditingMode && (
           <button
             onClick={() => handleAddCompleteDeposit(vendeur)}
-            onTouchStart={() => handleAddCompleteDeposit(vendeur)}
             className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 active:opacity-80 transition-opacity text-sm"
-            style={{ touchAction: 'manipulation' }}
           >
             <Plus size={14} />
             <span>Ajouter dépôt</span>
