@@ -31,11 +31,14 @@ const DepositsSummary = ({
       // Extract numeric value from different patterns
       let numericValue = 0;
       let displayTotal = '';
+      let multiplier = 1;
+      let value = 0;
+      let currency = '';
 
       // Pattern: "5 × 20 USD" or "5 × 20 HTG"
       const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
       if (multiplierMatch) {
-        const [, multiplier, value, currency] = multiplierMatch;
+        [, multiplier, value, currency] = multiplierMatch;
         const total = parseFloat(multiplier) * parseFloat(value);
         numericValue = total;
         displayTotal = `${formaterArgent(total)} ${currency}`;
@@ -44,7 +47,8 @@ const DepositsSummary = ({
       else {
         const valueMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
         if (valueMatch) {
-          const [, value, currency] = valueMatch;
+          [, value, currency] = valueMatch;
+          multiplier = 1;
           numericValue = parseFloat(value);
           displayTotal = `${formaterArgent(numericValue)} ${currency}`;
         }
@@ -54,7 +58,10 @@ const DepositsSummary = ({
         text: trimmed,
         value: numericValue,
         displayTotal: displayTotal,
-        isUSD: /USD/i.test(trimmed)
+        isUSD: /USD/i.test(trimmed),
+        multiplier: parseFloat(multiplier),
+        singleValue: parseFloat(value),
+        currency: currency
       };
     });
 
@@ -63,6 +70,14 @@ const DepositsSummary = ({
 
     // Calculate total of all sequences
     const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + seq.value, 0);
+
+    // Function to convert USD to HTG (replace with your actual conversion logic)
+    const convertUSDToHTG = (usdAmount) => {
+      // You should replace this with your actual exchange rate logic
+      // For example: get from context, props, or a hook
+      const exchangeRate = 132; // Example rate: 1 USD = 132 HTG
+      return usdAmount * exchangeRate;
+    };
 
     return (
       <div className="mt-2">
@@ -78,40 +93,68 @@ const DepositsSummary = ({
         </div>
 
         <div className="space-y-1.5">
-          {sortedSequences.map((seq, idx) => (
-            <div 
-              key={idx} 
-              className={`flex items-center justify-between w-full group ${
-                seq.isUSD ? 'text-green-200' : ''
-              }`}
-            >
-              {/* Left column - Description */}
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div className="relative">
-                  <div className={`w-2 h-2 rounded-full ${
-                    seq.isUSD 
-                      ? 'bg-green-500 bg-opacity-60' 
-                      : 'bg-white bg-opacity-40'
-                  }`}></div>
-                  <div className={`absolute inset-0 rounded-full ${
-                    seq.isUSD 
-                      ? 'bg-green-400 bg-opacity-30' 
-                      : 'bg-white bg-opacity-20'
-                  } group-hover:scale-125 transition-transform`}></div>
-                </div>
-                <span className="text-[11px] opacity-90 truncate">{seq.text}</span>
-              </div>
+          {sortedSequences.map((seq, idx) => {
+            // Calculate HTG conversion for USD sequences
+            const htgValue = seq.isUSD ? convertUSDToHTG(seq.value) : 0;
+            const htgPerUnit = seq.isUSD ? convertUSDToHTG(seq.singleValue) : 0;
+            
+            return (
+              <div key={idx} className="space-y-1">
+                <div className={`flex items-center justify-between w-full group ${
+                  seq.isUSD ? 'text-green-200' : ''
+                }`}>
+                  {/* Left column - Description */}
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="relative">
+                      <div className={`w-2 h-2 rounded-full ${
+                        seq.isUSD 
+                          ? 'bg-green-500 bg-opacity-60' 
+                          : 'bg-white bg-opacity-40'
+                      }`}></div>
+                      <div className={`absolute inset-0 rounded-full ${
+                        seq.isUSD 
+                          ? 'bg-green-400 bg-opacity-30' 
+                          : 'bg-white bg-opacity-20'
+                      } group-hover:scale-125 transition-transform`}></div>
+                    </div>
+                    <span className="text-[11px] opacity-90 truncate">{seq.text}</span>
+                  </div>
 
-              {/* Right column - Total */}
-              <div className={`text-[10px] font-medium px-2 py-0.5 rounded ${
-                seq.isUSD 
-                  ? 'bg-green-900 bg-opacity-40 text-green-200' 
-                  : 'bg-white bg-opacity-15'
-              }`}>
-                {seq.displayTotal}
+                  {/* Right column - Total */}
+                  <div className={`text-[10px] font-medium px-2 py-0.5 rounded ${
+                    seq.isUSD 
+                      ? 'bg-green-900 bg-opacity-40 text-green-200' 
+                      : 'bg-white bg-opacity-15'
+                  }`}>
+                    {seq.displayTotal}
+                  </div>
+                </div>
+                
+                {/* HTG Conversion for USD sequences */}
+                {seq.isUSD && (
+                  <div className="ml-5 pl-1.5 border-l border-green-800/50 border-dashed">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-1 opacity-70">
+                        <span className="text-green-300">↳</span>
+                        <span>Conversion HTG:</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {seq.multiplier > 1 && (
+                          <>
+                            <span className="opacity-70">{formaterArgent(htgPerUnit)} HTG × {seq.multiplier}</span>
+                            <span className="opacity-50">=</span>
+                          </>
+                        )}
+                        <span className="font-medium bg-white/10 px-1.5 py-0.5 rounded">
+                          {formaterArgent(htgValue)} HTG
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -225,7 +268,7 @@ const DepositsSummary = ({
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Action buttons - Pen and Trash icons */}
                   <div className="flex items-center gap-1 mt-1 sm:mt-0">
                     <button
