@@ -31,6 +31,34 @@ const DepositsSummary = ({
     }
   };
 
+  // Helper function to get display text for multiplier
+  const getMultiplierDisplay = (multiplier, singleValue, currency) => {
+    if (multiplier > 1) {
+      // For HTG, use "billets" if value >= 250 (common bill denominations)
+      // For USD, use "billets" for any multiplier
+      if (currency === 'HTG' && singleValue >= 250) {
+        return `${multiplier} billets de ${safeFormatArgent(singleValue)} ${currency}`;
+      } else if (currency === 'USD') {
+        return `${multiplier} billets de ${singleValue} ${currency}`;
+      }
+      // For smaller HTG amounts or coins
+      return `${multiplier} pièces de ${safeFormatArgent(singleValue)} ${currency}`;
+    }
+    return null;
+  };
+
+  // Helper function to get display text for sequence
+  const getSequenceDisplay = (text, multiplier, singleValue, currency, value) => {
+    const multiplierDisplay = getMultiplierDisplay(multiplier, singleValue, currency);
+    
+    if (multiplierDisplay) {
+      return multiplierDisplay;
+    }
+    
+    // For single items, return the original text
+    return text;
+  };
+
   // Helper function to parse breakdown and create sorted list items with totals
   const renderBreakdown = (depot) => {
     if (!depot || typeof depot !== 'object') return null;
@@ -51,6 +79,7 @@ const DepositsSummary = ({
       let multiplier = 1;
       let value = 0;
       let currency = '';
+      let displayText = trimmed;
 
       try {
         // Pattern: "5 × 20 USD" or "5 × 20 HTG"
@@ -60,6 +89,7 @@ const DepositsSummary = ({
           const total = parseFloat(multiplier) * parseFloat(value);
           numericValue = total;
           displayTotal = `${safeFormatArgent(total)} ${currency}`;
+          displayText = getSequenceDisplay(trimmed, parseFloat(multiplier), parseFloat(value), currency.toUpperCase(), total);
         } 
         // Pattern: "20 USD" or "100 HTG"
         else {
@@ -69,10 +99,13 @@ const DepositsSummary = ({
             multiplier = 1;
             numericValue = parseFloat(value) || 0;
             displayTotal = `${safeFormatArgent(numericValue)} ${currency}`;
+            // For single items, keep original text
+            displayText = trimmed;
           } else {
             // If no pattern matches, return the text as-is
             return {
               text: trimmed,
+              displayText: trimmed,
               value: 0,
               displayTotal: trimmed,
               isUSD: false,
@@ -85,6 +118,7 @@ const DepositsSummary = ({
 
         return {
           text: trimmed,
+          displayText: displayText,
           value: numericValue,
           displayTotal: displayTotal,
           isUSD: /USD/i.test(trimmed),
@@ -96,6 +130,7 @@ const DepositsSummary = ({
         console.error('Error parsing sequence:', error, 'item:', trimmed);
         return {
           text: trimmed,
+          displayText: trimmed,
           value: 0,
           displayTotal: trimmed,
           isUSD: false,
@@ -123,6 +158,14 @@ const DepositsSummary = ({
     const convertUSDToHTG = (usdAmount) => {
       const amount = parseFloat(usdAmount) || 0;
       return amount * exchangeRate;
+    };
+
+    // Function to get HTG bill/coin description
+    const getHTGDescription = (value) => {
+      const numValue = parseFloat(value);
+      if (numValue >= 1000) return `${safeFormatArgent(numValue)} gourdes`;
+      if (numValue >= 250) return `${safeFormatArgent(numValue)} gourdes`;
+      return `${safeFormatArgent(numValue)} gourdes (pièces)`;
     };
 
     return (
@@ -176,11 +219,14 @@ const DepositsSummary = ({
                       </div>
                       <div className="min-w-0">
                         <div className="text-xs font-medium opacity-90 truncate">
-                          {seq.text}
+                          {seq.displayText}
                         </div>
+                        {/* Only show breakdown if it's different from displayText */}
                         {seq.multiplier > 1 && seq.singleValue > 0 && (
-                          <div className="text-[10px] opacity-70 mt-0.5">
-                            {seq.multiplier} × {safeFormatArgent(seq.singleValue)} {seq.currency}
+                          <div className="text-[10px] opacity-60 mt-0.5">
+                            {seq.multiplier} × {seq.currency === 'HTG' 
+                              ? getHTGDescription(seq.singleValue)
+                              : `${seq.singleValue} ${seq.currency}`}
                           </div>
                         )}
                       </div>
@@ -218,10 +264,8 @@ const DepositsSummary = ({
                         {seq.multiplier > 1 && seq.singleValue > 0 && htgPerUnit > 0 && (
                           <div className="flex items-center justify-between text-[10px] opacity-70 pl-2">
                             <div className="flex items-center gap-1">
-                              <span className="opacity-60">×</span>
-                              <span>{safeFormatArgent(htgPerUnit)} HTG</span>
-                              <span className="opacity-60">×</span>
-                              <span>{seq.multiplier}</span>
+                              <span className="opacity-60">{seq.multiplier} ×</span>
+                              <span>{safeFormatArgent(htgPerUnit)} gourdes</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <span className="opacity-60">Taux:</span>
