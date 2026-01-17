@@ -349,32 +349,32 @@ const SequenceManager = ({
         </div>
       </div>
 
-      {/* TWO-COLUMN CURRENCY BUTTONS - NEW LAYOUT */}
+      {/* TWO-COLUMN CURRENCY BUTTONS - COMPACT VERSION */}
       <div className="grid grid-cols-2 gap-2">
-        {/* HTG Button */}
+        {/* HTG Button - COMPACT */}
         <button
           onClick={() => handleCurrencyChange('HTG')}
-          className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all active:scale-95 ${
+          className={`flex items-center justify-center gap-2 p-2 rounded-lg border transition-all active:scale-95 ${
             vendorState.currency === 'HTG'
-              ? 'bg-blue-500 border-blue-400 text-white shadow-lg'
+              ? 'bg-blue-500 border-blue-400 text-white shadow-md'
               : 'bg-white bg-opacity-10 border-white border-opacity-20 text-blue-200 hover:bg-opacity-20'
           }`}
         >
-          <Coins size={18} className={vendorState.currency === 'HTG' ? 'text-white' : 'text-blue-300'} />
-          <span className="font-bold">HTG</span>
+          <Coins size={16} className={vendorState.currency === 'HTG' ? 'text-white' : 'text-blue-300'} />
+          <span className="font-bold text-sm">HTG</span>
         </button>
 
-        {/* USD Button */}
+        {/* USD Button - COMPACT */}
         <button
           onClick={() => handleCurrencyChange('USD')}
-          className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all active:scale-95 ${
+          className={`flex items-center justify-center gap-2 p-2 rounded-lg border transition-all active:scale-95 ${
             vendorState.currency === 'USD'
-              ? 'bg-green-500 border-green-400 text-white shadow-lg'
+              ? 'bg-green-500 border-green-400 text-white shadow-md'
               : 'bg-white bg-opacity-10 border-white border-opacity-20 text-green-200 hover:bg-opacity-20'
           }`}
         >
-          <DollarSign size={18} className={vendorState.currency === 'USD' ? 'text-white' : 'text-green-300'} />
-          <span className="font-bold">USD</span>
+          <DollarSign size={16} className={vendorState.currency === 'USD' ? 'text-white' : 'text-green-300'} />
+          <span className="font-bold text-sm">USD</span>
         </button>
       </div>
 
