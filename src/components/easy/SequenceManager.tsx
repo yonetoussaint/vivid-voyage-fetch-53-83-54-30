@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, X, Plus, ChevronDown, Edit2, Save, RotateCcw, Check, ChevronUp, ChevronRight } from 'lucide-react';
+import { Trash2, X, Plus, ChevronDown, Edit2, Save, RotateCcw, Check, ChevronUp, DollarSign, Coins } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const SequenceManager = ({
@@ -75,27 +75,22 @@ const SequenceManager = ({
     setIsDraggingWheel(false);
   };
 
-  // Click outside handler - FIXED VERSION
+  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // If dropdown is not showing, do nothing
       if (!showPresetWheel) return;
 
-      // Check if click is on the dropdown button
       if (dropdownButtonRef.current && dropdownButtonRef.current.contains(event.target)) {
-        return; // Click is on the button itself, let button handler manage
+        return;
       }
 
-      // Check if click is inside the dropdown
       if (dropdownContainerRef.current && dropdownContainerRef.current.contains(event.target)) {
-        return; // Click is inside dropdown
+        return;
       }
 
-      // Click is outside, close dropdown
       setShowPresetWheel(false);
     };
 
-    // Add event listener with a slight delay to avoid interfering with button click
     const timer = setTimeout(() => {
       document.addEventListener('click', handleClickOutside);
       document.addEventListener('touchstart', handleClickOutside);
@@ -144,7 +139,6 @@ const SequenceManager = ({
 
     const note = sequence.note;
 
-    // Parse sequence note
     const multiplierMatch = note.match(/(\d+)\s*×\s*(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
 
     if (multiplierMatch) {
@@ -263,7 +257,6 @@ const SequenceManager = ({
     handlePresetSelect(vendeur, presetValue);
     setShowPresetWheel(false);
     
-    // Focus on input after selection with a small delay
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
@@ -272,7 +265,7 @@ const SequenceManager = ({
     }, 150);
   };
 
-  // Toggle preset wheel - PREVENT INPUT FOCUS WHEN OPENING
+  // Toggle preset wheel
   const togglePresetWheel = (e) => {
     if (e) {
       e.preventDefault();
@@ -282,36 +275,49 @@ const SequenceManager = ({
     const newState = !showPresetWheel;
     setShowPresetWheel(newState);
     
-    // IMPORTANT: Don't focus input when opening dropdown
     if (newState && inputRef.current) {
-      // Blur the input to close keyboard
       inputRef.current.blur();
     } else if (!newState && inputRef.current) {
-      // When closing, focus back on input
       setTimeout(() => {
         inputRef.current.focus();
       }, 50);
     }
   };
 
-  // Handle input field focus - PREVENT FOCUS WHEN DROPDOWN IS OPEN
+  // Handle input field focus
   const handleInputFocus = () => {
     if (showPresetWheel) {
-      // If dropdown is open, blur immediately
       if (inputRef.current) {
         inputRef.current.blur();
       }
     }
   };
 
-  // Handle input field click - PREVENT FOCUS WHEN DROPDOWN IS OPEN
+  // Handle input field click
   const handleInputClick = (e) => {
     if (showPresetWheel) {
-      // If dropdown is open, prevent focus
       e.preventDefault();
       if (inputRef.current) {
         inputRef.current.blur();
       }
+    }
+  };
+
+  // Handle currency change
+  const handleCurrencyChange = (currency) => {
+    if (vendorState) {
+      const presets = currency === 'HTG' ? htgPresets : usdPresets;
+      const smallestPreset = presets[0]?.value || '1';
+
+      setVendorPresets(prev => ({
+        ...prev,
+        [vendeur]: { 
+          ...prev[vendeur], 
+          currency,
+          preset: smallestPreset
+        }
+      }));
+      handleInputChange(vendeur, '');
     }
   };
 
@@ -341,6 +347,35 @@ const SequenceManager = ({
             </button>
           )}
         </div>
+      </div>
+
+      {/* TWO-COLUMN CURRENCY BUTTONS - NEW LAYOUT */}
+      <div className="grid grid-cols-2 gap-2">
+        {/* HTG Button */}
+        <button
+          onClick={() => handleCurrencyChange('HTG')}
+          className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all active:scale-95 ${
+            vendorState.currency === 'HTG'
+              ? 'bg-blue-500 border-blue-400 text-white shadow-lg'
+              : 'bg-white bg-opacity-10 border-white border-opacity-20 text-blue-200 hover:bg-opacity-20'
+          }`}
+        >
+          <Coins size={18} className={vendorState.currency === 'HTG' ? 'text-white' : 'text-blue-300'} />
+          <span className="font-bold">HTG</span>
+        </button>
+
+        {/* USD Button */}
+        <button
+          onClick={() => handleCurrencyChange('USD')}
+          className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all active:scale-95 ${
+            vendorState.currency === 'USD'
+              ? 'bg-green-500 border-green-400 text-white shadow-lg'
+              : 'bg-white bg-opacity-10 border-white border-opacity-20 text-green-200 hover:bg-opacity-20'
+          }`}
+        >
+          <DollarSign size={18} className={vendorState.currency === 'USD' ? 'text-white' : 'text-green-300'} />
+          <span className="font-bold">USD</span>
+        </button>
       </div>
 
       {/* Sequences List */}
@@ -427,7 +462,7 @@ const SequenceManager = ({
       <div className="space-y-2">
         <div className="relative" ref={dropdownContainerRef}>
           <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
-            {/* Input Field - ADDED ONCLICK AND ONFOCUS HANDLERS */}
+            {/* Input Field */}
             <div className="flex-1">
               <input
                 ref={inputRef}
@@ -437,8 +472,8 @@ const SequenceManager = ({
                 data-vendor={vendeur}
                 value={vendorInputs[vendeur] || ''}
                 onChange={(e) => handleInputChange(vendeur, e.target.value)}
-                onFocus={handleInputFocus} // NEW: Prevent focus when dropdown is open
-                onClick={handleInputClick} // NEW: Prevent focus when clicking input while dropdown is open
+                onFocus={handleInputFocus}
+                onClick={handleInputClick}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     if (isEditingMode) {
@@ -453,7 +488,7 @@ const SequenceManager = ({
               />
             </div>
 
-            {/* Preset Selector Button - Fixed with ref */}
+            {/* Preset Selector Button */}
             <button
               ref={dropdownButtonRef}
               data-dropdown-button
@@ -517,7 +552,6 @@ const SequenceManager = ({
               className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden border border-white border-opacity-30 bg-gray-800 top-full"
               onMouseDown={(e) => e.stopPropagation()}
             >
-              {/* Scrollable wheel list */}
               <div 
                 ref={wheelRef}
                 className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
@@ -546,7 +580,6 @@ const SequenceManager = ({
                 ))}
               </div>
 
-              {/* Wheel scroll indicators */}
               <div className="flex items-center justify-center py-1 bg-gray-900 bg-opacity-50">
                 <ChevronUp size={10} className="text-gray-400" />
                 <span className="text-[10px] text-gray-400 mx-2">Glisser pour faire défiler</span>
