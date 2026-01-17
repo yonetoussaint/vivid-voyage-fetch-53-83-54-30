@@ -17,52 +17,19 @@ const DepositsSummary = ({
 }) => {
   if (depots.length === 0) return null;
 
-  // Helper function to parse breakdown and create sorted list items with totals
-  const renderBreakdown = (depot) => {
+  // Helper function to render sequences from deposit object
+  const renderSequences = (depot) => {
     if (!depot || typeof depot !== 'object') return null;
 
-    const breakdown = depot.breakdown;
-    if (!breakdown) return null;
+    // Use the sequences array if available
+    const sequences = depot.sequences;
+    if (!sequences || !Array.isArray(sequences) || sequences.length === 0) return null;
 
-    // Parse sequences and extract numeric values for sorting
-    const parsedSequences = breakdown.split(',').map(item => {
-      const trimmed = item.trim();
-
-      // Extract numeric value from different patterns
-      let numericValue = 0;
-      let displayTotal = '';
-
-      // Pattern: "5 × 20 USD" or "5 × 20 HTG"
-      const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
-      if (multiplierMatch) {
-        const [, multiplier, value, currency] = multiplierMatch;
-        const total = parseFloat(multiplier) * parseFloat(value);
-        numericValue = total;
-        displayTotal = `${formaterArgent(total)} ${currency}`;
-      } 
-      // Pattern: "20 USD" or "100 HTG"
-      else {
-        const valueMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
-        if (valueMatch) {
-          const [, value, currency] = valueMatch;
-          numericValue = parseFloat(value);
-          displayTotal = `${formaterArgent(numericValue)} ${currency}`;
-        }
-      }
-
-      return {
-        text: trimmed,
-        value: numericValue,
-        displayTotal: displayTotal,
-        isUSD: /USD/i.test(trimmed)
-      };
-    });
-
-    // Sort by value descending (largest first)
-    const sortedSequences = [...parsedSequences].sort((a, b) => b.value - a.value);
+    // Sort sequences by amount (largest first)
+    const sortedSequences = [...sequences].sort((a, b) => b.amount - a.amount);
 
     // Calculate total of all sequences
-    const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + seq.value, 0);
+    const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + seq.amount, 0);
 
     return (
       <div className="mt-2">
@@ -73,7 +40,12 @@ const DepositsSummary = ({
           </div>
           <div className="text-[11px] opacity-70">
             <span className="opacity-60 mr-1">Total:</span>
-            <span className="font-semibold">{formaterArgent(sequencesTotal)}</span>
+            <span className="font-semibold">
+              {isUSDDepot(depot) ? 
+                `${formaterArgent(sequencesTotal)} USD` : 
+                `${formaterArgent(sequencesTotal)} HTG`
+              }
+            </span>
           </div>
         </div>
 
@@ -82,33 +54,33 @@ const DepositsSummary = ({
             <div 
               key={idx} 
               className={`flex items-center justify-between w-full group ${
-                seq.isUSD ? 'text-green-200' : ''
+                seq.currency === 'USD' ? 'text-green-200' : ''
               }`}
             >
               {/* Left column - Description */}
               <div className="flex items-center gap-1.5 min-w-0">
                 <div className="relative">
                   <div className={`w-2 h-2 rounded-full ${
-                    seq.isUSD 
+                    seq.currency === 'USD' 
                       ? 'bg-green-500 bg-opacity-60' 
                       : 'bg-white bg-opacity-40'
                   }`}></div>
                   <div className={`absolute inset-0 rounded-full ${
-                    seq.isUSD 
+                    seq.currency === 'USD' 
                       ? 'bg-green-400 bg-opacity-30' 
                       : 'bg-white bg-opacity-20'
                   } group-hover:scale-125 transition-transform`}></div>
                 </div>
-                <span className="text-[11px] opacity-90 truncate">{seq.text}</span>
+                <span className="text-[11px] opacity-90 truncate">{seq.note || `${seq.amount} ${seq.currency || 'HTG'}`}</span>
               </div>
 
               {/* Right column - Total */}
               <div className={`text-[10px] font-medium px-2 py-0.5 rounded ${
-                seq.isUSD 
+                seq.currency === 'USD' 
                   ? 'bg-green-900 bg-opacity-40 text-green-200' 
                   : 'bg-white bg-opacity-15'
               }`}>
-                {seq.displayTotal}
+                {formaterArgent(seq.amount)} {seq.currency || 'HTG'}
               </div>
             </div>
           ))}
@@ -117,8 +89,8 @@ const DepositsSummary = ({
     );
   };
 
-  // Helper function to get display text without breakdown
-  const getDisplayTextWithoutBreakdown = (depot) => {
+  // Helper function to get display text
+  const getDisplayText = (depot) => {
     if (!depot) return '';
     if (typeof depot === 'object') {
       if (depot.devise === 'USD') {
@@ -170,10 +142,9 @@ const DepositsSummary = ({
             const originalIndex = depots.indexOf(depot);
             const montantHTG = getMontantHTG(depot);
             const isUSD = isUSDDepot(depot);
-            const montantOriginal = getOriginalDepotAmount(depot);
-            const displayText = getDisplayTextWithoutBreakdown(depot);
+            const displayText = getDisplayText(depot);
             const isRecent = isRecentlyAdded(vendeur, originalIndex);
-            const hasBreakdown = depot && typeof depot === 'object' && depot.breakdown;
+            const hasSequences = depot && typeof depot === 'object' && depot.sequences && Array.isArray(depot.sequences) && depot.sequences.length > 0;
             const isEditing = isEditingThisDeposit(vendeur, originalIndex);
 
             return (
@@ -225,7 +196,7 @@ const DepositsSummary = ({
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Action buttons - Pen and Trash icons */}
                   <div className="flex items-center gap-1 mt-1 sm:mt-0">
                     <button
@@ -249,8 +220,8 @@ const DepositsSummary = ({
                   </div>
                 </div>
 
-                {/* Render breakdown - Only show for deposits with breakdown */}
-                {hasBreakdown && renderBreakdown(depot)}
+                {/* Render sequences - Only show for deposits with sequences array */}
+                {hasSequences && renderSequences(depot)}
               </div>
             );
           })}
