@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, X, Plus, ChevronDown, Edit2, Save, RotateCcw } from 'lucide-react';
+import { Trash2, X, Plus, ChevronDown, Edit2, Save, RotateCcw, Check, ChevronUp, ChevronRight } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const SequenceManager = ({
@@ -30,10 +30,13 @@ const SequenceManager = ({
   // Local state
   const [editingSequenceId, setEditingSequenceId] = useState(null);
   const [showPresetWheel, setShowPresetWheel] = useState(false);
+  const [isDraggingWheel, setIsDraggingWheel] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [wheelScrollTop, setWheelScrollTop] = useState(0);
   
+  const wheelRef = useRef(null);
   const inputRef = useRef(null);
-  const dropdownRef = useRef(null);
-  const dropdownButtonRef = useRef(null);
+  const dropdownContainerRef = useRef(null);
 
   // Get current presets based on currency
   const getPresets = () => {
@@ -49,33 +52,53 @@ const SequenceManager = ({
     return preset ? preset.label : presets[0]?.label || '';
   };
 
-  // Close wheel when clicking outside - FIXED FOR TOUCH
+  // Handle wheel dragging
+  const handleWheelMouseDown = (e) => {
+    setIsDraggingWheel(true);
+    setDragStartY(e.clientY);
+    if (wheelRef.current) {
+      setWheelScrollTop(wheelRef.current.scrollTop);
+    }
+  };
+
+  const handleWheelMouseMove = (e) => {
+    if (!isDraggingWheel || !wheelRef.current) return;
+    
+    const deltaY = e.clientY - dragStartY;
+    wheelRef.current.scrollTop = wheelScrollTop - deltaY * 2;
+  };
+
+  const handleWheelMouseUp = () => {
+    setIsDraggingWheel(false);
+  };
+
+  // Close wheel when clicking outside - FIXED VERSION
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Check if click is outside both dropdown and dropdown button
-      const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(event.target);
-      const isOutsideButton = dropdownButtonRef.current && !dropdownButtonRef.current.contains(event.target);
-      
-      if (isOutsideDropdown && isOutsideButton) {
+      if (dropdownContainerRef.current && 
+          !dropdownContainerRef.current.contains(event.target) &&
+          !event.target.closest('[data-dropdown-button]')) {
         setShowPresetWheel(false);
       }
     };
 
-    // Use setTimeout to delay the check - allows click to register first
-    const handleClickOutsideDelayed = (event) => {
-      setTimeout(() => {
-        handleClickOutside(event);
-      }, 10);
+    // Add with delay to allow click to register
+    const handleClick = (e) => {
+      setTimeout(() => handleClickOutside(e), 10);
     };
 
-    document.addEventListener('mousedown', handleClickOutsideDelayed);
-    document.addEventListener('touchstart', handleClickOutsideDelayed, { passive: true });
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('touchstart', handleClick, { passive: true });
+    document.addEventListener('mouseup', handleWheelMouseUp);
+    document.addEventListener('mousemove', handleWheelMouseMove);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutsideDelayed);
-      document.removeEventListener('touchstart', handleClickOutsideDelayed);
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('touchstart', handleClick);
+      document.removeEventListener('mouseup', handleWheelMouseUp);
+      document.removeEventListener('mousemove', handleWheelMouseMove);
     };
-  }, []);
+  }, [isDraggingWheel]);
 
   // Handle editing a sequence
   const handleEditSequence = (sequence) => {
@@ -197,7 +220,7 @@ const SequenceManager = ({
     }
   };
 
-  // Handle preset selection
+  // Handle preset selection from wheel
   const handleWheelPresetSelect = (presetValue) => {
     handlePresetSelect(vendeur, presetValue);
     setShowPresetWheel(false);
@@ -209,7 +232,7 @@ const SequenceManager = ({
     }, 50);
   };
 
-  // Toggle preset wheel - FIXED FOR TOUCH
+  // Toggle preset wheel
   const togglePresetWheel = (e) => {
     if (e) {
       e.preventDefault();
@@ -326,9 +349,9 @@ const SequenceManager = ({
         )}
       </div>
 
-      {/* Input Section - FIXED FOR TOUCH */}
+      {/* Input Section - WITH EXACT DROPDOWN FROM OLD CODE */}
       <div className="space-y-2">
-        <div className="relative">
+        <div className="relative" ref={dropdownContainerRef}>
           <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
             {/* Input Field */}
             <div className="flex-1">
@@ -355,22 +378,21 @@ const SequenceManager = ({
             </div>
             
             {/* Preset Selector Button */}
-            <div className="relative" ref={dropdownButtonRef}>
-              <button
-                onClick={togglePresetWheel}
-                onTouchStart={togglePresetWheel}
-                className={`h-full px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
-                  vendorState.currency === 'HTG'
-                    ? 'bg-blue-500 bg-opacity-20 text-blue-300 hover:bg-blue-500 hover:bg-opacity-30'
-                    : 'bg-green-500 bg-opacity-20 text-green-300 hover:green-500 hover:bg-opacity-30'
-                }`}
-              >
-                <div className="flex items-center gap-1">
-                  <span className="text-xs font-medium">× {selectedPresetLabel}</span>
-                  <ChevronDown size={12} className={`transition-transform ${showPresetWheel ? 'rotate-180' : ''}`} />
-                </div>
-              </button>
-            </div>
+            <button
+              data-dropdown-button
+              onClick={togglePresetWheel}
+              onTouchStart={togglePresetWheel}
+              className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
+                vendorState.currency === 'HTG'
+                  ? 'bg-blue-500 bg-opacity-20 text-blue-300 hover:bg-blue-500 hover:bg-opacity-30'
+                  : 'bg-green-500 bg-opacity-20 text-green-300 hover:green-500 hover:bg-opacity-30'
+              }`}
+            >
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-medium">× {selectedPresetLabel}</span>
+                <ChevronDown size={12} className={`transition-transform ${showPresetWheel ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
             
             {/* Add/Update Button */}
             {isEditingMode ? (
@@ -413,35 +435,48 @@ const SequenceManager = ({
             )}
           </div>
           
-          {/* DROPDOWN LIST - SEPARATE FOR TOUCH FRIENDLY */}
+          {/* EXACT DROPDOWN FROM OLD CODE */}
           {showPresetWheel && (
             <div 
-              ref={dropdownRef}
-              className="absolute z-50 top-full left-0 right-0 mt-1"
-              onMouseDown={(e) => e.stopPropagation()} // Prevent dropdown from closing when clicking inside
-              onTouchStart={(e) => e.stopPropagation()} // Prevent dropdown from closing when touching inside
+              className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden border border-white border-opacity-30 bg-gray-800"
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
             >
-              <div className="bg-gray-800 rounded-lg shadow-2xl border border-white border-opacity-20 overflow-hidden">
+              {/* Scrollable wheel list - EXACT SAME STYLE */}
+              <div 
+                ref={wheelRef}
+                className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
+                onMouseDown={handleWheelMouseDown}
+                style={{ cursor: isDraggingWheel ? 'grabbing' : 'grab' }}
+              >
                 {getPresets().map((preset) => (
                   <button
                     key={preset.value}
                     onClick={() => handleWheelPresetSelect(preset.value)}
                     onTouchStart={() => handleWheelPresetSelect(preset.value)}
-                    className={`w-full px-4 py-4 text-left text-sm hover:bg-opacity-50 active:bg-opacity-70 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
+                    className={`w-full px-3 py-2.5 text-left text-xs font-medium hover:bg-opacity-50 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
                       vendorState.preset === preset.value
                         ? vendorState.currency === 'HTG'
                           ? 'bg-blue-700 text-white'
                           : 'bg-green-700 text-white'
-                        : 'hover:bg-gray-700 text-gray-100 active:bg-gray-600'
+                        : vendorState.currency === 'HTG'
+                          ? 'hover:bg-blue-800 text-blue-100'
+                          : 'hover:bg-green-800 text-green-100'
                     }`}
-                    style={{ touchAction: 'manipulation' }} // Better touch handling
                   >
                     <span>{preset.label} {vendorState.currency}</span>
                     {vendorState.preset === preset.value && (
-                      <div className={`w-2 h-2 rounded-full ${vendorState.currency === 'HTG' ? 'bg-blue-300' : 'bg-green-300'}`}></div>
+                      <Check size={10} />
                     )}
                   </button>
                 ))}
+              </div>
+              
+              {/* Wheel scroll indicators - EXACT SAME */}
+              <div className="flex items-center justify-center py-1 bg-gray-900 bg-opacity-50">
+                <ChevronUp size={10} className="text-gray-400" />
+                <span className="text-[10px] text-gray-400 mx-2">Glisser pour faire défiler</span>
+                <ChevronDown size={10} className="text-gray-400" />
               </div>
             </div>
           )}
