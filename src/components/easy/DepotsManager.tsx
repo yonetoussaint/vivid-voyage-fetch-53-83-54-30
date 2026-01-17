@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { DollarSign } from 'lucide-react';
 import VendorDepositCard from './VendorDepositCard';
 import SequenceManager from './SequenceManager';
-import DepositInputsSection from './DepositInputsSection';
 import DepositsSummary from './DepositsSummary';
 import ExchangeRateBanner from './ExchangeRateBanner';
 import { formaterArgent } from '@/utils/formatters';
@@ -91,6 +90,37 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }
     const amount = parseFloat(depot) || 0;
     return `${formaterArgent(amount)} HTG`;
+  };
+
+  // NEW: Calculate sequences total by currency
+  const calculateSequencesTotalByCurrency = (vendeur) => {
+    const sequences = depositSequences[vendeur] || [];
+    const totals = {
+      HTG: 0,
+      USD: 0
+    };
+    
+    sequences.forEach(seq => {
+      const currency = seq.currency || 'HTG';
+      if (currency === 'USD') {
+        totals.USD += seq.amount;
+      } else {
+        totals.HTG += seq.amount;
+      }
+    });
+    
+    return totals;
+  };
+
+  // NEW: Calculate total HTG value of all sequences
+  const calculateTotalSequencesHTG = (vendeur) => {
+    const sequences = depositSequences[vendeur] || [];
+    return sequences.reduce((total, seq) => {
+      if (seq.currency === 'USD') {
+        return total + (seq.amount * TAUX_DE_CHANGE);
+      }
+      return total + seq.amount;
+    }, 0);
   };
 
   // State Management Functions
@@ -222,9 +252,9 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     handleInputChange(vendeur, '');
   };
 
+  // FIXED: Save edited deposit with mixed currencies
   const saveEditedDeposit = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
-    const vendorState = vendorPresets[vendeur];
     const { index } = editingDeposit;
 
     if (sequences.length === 0) {
@@ -234,23 +264,42 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       return;
     }
 
-    const totalAmount = sequences.reduce((total, seq) => total + seq.amount, 0);
-    const currency = vendorState?.currency || 'HTG';
-    const breakdown = sequences.map(seq => seq.note).join(', ');
+    // Get original deposit to know its currency
+    const originalDepot = depotsActuels[vendeur]?.[index];
+    const originalCurrency = isUSDDepot(originalDepot) ? 'USD' : 'HTG';
 
-    if (currency === 'USD') {
-      // Create USD deposit object
+    if (originalCurrency === 'USD') {
+      // Convert all to USD
+      const totalAmountUSD = sequences.reduce((total, seq) => {
+        if (seq.currency === 'USD') {
+          return total + seq.amount;
+        } else {
+          // Convert HTG to USD
+          return total + (seq.amount / TAUX_DE_CHANGE);
+        }
+      }, 0);
+      
+      const breakdown = sequences.map(seq => seq.note).join(', ');
       const deposit = {
-        montant: totalAmount.toFixed(2),
+        montant: totalAmountUSD.toFixed(2),
         devise: 'USD',
         breakdown: breakdown,
         sequences: sequences
       };
       mettreAJourDepot(vendeur, index, deposit);
     } else {
-      // Create HTG deposit object
+      // Convert all to HTG
+      const totalAmountHTG = sequences.reduce((total, seq) => {
+        if (seq.currency === 'USD') {
+          return total + (seq.amount * TAUX_DE_CHANGE);
+        } else {
+          return total + seq.amount;
+        }
+      }, 0);
+      
+      const breakdown = sequences.map(seq => seq.note).join(', ');
       const deposit = {
-        value: totalAmount.toString(),
+        value: totalAmountHTG.toString(),
         breakdown: breakdown,
         sequences: sequences
       };
@@ -397,41 +446,54 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return sequences.reduce((total, seq) => total + seq.amount, 0);
   };
 
+  // FIXED: Handle mixed currencies by creating separate deposits
   const handleAddCompleteDeposit = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
-    const vendorState = vendorPresets[vendeur];
 
     if (sequences.length === 0) {
       console.log("No sequences to add");
       return;
     }
 
-    const totalAmount = calculateSequencesTotal(vendeur);
-    const currency = vendorState?.currency || 'HTG';
-    const breakdown = sequences.map(seq => seq.note).join(', ');
-
     // Get current deposits
     const currentDepots = depotsActuels[vendeur] || [];
-    const newIndex = currentDepots.length;
+    
+    // Group sequences by currency
+    const sequencesByCurrency = sequences.reduce((acc, seq) => {
+      const currency = seq.currency || 'HTG';
+      if (!acc[currency]) {
+        acc[currency] = [];
+      }
+      acc[currency].push(seq);
+      return acc;
+    }, {});
 
-    if (currency === 'USD') {
-      const deposit = {
-        montant: totalAmount.toFixed(2),
-        devise: 'USD',
-        breakdown: breakdown,
-        sequences: sequences
-      };
-      mettreAJourDepot(vendeur, newIndex, deposit);
-    } else {
-      const deposit = {
-        value: totalAmount.toString(),
-        breakdown: breakdown,
-        sequences: sequences
-      };
-      mettreAJourDepot(vendeur, newIndex, deposit);
-    }
+    // Create separate deposits for each currency
+    Object.entries(sequencesByCurrency).forEach(([currency, currencySequences]) => {
+      const totalAmount = currencySequences.reduce((total, seq) => total + seq.amount, 0);
+      const breakdown = currencySequences.map(seq => seq.note).join(', ');
+      const newIndex = currentDepots.length;
 
-    markAsRecentlyAdded(vendeur, newIndex);
+      if (currency === 'USD') {
+        const deposit = {
+          montant: totalAmount.toFixed(2),
+          devise: 'USD',
+          breakdown: breakdown,
+          sequences: currencySequences
+        };
+        mettreAJourDepot(vendeur, newIndex, deposit);
+      } else {
+        const deposit = {
+          value: totalAmount.toString(),
+          breakdown: breakdown,
+          sequences: currencySequences
+        };
+        mettreAJourDepot(vendeur, newIndex, deposit);
+      }
+
+      markAsRecentlyAdded(vendeur, newIndex);
+    });
+
     handleClearSequences(vendeur);
   };
 
@@ -477,6 +539,8 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
               const isDirectMode = isDirectAmount(vendeur);
               const sequences = depositSequences[vendeur] || [];
               const sequencesTotal = calculateSequencesTotal(vendeur);
+              const sequencesTotalByCurrency = calculateSequencesTotalByCurrency(vendeur);
+              const totalSequencesHTG = calculateTotalSequencesHTG(vendeur);
               const isEditingMode = editingDeposit?.vendeur === vendeur;
 
               return (
@@ -513,6 +577,8 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       vendorState={vendorState}
                       sequences={sequences}
                       sequencesTotal={sequencesTotal}
+                      sequencesTotalByCurrency={sequencesTotalByCurrency}
+                      totalSequencesHTG={totalSequencesHTG}
                       vendorInputs={vendorInputs}
                       currentPresets={currentPresets}
                       handleClearSequences={handleClearSequences}
@@ -530,6 +596,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       htgPresets={htgPresets}
                       usdPresets={usdPresets}
                       setVendorPresets={setVendorPresets}
+                      TAUX_DE_CHANGE={TAUX_DE_CHANGE}
                     />
                   </div>
 
