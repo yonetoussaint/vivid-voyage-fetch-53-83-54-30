@@ -521,7 +521,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     <div className="space-y-4">
       <ExchangeRateBanner tauxDeChange={TAUX_DE_CHANGE} />
 
-      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl p-4 shadow-xl">
+      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <DollarSign size={20} />
