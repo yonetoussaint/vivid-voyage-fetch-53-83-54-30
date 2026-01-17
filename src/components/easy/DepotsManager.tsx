@@ -455,9 +455,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       return;
     }
 
-    // Get current deposits
-    const currentDepots = depotsActuels[vendeur] || [];
-    
     // Group sequences by currency
     const sequencesByCurrency = sequences.reduce((acc, seq) => {
       const currency = seq.currency || 'HTG';
@@ -468,33 +465,42 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       return acc;
     }, {});
 
-    // Create separate deposits for each currency
-    Object.entries(sequencesByCurrency).forEach(([currency, currencySequences]) => {
+    // Get current deposits count
+    const currentDepots = depotsActuels[vendeur] || [];
+    let nextIndex = currentDepots.length;
+
+    // Create deposits with sequential indices
+    Object.entries(sequencesByCurrency).forEach(([currency, currencySequences], i) => {
       const totalAmount = currencySequences.reduce((total, seq) => total + seq.amount, 0);
       const breakdown = currencySequences.map(seq => seq.note).join(', ');
-      const newIndex = currentDepots.length;
-
-      if (currency === 'USD') {
-        const deposit = {
-          montant: totalAmount.toFixed(2),
-          devise: 'USD',
-          breakdown: breakdown,
-          sequences: currencySequences
-        };
-        mettreAJourDepot(vendeur, newIndex, deposit);
-      } else {
-        const deposit = {
-          value: totalAmount.toString(),
-          breakdown: breakdown,
-          sequences: currencySequences
-        };
-        mettreAJourDepot(vendeur, newIndex, deposit);
-      }
-
-      markAsRecentlyAdded(vendeur, newIndex);
+      
+      // Use setTimeout to ensure state updates sequentially
+      setTimeout(() => {
+        if (currency === 'USD') {
+          const deposit = {
+            montant: totalAmount.toFixed(2),
+            devise: 'USD',
+            breakdown: breakdown,
+            sequences: currencySequences
+          };
+          mettreAJourDepot(vendeur, nextIndex + i, deposit);
+        } else {
+          const deposit = {
+            value: totalAmount.toString(),
+            breakdown: breakdown,
+            sequences: currencySequences
+          };
+          mettreAJourDepot(vendeur, nextIndex + i, deposit);
+        }
+        
+        markAsRecentlyAdded(vendeur, nextIndex + i);
+      }, i * 50); // Small delay between each deposit
     });
 
-    handleClearSequences(vendeur);
+    // Clear sequences after a delay to ensure all deposits are added
+    setTimeout(() => {
+      handleClearSequences(vendeur);
+    }, Object.keys(sequencesByCurrency).length * 50 + 50);
   };
 
   const isRecentlyAdded = (vendeur, index) => {
