@@ -31,9 +31,8 @@ const SequenceManager = ({
   const [editingSequenceId, setEditingSequenceId] = useState(null);
   const [showPresetWheel, setShowPresetWheel] = useState(false);
   
-  const wheelRef = useRef(null);
   const inputRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const dropdownButtonRef = useRef(null);
 
   // Get current presets based on currency
   const getPresets = () => {
@@ -52,7 +51,8 @@ const SequenceManager = ({
   // Close wheel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      // Check if click is outside the dropdown area
+      if (!dropdownButtonRef.current?.contains(event.target)) {
         setShowPresetWheel(false);
       }
     };
@@ -199,8 +199,7 @@ const SequenceManager = ({
   };
 
   // Toggle preset wheel
-  const togglePresetWheel = (e) => {
-    e.stopPropagation();
+  const togglePresetWheel = () => {
     setShowPresetWheel(!showPresetWheel);
   };
 
@@ -312,10 +311,9 @@ const SequenceManager = ({
         )}
       </div>
 
-      {/* Input Section - Mobile Optimized */}
+      {/* Input Section - SIMPLIFIED FOR DEBUGGING */}
       <div className="space-y-2">
-        {/* Compact Input Row */}
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative">
           <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
             {/* Input Field */}
             <div className="flex-1">
@@ -341,8 +339,8 @@ const SequenceManager = ({
               />
             </div>
             
-            {/* Preset Selector */}
-            <div className="relative">
+            {/* Preset Selector Button - SIMPLE VERSION */}
+            <div className="relative" ref={dropdownButtonRef}>
               <button
                 onClick={togglePresetWheel}
                 className={`h-full px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
@@ -356,34 +354,6 @@ const SequenceManager = ({
                   <ChevronDown size={12} className={`transition-transform ${showPresetWheel ? 'rotate-180' : ''}`} />
                 </div>
               </button>
-              
-              {/* Preset Wheel - FIXED POSITIONING */}
-              {showPresetWheel && (
-                <div 
-                  ref={wheelRef}
-                  className="absolute z-50 right-0 mt-1 w-40 max-h-48 overflow-y-auto rounded-lg shadow-xl border border-white border-opacity-20 bg-gray-800"
-                  style={{ top: '100%' }}
-                >
-                  {getPresets().map((preset) => (
-                    <button
-                      key={preset.value}
-                      onClick={() => handleWheelPresetSelect(preset.value)}
-                      className={`w-full px-4 py-3 text-left text-sm hover:bg-opacity-50 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
-                        vendorState.preset === preset.value
-                          ? vendorState.currency === 'HTG'
-                            ? 'bg-blue-700 text-white'
-                            : 'bg-green-700 text-white'
-                          : 'hover:bg-gray-700 text-gray-100'
-                      }`}
-                    >
-                      <span>{preset.label} {vendorState.currency}</span>
-                      {vendorState.preset === preset.value && (
-                        <div className={`w-2 h-2 rounded-full ${vendorState.currency === 'HTG' ? 'bg-blue-300' : 'bg-green-300'}`}></div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
             
             {/* Add/Update Button */}
@@ -426,6 +396,32 @@ const SequenceManager = ({
               </button>
             )}
           </div>
+          
+          {/* DROPDOWN LIST - SEPARATE FROM BUTTON FOR DEBUGGING */}
+          {showPresetWheel && (
+            <div className="absolute z-50 top-full left-0 right-0 mt-1">
+              <div className="bg-gray-800 rounded-lg shadow-2xl border border-white border-opacity-20 overflow-hidden">
+                {getPresets().map((preset) => (
+                  <button
+                    key={preset.value}
+                    onClick={() => handleWheelPresetSelect(preset.value)}
+                    className={`w-full px-4 py-3 text-left text-sm hover:bg-opacity-50 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
+                      vendorState.preset === preset.value
+                        ? vendorState.currency === 'HTG'
+                          ? 'bg-blue-700 text-white'
+                          : 'bg-green-700 text-white'
+                        : 'hover:bg-gray-700 text-gray-100'
+                    }`}
+                  >
+                    <span>{preset.label} {vendorState.currency}</span>
+                    {vendorState.preset === preset.value && (
+                      <div className={`w-2 h-2 rounded-full ${vendorState.currency === 'HTG' ? 'bg-blue-300' : 'bg-green-300'}`}></div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Quick Preview */}
