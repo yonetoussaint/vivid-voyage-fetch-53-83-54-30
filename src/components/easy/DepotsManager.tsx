@@ -19,17 +19,22 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const [recentlyAdded, setRecentlyAdded] = useState({});
   const [editingDeposit, setEditingDeposit] = useState(null); // { vendeur: string, index: number }
 
-  // Presets - MODIFIED: HTG from 1 to 1000, USD from 1 to 100
+  // Presets
   const htgPresets = [
-    { value: '1', label: '1' },
     { value: '5', label: '5' },
     { value: '10', label: '10' },
+    { value: '20', label: '20' },
     { value: '25', label: '25' },
     { value: '50', label: '50' },
     { value: '100', label: '100' },
     { value: '250', label: '250' },
     { value: '500', label: '500' },
-    { value: '1000', label: '1,000' }
+    { value: '1000', label: '1,000' },
+    { value: '5000', label: '5,000' },
+    { value: '10000', label: '10k' },
+    { value: '25000', label: '25k' },
+    { value: '50000', label: '50k' },
+    { value: '100000', label: '100k' }
   ];
 
   const usdPresets = [
@@ -100,13 +105,9 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
     }
     if (!vendorPresets[vendeur]) {
-      // Auto-select smallest preset (1 HTG or 1 USD)
-      const presets = currency === 'HTG' ? htgPresets : usdPresets;
-      const smallestPreset = presets[0]?.value || '1';
-      
       setVendorPresets(prev => ({
         ...prev,
-        [vendeur]: { currency, preset: smallestPreset }
+        [vendeur]: { currency, preset: 'aucune' }
       }));
     }
   };
@@ -154,29 +155,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       // Convert simple deposit to sequence
       const currency = isUSDDepot(depot) ? 'USD' : 'HTG';
       const amount = getOriginalDepotAmount(depot);
-      
-      // Find best matching preset
-      const presets = currency === 'HTG' ? htgPresets : usdPresets;
-      let bestPreset = presets[0]; // Default to smallest
-      let bestMultiplier = 1;
-      
-      // Try to find a preset that divides evenly into the amount
-      for (const preset of presets) {
-        const presetValue = parseFloat(preset.value);
-        if (presetValue > 0 && amount % presetValue === 0) {
-          const multiplier = amount / presetValue;
-          if (multiplier >= 1 && multiplier === Math.floor(multiplier)) {
-            bestPreset = preset;
-            bestMultiplier = multiplier;
-            break;
-          }
-        }
-      }
-      
-      // Create sequence with preset notation
-      const note = bestMultiplier === 1 
-        ? `${bestPreset.value} ${currency}`
-        : `${bestMultiplier} × ${bestPreset.value} ${currency}`;
 
       setDepositSequences(prev => ({
         ...prev,
@@ -184,43 +162,30 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
           id: Date.now(),
           amount,
           currency,
-          note,
+          note: `${amount} ${currency}`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }]
       }));
-
-      // Set preset and multiplier in vendor state
-      setVendorPresets(prev => ({
-        ...prev,
-        [vendeur]: { 
-          ...prev[vendeur], 
-          currency,
-          preset: bestPreset.value
-        }
-      }));
-
-      // Set the multiplier in the input
-      handleInputChange(vendeur, bestMultiplier.toString());
     }
+
+    // Set currency in vendor state
+    const currency = isUSDDepot(depot) ? 'USD' : 'HTG';
+    setVendorPresets(prev => ({
+      ...prev,
+      [vendeur]: { 
+        ...prev[vendeur], 
+        currency,
+        preset: 'aucune'
+      }
+    }));
+
+    // Clear input
+    setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
   };
 
   const cancelEdit = (vendeur) => {
     setEditingDeposit(null);
     setDepositSequences(prev => ({ ...prev, [vendeur]: [] }));
-    // Reset to smallest preset
-    const vendorState = vendorPresets[vendeur];
-    if (vendorState) {
-      const presets = vendorState.currency === 'HTG' ? htgPresets : usdPresets;
-      const smallestPreset = presets[0]?.value || '1';
-      setVendorPresets(prev => ({
-        ...prev,
-        [vendeur]: { 
-          ...prev[vendeur], 
-          preset: smallestPreset
-        }
-      }));
-    }
-    handleInputChange(vendeur, '');
   };
 
   const saveEditedDeposit = (vendeur) => {
@@ -277,20 +242,12 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     if (!vendorPresets[vendeur]) {
       initializeVendorState(vendeur, currency);
     } else {
-      const presets = currency === 'HTG' ? htgPresets : usdPresets;
-      const smallestPreset = presets[0]?.value || '1';
-      
       setVendorPresets(prev => ({
         ...prev,
-        [vendeur]: { 
-          ...prev[vendeur], 
-          currency,
-          preset: smallestPreset // Auto-select smallest preset when switching currency
-        }
+        [vendeur]: { ...prev[vendeur], currency }
       }));
     }
     setShowPresetsForVendor(showPresetsForVendor === vendeur ? null : vendeur);
-    handleInputChange(vendeur, ''); // Clear input when switching currency
   };
 
   const handlePresetSelect = (vendeur, presetValue) => {
@@ -301,17 +258,15 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     setShowPresetsForVendor(null);
     setTimeout(() => {
       const input = document.querySelector(`input[data-vendor="${vendeur}"]`);
-      if (input) {
-        input.focus();
-        input.select();
-      }
+      if (input) input.focus();
     }, 100);
   };
 
   const calculatePresetAmount = (vendeur) => {
     const vendorState = vendorPresets[vendeur];
-    if (!vendorState) return 0;
-    
+    if (!vendorState || vendorState.preset === 'aucune') {
+      return parseFloat(vendorInputs[vendeur] || 0);
+    }
     const multiplier = parseFloat(vendorInputs[vendeur] || 1);
     const presetValue = parseFloat(vendorState.preset);
     return presetValue * multiplier;
@@ -325,15 +280,17 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
   const getSelectedPresetText = (vendeur) => {
     const vendorState = vendorPresets[vendeur];
-    if (!vendorState) return '1 HTG';
+    if (!vendorState || vendorState.preset === 'aucune') {
+      return 'Entrer montant libre';
+    }
     const currentPresets = getCurrentPresets(vendeur);
     const preset = currentPresets.find(p => p.value === vendorState.preset);
-    return preset ? `× ${preset.label} ${vendorState.currency}` : `× 1 ${vendorState.currency}`;
+    return preset ? `× ${preset.label} ${vendorState.currency}` : 'Sélectionner';
   };
 
   const isDirectAmount = (vendeur) => {
-    // Always false now - only presets are allowed
-    return false;
+    const vendorState = vendorPresets[vendeur];
+    return !vendorState || vendorState.preset === 'aucune';
   };
 
   const handleInputChange = (vendeur, value) => {
@@ -349,23 +306,23 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       return;
     }
 
-    // Always use preset mode (no direct amounts)
     let amount = 0;
     let currency = vendorState.currency;
     let note = '';
 
-    if (inputValue && !isNaN(parseFloat(inputValue))) {
-      const multiplier = parseFloat(inputValue);
-      const presetValue = parseFloat(vendorState.preset);
-      amount = presetValue * multiplier;
-      note = multiplier === 1 
-        ? `${presetValue} ${currency}`
-        : `${multiplier} × ${presetValue} ${currency}`;
+    if (vendorState.preset === 'aucune') {
+      amount = parseFloat(inputValue) || 0;
+      note = `${amount} ${currency}`;
     } else {
-      // Default to 1 × preset
-      const presetValue = parseFloat(vendorState.preset);
-      amount = presetValue;
-      note = `${presetValue} ${currency}`;
+      if (inputValue && !isNaN(parseFloat(inputValue))) {
+        const multiplier = parseFloat(inputValue);
+        const presetValue = parseFloat(vendorState.preset);
+        amount = presetValue * multiplier;
+        note = `${multiplier} × ${presetValue} ${currency}`;
+      } else {
+        amount = parseFloat(vendorState.preset);
+        note = `${vendorState.preset} ${currency}`;
+      }
     }
 
     if (currency === 'USD') {
@@ -387,8 +344,14 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         [vendeur]: [...(prev[vendeur] || []), newSequence]
       }));
 
-      // Clear input but keep same preset selected
       setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
+
+      if (vendorState.preset !== 'aucune') {
+        setVendorPresets(prev => ({
+          ...prev,
+          [vendeur]: { ...prev[vendeur], preset: 'aucune' }
+        }));
+      }
     }
   };
 
@@ -540,28 +503,34 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
                     {/* ALWAYS VISIBLE Sequence Manager */}
                     <SequenceManager
-  vendeur={vendeur}
-  vendorState={vendorState}
-  sequences={sequences}
-  sequencesTotal={sequencesTotal}
-  vendorInputs={vendorInputs}
-  currentPresets={currentPresets}
-  handleClearSequences={handleClearSequences}
-  handleRemoveSequence={handleRemoveSequence}
-  handleUpdateSequence={(sequenceId, updatedSequence) => 
-    handleUpdateSequence(vendeur, sequenceId, updatedSequence)
-  }
-  handlePresetSelect={handlePresetSelect}
-  handleInputChange={handleInputChange}
-  handleAddSequence={handleAddSequence}
-  handleAddCompleteDeposit={isEditingMode ? 
-    () => saveEditedDeposit(vendeur) : 
-    () => handleAddCompleteDeposit(vendeur)}
-  calculatePresetAmount={calculatePresetAmount}
-  htgPresets={htgPresets}
-  usdPresets={usdPresets}
-  setVendorPresets={setVendorPresets}
-/>
+                      vendeur={vendeur}
+                      vendorState={vendorState}
+                      sequences={sequences}
+                      sequencesTotal={sequencesTotal}
+                      isSequenceManagerOpen={true}
+                      vendorInputs={vendorInputs}
+                      isDirectMode={isDirectMode}
+                      showPresetsForVendor={showPresetsForVendor}
+                      currentPresets={currentPresets}
+                      toggleSequenceManager={() => {}}
+                      handleClearSequences={handleClearSequences}
+                      handleRemoveSequence={handleRemoveSequence}
+                      handleUpdateSequence={(sequenceId, updatedSequence) => 
+                        handleUpdateSequence(vendeur, sequenceId, updatedSequence)
+                      }
+                      setShowPresetsForVendor={setShowPresetsForVendor}
+                      handlePresetSelect={handlePresetSelect}
+                      handleInputChange={handleInputChange}
+                      handleAddSequence={handleAddSequence}
+                      handleAddCompleteDeposit={isEditingMode ? 
+                        () => saveEditedDeposit(vendeur) : 
+                        () => handleAddCompleteDeposit(vendeur)}
+                      getSelectedPresetText={getSelectedPresetText}
+                      calculatePresetAmount={calculatePresetAmount}
+                      htgPresets={htgPresets}
+                      usdPresets={usdPresets}
+                      setVendorPresets={setVendorPresets}
+                    />
                   </div>
 
                   {/* Use DepositsSummary with edit/delete actions */}
