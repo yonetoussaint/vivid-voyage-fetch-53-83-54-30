@@ -615,18 +615,19 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
                   {/* Use DepositsSummary with edit/delete actions */}
                   <DepositsSummary
-                    vendeur={vendeur}
-                    depots={depots}
-                    isRecentlyAdded={isRecentlyAdded}
-                    getMontantHTG={getMontantHTG}
-                    isUSDDepot={isUSDDepot}
-                    getOriginalDepotAmount={getOriginalDepotAmount}
-                    getDepositDisplay={getDepositDisplay}
-                    onEditDeposit={handleEditDeposit}
-                    onDeleteDeposit={supprimerDepot}
-                    editingDeposit={editingDeposit}
-                    isEditingThisDeposit={isEditingThisDeposit}
-                  />
+  vendeur={vendeur}
+  depots={depots}
+  isRecentlyAdded={isRecentlyAdded}
+  getMontantHTG={getMontantHTG}
+  isUSDDepot={isUSDDepot}
+  getOriginalDepotAmount={getOriginalDepotAmount}
+  getDepositDisplay={getDepositDisplay}
+  onEditDeposit={handleEditDeposit}
+  onDeleteDeposit={supprimerDepot}
+  editingDeposit={editingDeposit}
+  isEditingThisDeposit={isEditingThisDeposit}
+  exchangeRate={TAUX_DE_CHANGE} // ADDED THIS LINE
+/>
                 </VendorDepositCard>
               );
             })
