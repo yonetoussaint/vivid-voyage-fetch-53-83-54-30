@@ -55,6 +55,12 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return parseFloat(depot) || 0;
   };
 
+  // NEW: Calculate total deposits for a vendor from the actual deposits array
+  const calculateTotalDepotsHTG = (vendeur) => {
+    const depots = depotsActuels[vendeur] || [];
+    return depots.reduce((total, depot) => total + getMontantHTG(depot), 0);
+  };
+
   const isUSDDepot = (depot) => {
     return typeof depot === 'object' && depot.devise === 'USD';
   };
@@ -92,7 +98,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return `${formaterArgent(amount)} HTG`;
   };
 
-  // NEW: Calculate sequences total by currency
+  // Calculate sequences total by currency
   const calculateSequencesTotalByCurrency = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
     const totals = {
@@ -112,7 +118,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return totals;
   };
 
-  // NEW: Calculate total HTG value of all sequences
+  // Calculate total HTG value of all sequences
   const calculateTotalSequencesHTG = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
     return sequences.reduce((total, seq) => {
@@ -531,7 +537,8 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
           ) : (
             vendeurs.map(vendeur => {
               const donneesVendeur = totauxVendeurs[vendeur];
-              const totalDepotHTG = donneesVendeur?.depot || 0;
+              // FIXED: Calculate total from actual deposits array instead of totauxVendeurs
+              const totalDepotHTG = calculateTotalDepotsHTG(vendeur);
               const especesAttendues = donneesVendeur ? donneesVendeur.especesAttendues : 0;
               const depots = depotsActuels[vendeur] || [];
 
