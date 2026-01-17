@@ -193,7 +193,7 @@ const DepositsSummary = ({
               <div 
                 key={idx} 
                 className={`
-                  rounded-xl p-3 border
+                  rounded-xl p-2 border
                   ${seq.isUSD 
                     ? 'bg-gradient-to-br from-green-900/30 to-emerald-900/20 border-green-800/30' 
                     : 'bg-white/10 border-white/15'
