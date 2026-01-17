@@ -371,7 +371,7 @@ const DepositsSummary = ({
               <div 
                 key={originalIndex} 
                 className={`
-                  rounded-xl p-4
+                  rounded-xl p-2
                   transition-all duration-300
                   ${isRecent ? 'animate-pulse-subtle' : ''}
                   ${isEditing 
