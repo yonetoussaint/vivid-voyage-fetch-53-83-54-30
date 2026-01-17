@@ -386,7 +386,7 @@ const DepositsSummary = ({
               >
                 {/* Deposit Card Content */}
                 <div className="flex flex-col gap-3">
-                  {/* Deposit Header - SIMPLIFIED LIKE HTG CARD */}
+                  {/* Deposit Header - SIMPLIFIED (No conversion or rate shown) */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className={`
@@ -407,7 +407,6 @@ const DepositsSummary = ({
                             <Check size={12} className="text-green-300 flex-shrink-0 animate-pulse" />
                           )}
                         </div>
-                        {/* REMOVED THE CONVERSION AND RATE FROM USD CARD HEADER */}
                       </div>
                     </div>
 
@@ -435,26 +434,6 @@ const DepositsSummary = ({
                       </button>
                     </div>
                   </div>
-
-                  {/* HTG Conversion for USD deposits - Now only shown when breakdown exists */}
-                  {isUSD && hasBreakdown && (
-                    <div className="mt-2 pt-3 border-t border-green-800/30">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-1.5 opacity-90">
-                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400/60"></div>
-                          <span>En Gourdes:</span>
-                        </div>
-                        <div className="font-semibold text-amber-300">
-                          {safeFormatArgent(montantHTG)} HTG
-                        </div>
-                      </div>
-                      <div className="flex justify-end mt-1">
-                        <div className="text-[10px] opacity-60">
-                          1 USD = {exchangeRate} HTG
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Render breakdown if exists */}
                   {hasBreakdown && renderBreakdown(depot)}
