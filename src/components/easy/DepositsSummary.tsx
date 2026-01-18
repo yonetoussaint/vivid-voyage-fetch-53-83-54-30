@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Edit2, Trash2, Clock } from 'lucide-react';
+import { Check, Edit2, Trash2 } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const DepositsSummary = ({
@@ -31,25 +31,55 @@ const DepositsSummary = ({
     }
   };
 
-  // Helper function to format timestamp
+  // Helper function to format timestamp as "12:34 AM"
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
     
     try {
-      // If it's already a time string like "14:30" or "14h30", return as-is
+      // If it's already a time string, try to parse it
       if (typeof timestamp === 'string') {
-        // Clean up the format: remove AM/PM, ensure 24h format
-        const cleaned = timestamp.replace('AM', '').replace('PM', '').replace(':', 'h').trim();
-        return cleaned;
+        // Check if it's in format like "14:30"
+        const timeMatch = timestamp.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch) {
+          const hours = parseInt(timeMatch[1]);
+          const minutes = timeMatch[2];
+          
+          // Convert to 12-hour format with AM/PM
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          const displayHours = hours % 12 || 12; // Convert 0 or 12 to 12
+          
+          return `${displayHours}:${minutes} ${ampm}`;
+        }
+        
+        // Check if it's in format like "14h30"
+        const hMatch = timestamp.match(/(\d{1,2})h(\d{2})/);
+        if (hMatch) {
+          const hours = parseInt(hMatch[1]);
+          const minutes = hMatch[2];
+          
+          // Convert to 12-hour format with AM/PM
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          const displayHours = hours % 12 || 12; // Convert 0 or 12 to 12
+          
+          return `${displayHours}:${minutes} ${ampm}`;
+        }
+        
+        // Check if it's already in "12:34 AM" format
+        const ampmMatch = timestamp.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (ampmMatch) {
+          return timestamp; // Return as-is
+        }
       }
       
       // If it's a Date object or ISO string
       const date = new Date(timestamp);
       if (!isNaN(date.getTime())) {
-        // Format: "HHhMM" (24-hour format)
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}h${minutes}`;
+        // Format as "12:34 AM"
+        return date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
       }
       
       return timestamp; // Return as-is if we can't parse it
@@ -347,12 +377,6 @@ const DepositsSummary = ({
       return depot.sequences[0].timestamp;
     }
     
-    // If still no timestamp, check breakdown sequences
-    if (!timestamp && depot.breakdown) {
-      // This is a simpler approach - just use current time
-      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    
     return timestamp;
   };
 
@@ -481,21 +505,11 @@ const DepositsSummary = ({
                             )}
                           </div>
                           
-                          {/* Timestamp */}
-                          {formattedTime ? (
-                            <div className="flex items-center gap-1.5">
-                              <Clock size={10} className="opacity-50 flex-shrink-0" />
-                              <span className="text-[11px] opacity-60 font-medium">
-                                {formattedTime}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5">
-                              <Clock size={10} className="opacity-30 flex-shrink-0" />
-                              <span className="text-[11px] opacity-40 italic">
-                                Ajouté récemment
-                              </span>
-                            </div>
+                          {/* Timestamp - NO CLOCK ICON */}
+                          {formattedTime && (
+                            <span className="text-[11px] opacity-60">
+                              {formattedTime}
+                            </span>
                           )}
                         </div>
                       </div>
