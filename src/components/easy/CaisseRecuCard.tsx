@@ -20,7 +20,7 @@ const CaisseRecuCard = ({
   const [showPresets, setShowPresets] = useState(false);
   const [showRoundAmount, setShowRoundAmount] = useState(false);
   const [roundAmount, setRoundAmount] = useState('');
-  
+
   // Preset options for HTG (Gourdes) - including coin values
   const htgPresets = [
     { value: '5', label: '5' },
@@ -93,15 +93,15 @@ const CaisseRecuCard = ({
   // Calculate round amount details
   const roundAmountDetails = useMemo(() => {
     if (!roundAmount || !shouldGiveChange || changeNeeded <= 0) return null;
-    
+
     const desiredAmount = parseFloat(roundAmount);
     const currentChange = changeNeeded;
-    
+
     if (isNaN(desiredAmount) || desiredAmount <= 0) return null;
-    
+
     // Customer wants to receive more than they're owed
     const customerAdds = desiredAmount - currentChange;
-    
+
     return {
       desiredAmount,
       currentChange,
@@ -112,6 +112,58 @@ const CaisseRecuCard = ({
         : `Impossible: ${formaterArgent(desiredAmount)} HTG est moins que ${formaterArgent(currentChange)} HTG dû`
     };
   }, [roundAmount, changeNeeded, shouldGiveChange]);
+
+  // FIXED: Format deposit display function - handles all deposit types
+  const formatDepositDisplay = (depot) => {
+    if (!depot) return '';
+    
+    try {
+      // Case 1: USD deposit object
+      if (typeof depot === 'object' && depot.devise === 'USD') {
+        const montantUSD = parseFloat(depot.montant) || 0;
+        const montantHTG = montantUSD * tauxUSD;
+        return `${montantUSD.toFixed(2)} USD (${formaterArgent(montantHTG)} HTG)`;
+      }
+      
+      // Case 2: HTG deposit object with 'value' property
+      if (typeof depot === 'object' && depot.value !== undefined) {
+        const montantHTG = parseFloat(depot.value) || 0;
+        return `${formaterArgent(montantHTG)} HTG`;
+      }
+      
+      // Case 3: Direct HTG amount (number or string)
+      const montantHTG = parseFloat(depot) || 0;
+      return `${formaterArgent(montantHTG)} HTG`;
+      
+    } catch (error) {
+      console.error('Error formatting deposit display:', error, depot);
+      return 'Erreur de formatage';
+    }
+  };
+
+  // FIXED: Get deposit breakdown including all types
+  const depositBreakdown = useMemo(() => {
+    if (!Array.isArray(sellerDeposits)) return [];
+    
+    return sellerDeposits
+      .filter(depot => depot != null) // Filter out null/undefined
+      .map((depot, index) => {
+        const isUSD = typeof depot === 'object' && depot.devise === 'USD';
+        const display = formatDepositDisplay(depot);
+        const amount = isUSD 
+          ? (parseFloat(depot.montant) || 0) * tauxUSD 
+          : (typeof depot === 'object' && depot.value !== undefined 
+              ? parseFloat(depot.value) || 0 
+              : parseFloat(depot) || 0);
+        
+        return {
+          id: index + 1,
+          display: display,
+          isUSD: isUSD,
+          amount: amount
+        };
+      });
+  }, [sellerDeposits, tauxUSD]);
 
   // Handle adding a new cash sequence
   const handleAddSequence = () => {
@@ -158,7 +210,7 @@ const CaisseRecuCard = ({
       };
       setCashSequences(prev => [...prev, newSequence]);
       setInputValue('');
-      
+
       // RESET to "aucune" after adding a sequence with multiplier
       if (!isDirectAmount && inputValue) {
         setSelectedPreset('aucune');
@@ -242,7 +294,7 @@ const CaisseRecuCard = ({
   // Apply round amount to cash sequences
   const handleApplyRoundAmount = () => {
     if (!roundAmountDetails || !roundAmountDetails.isValid) return;
-    
+
     // Add the extra amount the customer gives
     const extraAmount = roundAmountDetails.customerAdds;
     if (extraAmount > 0) {
@@ -256,29 +308,10 @@ const CaisseRecuCard = ({
       };
       setCashSequences(prev => [...prev, newSequence]);
     }
-    
+
     // Reset round amount
     setRoundAmount('');
   };
-
-  const formatDepositDisplay = (depot) => {
-    if (!depot) return '';
-
-    if (typeof depot === 'object' && depot.devise === 'USD') {
-      const montantUSD = parseFloat(depot.montant) || 0;
-      const montantHTG = montantUSD * tauxUSD;
-      return `${montantUSD} USD (${formaterArgent(montantHTG)} HTG)`;
-    } else {
-      const montantHTG = parseFloat(depot) || 0;
-      return `${formaterArgent(montantHTG)} HTG`;
-    }
-  };
-
-  const depositBreakdown = sellerDeposits.map((depot, index) => ({
-    id: index + 1,
-    display: formatDepositDisplay(depot),
-    isUSD: typeof depot === 'object' && depot.devise === 'USD'
-  }));
 
   // Calculate givable amount and remainder
   const givableAmount = getMaximumGivableAmount(changeNeeded);
@@ -341,7 +374,7 @@ const CaisseRecuCard = ({
             <p className="text-xs opacity-90">Détail des dépôts:</p>
           </div>
 
-          {/* Deposit breakdown */}
+          {/* Deposit breakdown - FIXED: Shows ALL deposits */}
           <div className="space-y-1">
             {depositBreakdown.map((deposit) => (
               <div key={deposit.id} className="flex items-center justify-between text-xs">
@@ -351,7 +384,9 @@ const CaisseRecuCard = ({
                   }`}></div>
                   <span className="opacity-80">Dépôt {deposit.id}:</span>
                 </div>
-                <span className="font-medium opacity-90 text-right text-[11px]">{deposit.display}</span>
+                <span className="font-medium opacity-90 text-right text-[11px]">
+                  {deposit.display}
+                </span>
               </div>
             ))}
           </div>
@@ -560,7 +595,7 @@ const CaisseRecuCard = ({
                   }`} 
                 />
               </button>
-              
+
               {/* Dropdown menu with grid layout - SIMILAR STYLE TO QUICK ADD BUTTONS */}
               {showPresets && (
                 <div className={`absolute z-20 w-full mt-1 rounded-lg shadow-lg overflow-hidden border ${
@@ -588,7 +623,7 @@ const CaisseRecuCard = ({
                       <span className="text-[10px] opacity-70">✓</span>
                     )}
                   </button>
-                  
+
                   {/* Grid of presets - SAME STYLE AS QUICK ADD BUTTONS */}
                   <div className="p-2">
                     <div className="grid grid-cols-3 gap-1.5">
@@ -611,7 +646,7 @@ const CaisseRecuCard = ({
                 </div>
               )}
             </div>
-            
+
             {/* Helper text */}
             <p className="text-[10px] opacity-70 mt-1 text-center">
               {isDirectAmount 
@@ -660,7 +695,7 @@ const CaisseRecuCard = ({
               </button>
             </div>
           </div>
-          
+
           {/* Preview of calculation */}
           {!isDirectAmount && inputValue && !isNaN(parseFloat(inputValue)) && selectedPreset && selectedPreset !== 'aucune' && (
             <div className="mt-2 bg-white bg-opacity-10 rounded p-2 text-center">
@@ -675,7 +710,7 @@ const CaisseRecuCard = ({
             </div>
           )}
         </div>
-        
+
         {/* Quick add buttons (ORIGINAL FUNCTIONALITY - adds directly) */}
         <div className="grid grid-cols-4 gap-1 mb-2">
           {quickAddAmounts.map((amount) => (
@@ -748,7 +783,7 @@ const CaisseRecuCard = ({
                 changeNeeded={changeNeeded}
                 shouldGiveChange={shouldGiveChange}
               />
-              
+
               {/* Round Amount Preference Section */}
               <div className="border-t border-white border-opacity-20 pt-2">
                 <div className="flex items-center justify-between mb-2">
@@ -766,11 +801,11 @@ const CaisseRecuCard = ({
                     </button>
                   ) : null}
                 </div>
-                
+
                 <p className="text-[10px] opacity-80 mb-2 text-center">
                   Le client veut recevoir un montant rond (ex: 50 au lieu de 45 HTG)
                 </p>
-                
+
                 {/* Input for round amount */}
                 <div className="relative mb-2">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -796,7 +831,7 @@ const CaisseRecuCard = ({
                     </div>
                   )}
                 </div>
-                
+
                 {/* Quick round amount buttons */}
                 <div className="grid grid-cols-4 gap-1 mb-2">
                   {commonRoundAmounts.map((amount) => (
@@ -810,7 +845,7 @@ const CaisseRecuCard = ({
                     </button>
                   ))}
                 </div>
-                
+
                 {/* Calculation result */}
                 {roundAmountDetails && (
                   <div className={`rounded-lg p-2 ${
