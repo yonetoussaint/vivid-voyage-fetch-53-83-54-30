@@ -2,16 +2,18 @@ import React from 'react';
 import { FileText, Trash2, Fuel, Users, DollarSign, Globe, Database } from 'lucide-react';
 
 const Navbar = ({ date, setDate, shift, setShift, activeView, onViewChange, onResetShift, onResetDay }) => {
-  const navItems = [
-    { id: 'pumps', label: 'Données', icon: FileText },
-    { id: 'stock', label: 'Stock', icon: Database },
-    { id: 'report', label: 'Rapport', icon: FileText },
-    { id: 'vendeurs', label: 'Vendeurs', icon: Users },
-    { id: 'depots', label: 'Dépôts', icon: DollarSign },
-    { id: 'usd', label: 'USD', icon: Globe },
-    { id: 'resetShift', label: `Reset ${shift}`, icon: Trash2, onClick: onResetShift },
-    { id: 'resetDay', label: 'Reset Jour', icon: Trash2, onClick: onResetDay }
-  ];
+  
+const navItems = [
+  { id: 'pumps', label: 'Données', icon: FileText },
+  { id: 'stock', label: 'Stock', icon: Database },
+  { id: 'report', label: 'Rapport', icon: FileText },
+  { id: 'vendeurs', label: 'Vendeurs', icon: Users },
+  { id: 'depots', label: 'Dépôts', icon: DollarSign },
+  { id: 'usd', label: 'USD', icon: Globe },
+  { id: 'conditionnement', label: 'Conditionnement', icon: DollarSign }, // Add this line
+  { id: 'resetShift', label: `Reset ${shift}`, icon: Trash2, onClick: onResetShift },
+  { id: 'resetDay', label: 'Reset Jour', icon: Trash2, onClick: onResetDay }
+];
 
   return (
     <div className="bg-white border-b border-gray-200 p-4 sticky top-0 z-50">
