@@ -456,32 +456,32 @@ const DepositsSummary = ({
 
                   {/* Render breakdown if exists */}
                   {hasBreakdown && renderBreakdown(depot)}
+
+                  {/* Compact Total Conversion Card - Only for USD deposits */}
+                  {isUSD && hasUSDDeposits && idx === sortedDepots.findIndex(d => isUSDDepot?.(d)) && (
+                    <div className="mt-2 pt-3 border-t border-green-800/30">
+                      <div className={`
+                        rounded-lg p-2
+                        bg-gradient-to-br from-amber-900/30 to-yellow-900/20 
+                        border border-amber-800/20
+                      `}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400/60"></div>
+                            <span className="text-xs opacity-80">Total en Gourdes:</span>
+                          </div>
+                          <div className="font-semibold text-amber-300">
+                            {safeFormatArgent(totalHTG)} HTG
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
-
-        {/* Compact Total Conversion Card - Only show if there are USD deposits */}
-        {hasUSDDeposits && (
-          <div className="mt-4">
-            <div className={`
-              rounded-lg p-2
-              bg-gradient-to-br from-amber-900/30 to-yellow-900/20 
-              border border-amber-800/20
-            `}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400/60"></div>
-                  <span className="text-xs opacity-80">Total en Gourdes:</span>
-                </div>
-                <div className="font-semibold text-amber-300">
-                  {safeFormatArgent(totalHTG)} HTG
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Add custom CSS for animations */}
