@@ -141,7 +141,7 @@ const CaisseRecuCard = ({
     }
   };
 
-  // FIXED: Get deposit breakdown including all types AND verify total
+  // FIXED: Get deposit breakdown including all types
   const depositBreakdown = useMemo(() => {
     if (!Array.isArray(sellerDeposits)) return [];
     
@@ -170,23 +170,16 @@ const CaisseRecuCard = ({
       });
   }, [sellerDeposits, tauxUSD]);
 
-  // FIXED: Calculate total deposits from breakdown to verify
+  // FIXED: Calculate total deposits from breakdown - USE THIS AS THE SINGLE SOURCE OF TRUTH
   const calculatedTotalDepositsHTG = useMemo(() => {
     return depositBreakdown.reduce((sum, deposit) => sum + deposit.amountInHTG, 0);
   }, [depositBreakdown]);
 
-  // Log for debugging
-  React.useEffect(() => {
-    if (sellerDeposits.length > 0) {
-      console.log('Deposits debugging:', {
-        sellerDeposits,
-        depositBreakdown,
-        totalDepositsProp: totalDeposits,
-        calculatedTotalDepositsHTG,
-        difference: totalDeposits - calculatedTotalDepositsHTG
-      });
-    }
-  }, [sellerDeposits, depositBreakdown, totalDeposits, calculatedTotalDepositsHTG]);
+  // Use the calculated total as the single source of truth
+  const displayTotalDeposits = calculatedTotalDepositsHTG;
+  
+  // Recalculate espèces attendues with the correct total
+  const displayEspecesAttendues = totalAjustePourCaisse - displayTotalDeposits;
 
   // Handle adding a new cash sequence
   const handleAddSequence = () => {
@@ -376,7 +369,7 @@ const CaisseRecuCard = ({
         )}
       </div>
 
-      {/* Total Deposits Row - Standalone above deposits */}
+      {/* Total Deposits Row - Standalone above deposits - SHOW ONLY CALCULATED TOTAL */}
       {sellerDeposits.length > 0 && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2">
           <div className="flex items-center justify-between">
@@ -384,15 +377,7 @@ const CaisseRecuCard = ({
               <Layers size={12} className="text-white opacity-90" />
               <p className="text-xs opacity-90">Total Dépôts:</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm font-bold">{formaterArgent(totalDeposits)} HTG</p>
-              {/* DEBUG: Show calculated total */}
-              {Math.abs(totalDeposits - calculatedTotalDepositsHTG) > 0.01 && (
-                <p className="text-[9px] opacity-60 text-amber-300">
-                  (Calculé: {formaterArgent(calculatedTotalDepositsHTG)} HTG)
-                </p>
-              )}
-            </div>
+            <p className="text-sm font-bold">{formaterArgent(displayTotalDeposits)} HTG</p>
           </div>
         </div>
       )}
@@ -405,7 +390,7 @@ const CaisseRecuCard = ({
             <p className="text-xs opacity-90">Détail des dépôts:</p>
           </div>
 
-          {/* Deposit breakdown - FIXED: Shows ALL deposits */}
+          {/* Deposit breakdown - Shows ALL deposits */}
           <div className="space-y-1">
             {depositBreakdown.map((deposit) => (
               <div key={deposit.id} className="flex items-center justify-between text-xs">
@@ -424,20 +409,20 @@ const CaisseRecuCard = ({
         </div>
       )}
 
-      {/* Espèces Attendues Row - Standalone below deposits */}
+      {/* Espèces Attendues Row - Standalone below deposits - USE CORRECTED CALCULATION */}
       <div className={`rounded-lg p-2 mb-2 ${
-        especesAttendues > 0 
+        displayEspecesAttendues > 0 
           ? 'bg-green-500 bg-opacity-20 border border-green-400 border-opacity-30' 
-          : especesAttendues < 0 
+          : displayEspecesAttendues < 0 
           ? 'bg-red-500 bg-opacity-20 border border-red-400 border-opacity-30'
           : 'bg-white bg-opacity-10'
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <Target size={12} className={
-              especesAttendues > 0 
+              displayEspecesAttendues > 0 
                 ? 'text-green-300' 
-                : especesAttendues < 0 
+                : displayEspecesAttendues < 0 
                 ? 'text-red-300'
                 : 'text-white opacity-90'
             } />
@@ -445,16 +430,16 @@ const CaisseRecuCard = ({
           </div>
           <div className="text-right">
             <p className={`text-sm font-bold ${
-              especesAttendues > 0 
+              displayEspecesAttendues > 0 
                 ? 'text-green-300' 
-                : especesAttendues < 0 
+                : displayEspecesAttendues < 0 
                 ? 'text-red-300'
                 : 'text-white'
             }`}>
-              {formaterArgent(especesAttendues)} HTG
+              {formaterArgent(displayEspecesAttendues)} HTG
             </p>
             <p className="text-[10px] opacity-60">
-              {formaterArgent(totalAjustePourCaisse)} HTG - {formaterArgent(totalDeposits)} HTG
+              {formaterArgent(totalAjustePourCaisse)} HTG - {formaterArgent(displayTotalDeposits)} HTG
             </p>
           </div>
         </div>
@@ -766,7 +751,7 @@ const CaisseRecuCard = ({
         </div>
       </div>
 
-      {/* Change calculation */}
+      {/* Change calculation - USE CORRECTED ESPECES ATTENDUES */}
       {cashSequences.length > 0 && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-3">
           {/* Change summary */}
