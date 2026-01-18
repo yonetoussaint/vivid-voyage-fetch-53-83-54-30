@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Edit2, Trash2 } from 'lucide-react';
+import { Check, Edit2, Trash2, Clock } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const DepositsSummary = ({
@@ -8,7 +8,7 @@ const DepositsSummary = ({
   isRecentlyAdded,
   getMontantHTG,
   isUSDDepot,
-  getOriginalDepotAmount,
+  getOriginalDepositAmount,
   getDepositDisplay,
   onEditDeposit,
   onDeleteDeposit,
@@ -28,6 +28,24 @@ const DepositsSummary = ({
     } catch (error) {
       console.error('Formatting error:', error);
       return '0';
+    }
+  };
+
+  // Helper function to format timestamp
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    
+    try {
+      const date = new Date(timestamp);
+      // Format: "HH:MM" (24-hour format)
+      return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      }).replace(':', 'h');
+    } catch (error) {
+      console.error('Error formatting timestamp:', error);
+      return '';
     }
   };
 
@@ -306,6 +324,19 @@ const DepositsSummary = ({
     }
   };
 
+  // Helper function to get timestamp from deposit
+  const getDepositTimestamp = (depot) => {
+    if (!depot || typeof depot !== 'object') return null;
+    
+    // Try different possible timestamp properties
+    const timestamp = depot.timestamp || depot.createdAt || depot.date || depot.time;
+    
+    // If no timestamp found, return null
+    if (!timestamp) return null;
+    
+    return timestamp;
+  };
+
   // Helper function to get total value for sorting deposits
   const getDepositValue = (depot) => {
     if (!depot) return 0;
@@ -385,6 +416,8 @@ const DepositsSummary = ({
             const isRecent = isRecentlyAdded?.(vendeur, originalIndex) || false;
             const hasBreakdown = depot && typeof depot === 'object' && depot.breakdown;
             const isEditing = isEditingThisDeposit?.(vendeur, originalIndex) || false;
+            const timestamp = getDepositTimestamp(depot);
+            const formattedTime = formatTimestamp(timestamp);
 
             return (
               <div 
@@ -405,7 +438,7 @@ const DepositsSummary = ({
               >
                 {/* Deposit Card Content */}
                 <div className="flex flex-col gap-3">
-                  {/* Deposit Header - SIMPLIFIED (No conversion or rate shown) */}
+                  {/* Deposit Header with Timestamp */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className={`
@@ -420,10 +453,23 @@ const DepositsSummary = ({
                         {originalIndex + 1}
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-base truncate">{displayText}</span>
-                          {isRecent && !isEditing && (
-                            <Check size={12} className="text-green-300 flex-shrink-0 animate-pulse" />
+                        <div className="flex flex-col gap-0.5">
+                          {/* Amount */}
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-base truncate">{displayText}</span>
+                            {isRecent && !isEditing && (
+                              <Check size={12} className="text-green-300 flex-shrink-0 animate-pulse" />
+                            )}
+                          </div>
+                          
+                          {/* Timestamp */}
+                          {formattedTime && (
+                            <div className="flex items-center gap-1.5">
+                              <Clock size={10} className="opacity-50 flex-shrink-0" />
+                              <span className="text-[11px] opacity-60 font-medium">
+                                {formattedTime}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -457,7 +503,7 @@ const DepositsSummary = ({
                   {/* Render breakdown if exists */}
                   {hasBreakdown && renderBreakdown(depot)}
 
-                  {/* Compact Total Conversion Card - Only for USD deposits */}
+                  {/* Compact Total Conversion Card - Only for first USD deposit */}
                   {isUSD && hasUSDDeposits && idx === sortedDepots.findIndex(d => isUSDDepot?.(d)) && (
                     <div className="mt-2 pt-3 border-t border-green-800/30">
                       <div className={`
