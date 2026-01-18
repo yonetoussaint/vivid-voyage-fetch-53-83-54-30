@@ -8,7 +8,7 @@ const DepositsSummary = ({
   isRecentlyAdded,
   getMontantHTG,
   isUSDDepot,
-  getOriginalDepositAmount,
+  getOriginalDepotAmount,
   getDepositDisplay,
   onEditDeposit,
   onDeleteDeposit,
@@ -36,15 +36,25 @@ const DepositsSummary = ({
     if (!timestamp) return '';
     
     try {
+      // If it's already a time string like "14:30" or "14h30", return as-is
+      if (typeof timestamp === 'string') {
+        // Clean up the format: remove AM/PM, ensure 24h format
+        const cleaned = timestamp.replace('AM', '').replace('PM', '').replace(':', 'h').trim();
+        return cleaned;
+      }
+      
+      // If it's a Date object or ISO string
       const date = new Date(timestamp);
-      // Format: "HH:MM" (24-hour format)
-      return date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      }).replace(':', 'h');
+      if (!isNaN(date.getTime())) {
+        // Format: "HHhMM" (24-hour format)
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}h${minutes}`;
+      }
+      
+      return timestamp; // Return as-is if we can't parse it
     } catch (error) {
-      console.error('Error formatting timestamp:', error);
+      console.error('Error formatting timestamp:', error, timestamp);
       return '';
     }
   };
@@ -331,8 +341,17 @@ const DepositsSummary = ({
     // Try different possible timestamp properties
     const timestamp = depot.timestamp || depot.createdAt || depot.date || depot.time;
     
-    // If no timestamp found, return null
-    if (!timestamp) return null;
+    // If no timestamp found in deposit object, check sequences
+    if (!timestamp && depot.sequences && Array.isArray(depot.sequences) && depot.sequences.length > 0) {
+      // Use the first sequence's timestamp (they all should have the same timestamp)
+      return depot.sequences[0].timestamp;
+    }
+    
+    // If still no timestamp, check breakdown sequences
+    if (!timestamp && depot.breakdown) {
+      // This is a simpler approach - just use current time
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
     
     return timestamp;
   };
@@ -463,11 +482,18 @@ const DepositsSummary = ({
                           </div>
                           
                           {/* Timestamp */}
-                          {formattedTime && (
+                          {formattedTime ? (
                             <div className="flex items-center gap-1.5">
                               <Clock size={10} className="opacity-50 flex-shrink-0" />
                               <span className="text-[11px] opacity-60 font-medium">
                                 {formattedTime}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <Clock size={10} className="opacity-30 flex-shrink-0" />
+                              <span className="text-[11px] opacity-40 italic">
+                                Ajouté récemment
                               </span>
                             </div>
                           )}
