@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/easy/Navbar';
 import ShiftManager from '@/components/easy/ShiftManager';
+import ConditionnementManager from '@/components/easy/ConditionnementManager';
 import VendeursManager from '@/components/easy/VendeursManager';
 import DepotsManager from '@/components/easy/DepotsManager';
 import USDManager from '@/components/easy/USDManager';
@@ -11,6 +12,7 @@ import { useStationData } from '@/hooks/useStationData';
 
 const SystemeStationService = () => {
   const [shift, setShift] = useState('AM');
+const [conditionnements, setConditionnements] = useState([]);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [activeView, setActiveView] = useState('pumps');
   const [pompeEtendue, setPompeEtendue] = useState('P1');
@@ -95,6 +97,15 @@ const SystemeStationService = () => {
             getNombreAffectations={getNombreAffectations}
           />
         );
+case 'conditionnement':
+      return (
+        <ConditionnementManager
+          shift={shift}
+          date={date}
+          vendeurs={vendeurs}
+          onConditionnementUpdate={setConditionnements}
+        />
+      );
       case 'depots':
         return (
           <DepotsManager
