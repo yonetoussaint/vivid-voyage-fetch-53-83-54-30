@@ -98,14 +98,15 @@ const [conditionnements, setConditionnements] = useState([]);
           />
         );
 case 'conditionnement':
-      return (
-        <ConditionnementManager
-          shift={shift}
-          date={date}
-          vendeurs={vendeurs}
-          onConditionnementUpdate={setConditionnements}
-        />
-      );
+  return (
+    <ConditionnementManager
+      shift={shift}
+      date={date}
+      vendeurs={vendeurs}
+      tousDepots={tousDepots} // ADD THIS LINE
+      onConditionnementUpdate={setConditionnements}
+    />
+  );
       case 'depots':
         return (
           <DepotsManager
