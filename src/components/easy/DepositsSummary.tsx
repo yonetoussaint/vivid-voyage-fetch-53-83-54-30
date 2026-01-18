@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Edit2, Trash2, Calculator } from 'lucide-react';
+import { Check, Edit2, Trash2 } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const DepositsSummary = ({
@@ -324,26 +324,24 @@ const DepositsSummary = ({
     }
   };
 
-  // Calculate total USD deposits
-  const calculateTotalUSDDeposits = () => {
-    let totalUSD = 0;
-    let totalHTGFromUSD = 0;
-    let usdDepositCount = 0;
+  // Calculate total HTG from USD deposits
+  const calculateTotalHTGFromUSD = () => {
+    let totalHTG = 0;
+    let hasUSDDeposits = false;
 
     depots.forEach(depot => {
       const isUSD = isUSDDepot?.(depot) || false;
       if (isUSD) {
         const usdAmount = getDepositValue(depot);
-        totalUSD += usdAmount;
-        totalHTGFromUSD += (usdAmount * exchangeRate);
-        usdDepositCount++;
+        totalHTG += (usdAmount * exchangeRate);
+        hasUSDDeposits = true;
       }
     });
 
-    return { totalUSD, totalHTGFromUSD, usdDepositCount };
+    return { totalHTG, hasUSDDeposits };
   };
 
-  const { totalUSD, totalHTGFromUSD, usdDepositCount } = calculateTotalUSDDeposits();
+  const { totalHTG, hasUSDDeposits } = calculateTotalHTGFromUSD();
 
   // Sort deposits by value (largest first)
   const sortedDepots = [...(depots || [])].sort((a, b) => {
@@ -464,85 +462,21 @@ const DepositsSummary = ({
           })}
         </div>
 
-        {/* Total Conversion Card - Only show if there are USD deposits */}
-        {usdDepositCount > 0 && totalUSD > 0 && (
-          <div className="mt-6">
+        {/* Compact Total Conversion Card - Only show if there are USD deposits */}
+        {hasUSDDeposits && (
+          <div className="mt-4">
             <div className={`
-              rounded-xl p-3
-              bg-gradient-to-br from-amber-900/40 to-yellow-900/30 
-              border border-amber-800/30
-              transition-all duration-300 hover:scale-[1.01] hover:shadow-lg
+              rounded-lg p-2
+              bg-gradient-to-br from-amber-900/30 to-yellow-900/20 
+              border border-amber-800/20
             `}>
-              <div className="flex flex-col gap-3">
-                {/* Conversion Card Header */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-br from-amber-500 to-yellow-600 text-amber-50 shadow-md">
-                      <Calculator size={16} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium opacity-90 flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400/60"></div>
-                        <span>Conversion USD vers HTG</span>
-                      </div>
-                      <div className="text-[10px] opacity-60 mt-0.5">
-                        {usdDepositCount} dépôt{usdDepositCount !== 1 ? 's' : ''} en USD
-                      </div>
-                    </div>
-                  </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400/60"></div>
+                  <span className="text-xs opacity-80">Total en Gourdes:</span>
                 </div>
-
-                {/* Conversion Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* USD Total */}
-                  <div className={`
-                    rounded-lg p-3
-                    bg-gradient-to-br from-green-900/40 to-emerald-900/30
-                    border border-green-800/30
-                  `}>
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="text-xs opacity-80 mb-1.5 flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-400/60"></div>
-                        <span>Total USD</span>
-                      </div>
-                      <div className="text-xl font-bold text-green-300">
-                        {totalUSD.toFixed(2)} USD
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* HTG Conversion */}
-                  <div className={`
-                    rounded-lg p-3
-                    bg-gradient-to-br from-amber-900/50 to-yellow-900/40
-                    border border-amber-800/40
-                  `}>
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="text-xs opacity-80 mb-1.5 flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400/60"></div>
-                        <span>En Gourdes</span>
-                      </div>
-                      <div className="text-xl font-bold text-amber-300">
-                        {safeFormatArgent(totalHTGFromUSD)} HTG
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Exchange Rate */}
-                <div className="mt-2 pt-2 border-t border-amber-800/40">
-                  <div className="flex items-center justify-between text-xs opacity-80">
-                    <div className="flex items-center gap-1.5">
-                      <span>Taux de change:</span>
-                    </div>
-                    <div className="font-medium text-amber-300">
-                      1 USD = {exchangeRate} HTG
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] opacity-60 mt-1">
-                    <div>Calcul: {totalUSD} × {exchangeRate}</div>
-                    <div>= {safeFormatArgent(totalHTGFromUSD)}</div>
-                  </div>
+                <div className="font-semibold text-amber-300">
+                  {safeFormatArgent(totalHTG)} HTG
                 </div>
               </div>
             </div>
