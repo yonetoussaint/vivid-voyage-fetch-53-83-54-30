@@ -10,7 +10,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const TAUX_DE_CHANGE = 132;
   const depotsActuels = tousDepots[shift] || {};
 
-  // Haitian Gourde denominations (1000, 500, 250, 100, 50, 25, 10)
+  // Haitian Gourde denominations
   const DENOMINATIONS = [
     { value: 1000, label: '1000', color: 'bg-purple-100 text-purple-800' },
     { value: 500, label: '500', color: 'bg-blue-100 text-blue-800' },
@@ -21,7 +21,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     { value: 10, label: '10', color: 'bg-gray-100 text-gray-800' }
   ];
 
-  const BILLS_PER_LIAS = 100; // Each lias contains 100 bills
+  const BILLS_PER_LIAS = 100;
 
   // State
   const [vendorInputs, setVendorInputs] = useState({});
@@ -30,7 +30,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const [recentlyAdded, setRecentlyAdded] = useState({});
   const [editingDeposit, setEditingDeposit] = useState(null);
   
-  // NEW: State for denomination tracking per vendor
+  // Denomination tracking
   const [denominationsByVendor, setDenominationsByVendor] = useState({});
   const [showDenominationView, setShowDenominationView] = useState(false);
 
@@ -111,7 +111,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return `${formaterArgent(amount)} HTG`;
   };
 
-  // NEW: Parse deposit breakdown to extract denominations
+  // Parse deposit breakdown to extract denominations
   const parseDepositForDenominations = (depot) => {
     const bills = {};
     
@@ -125,7 +125,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     // If deposit has a breakdown string
     if (typeof depot === 'object' && depot.breakdown) {
       const breakdown = depot.breakdown;
-      // Parse patterns like "5 × 1000 HTG, 10 × 500 HTG"
       const parts = breakdown.split(',');
       
       parts.forEach(part => {
@@ -136,7 +135,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
           const quantity = match[1] ? parseInt(match[1]) : 1;
           const denomination = parseInt(match[2]);
           
-          // Check if this is a valid denomination
           const validDenom = DENOMINATIONS.find(d => d.value === denomination);
           if (validDenom && quantity > 0) {
             bills[denomination] += quantity;
@@ -148,7 +146,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return bills;
   };
 
-  // NEW: Update denominations for all vendors based on deposits
+  // Update denominations for all vendors based on deposits
   useEffect(() => {
     const newDenominations = {};
     
@@ -181,7 +179,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     setDenominationsByVendor(newDenominations);
   }, [depotsActuels]);
 
-  // NEW: Calculate total denominations across all vendors
+  // Calculate total denominations across all vendors
   const calculateTotalDenominations = () => {
     const totals = {
       bills: DENOMINATIONS.reduce((acc, denom) => ({ ...acc, [denom.value]: 0 }), {}),
@@ -200,12 +198,11 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return totals;
   };
 
-  // NEW: Calculate how many liasses (100-bill bundles) we can make
+  // Calculate how many liasses (100-bill bundles) we can make
   const calculateLiasses = () => {
     const totals = calculateTotalDenominations();
     const totalBills = totals.totalBills;
     
-    // Each lias has 100 bills
     const possibleLiasses = Math.floor(totalBills / BILLS_PER_LIAS);
     const remainingBills = totalBills % BILLS_PER_LIAS;
     
@@ -218,7 +215,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     };
   };
 
-  // NEW: Manually adjust denominations for a vendor
+  // Manually adjust denominations for a vendor
   const handleDenominationAdjustment = (vendeurId, denomination, delta) => {
     setDenominationsByVendor(prev => {
       const newData = { ...prev };
@@ -254,7 +251,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     });
   };
 
-  // Rest of your existing functions (truncated for brevity)...
+  // Sequence calculations
   const calculateSequencesTotalByCurrency = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
     const totals = {
@@ -284,6 +281,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }, 0);
   };
 
+  // Initialize vendor state
   const initializeVendorState = (vendeur, currency = 'HTG') => {
     if (!vendorInputs[vendeur]) {
       setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
@@ -317,12 +315,70 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }, 2000);
   };
 
+  // FIXED: Handle edit deposit with null check
   const handleEditDeposit = (vendeur, index) => {
     const depot = depotsActuels[vendeur]?.[index];
     if (!depot) return;
 
     setEditingDeposit({ vendeur, index });
-    // ... rest of edit logic
+    
+    if (depot.sequences && Array.isArray(depot.sequences)) {
+      setDepositSequences(prev => ({
+        ...prev,
+        [vendeur]: depot.sequences.map(seq => ({
+          id: Date.now() + Math.random(),
+          amount: seq.amount,
+          currency: seq.currency || (isUSDDepot(depot) ? 'USD' : 'HTG'),
+          note: seq.note || `${seq.amount} ${seq.currency || (isUSDDepot(depot) ? 'USD' : 'HTG')}`,
+          timestamp: seq.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }))
+      }));
+    } else {
+      const currency = isUSDDepot(depot) ? 'USD' : 'HTG';
+      const amount = getOriginalDepotAmount(depot);
+
+      const presets = currency === 'HTG' ? htgPresets : usdPresets;
+      let bestPreset = presets[0];
+      let bestMultiplier = 1;
+
+      for (const preset of presets) {
+        const presetValue = parseFloat(preset.value);
+        if (presetValue > 0 && amount % presetValue === 0) {
+          const multiplier = amount / presetValue;
+          if (multiplier >= 1 && multiplier === Math.floor(multiplier)) {
+            bestPreset = preset;
+            bestMultiplier = multiplier;
+            break;
+          }
+        }
+      }
+
+      const note = bestMultiplier === 1 
+        ? `${bestPreset.value} ${currency}`
+        : `${bestMultiplier} × ${bestPreset.value} ${currency}`;
+
+      setDepositSequences(prev => ({
+        ...prev,
+        [vendeur]: [{
+          id: Date.now(),
+          amount,
+          currency,
+          note,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]
+      }));
+
+      setVendorPresets(prev => ({
+        ...prev,
+        [vendeur]: { 
+          ...prev[vendeur], 
+          currency,
+          preset: bestPreset.value
+        }
+      }));
+
+      handleInputChange(vendeur, bestMultiplier.toString());
+    }
   };
 
   const cancelEdit = (vendeur) => {
@@ -341,6 +397,61 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       }));
     }
     handleInputChange(vendeur, '');
+  };
+
+  // FIXED: Save edited deposit
+  const saveEditedDeposit = (vendeur) => {
+    if (!editingDeposit || editingDeposit.vendeur !== vendeur) return;
+    
+    const sequences = depositSequences[vendeur] || [];
+    const { index } = editingDeposit;
+
+    if (sequences.length === 0) {
+      supprimerDepot(vendeur, index);
+      cancelEdit(vendeur);
+      return;
+    }
+
+    const originalDepot = depotsActuels[vendeur]?.[index];
+    const originalCurrency = isUSDDepot(originalDepot) ? 'USD' : 'HTG';
+
+    if (originalCurrency === 'USD') {
+      const totalAmountUSD = sequences.reduce((total, seq) => {
+        if (seq.currency === 'USD') {
+          return total + seq.amount;
+        } else {
+          return total + (seq.amount / TAUX_DE_CHANGE);
+        }
+      }, 0);
+
+      const breakdown = sequences.map(seq => seq.note).join(', ');
+      const deposit = {
+        montant: totalAmountUSD.toFixed(2),
+        devise: 'USD',
+        breakdown: breakdown,
+        sequences: sequences
+      };
+      mettreAJourDepot(vendeur, index, deposit);
+    } else {
+      const totalAmountHTG = sequences.reduce((total, seq) => {
+        if (seq.currency === 'USD') {
+          return total + (seq.amount * TAUX_DE_CHANGE);
+        } else {
+          return total + seq.amount;
+        }
+      }, 0);
+
+      const breakdown = sequences.map(seq => seq.note).join(', ');
+      const deposit = {
+        value: totalAmountHTG.toString(),
+        breakdown: breakdown,
+        sequences: sequences
+      };
+      mettreAJourDepot(vendeur, index, deposit);
+    }
+
+    markAsRecentlyAdded(vendeur, index);
+    cancelEdit(vendeur);
   };
 
   const handleCurrencyButtonClick = (vendeur, currency) => {
@@ -367,13 +478,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       ...prev,
       [vendeur]: { ...prev[vendeur], preset: presetValue }
     }));
-    setTimeout(() => {
-      const input = document.querySelector(`input[data-vendor="${vendeur}"]`);
-      if (input) {
-        input.focus();
-        input.select();
-      }
-    }, 100);
   };
 
   const calculatePresetAmount = (vendeur) => {
@@ -389,10 +493,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     const vendorState = vendorPresets[vendeur];
     if (!vendorState) return htgPresets;
     return vendorState.currency === 'HTG' ? htgPresets : usdPresets;
-  };
-
-  const isDirectAmount = (vendeur) => {
-    return false;
   };
 
   const handleInputChange = (vendeur, value) => {
@@ -464,9 +564,8 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return sequences.reduce((total, seq) => total + seq.amount, 0);
   };
 
-  // NEW: Create breakdown string for deposit
+  // Create breakdown string for deposit
   const createBreakdownString = (sequences) => {
-    // Group HTG sequences by denomination
     const htgSequences = sequences.filter(seq => seq.currency === 'HTG');
     const bills = {};
     
@@ -483,7 +582,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       }
     });
     
-    // Format as "5 × 1000, 10 × 500"
     return Object.entries(bills)
       .sort(([a], [b]) => parseInt(b) - parseInt(a))
       .map(([denom, qty]) => `${qty} × ${denom}`)
@@ -509,8 +607,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
     Object.entries(sequencesByCurrency).forEach(([currency, currencySequences], i) => {
       const totalAmount = currencySequences.reduce((total, seq) => total + seq.amount, 0);
-      
-      // Create breakdown string
       const breakdown = createBreakdownString(currencySequences);
 
       setTimeout(() => {
@@ -521,14 +617,14 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
             breakdown: breakdown,
             sequences: currencySequences
           };
-          mettreAJourDepot(vendeur, nextIndex + i, deposit);
+          ajouterDepot(vendeur, deposit);
         } else {
           const deposit = {
             value: totalAmount.toString(),
             breakdown: breakdown,
             sequences: currencySequences
           };
-          mettreAJourDepot(vendeur, nextIndex + i, deposit);
+          ajouterDepot(vendeur, deposit);
         }
 
         markAsRecentlyAdded(vendeur, nextIndex + i);
@@ -555,7 +651,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     <div className="space-y-4">
       <ExchangeRateBanner tauxDeChange={TAUX_DE_CHANGE} />
 
-      {/* NEW: Denomination Summary Toggle */}
+      {/* Denomination Summary Section */}
       <div className="bg-white rounded-xl shadow p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -697,7 +793,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         )}
       </div>
 
-      {/* Original Deposits Section */}
+      {/* Deposits Section */}
       <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl p-2 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -729,7 +825,10 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
               const sequencesTotal = calculateSequencesTotal(vendeur.id);
               const sequencesTotalByCurrency = calculateSequencesTotalByCurrency(vendeur.id);
               const totalSequencesHTG = calculateTotalSequencesHTG(vendeur.id);
+              
+              // FIXED: Check if editing this vendor
               const isEditingMode = editingDeposit?.vendeur === vendeur.id;
+              const editingIndex = editingDeposit?.index;
 
               return (
                 <VendorDepositCard
@@ -743,16 +842,24 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-semibold">
                         {isEditingMode ? 
-                          `Éditer Dépôt #${editingDeposit.index + 1}` : 
+                          `Éditer Dépôt #${editingIndex + 1}` : 
                           'Ajouter Nouveau Dépôt'}
                       </span>
                       {isEditingMode && (
-                        <button
-                          onClick={() => cancelEdit(vendeur.id)}
-                          className="px-2 py-1.5 rounded-lg font-bold text-xs bg-red-500 text-white"
-                        >
-                          Annuler
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => saveEditedDeposit(vendeur.id)}
+                            className="px-2 py-1.5 rounded-lg font-bold text-xs bg-green-500 text-white"
+                          >
+                            Sauvegarder
+                          </button>
+                          <button
+                            onClick={() => cancelEdit(vendeur.id)}
+                            className="px-2 py-1.5 rounded-lg font-bold text-xs bg-red-500 text-white"
+                          >
+                            Annuler
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -771,7 +878,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       handleInputChange={handleInputChange}
                       handleAddSequence={handleAddSequence}
                       handleAddCompleteDeposit={isEditingMode ? 
-                        () => {} : // Save edit function would go here
+                        () => saveEditedDeposit(vendeur.id) : 
                         () => handleAddCompleteDeposit(vendeur.id)}
                       calculatePresetAmount={calculatePresetAmount}
                       htgPresets={htgPresets}
