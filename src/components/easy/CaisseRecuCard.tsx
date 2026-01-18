@@ -141,7 +141,7 @@ const CaisseRecuCard = ({
     }
   };
 
-  // FIXED: Get deposit breakdown including all types
+  // FIXED: Get deposit breakdown including all types AND verify total
   const depositBreakdown = useMemo(() => {
     if (!Array.isArray(sellerDeposits)) return [];
     
@@ -149,21 +149,44 @@ const CaisseRecuCard = ({
       .filter(depot => depot != null) // Filter out null/undefined
       .map((depot, index) => {
         const isUSD = typeof depot === 'object' && depot.devise === 'USD';
-        const display = formatDepositDisplay(depot);
-        const amount = isUSD 
-          ? (parseFloat(depot.montant) || 0) * tauxUSD 
-          : (typeof depot === 'object' && depot.value !== undefined 
-              ? parseFloat(depot.value) || 0 
-              : parseFloat(depot) || 0);
+        
+        // Calculate amount in HTG
+        let amountInHTG = 0;
+        if (isUSD) {
+          const montantUSD = parseFloat(depot.montant) || 0;
+          amountInHTG = montantUSD * tauxUSD;
+        } else if (typeof depot === 'object' && depot.value !== undefined) {
+          amountInHTG = parseFloat(depot.value) || 0;
+        } else {
+          amountInHTG = parseFloat(depot) || 0;
+        }
         
         return {
           id: index + 1,
-          display: display,
+          display: formatDepositDisplay(depot),
           isUSD: isUSD,
-          amount: amount
+          amountInHTG: amountInHTG
         };
       });
   }, [sellerDeposits, tauxUSD]);
+
+  // FIXED: Calculate total deposits from breakdown to verify
+  const calculatedTotalDepositsHTG = useMemo(() => {
+    return depositBreakdown.reduce((sum, deposit) => sum + deposit.amountInHTG, 0);
+  }, [depositBreakdown]);
+
+  // Log for debugging
+  React.useEffect(() => {
+    if (sellerDeposits.length > 0) {
+      console.log('Deposits debugging:', {
+        sellerDeposits,
+        depositBreakdown,
+        totalDepositsProp: totalDeposits,
+        calculatedTotalDepositsHTG,
+        difference: totalDeposits - calculatedTotalDepositsHTG
+      });
+    }
+  }, [sellerDeposits, depositBreakdown, totalDeposits, calculatedTotalDepositsHTG]);
 
   // Handle adding a new cash sequence
   const handleAddSequence = () => {
@@ -361,7 +384,15 @@ const CaisseRecuCard = ({
               <Layers size={12} className="text-white opacity-90" />
               <p className="text-xs opacity-90">Total Dépôts:</p>
             </div>
-            <p className="text-sm font-bold">{formaterArgent(totalDeposits)} HTG</p>
+            <div className="text-right">
+              <p className="text-sm font-bold">{formaterArgent(totalDeposits)} HTG</p>
+              {/* DEBUG: Show calculated total */}
+              {Math.abs(totalDeposits - calculatedTotalDepositsHTG) > 0.01 && (
+                <p className="text-[9px] opacity-60 text-amber-300">
+                  (Calculé: {formaterArgent(calculatedTotalDepositsHTG)} HTG)
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -412,15 +443,20 @@ const CaisseRecuCard = ({
             } />
             <p className="text-xs opacity-90">Espèces attendues:</p>
           </div>
-          <p className={`text-sm font-bold ${
-            especesAttendues > 0 
-              ? 'text-green-300' 
-              : especesAttendues < 0 
-              ? 'text-red-300'
-              : 'text-white'
-          }`}>
-            {formaterArgent(especesAttendues)} HTG
-          </p>
+          <div className="text-right">
+            <p className={`text-sm font-bold ${
+              especesAttendues > 0 
+                ? 'text-green-300' 
+                : especesAttendues < 0 
+                ? 'text-red-300'
+                : 'text-white'
+            }`}>
+              {formaterArgent(especesAttendues)} HTG
+            </p>
+            <p className="text-[10px] opacity-60">
+              {formaterArgent(totalAjustePourCaisse)} HTG - {formaterArgent(totalDeposits)} HTG
+            </p>
+          </div>
         </div>
       </div>
 
