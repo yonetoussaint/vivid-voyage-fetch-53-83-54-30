@@ -7,9 +7,9 @@ import ChangeCombinations from './ChangeCombinations';
 const CaisseRecuCard = ({
   vendeurActuel,
   sellerDeposits = [],
-  totalDeposits = 0,
+  totalDeposits = 0, // Kept for reference but not used directly
   totalAjustePourCaisse = 0,
-  especesAttendues = 0,
+  especesAttendues = 0, // Kept for reference but recalculated
   isPropane = false,
   tauxUSD = 132
 }) => {
@@ -63,56 +63,6 @@ const CaisseRecuCard = ({
   // Check if "Aucune" is selected (direct amount entry)
   const isDirectAmount = selectedPreset === 'aucune';
 
-  // Calculate total cash received from all sequences (converted to HTG)
-  const totalCashRecuHTG = useMemo(() => {
-    return cashSequences.reduce((sum, seq) => {
-      if (seq.currency === 'USD') {
-        return sum + (parseFloat(seq.amount) * tauxUSD || 0);
-      }
-      return sum + (parseFloat(seq.amount) || 0);
-    }, 0);
-  }, [cashSequences, tauxUSD]);
-
-  // Calculate total in original currencies for display
-  const totalHTG = useMemo(() => {
-    return cashSequences
-      .filter(seq => seq.currency === 'HTG')
-      .reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
-  }, [cashSequences]);
-
-  const totalUSD = useMemo(() => {
-    return cashSequences
-      .filter(seq => seq.currency === 'USD')
-      .reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
-  }, [cashSequences]);
-
-  const changeNeeded = totalCashRecuHTG - especesAttendues;
-  const shouldGiveChange = changeNeeded > 0;
-  const isShort = changeNeeded < 0;
-
-  // Calculate round amount details
-  const roundAmountDetails = useMemo(() => {
-    if (!roundAmount || !shouldGiveChange || changeNeeded <= 0) return null;
-
-    const desiredAmount = parseFloat(roundAmount);
-    const currentChange = changeNeeded;
-
-    if (isNaN(desiredAmount) || desiredAmount <= 0) return null;
-
-    // Customer wants to receive more than they're owed
-    const customerAdds = desiredAmount - currentChange;
-
-    return {
-      desiredAmount,
-      currentChange,
-      customerAdds,
-      isValid: customerAdds >= 0, // Customer must add, not subtract
-      message: customerAdds >= 0 
-        ? `Le client vous donne ${formaterArgent(customerAdds)} HTG de plus pour recevoir ${formaterArgent(desiredAmount)} HTG`
-        : `Impossible: ${formaterArgent(desiredAmount)} HTG est moins que ${formaterArgent(currentChange)} HTG dû`
-    };
-  }, [roundAmount, changeNeeded, shouldGiveChange]);
-
   // FIXED: Format deposit display function - handles all deposit types
   const formatDepositDisplay = (depot) => {
     if (!depot) return '';
@@ -141,7 +91,7 @@ const CaisseRecuCard = ({
     }
   };
 
-  // FIXED: Get deposit breakdown including all types
+  // FIXED: Get deposit breakdown including all types - SINGLE SOURCE OF TRUTH
   const depositBreakdown = useMemo(() => {
     if (!Array.isArray(sellerDeposits)) return [];
     
@@ -170,16 +120,80 @@ const CaisseRecuCard = ({
       });
   }, [sellerDeposits, tauxUSD]);
 
-  // FIXED: Calculate total deposits from breakdown - USE THIS AS THE SINGLE SOURCE OF TRUTH
+  // SINGLE SOURCE OF TRUTH: Calculate total deposits from breakdown
   const calculatedTotalDepositsHTG = useMemo(() => {
     return depositBreakdown.reduce((sum, deposit) => sum + deposit.amountInHTG, 0);
   }, [depositBreakdown]);
 
-  // Use the calculated total as the single source of truth
-  const displayTotalDeposits = calculatedTotalDepositsHTG;
-  
-  // Recalculate espèces attendues with the correct total
-  const displayEspecesAttendues = totalAjustePourCaisse - displayTotalDeposits;
+  // SINGLE SOURCE OF TRUTH: Calculate espèces attendues from corrected total
+  const calculatedEspecesAttendues = useMemo(() => {
+    return totalAjustePourCaisse - calculatedTotalDepositsHTG;
+  }, [totalAjustePourCaisse, calculatedTotalDepositsHTG]);
+
+  // Calculate total cash received from all sequences (converted to HTG)
+  const totalCashRecuHTG = useMemo(() => {
+    return cashSequences.reduce((sum, seq) => {
+      if (seq.currency === 'USD') {
+        return sum + (parseFloat(seq.amount) * tauxUSD || 0);
+      }
+      return sum + (parseFloat(seq.amount) || 0);
+    }, 0);
+  }, [cashSequences, tauxUSD]);
+
+  // Calculate total in original currencies for display
+  const totalHTG = useMemo(() => {
+    return cashSequences
+      .filter(seq => seq.currency === 'HTG')
+      .reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
+  }, [cashSequences]);
+
+  const totalUSD = useMemo(() => {
+    return cashSequences
+      .filter(seq => seq.currency === 'USD')
+      .reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
+  }, [cashSequences]);
+
+  // SINGLE SOURCE OF TRUTH: Calculate change needed using corrected espèces attendues
+  const changeNeeded = totalCashRecuHTG - calculatedEspecesAttendues;
+  const shouldGiveChange = changeNeeded > 0;
+  const isShort = changeNeeded < 0;
+
+  // Calculate round amount details
+  const roundAmountDetails = useMemo(() => {
+    if (!roundAmount || !shouldGiveChange || changeNeeded <= 0) return null;
+
+    const desiredAmount = parseFloat(roundAmount);
+    const currentChange = changeNeeded;
+
+    if (isNaN(desiredAmount) || desiredAmount <= 0) return null;
+
+    // Customer wants to receive more than they're owed
+    const customerAdds = desiredAmount - currentChange;
+
+    return {
+      desiredAmount,
+      currentChange,
+      customerAdds,
+      isValid: customerAdds >= 0, // Customer must add, not subtract
+      message: customerAdds >= 0 
+        ? `Le client vous donne ${formaterArgent(customerAdds)} HTG de plus pour recevoir ${formaterArgent(desiredAmount)} HTG`
+        : `Impossible: ${formaterArgent(desiredAmount)} HTG est moins que ${formaterArgent(currentChange)} HTG dû`
+    };
+  }, [roundAmount, changeNeeded, shouldGiveChange]);
+
+  // Calculate givable amount and remainder
+  const givableAmount = getMaximumGivableAmount(changeNeeded);
+  const remainder = changeNeeded - givableAmount;
+  const hasRemainder = remainder > 0;
+
+  // Get selected preset display text
+  const getSelectedPresetText = () => {
+    if (selectedPreset === 'aucune') {
+      return 'Entrer montant libre';
+    }
+    const preset = currentPresets.find(p => p.value === selectedPreset);
+    return preset ? `× ${preset.label} ${currencyType}` : 'Sélectionner';
+  };
 
   // Handle adding a new cash sequence
   const handleAddSequence = () => {
@@ -329,20 +343,6 @@ const CaisseRecuCard = ({
     setRoundAmount('');
   };
 
-  // Calculate givable amount and remainder
-  const givableAmount = getMaximumGivableAmount(changeNeeded);
-  const remainder = changeNeeded - givableAmount;
-  const hasRemainder = remainder > 0;
-
-  // Get selected preset display text
-  const getSelectedPresetText = () => {
-    if (selectedPreset === 'aucune') {
-      return 'Entrer montant libre';
-    }
-    const preset = currentPresets.find(p => p.value === selectedPreset);
-    return preset ? `× ${preset.label} ${currencyType}` : 'Sélectionner';
-  };
-
   return (
     <div className={`rounded-xl p-3 shadow-lg mb-3 ${
       isPropane 
@@ -369,7 +369,7 @@ const CaisseRecuCard = ({
         )}
       </div>
 
-      {/* Total Deposits Row - Standalone above deposits - SHOW ONLY CALCULATED TOTAL */}
+      {/* Total Deposits Row - Standalone above deposits */}
       {sellerDeposits.length > 0 && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2">
           <div className="flex items-center justify-between">
@@ -377,7 +377,9 @@ const CaisseRecuCard = ({
               <Layers size={12} className="text-white opacity-90" />
               <p className="text-xs opacity-90">Total Dépôts:</p>
             </div>
-            <p className="text-sm font-bold">{formaterArgent(displayTotalDeposits)} HTG</p>
+            <div className="text-right">
+              <p className="text-sm font-bold">{formaterArgent(calculatedTotalDepositsHTG)} HTG</p>
+            </div>
           </div>
         </div>
       )}
@@ -409,20 +411,20 @@ const CaisseRecuCard = ({
         </div>
       )}
 
-      {/* Espèces Attendues Row - Standalone below deposits - USE CORRECTED CALCULATION */}
+      {/* Espèces Attendues Row - Standalone below deposits */}
       <div className={`rounded-lg p-2 mb-2 ${
-        displayEspecesAttendues > 0 
+        calculatedEspecesAttendues > 0 
           ? 'bg-green-500 bg-opacity-20 border border-green-400 border-opacity-30' 
-          : displayEspecesAttendues < 0 
+          : calculatedEspecesAttendues < 0 
           ? 'bg-red-500 bg-opacity-20 border border-red-400 border-opacity-30'
           : 'bg-white bg-opacity-10'
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <Target size={12} className={
-              displayEspecesAttendues > 0 
+              calculatedEspecesAttendues > 0 
                 ? 'text-green-300' 
-                : displayEspecesAttendues < 0 
+                : calculatedEspecesAttendues < 0 
                 ? 'text-red-300'
                 : 'text-white opacity-90'
             } />
@@ -430,16 +432,16 @@ const CaisseRecuCard = ({
           </div>
           <div className="text-right">
             <p className={`text-sm font-bold ${
-              displayEspecesAttendues > 0 
+              calculatedEspecesAttendues > 0 
                 ? 'text-green-300' 
-                : displayEspecesAttendues < 0 
+                : calculatedEspecesAttendues < 0 
                 ? 'text-red-300'
                 : 'text-white'
             }`}>
-              {formaterArgent(displayEspecesAttendues)} HTG
+              {formaterArgent(calculatedEspecesAttendues)} HTG
             </p>
             <p className="text-[10px] opacity-60">
-              {formaterArgent(totalAjustePourCaisse)} HTG - {formaterArgent(displayTotalDeposits)} HTG
+              {formaterArgent(totalAjustePourCaisse)} HTG - {formaterArgent(calculatedTotalDepositsHTG)} HTG
             </p>
           </div>
         </div>
@@ -751,7 +753,7 @@ const CaisseRecuCard = ({
         </div>
       </div>
 
-      {/* Change calculation - USE CORRECTED ESPECES ATTENDUES */}
+      {/* Change calculation */}
       {cashSequences.length > 0 && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-3">
           {/* Change summary */}
