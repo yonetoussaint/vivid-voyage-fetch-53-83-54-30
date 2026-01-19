@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { DollarSign, Calculator, Package, Filter, Grid, Layers } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { DollarSign, Package, Calculator } from 'lucide-react';
 import VendorDepositCard from './VendorDepositCard';
 import SequenceManager from './SequenceManager';
 import DepositsSummary from './DepositsSummary';
@@ -10,19 +10,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const TAUX_DE_CHANGE = 132;
   const depotsActuels = tousDepots[shift] || {};
 
-  // Haitian Gourde denominations
-  const DENOMINATIONS = [
-    { value: 1000, label: '1000', color: 'bg-purple-100 text-purple-800' },
-    { value: 500, label: '500', color: 'bg-blue-100 text-blue-800' },
-    { value: 250, label: '250', color: 'bg-green-100 text-green-800' },
-    { value: 100, label: '100', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 50, label: '50', color: 'bg-orange-100 text-orange-800' },
-    { value: 25, label: '25', color: 'bg-red-100 text-red-800' },
-    { value: 10, label: '10', color: 'bg-gray-100 text-gray-800' }
-  ];
-
-  const BILLS_PER_LIAS = 100;
-
   // State
   const [vendorInputs, setVendorInputs] = useState({});
   const [vendorPresets, setVendorPresets] = useState({});
@@ -30,11 +17,11 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const [recentlyAdded, setRecentlyAdded] = useState({});
   const [editingDeposit, setEditingDeposit] = useState(null);
   
-  // Denomination tracking
-  const [denominationsByVendor, setDenominationsByVendor] = useState({});
-  const [showDenominationView, setShowDenominationView] = useState(false);
+  // New state for denomination counting
+  const [denominationInputs, setDenominationInputs] = useState({});
+  const [showDenomination, setShowDenomination] = useState(false);
 
-  // Presets
+  // Presets - HTG from 1 to 1000, USD from 1 to 100
   const htgPresets = [
     { value: '1', label: '1' },
     { value: '5', label: '5' },
@@ -56,6 +43,17 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     { value: '100', label: '100' }
   ];
 
+  // Gourde denominations (billets)
+  const denominations = [
+    { value: 1000, label: '1000 Gourdes', bundles: 10, color: 'bg-purple-100' },
+    { value: 500, label: '500 Gourdes', bundles: 10, color: 'bg-blue-100' },
+    { value: 250, label: '250 Gourdes', bundles: 10, color: 'bg-green-100' },
+    { value: 100, label: '100 Gourdes', bundles: 10, color: 'bg-yellow-100' },
+    { value: 50, label: '50 Gourdes', bundles: 10, color: 'bg-orange-100' },
+    { value: 25, label: '25 Gourdes', bundles: 10, color: 'bg-red-100' },
+    { value: 10, label: '10 Gourdes', bundles: 10, color: 'bg-pink-100' }
+  ];
+
   // Helper Functions
   const convertirUSDversHTG = (montantUSD) => {
     return (parseFloat(montantUSD) || 0) * TAUX_DE_CHANGE;
@@ -72,7 +70,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return parseFloat(depot) || 0;
   };
 
-  // Calculate total deposits for a vendor
+  // Calculate total deposits for a vendor from the actual deposits array
   const calculateTotalDepotsHTG = (vendeur) => {
     const depots = depotsActuels[vendeur] || [];
     return depots.reduce((total, depot) => total + getMontantHTG(depot), 0);
@@ -80,6 +78,10 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
   const isUSDDepot = (depot) => {
     return typeof depot === 'object' && depot.devise === 'USD';
+  };
+
+  const hasBreakdown = (depot) => {
+    return typeof depot === 'object' && (depot.breakdown || depot.sequences);
   };
 
   const getOriginalDepotAmount = (depot) => {
@@ -111,147 +113,90 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return `${formaterArgent(amount)} HTG`;
   };
 
-  // Parse deposit breakdown to extract denominations
-  const parseDepositForDenominations = (depot) => {
-    const bills = {};
-    
-    // Initialize all denominations to 0
-    DENOMINATIONS.forEach(denom => {
-      bills[denom.value] = 0;
-    });
-    
-    if (!depot) return bills;
-    
-    // If deposit has a breakdown string
-    if (typeof depot === 'object' && depot.breakdown) {
-      const breakdown = depot.breakdown;
-      const parts = breakdown.split(',');
-      
-      parts.forEach(part => {
-        const trimmed = part.trim();
-        const match = trimmed.match(/(?:(\d+)\s*[×x]\s*)?(\d+)/i);
-        
-        if (match) {
-          const quantity = match[1] ? parseInt(match[1]) : 1;
-          const denomination = parseInt(match[2]);
-          
-          const validDenom = DENOMINATIONS.find(d => d.value === denomination);
-          if (validDenom && quantity > 0) {
-            bills[denomination] += quantity;
-          }
-        }
-      });
-    }
-    
-    return bills;
-  };
+  // NEW: Calculate cash breakdown for denomination counting
+  const calculateCashBreakdown = useMemo(() => {
+    const breakdown = {
+      byVendor: {},
+      totals: {},
+      bundles: {}
+    };
 
-  // Update denominations for all vendors based on deposits
-  useEffect(() => {
-    const newDenominations = {};
-    
-    Object.entries(depotsActuels).forEach(([vendeurId, deposits]) => {
-      if (!Array.isArray(deposits)) return;
-      
-      // Initialize vendor
-      if (!newDenominations[vendeurId]) {
-        newDenominations[vendeurId] = {
-          bills: DENOMINATIONS.reduce((acc, denom) => ({ ...acc, [denom.value]: 0 }), {}),
-          totalBills: 0,
-          totalValue: 0
-        };
-      }
-      
+    // Initialize totals
+    denominations.forEach(denom => {
+      breakdown.totals[denom.value] = 0;
+      breakdown.bundles[denom.value] = 0;
+    });
+
+    // Process deposits for each vendor
+    Object.entries(depotsActuels).forEach(([vendeur, depots]) => {
+      // Initialize vendor breakdown
+      breakdown.byVendor[vendeur] = {};
+      denominations.forEach(denom => {
+        breakdown.byVendor[vendeur][denom.value] = 0;
+      });
+
       // Process each deposit
-      deposits.forEach(depot => {
-        const depositBills = parseDepositForDenominations(depot);
+      depots.forEach(depot => {
+        // Skip USD deposits for denomination counting
+        if (isUSDDepot(depot)) return;
+
+        const amountHTG = getMontantHTG(depot);
+        let remainingAmount = amountHTG;
         
-        // Add to vendor totals
-        Object.entries(depositBills).forEach(([denom, count]) => {
-          const denomination = parseInt(denom);
-          newDenominations[vendeurId].bills[denomination] += count;
-          newDenominations[vendeurId].totalBills += count;
-          newDenominations[vendeurId].totalValue += count * denomination;
+        // Try to distribute by denominations from highest to lowest
+        denominations.forEach(denom => {
+          const count = Math.floor(remainingAmount / denom.value);
+          if (count > 0) {
+            breakdown.byVendor[vendeur][denom.value] += count;
+            breakdown.totals[denom.value] += count;
+            remainingAmount -= count * denom.value;
+          }
         });
       });
     });
-    
-    setDenominationsByVendor(newDenominations);
-  }, [depotsActuels]);
 
-  // Calculate total denominations across all vendors
-  const calculateTotalDenominations = () => {
-    const totals = {
-      bills: DENOMINATIONS.reduce((acc, denom) => ({ ...acc, [denom.value]: 0 }), {}),
-      totalBills: 0,
-      totalValue: 0
-    };
-    
-    Object.values(denominationsByVendor).forEach(vendor => {
-      DENOMINATIONS.forEach(denom => {
-        totals.bills[denom.value] += vendor.bills[denom.value] || 0;
-      });
-      totals.totalBills += vendor.totalBills;
-      totals.totalValue += vendor.totalValue;
+    // Calculate bundles for totals
+    denominations.forEach(denom => {
+      breakdown.bundles[denom.value] = Math.floor(breakdown.totals[denom.value] / denom.bundles);
     });
-    
-    return totals;
+
+    return breakdown;
+  }, [depotsActuels, shift]);
+
+  // NEW: Get vendor name from ID
+  const getVendorName = (vendorId) => {
+    const vendor = vendeurs.find(v => v.id === vendorId);
+    return vendor ? vendor.nom : vendorId;
   };
 
-  // Calculate how many liasses (100-bill bundles) we can make
-  const calculateLiasses = () => {
-    const totals = calculateTotalDenominations();
-    const totalBills = totals.totalBills;
-    
-    const possibleLiasses = Math.floor(totalBills / BILLS_PER_LIAS);
-    const remainingBills = totalBills % BILLS_PER_LIAS;
-    
-    return {
-      possibleLiasses,
-      remainingBills,
-      totalBills,
-      billsUsed: possibleLiasses * BILLS_PER_LIAS,
-      percentageUsed: totalBills > 0 ? Math.round((possibleLiasses * BILLS_PER_LIAS / totalBills) * 100) : 0
-    };
+  // NEW: Handle denomination input change
+  const handleDenominationChange = (denomination, value) => {
+    setDenominationInputs(prev => ({
+      ...prev,
+      [denomination]: value
+    }));
   };
 
-  // Manually adjust denominations for a vendor
-  const handleDenominationAdjustment = (vendeurId, denomination, delta) => {
-    setDenominationsByVendor(prev => {
-      const newData = { ...prev };
+  // NEW: Add manual denomination count
+  const handleAddDenomination = (denomination) => {
+    const value = parseInt(denominationInputs[denomination]) || 0;
+    if (value > 0) {
+      // Update totals
+      calculateCashBreakdown.totals[denomination] += value;
+      calculateCashBreakdown.bundles[denomination] = Math.floor(
+        calculateCashBreakdown.totals[denomination] / 
+        denominations.find(d => d.value === denomination)?.bundles || 10
+      );
       
-      if (!newData[vendeurId]) {
-        newData[vendeurId] = {
-          bills: DENOMINATIONS.reduce((acc, denom) => ({ ...acc, [denom.value]: 0 }), {}),
-          totalBills: 0,
-          totalValue: 0
-        };
-      }
-      
-      const current = newData[vendeurId].bills[denomination] || 0;
-      const newValue = Math.max(0, current + delta);
-      
-      // Update the count
-      newData[vendeurId].bills[denomination] = newValue;
-      
-      // Recalculate totals
-      let totalBills = 0;
-      let totalValue = 0;
-      
-      DENOMINATIONS.forEach(denom => {
-        const count = newData[vendeurId].bills[denom.value] || 0;
-        totalBills += count;
-        totalValue += count * denom.value;
-      });
-      
-      newData[vendeurId].totalBills = totalBills;
-      newData[vendeurId].totalValue = totalValue;
-      
-      return newData;
-    });
+      // Clear input
+      setDenominationInputs(prev => ({
+        ...prev,
+        [denomination]: ''
+      }));
+    }
   };
 
-  // Sequence calculations
+  // Calculate sequences total by currency
   const calculateSequencesTotalByCurrency = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
     const totals = {
@@ -271,6 +216,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return totals;
   };
 
+  // Calculate total HTG value of all sequences
   const calculateTotalSequencesHTG = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
     return sequences.reduce((total, seq) => {
@@ -281,12 +227,13 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }, 0);
   };
 
-  // Initialize vendor state
+  // State Management Functions
   const initializeVendorState = (vendeur, currency = 'HTG') => {
     if (!vendorInputs[vendeur]) {
       setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
     }
     if (!vendorPresets[vendeur]) {
+      // Auto-select smallest preset (1 HTG or 1 USD)
       const presets = currency === 'HTG' ? htgPresets : usdPresets;
       const smallestPreset = presets[0]?.value || '1';
 
@@ -315,32 +262,38 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }, 2000);
   };
 
-  // FIXED: Handle edit deposit with null check
+  // Edit deposit functionality
   const handleEditDeposit = (vendeur, index) => {
     const depot = depotsActuels[vendeur]?.[index];
+
     if (!depot) return;
 
+    // Set editing state
     setEditingDeposit({ vendeur, index });
-    
+
+    // Load sequences from deposit if they exist
     if (depot.sequences && Array.isArray(depot.sequences)) {
       setDepositSequences(prev => ({
         ...prev,
         [vendeur]: depot.sequences.map(seq => ({
-          id: Date.now() + Math.random(),
+          id: Date.now() + Math.random(), // New IDs for editing
           amount: seq.amount,
           currency: seq.currency || (isUSDDepot(depot) ? 'USD' : 'HTG'),
-          note: seq.note || `${seq.amount} ${seq.currency || (isUSDDepot(depot) ? 'USD' : 'HTG')}`,
+          note: seq.note || seq.text || `${seq.amount} ${seq.currency || (isUSDDepot(depot) ? 'USD' : 'HTG')}`,
           timestamp: seq.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }))
       }));
     } else {
+      // Convert simple deposit to sequence
       const currency = isUSDDepot(depot) ? 'USD' : 'HTG';
       const amount = getOriginalDepotAmount(depot);
 
+      // Find best matching preset
       const presets = currency === 'HTG' ? htgPresets : usdPresets;
-      let bestPreset = presets[0];
+      let bestPreset = presets[0]; // Default to smallest
       let bestMultiplier = 1;
 
+      // Try to find a preset that divides evenly into the amount
       for (const preset of presets) {
         const presetValue = parseFloat(preset.value);
         if (presetValue > 0 && amount % presetValue === 0) {
@@ -353,6 +306,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         }
       }
 
+      // Create sequence with preset notation
       const note = bestMultiplier === 1 
         ? `${bestPreset.value} ${currency}`
         : `${bestMultiplier} × ${bestPreset.value} ${currency}`;
@@ -368,6 +322,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         }]
       }));
 
+      // Set preset and multiplier in vendor state
       setVendorPresets(prev => ({
         ...prev,
         [vendeur]: { 
@@ -377,6 +332,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         }
       }));
 
+      // Set the multiplier in the input
       handleInputChange(vendeur, bestMultiplier.toString());
     }
   };
@@ -384,6 +340,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const cancelEdit = (vendeur) => {
     setEditingDeposit(null);
     setDepositSequences(prev => ({ ...prev, [vendeur]: [] }));
+    // Reset to smallest preset
     const vendorState = vendorPresets[vendeur];
     if (vendorState) {
       const presets = vendorState.currency === 'HTG' ? htgPresets : usdPresets;
@@ -399,27 +356,29 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     handleInputChange(vendeur, '');
   };
 
-  // FIXED: Save edited deposit
+  // Save edited deposit with mixed currencies
   const saveEditedDeposit = (vendeur) => {
-    if (!editingDeposit || editingDeposit.vendeur !== vendeur) return;
-    
     const sequences = depositSequences[vendeur] || [];
     const { index } = editingDeposit;
 
     if (sequences.length === 0) {
+      // If no sequences, delete the deposit
       supprimerDepot(vendeur, index);
       cancelEdit(vendeur);
       return;
     }
 
+    // Get original deposit to know its currency
     const originalDepot = depotsActuels[vendeur]?.[index];
     const originalCurrency = isUSDDepot(originalDepot) ? 'USD' : 'HTG';
 
     if (originalCurrency === 'USD') {
+      // Convert all to USD
       const totalAmountUSD = sequences.reduce((total, seq) => {
         if (seq.currency === 'USD') {
           return total + seq.amount;
         } else {
+          // Convert HTG to USD
           return total + (seq.amount / TAUX_DE_CHANGE);
         }
       }, 0);
@@ -433,6 +392,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       };
       mettreAJourDepot(vendeur, index, deposit);
     } else {
+      // Convert all to HTG
       const totalAmountHTG = sequences.reduce((total, seq) => {
         if (seq.currency === 'USD') {
           return total + (seq.amount * TAUX_DE_CHANGE);
@@ -454,6 +414,17 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     cancelEdit(vendeur);
   };
 
+  // Sequence editing functionality
+  const handleUpdateSequence = (vendeur, sequenceId, updatedSequence) => {
+    setDepositSequences(prev => ({
+      ...prev,
+      [vendeur]: (prev[vendeur] || []).map(seq => 
+        seq.id === sequenceId ? { ...updatedSequence, id: sequenceId } : seq
+      )
+    }));
+  };
+
+  // Event Handlers
   const handleCurrencyButtonClick = (vendeur, currency) => {
     if (!vendorPresets[vendeur]) {
       initializeVendorState(vendeur, currency);
@@ -466,11 +437,11 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         [vendeur]: { 
           ...prev[vendeur], 
           currency,
-          preset: smallestPreset
+          preset: smallestPreset // Auto-select smallest preset when switching currency
         }
       }));
     }
-    handleInputChange(vendeur, '');
+    handleInputChange(vendeur, ''); // Clear input when switching currency
   };
 
   const handlePresetSelect = (vendeur, presetValue) => {
@@ -478,6 +449,13 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       ...prev,
       [vendeur]: { ...prev[vendeur], preset: presetValue }
     }));
+    setTimeout(() => {
+      const input = document.querySelector(`input[data-vendor="${vendeur}"]`);
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 100);
   };
 
   const calculatePresetAmount = (vendeur) => {
@@ -495,6 +473,10 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return vendorState.currency === 'HTG' ? htgPresets : usdPresets;
   };
 
+  const isDirectAmount = (vendeur) => {
+    return false;
+  };
+
   const handleInputChange = (vendeur, value) => {
     setVendorInputs(prev => ({ ...prev, [vendeur]: value }));
   };
@@ -508,6 +490,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       return;
     }
 
+    // Always use preset mode (no direct amounts)
     let amount = 0;
     let currency = vendorState.currency;
     let note = '';
@@ -520,6 +503,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         ? `${presetValue} ${currency}`
         : `${multiplier} × ${presetValue} ${currency}`;
     } else {
+      // Default to 1 × preset
       const presetValue = parseFloat(vendorState.preset);
       amount = presetValue;
       note = `${presetValue} ${currency}`;
@@ -544,6 +528,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         [vendeur]: [...(prev[vendeur] || []), newSequence]
       }));
 
+      // Clear input but keep same preset selected
       setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
     }
   };
@@ -564,35 +549,16 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return sequences.reduce((total, seq) => total + seq.amount, 0);
   };
 
-  // Create breakdown string for deposit
-  const createBreakdownString = (sequences) => {
-    const htgSequences = sequences.filter(seq => seq.currency === 'HTG');
-    const bills = {};
-    
-    htgSequences.forEach(seq => {
-      const match = seq.note.match(/(?:(\d+)\s*[×x]\s*)?(\d+)/i);
-      if (match) {
-        const quantity = match[1] ? parseInt(match[1]) : 1;
-        const denomination = parseInt(match[2]);
-        
-        if (!bills[denomination]) {
-          bills[denomination] = 0;
-        }
-        bills[denomination] += quantity;
-      }
-    });
-    
-    return Object.entries(bills)
-      .sort(([a], [b]) => parseInt(b) - parseInt(a))
-      .map(([denom, qty]) => `${qty} × ${denom}`)
-      .join(', ');
-  };
-
+  // Handle mixed currencies by creating separate deposits
   const handleAddCompleteDeposit = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
 
-    if (sequences.length === 0) return;
+    if (sequences.length === 0) {
+      console.log("No sequences to add");
+      return;
+    }
 
+    // Group sequences by currency
     const sequencesByCurrency = sequences.reduce((acc, seq) => {
       const currency = seq.currency || 'HTG';
       if (!acc[currency]) {
@@ -602,13 +568,16 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       return acc;
     }, {});
 
+    // Get current deposits count
     const currentDepots = depotsActuels[vendeur] || [];
     let nextIndex = currentDepots.length;
 
+    // Create deposits with sequential indices
     Object.entries(sequencesByCurrency).forEach(([currency, currencySequences], i) => {
       const totalAmount = currencySequences.reduce((total, seq) => total + seq.amount, 0);
-      const breakdown = createBreakdownString(currencySequences);
+      const breakdown = currencySequences.map(seq => seq.note).join(', ');
 
+      // Use setTimeout to ensure state updates sequentially
       setTimeout(() => {
         if (currency === 'USD') {
           const deposit = {
@@ -617,20 +586,21 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
             breakdown: breakdown,
             sequences: currencySequences
           };
-          ajouterDepot(vendeur, deposit);
+          mettreAJourDepot(vendeur, nextIndex + i, deposit);
         } else {
           const deposit = {
             value: totalAmount.toString(),
             breakdown: breakdown,
             sequences: currencySequences
           };
-          ajouterDepot(vendeur, deposit);
+          mettreAJourDepot(vendeur, nextIndex + i, deposit);
         }
 
         markAsRecentlyAdded(vendeur, nextIndex + i);
-      }, i * 50);
+      }, i * 50); // Small delay between each deposit
     });
 
+    // Clear sequences after a delay to ensure all deposits are added
     setTimeout(() => {
       handleClearSequences(vendeur);
     }, Object.keys(sequencesByCurrency).length * 50 + 50);
@@ -644,163 +614,127 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return editingDeposit?.vendeur === vendeur && editingDeposit?.index === index;
   };
 
-  // Calculate liasses stats
-  const liasseStats = calculateLiasses();
-
   return (
     <div className="space-y-4">
       <ExchangeRateBanner tauxDeChange={TAUX_DE_CHANGE} />
 
-      {/* Denomination Summary Section */}
-      <div className="bg-white rounded-xl shadow p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Package className="text-green-600" size={24} />
-            <h3 className="text-lg font-semibold text-gray-900">Conditionnement des Billets</h3>
-          </div>
-          <button
-            onClick={() => setShowDenominationView(!showDenominationView)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            <Layers size={18} />
-            {showDenominationView ? 'Masquer' : 'Afficher'} Détail
-          </button>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <p className="text-sm text-blue-600">Total Billets</p>
-            <p className="text-2xl font-bold text-blue-900">{liasseStats.totalBills}</p>
-          </div>
-          <div className="bg-green-50 p-3 rounded-lg">
-            <p className="text-sm text-green-600">Liasses Possibles</p>
-            <p className="text-2xl font-bold text-green-900">{liasseStats.possibleLiasses}</p>
-            <p className="text-xs text-green-700">(100 billets/lias)</p>
-          </div>
-          <div className="bg-yellow-50 p-3 rounded-lg">
-            <p className="text-sm text-yellow-600">Billets Restants</p>
-            <p className="text-2xl font-bold text-yellow-900">{liasseStats.remainingBills}</p>
-          </div>
-          <div className="bg-purple-50 p-3 rounded-lg">
-            <p className="text-sm text-purple-600">Valeur Totale</p>
-            <p className="text-2xl font-bold text-purple-900">
-              {calculateTotalDenominations().totalValue.toLocaleString()} HTG
-            </p>
-          </div>
-        </div>
-
-        {/* Detailed Denomination View */}
-        {showDenominationView && (
-          <div className="border border-gray-200 rounded-lg p-4 mt-4">
-            <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-              <Calculator size={18} />
-              Détail par Dénomination
-            </h4>
-            
-            {/* Global Summary */}
-            <div className="mb-6">
-              <div className="grid grid-cols-2 md:grid-cols-7 gap-2 mb-4">
-                {DENOMINATIONS.map(denom => {
-                  const total = calculateTotalDenominations().bills[denom.value];
-                  return (
-                    <div key={denom.value} className={`${denom.color} p-3 rounded-lg text-center`}>
-                      <p className="text-sm font-medium">{denom.label} HTG</p>
-                      <p className="text-2xl font-bold mt-1">{total}</p>
-                      <p className="text-xs mt-1">{(total * denom.value).toLocaleString()} HTG</p>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Liasses Calculation */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm font-medium text-gray-900 mb-2">Calcul des Liasses:</p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-bold">{liasseStats.totalBills} billets</span> ÷ 
-                  <span className="font-bold"> 100 billets/lias</span> = 
-                  <span className="font-bold text-green-600"> {liasseStats.possibleLiasses} liasses</span>
-                </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Avec <span className="font-bold">{liasseStats.remainingBills} billets</span> restants
-                </p>
-              </div>
-            </div>
-
-            {/* Per Vendor Breakdown */}
-            <h5 className="font-medium text-gray-900 mb-3">Par Vendeur:</h5>
-            <div className="space-y-4">
-              {vendeurs.map(vendeur => {
-                const vendorDenoms = denominationsByVendor[vendeur.id];
-                if (!vendorDenoms || vendorDenoms.totalBills === 0) return null;
-                
-                return (
-                  <div key={vendeur.id} className="border border-gray-200 rounded p-3">
-                    <div className="flex justify-between items-center mb-2">
-                      <h6 className="font-medium text-gray-900">{vendeur.nom}</h6>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-600">
-                          {vendorDenoms.totalBills} billets
-                        </p>
-                        <p className="text-sm font-bold">
-                          {vendorDenoms.totalValue.toLocaleString()} HTG
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-7 gap-1">
-                      {DENOMINATIONS.map(denom => {
-                        const count = vendorDenoms.bills[denom.value] || 0;
-                        if (count === 0) return null;
-                        
-                        return (
-                          <div key={denom.value} className={`${denom.color} p-2 rounded text-center`}>
-                            <p className="text-xs font-medium">{denom.label}</p>
-                            <div className="flex items-center justify-center gap-1 mt-1">
-                              <span className="text-sm font-bold">{count}</span>
-                              <div className="flex flex-col">
-                                <button
-                                  onClick={() => handleDenominationAdjustment(vendeur.id, denom.value, 1)}
-                                  className="text-xs hover:bg-white/50 rounded px-1"
-                                >
-                                  +
-                                </button>
-                                <button
-                                  onClick={() => handleDenominationAdjustment(vendeur.id, denom.value, -1)}
-                                  className="text-xs hover:bg-white/50 rounded px-1"
-                                >
-                                  -
-                                </button>
-                              </div>
-                            </div>
-                            <p className="text-xs mt-1">{(count * denom.value).toLocaleString()}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-              
-              {Object.keys(denominationsByVendor).length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  <p>Aucun dépôt avec décomposition de billets</p>
-                  <p className="text-sm mt-1">Ajoutez des dépôts avec des séquences HTG</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Deposits Section */}
       <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl p-2 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <DollarSign size={20} />
             <h3 className="text-lg font-bold">Dépôts - Shift {shift}</h3>
           </div>
+          
+          {/* NEW: Button to toggle denomination view */}
+          <button
+            onClick={() => setShowDenomination(!showDenomination)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition"
+          >
+            <Calculator size={16} />
+            <span className="text-sm font-medium">
+              {showDenomination ? 'Cacher Dénominations' : 'Voir Dénominations'}
+            </span>
+          </button>
         </div>
+
+        {/* NEW: Denomination Counter Section */}
+        {showDenomination && (
+          <div className="mb-6 bg-white bg-opacity-10 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Package size={20} />
+              <h4 className="text-lg font-bold">Conditionnement des Espèces</h4>
+            </div>
+            
+            {/* Summary of bundles possible */}
+            <div className="mb-4">
+              <h5 className="text-sm font-semibold mb-2">Liasses possibles:</h5>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {denominations.map(denom => {
+                  const bundles = calculateCashBreakdown.bundles[denom.value] || 0;
+                  return (
+                    <div key={denom.value} className={`p-2 rounded-lg ${denom.color}`}>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-gray-900">{bundles}</div>
+                        <div className="text-xs text-gray-700">liasses de {denom.value}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Totals by denomination */}
+            <div className="mb-4">
+              <h5 className="text-sm font-semibold mb-2">Total par dénomination:</h5>
+              <div className="space-y-2">
+                {denominations.map(denom => {
+                  const total = calculateCashBreakdown.totals[denom.value] || 0;
+                  const value = total * denom.value;
+                  return (
+                    <div key={denom.value} className="flex justify-between items-center p-2 bg-white bg-opacity-10 rounded">
+                      <span className="text-sm">{denom.label}:</span>
+                      <div className="flex items-center gap-4">
+                        <span className="font-bold">{total} billets</span>
+                        <span className="text-sm opacity-80">({formaterArgent(value)} HTG)</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Manual denomination input */}
+            <div className="mt-4">
+              <h5 className="text-sm font-semibold mb-2">Ajouter manuellement:</h5>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {denominations.map(denom => (
+                  <div key={denom.value} className="flex gap-1">
+                    <input
+                      type="number"
+                      min="0"
+                      value={denominationInputs[denom.value] || ''}
+                      onChange={(e) => handleDenominationChange(denom.value, e.target.value)}
+                      placeholder="Qté"
+                      className="w-full px-2 py-1 rounded text-gray-900 text-center"
+                    />
+                    <button
+                      onClick={() => handleAddDenomination(denom.value)}
+                      className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-sm"
+                    >
+                      +
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Breakdown by vendor */}
+            {Object.keys(calculateCashBreakdown.byVendor).length > 0 && (
+              <div className="mt-4">
+                <h5 className="text-sm font-semibold mb-2">Détail par vendeur:</h5>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                  {Object.entries(calculateCashBreakdown.byVendor).map(([vendorId, breakdown]) => (
+                    <div key={vendorId} className="bg-white bg-opacity-5 rounded p-2">
+                      <div className="font-medium text-sm mb-1">{getVendorName(vendorId)}</div>
+                      <div className="grid grid-cols-3 md:grid-cols-7 gap-1 text-xs">
+                        {denominations.map(denom => {
+                          const count = breakdown[denom.value] || 0;
+                          if (count === 0) return null;
+                          return (
+                            <div key={denom.value} className="text-center">
+                              <div className="font-bold">{count}</div>
+                              <div className="text-xs opacity-70">{denom.value}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="space-y-4">
           {vendeurs.length === 0 ? (
@@ -809,62 +743,56 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
             </div>
           ) : (
             vendeurs.map(vendeur => {
-              const donneesVendeur = totauxVendeurs[vendeur.id];
-              const totalDepotHTG = calculateTotalDepotsHTG(vendeur.id);
+              const donneesVendeur = totauxVendeurs[vendeur];
+              const totalDepotHTG = calculateTotalDepotsHTG(vendeur);
               const especesAttendues = donneesVendeur ? donneesVendeur.especesAttendues : 0;
-              const depots = depotsActuels[vendeur.id] || [];
+              const depots = depotsActuels[vendeur] || [];
 
               // Initialize vendor state if not exists
-              if (!vendorPresets[vendeur.id]) {
-                initializeVendorState(vendeur.id, 'HTG');
+              if (!vendorPresets[vendeur]) {
+                initializeVendorState(vendeur, 'HTG');
               }
 
-              const vendorState = vendorPresets[vendeur.id];
-              const currentPresets = getCurrentPresets(vendeur.id);
-              const sequences = depositSequences[vendeur.id] || [];
-              const sequencesTotal = calculateSequencesTotal(vendeur.id);
-              const sequencesTotalByCurrency = calculateSequencesTotalByCurrency(vendeur.id);
-              const totalSequencesHTG = calculateTotalSequencesHTG(vendeur.id);
-              
-              // FIXED: Check if editing this vendor
-              const isEditingMode = editingDeposit?.vendeur === vendeur.id;
-              const editingIndex = editingDeposit?.index;
+              const vendorState = vendorPresets[vendeur];
+              const currentPresets = getCurrentPresets(vendeur);
+              const isDirectMode = isDirectAmount(vendeur);
+              const sequences = depositSequences[vendeur] || [];
+              const sequencesTotal = calculateSequencesTotal(vendeur);
+              const sequencesTotalByCurrency = calculateSequencesTotalByCurrency(vendeur);
+              const totalSequencesHTG = calculateTotalSequencesHTG(vendeur);
+              const isEditingMode = editingDeposit?.vendeur === vendeur;
 
               return (
                 <VendorDepositCard
-                  key={vendeur.id}
-                  vendeur={vendeur.nom}
+                  key={vendeur}
+                  vendeur={vendeur}
                   donneesVendeur={donneesVendeur}
                   especesAttendues={especesAttendues}
                   totalDepotHTG={totalDepotHTG}
                 >
+                  {/* SEQUENTIAL DEPOSITS ONLY - Always Visible */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-semibold">
                         {isEditingMode ? 
-                          `Éditer Dépôt #${editingIndex + 1}` : 
-                          'Ajouter Nouveau Dépôt'}
+                          `Éditer Dépôt #${editingDeposit.index + 1}` : 
+                          'Ajouter Nouveau Dépôt (Séquentiel)'}
                       </span>
-                      {isEditingMode && (
-                        <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-1">
+                        {isEditingMode && (
                           <button
-                            onClick={() => saveEditedDeposit(vendeur.id)}
-                            className="px-2 py-1.5 rounded-lg font-bold text-xs bg-green-500 text-white"
-                          >
-                            Sauvegarder
-                          </button>
-                          <button
-                            onClick={() => cancelEdit(vendeur.id)}
-                            className="px-2 py-1.5 rounded-lg font-bold text-xs bg-red-500 text-white"
+                            onClick={() => cancelEdit(vendeur)}
+                            className="px-2 py-1.5 rounded-lg font-bold text-xs bg-red-500 text-white active:scale-95 transition"
                           >
                             Annuler
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
 
+                    {/* ALWAYS VISIBLE Sequence Manager - UPDATED PROPS */}
                     <SequenceManager
-                      vendeur={vendeur.id}
+                      vendeur={vendeur}
                       vendorState={vendorState}
                       sequences={sequences}
                       sequencesTotal={sequencesTotal}
@@ -874,12 +802,15 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                       currentPresets={currentPresets}
                       handleClearSequences={handleClearSequences}
                       handleRemoveSequence={handleRemoveSequence}
+                      handleUpdateSequence={(sequenceId, updatedSequence) => 
+                        handleUpdateSequence(vendeur, sequenceId, updatedSequence)
+                      }
                       handlePresetSelect={handlePresetSelect}
                       handleInputChange={handleInputChange}
                       handleAddSequence={handleAddSequence}
                       handleAddCompleteDeposit={isEditingMode ? 
-                        () => saveEditedDeposit(vendeur.id) : 
-                        () => handleAddCompleteDeposit(vendeur.id)}
+                        () => saveEditedDeposit(vendeur) : 
+                        () => handleAddCompleteDeposit(vendeur)}
                       calculatePresetAmount={calculatePresetAmount}
                       htgPresets={htgPresets}
                       usdPresets={usdPresets}
@@ -888,8 +819,9 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                     />
                   </div>
 
+                  {/* Use DepositsSummary with edit/delete actions */}
                   <DepositsSummary
-                    vendeur={vendeur.id}
+                    vendeur={vendeur}
                     depots={depots}
                     isRecentlyAdded={isRecentlyAdded}
                     getMontantHTG={getMontantHTG}
