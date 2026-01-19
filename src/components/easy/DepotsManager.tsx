@@ -43,15 +43,15 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     { value: '100', label: '100' }
   ];
 
-  // Gourde denominations (billets)
+  // Gourde denominations (billets) - Updated: liasse = 100 bills
   const denominations = [
-    { value: 1000, label: '1000 Gourdes', bundles: 10, color: 'bg-purple-100' },
-    { value: 500, label: '500 Gourdes', bundles: 10, color: 'bg-blue-100' },
-    { value: 250, label: '250 Gourdes', bundles: 10, color: 'bg-green-100' },
-    { value: 100, label: '100 Gourdes', bundles: 10, color: 'bg-yellow-100' },
-    { value: 50, label: '50 Gourdes', bundles: 10, color: 'bg-orange-100' },
-    { value: 25, label: '25 Gourdes', bundles: 10, color: 'bg-red-100' },
-    { value: 10, label: '10 Gourdes', bundles: 10, color: 'bg-pink-100' }
+    { value: 1000, label: '1000 Gourdes', bundles: 100, color: 'bg-purple-100' },
+    { value: 500, label: '500 Gourdes', bundles: 100, color: 'bg-blue-100' },
+    { value: 250, label: '250 Gourdes', bundles: 100, color: 'bg-green-100' },
+    { value: 100, label: '100 Gourdes', bundles: 100, color: 'bg-yellow-100' },
+    { value: 50, label: '50 Gourdes', bundles: 100, color: 'bg-orange-100' },
+    { value: 25, label: '25 Gourdes', bundles: 100, color: 'bg-red-100' },
+    { value: 10, label: '10 Gourdes', bundles: 100, color: 'bg-pink-100' }
   ];
 
   // Helper Functions
@@ -113,18 +113,21 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return `${formaterArgent(amount)} HTG`;
   };
 
-  // NEW: Calculate cash breakdown for denomination counting
+  // FIXED: Calculate cash breakdown for denomination counting
   const calculateCashBreakdown = useMemo(() => {
     const breakdown = {
       byVendor: {},
       totals: {},
-      bundles: {}
+      bundles: {},
+      bundlesCount: 0, // Total number of bundles
+      looseBills: {}, // Bills that don't form complete bundles
     };
 
     // Initialize totals
     denominations.forEach(denom => {
       breakdown.totals[denom.value] = 0;
       breakdown.bundles[denom.value] = 0;
+      breakdown.looseBills[denom.value] = 0;
     });
 
     // Process deposits for each vendor
@@ -140,36 +143,84 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
         // Skip USD deposits for denomination counting
         if (isUSDDepot(depot)) return;
 
-        const amountHTG = getMontantHTG(depot);
-        let remainingAmount = amountHTG;
-        
-        // Try to distribute by denominations from highest to lowest
-        denominations.forEach(denom => {
-          const count = Math.floor(remainingAmount / denom.value);
-          if (count > 0) {
-            breakdown.byVendor[vendeur][denom.value] += count;
-            breakdown.totals[denom.value] += count;
-            remainingAmount -= count * denom.value;
+        // Check if deposit has a breakdown/sequences
+        if (hasBreakdown(depot)) {
+          // Parse the breakdown to get exact denominations
+          const breakdownText = depot.breakdown || '';
+          // Try to extract denomination info from breakdown
+          // Example: "100 × 1000 HTG" or "180 × 1000 HTG"
+          const regex = /(\d+)\s*×\s*(\d+)\s*(HTG|Gourdes?)/gi;
+          let match;
+          while ((match = regex.exec(breakdownText)) !== null) {
+            const count = parseInt(match[1], 10);
+            const denomination = parseInt(match[2], 10);
+            if (count && denomination && breakdown.byVendor[vendeur][denomination] !== undefined) {
+              breakdown.byVendor[vendeur][denomination] += count;
+              breakdown.totals[denomination] += count;
+            }
           }
-        });
+        } else {
+          // For simple deposits without breakdown, we need to estimate
+          const amountHTG = getMontantHTG(depot);
+          
+          // Find best denomination combination
+          const estimatedBills = estimateBillsFromAmount(amountHTG);
+          Object.entries(estimatedBills).forEach(([denomStr, count]) => {
+            const denomination = parseInt(denomStr, 10);
+            if (denomination && count > 0) {
+              breakdown.byVendor[vendeur][denomination] += count;
+              breakdown.totals[denomination] += count;
+            }
+          });
+        }
       });
     });
 
-    // Calculate bundles for totals
+    // Calculate bundles and loose bills for each denomination
+    let totalBundlesCount = 0;
     denominations.forEach(denom => {
-      breakdown.bundles[denom.value] = Math.floor(breakdown.totals[denom.value] / denom.bundles);
+      const totalBills = breakdown.totals[denom.value] || 0;
+      const bundles = Math.floor(totalBills / denom.bundles); // 100 bills per bundle
+      const loose = totalBills % denom.bundles;
+      
+      breakdown.bundles[denom.value] = bundles;
+      breakdown.looseBills[denom.value] = loose;
+      totalBundlesCount += bundles;
     });
+    
+    breakdown.bundlesCount = totalBundlesCount;
 
     return breakdown;
   }, [depotsActuels, shift]);
 
-  // NEW: Get vendor name from ID
+  // Helper function to estimate bills from amount
+  const estimateBillsFromAmount = (amount) => {
+    const result = {};
+    let remaining = amount;
+    
+    // Sort denominations from highest to lowest
+    const sortedDenoms = [...denominations].sort((a, b) => b.value - a.value);
+    
+    sortedDenoms.forEach(denom => {
+      const count = Math.floor(remaining / denom.value);
+      if (count > 0) {
+        result[denom.value] = count;
+        remaining -= count * denom.value;
+      } else {
+        result[denom.value] = 0;
+      }
+    });
+    
+    return result;
+  };
+
+  // Get vendor name from ID
   const getVendorName = (vendorId) => {
     const vendor = vendeurs.find(v => v.id === vendorId);
     return vendor ? vendor.nom : vendorId;
   };
 
-  // NEW: Handle denomination input change
+  // Handle denomination input change
   const handleDenominationChange = (denomination, value) => {
     setDenominationInputs(prev => ({
       ...prev,
@@ -177,16 +228,20 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }));
   };
 
-  // NEW: Add manual denomination count
+  // Add manual denomination count
   const handleAddDenomination = (denomination) => {
     const value = parseInt(denominationInputs[denomination]) || 0;
     if (value > 0) {
       // Update totals
       calculateCashBreakdown.totals[denomination] += value;
-      calculateCashBreakdown.bundles[denomination] = Math.floor(
-        calculateCashBreakdown.totals[denomination] / 
-        denominations.find(d => d.value === denomination)?.bundles || 10
-      );
+      
+      // Recalculate bundles and loose bills for this denomination
+      const denomConfig = denominations.find(d => d.value === denomination);
+      if (denomConfig) {
+        const totalBills = calculateCashBreakdown.totals[denomination];
+        calculateCashBreakdown.bundles[denomination] = Math.floor(totalBills / denomConfig.bundles);
+        calculateCashBreakdown.looseBills[denomination] = totalBills % denomConfig.bundles;
+      }
       
       // Clear input
       setDenominationInputs(prev => ({
@@ -625,7 +680,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
             <h3 className="text-lg font-bold">Dépôts - Shift {shift}</h3>
           </div>
           
-          {/* NEW: Button to toggle denomination view */}
+          {/* Button to toggle denomination view */}
           <button
             onClick={() => setShowDenomination(!showDenomination)}
             className="flex items-center gap-2 px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition"
@@ -637,7 +692,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
           </button>
         </div>
 
-        {/* NEW: Denomination Counter Section */}
+        {/* Denomination Counter Section */}
         {showDenomination && (
           <div className="mb-6 bg-white bg-opacity-10 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-4">
@@ -647,15 +702,28 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
             
             {/* Summary of bundles possible */}
             <div className="mb-4">
-              <h5 className="text-sm font-semibold mb-2">Liasses possibles:</h5>
+              <div className="flex justify-between items-center mb-2">
+                <h5 className="text-sm font-semibold">Liasses possibles (100 billets par liasse):</h5>
+                <div className="bg-green-600 px-3 py-1 rounded-full text-sm">
+                  Total: {calculateCashBreakdown.bundlesCount} liasses
+                </div>
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {denominations.map(denom => {
                   const bundles = calculateCashBreakdown.bundles[denom.value] || 0;
+                  const loose = calculateCashBreakdown.looseBills[denom.value] || 0;
+                  if (bundles === 0 && loose === 0) return null;
+                  
                   return (
-                    <div key={denom.value} className={`p-2 rounded-lg ${denom.color}`}>
+                    <div key={denom.value} className={`p-3 rounded-lg ${denom.color}`}>
                       <div className="text-center">
-                        <div className="text-lg font-bold text-gray-900">{bundles}</div>
-                        <div className="text-xs text-gray-700">liasses de {denom.value}</div>
+                        <div className="text-xl font-bold text-gray-900">{bundles}</div>
+                        <div className="text-sm text-gray-700">liasses de {denom.value}</div>
+                        {loose > 0 && (
+                          <div className="text-xs text-gray-600 mt-1">
+                            + {loose} billets libres
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -666,15 +734,27 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
             {/* Totals by denomination */}
             <div className="mb-4">
               <h5 className="text-sm font-semibold mb-2">Total par dénomination:</h5>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                 {denominations.map(denom => {
                   const total = calculateCashBreakdown.totals[denom.value] || 0;
+                  const bundles = calculateCashBreakdown.bundles[denom.value] || 0;
+                  const loose = calculateCashBreakdown.looseBills[denom.value] || 0;
                   const value = total * denom.value;
+                  
+                  if (total === 0) return null;
+                  
                   return (
                     <div key={denom.value} className="flex justify-between items-center p-2 bg-white bg-opacity-10 rounded">
                       <span className="text-sm">{denom.label}:</span>
                       <div className="flex items-center gap-4">
-                        <span className="font-bold">{total} billets</span>
+                        <div className="text-right">
+                          <div className="font-bold">{total} billets</div>
+                          {bundles > 0 && (
+                            <div className="text-xs opacity-80">
+                              ({bundles} liasses + {loose} libres)
+                            </div>
+                          )}
+                        </div>
                         <span className="text-sm opacity-80">({formaterArgent(value)} HTG)</span>
                       </div>
                     </div>
@@ -712,24 +792,44 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
             {Object.keys(calculateCashBreakdown.byVendor).length > 0 && (
               <div className="mt-4">
                 <h5 className="text-sm font-semibold mb-2">Détail par vendeur:</h5>
-                <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                  {Object.entries(calculateCashBreakdown.byVendor).map(([vendorId, breakdown]) => (
-                    <div key={vendorId} className="bg-white bg-opacity-5 rounded p-2">
-                      <div className="font-medium text-sm mb-1">{getVendorName(vendorId)}</div>
-                      <div className="grid grid-cols-3 md:grid-cols-7 gap-1 text-xs">
-                        {denominations.map(denom => {
-                          const count = breakdown[denom.value] || 0;
-                          if (count === 0) return null;
-                          return (
-                            <div key={denom.value} className="text-center">
-                              <div className="font-bold">{count}</div>
-                              <div className="text-xs opacity-70">{denom.value}</div>
-                            </div>
-                          );
-                        })}
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                  {Object.entries(calculateCashBreakdown.byVendor).map(([vendorId, breakdown]) => {
+                    // Calculate total bills for this vendor
+                    const vendorTotal = denominations.reduce((sum, denom) => 
+                      sum + (breakdown[denom.value] || 0), 0);
+                    if (vendorTotal === 0) return null;
+                    
+                    return (
+                      <div key={vendorId} className="bg-white bg-opacity-5 rounded p-2">
+                        <div className="flex justify-between items-center mb-1">
+                          <div className="font-medium text-sm">{getVendorName(vendorId)}</div>
+                          <div className="text-xs opacity-70">
+                            {vendorTotal} billets
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 md:grid-cols-7 gap-1 text-xs">
+                          {denominations.map(denom => {
+                            const count = breakdown[denom.value] || 0;
+                            if (count === 0) return null;
+                            const bundles = Math.floor(count / denom.bundles);
+                            const loose = count % denom.bundles;
+                            
+                            return (
+                              <div key={denom.value} className="text-center">
+                                <div className="font-bold">{count}</div>
+                                <div className="text-xs opacity-70">
+                                  {denom.value}
+                                  {bundles > 0 && (
+                                    <div className="text-green-400">{bundles}L</div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
