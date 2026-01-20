@@ -97,13 +97,20 @@ export default function LiasseCounter() {
     const instructions = getDepartageInstructions(denom);
 
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="text-right">
-            <div className="text-xs sm:text-sm text-gray-600">Total billets</div>
-            <div className="text-2xl sm:text-3xl font-bold text-emerald-600">
-              {total}
-            </div>
+      <div className="space-y-4 sm:space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg sm:rounded-xl p-2 sm:p-4 border border-slate-200">
+            <div className="text-[10px] sm:text-xs text-slate-600 font-medium mb-0.5 sm:mb-1">Total</div>
+            <div className="text-lg sm:text-2xl font-bold text-slate-900">{total}</div>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg sm:rounded-xl p-2 sm:p-4 border border-emerald-200">
+            <div className="text-[10px] sm:text-xs text-emerald-700 font-medium mb-0.5 sm:mb-1">Liasses</div>
+            <div className="text-lg sm:text-2xl font-bold text-emerald-900">{liasseInfo.complete}</div>
+          </div>
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg sm:rounded-xl p-2 sm:p-4 border border-amber-200">
+            <div className="text-[10px] sm:text-xs text-amber-700 font-medium mb-0.5 sm:mb-1">Reste</div>
+            <div className="text-lg sm:text-2xl font-bold text-amber-900">{liasseInfo.remaining}</div>
           </div>
         </div>
 
@@ -118,37 +125,41 @@ export default function LiasseCounter() {
             }))}
             onKeyPress={(e) => e.key === 'Enter' && addSequence(denom)}
             placeholder="Nombre de billets..."
-            className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"
+            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-white border border-slate-200 rounded-lg sm:rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
           />
           <button
             onClick={() => addSequence(denom)}
-            className="bg-emerald-500 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-emerald-600 transition-colors flex items-center gap-1 sm:gap-2 text-sm sm:text-base whitespace-nowrap"
+            className="bg-emerald-500 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:bg-emerald-600 active:bg-emerald-700 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base font-medium shadow-sm hover:shadow whitespace-nowrap"
           >
-            <Plus size={18} className="sm:w-5 sm:h-5" />
-            <span>Ajouter</span>
+            <Plus size={16} className="sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">Ajouter</span>
+            <span className="xs:hidden">+</span>
           </button>
         </div>
 
         {/* Sequences */}
         {bills[denom].length > 0 && (
           <div>
-            <div className="text-xs sm:text-sm font-semibold text-gray-700 mb-2">
-              Séquences:
+            <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">
+              Séquences
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {bills[denom].map((count, idx) => (
                 <div
                   key={idx}
-                  className="bg-gray-100 px-2 sm:px-3 py-1 rounded-full flex items-center gap-1 sm:gap-2"
+                  className="bg-slate-100 border border-slate-200 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 hover:bg-slate-200 transition-colors"
                 >
-                  <span className="text-xs sm:text-sm">
-                    #{idx + 1}: {count}
+                  <span className="text-[10px] sm:text-sm font-medium text-slate-700">
+                    #{idx + 1}
+                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-900">
+                    {count}
                   </span>
                   <button
                     onClick={() => removeSequence(denom, idx)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 transition-colors"
                   >
-                    <Trash2 size={14} className="sm:w-4 sm:h-4" />
+                    <Trash2 size={12} className="sm:w-3.5 sm:h-3.5" />
                   </button>
                 </div>
               ))}
@@ -156,68 +167,62 @@ export default function LiasseCounter() {
           </div>
         )}
 
-        {/* Liasse summary */}
-        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 sm:p-4">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <div className="text-xs sm:text-sm text-gray-600">Liasses complètes</div>
-              <div className="text-2xl sm:text-3xl font-bold text-emerald-600">
-                {liasseInfo.complete}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm text-gray-600">Billets restants</div>
-              <div className="text-2xl sm:text-3xl font-bold text-gray-700">
-                {liasseInfo.remaining}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Departage Instructions */}
         {instructions.length > 0 && (
           <div>
-            <div className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">
-              Comment départager les séquences:
+            <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">
+              Instructions de départage
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {instructions.map((inst) => (
                 <div
                   key={inst.liasseNum}
-                  className={`p-3 sm:p-4 rounded-lg border-2 ${
+                  className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 ${
                     inst.isComplete 
-                      ? 'bg-emerald-50 border-emerald-400' 
-                      : 'bg-yellow-50 border-yellow-400'
+                      ? 'bg-emerald-50 border-emerald-300' 
+                      : 'bg-amber-50 border-amber-300'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm sm:text-base font-bold text-gray-800">
-                      Liasse {inst.liasseNum} {inst.isComplete ? '✓' : '(Incomplète)'}
-                    </span>
-                    <span className="text-sm sm:text-base font-bold text-gray-800">
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900">
+                        Liasse {inst.liasseNum}
+                      </span>
+                      {inst.isComplete && (
+                        <span className="text-[9px] sm:text-xs bg-emerald-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full font-medium">
+                          Complète
+                        </span>
+                      )}
+                      {!inst.isComplete && (
+                        <span className="text-[9px] sm:text-xs bg-amber-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full font-medium">
+                          Incomplète
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs sm:text-sm font-bold text-slate-900">
                       {inst.total}/100
                     </span>
                   </div>
                   
-                  <div className="space-y-1">
+                  <div className="space-y-1.5 sm:space-y-2">
                     {inst.steps.map((step, idx) => (
-                      <div key={idx} className="text-xs sm:text-sm">
-                        <span className="font-semibold text-gray-800">
-                          Séquence #{step.sequenceNum}:
+                      <div key={idx} className="text-[11px] sm:text-sm bg-white/60 rounded-lg p-2 border border-slate-200">
+                        <span className="font-semibold text-slate-800">
+                          Séq. #{step.sequenceNum}:
                         </span>{' '}
                         Prenez{' '}
                         <span className="font-bold text-emerald-700">
-                          {step.take} billets
+                          {step.take}
                         </span>
                         {' '}sur {step.from}
                         {step.remaining > 0 && (
-                          <span className="text-orange-600 font-semibold">
-                            {' '}→ reste {step.remaining} pour la prochaine liasse
+                          <span className="text-amber-700 font-semibold">
+                            {' '}→ reste {step.remaining}
                           </span>
                         )}
                         {step.remaining === 0 && (
-                          <span className="text-gray-500">
-                            {' '}(tout utilisé ✓)
+                          <span className="text-slate-500">
+                            {' '}✓
                           </span>
                         )}
                       </div>
@@ -233,19 +238,20 @@ export default function LiasseCounter() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-3 sm:p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 p-2 sm:p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+        {/* Header */}
+        <div className="mb-4 sm:mb-6 px-2 sm:px-0">
+          <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 mb-1 sm:mb-2">
             Compteur de Liasses
           </h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            Sélectionnez une dénomination et entrez vos séquences
+          <p className="text-xs sm:text-base text-slate-600">
+            Gérez vos billets par dénomination
           </p>
         </div>
 
         {/* Tabs Header */}
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm mb-4 p-1 overflow-hidden border border-gray-100">
+        <div className="bg-white rounded-lg sm:rounded-2xl shadow-sm mb-3 sm:mb-4 p-1 overflow-hidden border border-slate-200">
           <div className="flex gap-1 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
             {DENOMINATIONS.map((denom) => {
               const isActive = activeTab === denom;
@@ -254,16 +260,14 @@ export default function LiasseCounter() {
                 <button
                   key={denom}
                   onClick={() => setActiveTab(denom)}
-                  className={`flex-shrink-0 snap-center min-w-[70px] sm:min-w-[80px] px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg transition-all duration-200 ${
+                  className={`flex-shrink-0 snap-center min-w-[60px] sm:min-w-[80px] px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-all duration-200 font-medium ${
                     isActive
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-transparent text-gray-600 hover:bg-gray-50 active:bg-gray-100'
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'bg-transparent text-slate-600 hover:bg-slate-50 active:bg-slate-100'
                   }`}
                 >
                   <div className="text-center">
-                    <div className={`text-xs sm:text-sm font-semibold ${
-                      isActive ? 'text-white' : 'text-gray-800'
-                    }`}>
+                    <div className={`text-xs sm:text-sm font-semibold`}>
                       {denom} G
                     </div>
                   </div>
@@ -273,21 +277,21 @@ export default function LiasseCounter() {
           </div>
         </div>
 
-        <style dangerouslySetInnerHTML={{__html: `
-          .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-          }
-          .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-        `}} />
-
         {/* Tab Content */}
-        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+        <div className="bg-white rounded-lg sm:rounded-2xl shadow-sm p-3 sm:p-6 border border-slate-200">
           {renderDenomination(activeTab)}
         </div>
       </div>
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}} />
     </div>
   );
 }
