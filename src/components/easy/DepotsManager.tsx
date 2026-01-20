@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { DollarSign, Package, Calculator } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DollarSign } from 'lucide-react';
 import VendorDepositCard from './VendorDepositCard';
 import SequenceManager from './SequenceManager';
 import DepositsSummary from './DepositsSummary';
@@ -15,11 +15,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const [vendorPresets, setVendorPresets] = useState({});
   const [depositSequences, setDepositSequences] = useState({});
   const [recentlyAdded, setRecentlyAdded] = useState({});
-  const [editingDeposit, setEditingDeposit] = useState(null);
-  
-  // New state for denomination counting
-  const [denominationInputs, setDenominationInputs] = useState({});
-  const [showDenomination, setShowDenomination] = useState(false);
+  const [editingDeposit, setEditingDeposit] = useState(null); // { vendeur: string, index: number }
 
   // Presets - HTG from 1 to 1000, USD from 1 to 100
   const htgPresets = [
@@ -43,17 +39,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     { value: '100', label: '100' }
   ];
 
-  // Gourde denominations (billets) - Updated: liasse = 100 bills
-  const denominations = [
-    { value: 1000, label: '1000 Gourdes', bundles: 100, color: 'bg-purple-100' },
-    { value: 500, label: '500 Gourdes', bundles: 100, color: 'bg-blue-100' },
-    { value: 250, label: '250 Gourdes', bundles: 100, color: 'bg-green-100' },
-    { value: 100, label: '100 Gourdes', bundles: 100, color: 'bg-yellow-100' },
-    { value: 50, label: '50 Gourdes', bundles: 100, color: 'bg-orange-100' },
-    { value: 25, label: '25 Gourdes', bundles: 100, color: 'bg-red-100' },
-    { value: 10, label: '10 Gourdes', bundles: 100, color: 'bg-pink-100' }
-  ];
-
   // Helper Functions
   const convertirUSDversHTG = (montantUSD) => {
     return (parseFloat(montantUSD) || 0) * TAUX_DE_CHANGE;
@@ -70,7 +55,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return parseFloat(depot) || 0;
   };
 
-  // Calculate total deposits for a vendor from the actual deposits array
+  // NEW: Calculate total deposits for a vendor from the actual deposits array
   const calculateTotalDepotsHTG = (vendeur) => {
     const depots = depotsActuels[vendeur] || [];
     return depots.reduce((total, depot) => total + getMontantHTG(depot), 0);
@@ -111,144 +96,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     }
     const amount = parseFloat(depot) || 0;
     return `${formaterArgent(amount)} HTG`;
-  };
-
-  // FIXED: Calculate cash breakdown for denomination counting
-  const calculateCashBreakdown = useMemo(() => {
-    const breakdown = {
-      byVendor: {},
-      totals: {},
-      bundles: {},
-      bundlesCount: 0, // Total number of bundles
-      looseBills: {}, // Bills that don't form complete bundles
-    };
-
-    // Initialize totals
-    denominations.forEach(denom => {
-      breakdown.totals[denom.value] = 0;
-      breakdown.bundles[denom.value] = 0;
-      breakdown.looseBills[denom.value] = 0;
-    });
-
-    // Process deposits for each vendor
-    Object.entries(depotsActuels).forEach(([vendeur, depots]) => {
-      // Initialize vendor breakdown
-      breakdown.byVendor[vendeur] = {};
-      denominations.forEach(denom => {
-        breakdown.byVendor[vendeur][denom.value] = 0;
-      });
-
-      // Process each deposit
-      depots.forEach(depot => {
-        // Skip USD deposits for denomination counting
-        if (isUSDDepot(depot)) return;
-
-        // Check if deposit has a breakdown/sequences
-        if (hasBreakdown(depot)) {
-          // Parse the breakdown to get exact denominations
-          const breakdownText = depot.breakdown || '';
-          // Try to extract denomination info from breakdown
-          // Example: "100 × 1000 HTG" or "180 × 1000 HTG"
-          const regex = /(\d+)\s*×\s*(\d+)\s*(HTG|Gourdes?)/gi;
-          let match;
-          while ((match = regex.exec(breakdownText)) !== null) {
-            const count = parseInt(match[1], 10);
-            const denomination = parseInt(match[2], 10);
-            if (count && denomination && breakdown.byVendor[vendeur][denomination] !== undefined) {
-              breakdown.byVendor[vendeur][denomination] += count;
-              breakdown.totals[denomination] += count;
-            }
-          }
-        } else {
-          // For simple deposits without breakdown, we need to estimate
-          const amountHTG = getMontantHTG(depot);
-          
-          // Find best denomination combination
-          const estimatedBills = estimateBillsFromAmount(amountHTG);
-          Object.entries(estimatedBills).forEach(([denomStr, count]) => {
-            const denomination = parseInt(denomStr, 10);
-            if (denomination && count > 0) {
-              breakdown.byVendor[vendeur][denomination] += count;
-              breakdown.totals[denomination] += count;
-            }
-          });
-        }
-      });
-    });
-
-    // Calculate bundles and loose bills for each denomination
-    let totalBundlesCount = 0;
-    denominations.forEach(denom => {
-      const totalBills = breakdown.totals[denom.value] || 0;
-      const bundles = Math.floor(totalBills / denom.bundles); // 100 bills per bundle
-      const loose = totalBills % denom.bundles;
-      
-      breakdown.bundles[denom.value] = bundles;
-      breakdown.looseBills[denom.value] = loose;
-      totalBundlesCount += bundles;
-    });
-    
-    breakdown.bundlesCount = totalBundlesCount;
-
-    return breakdown;
-  }, [depotsActuels, shift]);
-
-  // Helper function to estimate bills from amount
-  const estimateBillsFromAmount = (amount) => {
-    const result = {};
-    let remaining = amount;
-    
-    // Sort denominations from highest to lowest
-    const sortedDenoms = [...denominations].sort((a, b) => b.value - a.value);
-    
-    sortedDenoms.forEach(denom => {
-      const count = Math.floor(remaining / denom.value);
-      if (count > 0) {
-        result[denom.value] = count;
-        remaining -= count * denom.value;
-      } else {
-        result[denom.value] = 0;
-      }
-    });
-    
-    return result;
-  };
-
-  // Get vendor name from ID
-  const getVendorName = (vendorId) => {
-    const vendor = vendeurs.find(v => v.id === vendorId);
-    return vendor ? vendor.nom : vendorId;
-  };
-
-  // Handle denomination input change
-  const handleDenominationChange = (denomination, value) => {
-    setDenominationInputs(prev => ({
-      ...prev,
-      [denomination]: value
-    }));
-  };
-
-  // Add manual denomination count
-  const handleAddDenomination = (denomination) => {
-    const value = parseInt(denominationInputs[denomination]) || 0;
-    if (value > 0) {
-      // Update totals
-      calculateCashBreakdown.totals[denomination] += value;
-      
-      // Recalculate bundles and loose bills for this denomination
-      const denomConfig = denominations.find(d => d.value === denomination);
-      if (denomConfig) {
-        const totalBills = calculateCashBreakdown.totals[denomination];
-        calculateCashBreakdown.bundles[denomination] = Math.floor(totalBills / denomConfig.bundles);
-        calculateCashBreakdown.looseBills[denomination] = totalBills % denomConfig.bundles;
-      }
-      
-      // Clear input
-      setDenominationInputs(prev => ({
-        ...prev,
-        [denomination]: ''
-      }));
-    }
   };
 
   // Calculate sequences total by currency
@@ -411,7 +258,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     handleInputChange(vendeur, '');
   };
 
-  // Save edited deposit with mixed currencies
+  // FIXED: Save edited deposit with mixed currencies
   const saveEditedDeposit = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
     const { index } = editingDeposit;
@@ -529,6 +376,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   };
 
   const isDirectAmount = (vendeur) => {
+    // Always false now - only presets are allowed
     return false;
   };
 
@@ -604,7 +452,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     return sequences.reduce((total, seq) => total + seq.amount, 0);
   };
 
-  // Handle mixed currencies by creating separate deposits
+  // FIXED: Handle mixed currencies by creating separate deposits
   const handleAddCompleteDeposit = (vendeur) => {
     const sequences = depositSequences[vendeur] || [];
 
@@ -679,162 +527,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
             <DollarSign size={20} />
             <h3 className="text-lg font-bold">Dépôts - Shift {shift}</h3>
           </div>
-          
-          {/* Button to toggle denomination view */}
-          <button
-            onClick={() => setShowDenomination(!showDenomination)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition"
-          >
-            <Calculator size={16} />
-            <span className="text-sm font-medium">
-              {showDenomination ? 'Cacher Dénominations' : 'Voir Dénominations'}
-            </span>
-          </button>
         </div>
-
-        {/* Denomination Counter Section */}
-        {showDenomination && (
-          <div className="mb-6 bg-white bg-opacity-10 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Package size={20} />
-              <h4 className="text-lg font-bold">Conditionnement des Espèces</h4>
-            </div>
-            
-            {/* Summary of bundles possible */}
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h5 className="text-sm font-semibold">Liasses possibles (100 billets par liasse):</h5>
-                <div className="bg-green-600 px-3 py-1 rounded-full text-sm">
-                  Total: {calculateCashBreakdown.bundlesCount} liasses
-                </div>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {denominations.map(denom => {
-                  const bundles = calculateCashBreakdown.bundles[denom.value] || 0;
-                  const loose = calculateCashBreakdown.looseBills[denom.value] || 0;
-                  if (bundles === 0 && loose === 0) return null;
-                  
-                  return (
-                    <div key={denom.value} className={`p-3 rounded-lg ${denom.color}`}>
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-gray-900">{bundles}</div>
-                        <div className="text-sm text-gray-700">liasses de {denom.value}</div>
-                        {loose > 0 && (
-                          <div className="text-xs text-gray-600 mt-1">
-                            + {loose} billets libres
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Totals by denomination */}
-            <div className="mb-4">
-              <h5 className="text-sm font-semibold mb-2">Total par dénomination:</h5>
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                {denominations.map(denom => {
-                  const total = calculateCashBreakdown.totals[denom.value] || 0;
-                  const bundles = calculateCashBreakdown.bundles[denom.value] || 0;
-                  const loose = calculateCashBreakdown.looseBills[denom.value] || 0;
-                  const value = total * denom.value;
-                  
-                  if (total === 0) return null;
-                  
-                  return (
-                    <div key={denom.value} className="flex justify-between items-center p-2 bg-white bg-opacity-10 rounded">
-                      <span className="text-sm">{denom.label}:</span>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="font-bold">{total} billets</div>
-                          {bundles > 0 && (
-                            <div className="text-xs opacity-80">
-                              ({bundles} liasses + {loose} libres)
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-sm opacity-80">({formaterArgent(value)} HTG)</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Manual denomination input */}
-            <div className="mt-4">
-              <h5 className="text-sm font-semibold mb-2">Ajouter manuellement:</h5>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {denominations.map(denom => (
-                  <div key={denom.value} className="flex gap-1">
-                    <input
-                      type="number"
-                      min="0"
-                      value={denominationInputs[denom.value] || ''}
-                      onChange={(e) => handleDenominationChange(denom.value, e.target.value)}
-                      placeholder="Qté"
-                      className="w-full px-2 py-1 rounded text-gray-900 text-center"
-                    />
-                    <button
-                      onClick={() => handleAddDenomination(denom.value)}
-                      className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-sm"
-                    >
-                      +
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Breakdown by vendor */}
-            {Object.keys(calculateCashBreakdown.byVendor).length > 0 && (
-              <div className="mt-4">
-                <h5 className="text-sm font-semibold mb-2">Détail par vendeur:</h5>
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                  {Object.entries(calculateCashBreakdown.byVendor).map(([vendorId, breakdown]) => {
-                    // Calculate total bills for this vendor
-                    const vendorTotal = denominations.reduce((sum, denom) => 
-                      sum + (breakdown[denom.value] || 0), 0);
-                    if (vendorTotal === 0) return null;
-                    
-                    return (
-                      <div key={vendorId} className="bg-white bg-opacity-5 rounded p-2">
-                        <div className="flex justify-between items-center mb-1">
-                          <div className="font-medium text-sm">{getVendorName(vendorId)}</div>
-                          <div className="text-xs opacity-70">
-                            {vendorTotal} billets
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-3 md:grid-cols-7 gap-1 text-xs">
-                          {denominations.map(denom => {
-                            const count = breakdown[denom.value] || 0;
-                            if (count === 0) return null;
-                            const bundles = Math.floor(count / denom.bundles);
-                            const loose = count % denom.bundles;
-                            
-                            return (
-                              <div key={denom.value} className="text-center">
-                                <div className="font-bold">{count}</div>
-                                <div className="text-xs opacity-70">
-                                  {denom.value}
-                                  {bundles > 0 && (
-                                    <div className="text-green-400">{bundles}L</div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         <div className="space-y-4">
           {vendeurs.length === 0 ? (
@@ -844,6 +537,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
           ) : (
             vendeurs.map(vendeur => {
               const donneesVendeur = totauxVendeurs[vendeur];
+              // FIXED: Calculate total from actual deposits array instead of totauxVendeurs
               const totalDepotHTG = calculateTotalDepotsHTG(vendeur);
               const especesAttendues = donneesVendeur ? donneesVendeur.especesAttendues : 0;
               const depots = depotsActuels[vendeur] || [];
@@ -921,19 +615,19 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
                   {/* Use DepositsSummary with edit/delete actions */}
                   <DepositsSummary
-                    vendeur={vendeur}
-                    depots={depots}
-                    isRecentlyAdded={isRecentlyAdded}
-                    getMontantHTG={getMontantHTG}
-                    isUSDDepot={isUSDDepot}
-                    getOriginalDepotAmount={getOriginalDepotAmount}
-                    getDepositDisplay={getDepositDisplay}
-                    onEditDeposit={handleEditDeposit}
-                    onDeleteDeposit={supprimerDepot}
-                    editingDeposit={editingDeposit}
-                    isEditingThisDeposit={isEditingThisDeposit}
-                    exchangeRate={TAUX_DE_CHANGE}
-                  />
+  vendeur={vendeur}
+  depots={depots}
+  isRecentlyAdded={isRecentlyAdded}
+  getMontantHTG={getMontantHTG}
+  isUSDDepot={isUSDDepot}
+  getOriginalDepotAmount={getOriginalDepotAmount}
+  getDepositDisplay={getDepositDisplay}
+  onEditDeposit={handleEditDeposit}
+  onDeleteDeposit={supprimerDepot}
+  editingDeposit={editingDeposit}
+  isEditingThisDeposit={isEditingThisDeposit}
+  exchangeRate={TAUX_DE_CHANGE} // ADDED THIS LINE
+/>
                 </VendorDepositCard>
               );
             })
