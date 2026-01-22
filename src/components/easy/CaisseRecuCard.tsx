@@ -1,27 +1,38 @@
-import React, { useState, useMemo } from 'react';
-import { DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, Layers, Target, AlertCircle, Plus, Trash2, Globe, ChevronDown, RefreshCw, ArrowRightLeft } from 'lucide-react';
+// components/easy/CaisseRecuCard.js
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { 
+  DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, 
+  Layers, Target, AlertCircle, Plus, Trash2, Globe, ChevronDown, 
+  RefreshCw, ArrowRightLeft, Loader2 
+} from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 import { generateChangeCombinations, getMaximumGivableAmount } from '@/utils/changeCalculator';
 import ChangeCombinations from './ChangeCombinations';
 
-const CaisseRecuCard = ({
+const CaisseRecuCard = React.memo(({
   vendeurActuel,
   sellerDeposits = [],
-  totalDeposits = 0, // Kept for reference but not used directly
+  totalDeposits = 0,
   totalAjustePourCaisse = 0,
-  especesAttendues = 0, // Kept for reference but recalculated
+  especesAttendues = 0,
   isPropane = false,
   tauxUSD = 132
 }) => {
+  // State
   const [inputValue, setInputValue] = useState('');
-  const [currencyType, setCurrencyType] = useState('HTG'); // 'HTG' or 'USD'
+  const [currencyType, setCurrencyType] = useState('HTG');
   const [cashSequences, setCashSequences] = useState([]);
-  const [selectedPreset, setSelectedPreset] = useState('aucune'); // 'aucune' or preset value
+  const [selectedPreset, setSelectedPreset] = useState('aucune');
   const [showPresets, setShowPresets] = useState(false);
   const [showRoundAmount, setShowRoundAmount] = useState(false);
   const [roundAmount, setRoundAmount] = useState('');
+  const [isCalculating, setIsCalculating] = useState(false);
+  
+  // Refs for debouncing
+  const inputDebounceRef = useRef(null);
+  const calculationTimeoutRef = useRef(null);
 
-  // Preset options for HTG (Gourdes) - including coin values
+  // Presets
   const htgPresets = [
     { value: '5', label: '5' },
     { value: '10', label: '10' },
@@ -39,7 +50,6 @@ const CaisseRecuCard = ({
     { value: '100000', label: '100k' }
   ];
 
-  // Preset options for USD
   const usdPresets = [
     { value: '1', label: '1' },
     { value: '5', label: '5' },
@@ -49,59 +59,47 @@ const CaisseRecuCard = ({
     { value: '100', label: '100' }
   ];
 
-  // Quick add amounts (original functionality - adds directly)
+  // Quick adds
   const htgQuickAdds = [100, 250, 500, 1000];
   const usdQuickAdds = [1, 5, 10, 20];
   const quickAddAmounts = currencyType === 'HTG' ? htgQuickAdds : usdQuickAdds;
-
-  // Get current presets based on currency
   const currentPresets = currencyType === 'HTG' ? htgPresets : usdPresets;
-
-  // Common round amounts for HTG
+  const isDirectAmount = selectedPreset === 'aucune';
   const commonRoundAmounts = [50, 100, 250, 500, 1000, 2000, 5000, 10000];
 
-  // Check if "Aucune" is selected (direct amount entry)
-  const isDirectAmount = selectedPreset === 'aucune';
-
-  // FIXED: Format deposit display function - handles all deposit types
-  const formatDepositDisplay = (depot) => {
+  // Format deposit display with caching
+  const formatDepositDisplay = useCallback((depot) => {
     if (!depot) return '';
     
     try {
-      // Case 1: USD deposit object
       if (typeof depot === 'object' && depot.devise === 'USD') {
         const montantUSD = parseFloat(depot.montant) || 0;
         const montantHTG = montantUSD * tauxUSD;
         return `${montantUSD.toFixed(2)} USD (${formaterArgent(montantHTG)} HTG)`;
       }
-      
-      // Case 2: HTG deposit object with 'value' property
+
       if (typeof depot === 'object' && depot.value !== undefined) {
         const montantHTG = parseFloat(depot.value) || 0;
         return `${formaterArgent(montantHTG)} HTG`;
       }
-      
-      // Case 3: Direct HTG amount (number or string)
+
       const montantHTG = parseFloat(depot) || 0;
       return `${formaterArgent(montantHTG)} HTG`;
-      
     } catch (error) {
-      console.error('Error formatting deposit display:', error, depot);
       return 'Erreur de formatage';
     }
-  };
+  }, [tauxUSD]);
 
-  // FIXED: Get deposit breakdown including all types - SINGLE SOURCE OF TRUTH
+  // Memoized calculations
   const depositBreakdown = useMemo(() => {
     if (!Array.isArray(sellerDeposits)) return [];
     
     return sellerDeposits
-      .filter(depot => depot != null) // Filter out null/undefined
+      .filter(depot => depot != null)
       .map((depot, index) => {
         const isUSD = typeof depot === 'object' && depot.devise === 'USD';
-        
-        // Calculate amount in HTG
         let amountInHTG = 0;
+        
         if (isUSD) {
           const montantUSD = parseFloat(depot.montant) || 0;
           amountInHTG = montantUSD * tauxUSD;
@@ -114,23 +112,20 @@ const CaisseRecuCard = ({
         return {
           id: index + 1,
           display: formatDepositDisplay(depot),
-          isUSD: isUSD,
-          amountInHTG: amountInHTG
+          isUSD,
+          amountInHTG
         };
       });
-  }, [sellerDeposits, tauxUSD]);
+  }, [sellerDeposits, tauxUSD, formatDepositDisplay]);
 
-  // SINGLE SOURCE OF TRUTH: Calculate total deposits from breakdown
   const calculatedTotalDepositsHTG = useMemo(() => {
     return depositBreakdown.reduce((sum, deposit) => sum + deposit.amountInHTG, 0);
   }, [depositBreakdown]);
 
-  // SINGLE SOURCE OF TRUTH: Calculate espèces attendues from corrected total
   const calculatedEspecesAttendues = useMemo(() => {
     return totalAjustePourCaisse - calculatedTotalDepositsHTG;
   }, [totalAjustePourCaisse, calculatedTotalDepositsHTG]);
 
-  // Calculate total cash received from all sequences (converted to HTG)
   const totalCashRecuHTG = useMemo(() => {
     return cashSequences.reduce((sum, seq) => {
       if (seq.currency === 'USD') {
@@ -140,7 +135,6 @@ const CaisseRecuCard = ({
     }, 0);
   }, [cashSequences, tauxUSD]);
 
-  // Calculate total in original currencies for display
   const totalHTG = useMemo(() => {
     return cashSequences
       .filter(seq => seq.currency === 'HTG')
@@ -153,40 +147,41 @@ const CaisseRecuCard = ({
       .reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
   }, [cashSequences]);
 
-  // SINGLE SOURCE OF TRUTH: Calculate change needed using corrected espèces attendues
   const changeNeeded = totalCashRecuHTG - calculatedEspecesAttendues;
   const shouldGiveChange = changeNeeded > 0;
   const isShort = changeNeeded < 0;
 
-  // Calculate round amount details
+  // Givable amount calculation
+  const givableAmount = useMemo(() => {
+    return getMaximumGivableAmount(changeNeeded);
+  }, [changeNeeded]);
+
+  const remainder = changeNeeded - givableAmount;
+  const hasRemainder = remainder > 0;
+
+  // Round amount details
   const roundAmountDetails = useMemo(() => {
     if (!roundAmount || !shouldGiveChange || changeNeeded <= 0) return null;
-
+    
     const desiredAmount = parseFloat(roundAmount);
     const currentChange = changeNeeded;
-
+    
     if (isNaN(desiredAmount) || desiredAmount <= 0) return null;
-
-    // Customer wants to receive more than they're owed
+    
     const customerAdds = desiredAmount - currentChange;
-
+    
     return {
       desiredAmount,
       currentChange,
       customerAdds,
-      isValid: customerAdds >= 0, // Customer must add, not subtract
+      isValid: customerAdds >= 0,
       message: customerAdds >= 0 
         ? `Le client vous donne ${formaterArgent(customerAdds)} HTG de plus pour recevoir ${formaterArgent(desiredAmount)} HTG`
         : `Impossible: ${formaterArgent(desiredAmount)} HTG est moins que ${formaterArgent(currentChange)} HTG dû`
     };
   }, [roundAmount, changeNeeded, shouldGiveChange]);
 
-  // Calculate givable amount and remainder
-  const givableAmount = getMaximumGivableAmount(changeNeeded);
-  const remainder = changeNeeded - givableAmount;
-  const hasRemainder = remainder > 0;
-
-  // Get selected preset display text
+  // Selected preset text
   const getSelectedPresetText = () => {
     if (selectedPreset === 'aucune') {
       return 'Entrer montant libre';
@@ -195,35 +190,48 @@ const CaisseRecuCard = ({
     return preset ? `× ${preset.label} ${currencyType}` : 'Sélectionner';
   };
 
-  // Handle adding a new cash sequence
-  const handleAddSequence = () => {
+  // Debounced input handler
+  const handleInputChange = useCallback((e) => {
+    const value = e.target.value;
+    setInputValue(value);
+    
+    // Clear existing debounce
+    if (inputDebounceRef.current) {
+      clearTimeout(inputDebounceRef.current);
+    }
+    
+    // Only trigger heavy calculations after a delay
+    if (parseFloat(value) > 1000) {
+      inputDebounceRef.current = setTimeout(() => {
+        // Re-trigger calculations if needed
+      }, 500);
+    }
+  }, []);
+
+  // Add sequence handler
+  const handleAddSequence = useCallback(() => {
     let amount = 0;
     let displayAmount = '';
     let note = '';
 
     if (isDirectAmount) {
-      // Direct amount entry mode
       amount = parseFloat(inputValue) || 0;
       displayAmount = amount.toString();
       note = `${amount} ${currencyType}`;
     } else {
-      // Preset multiplier mode
       if (inputValue && !isNaN(parseFloat(inputValue))) {
-        // Calculate amount based on preset
         const multiplier = parseFloat(inputValue);
         const presetValue = parseFloat(selectedPreset);
         amount = presetValue * multiplier;
         displayAmount = amount.toString();
         note = `${multiplier} × ${selectedPreset} ${currencyType}`;
       } else {
-        // If no input value, just use the preset value (as single item)
         amount = parseFloat(selectedPreset);
         displayAmount = amount.toString();
         note = `${selectedPreset} ${currencyType}`;
       }
     }
 
-    // Round to 2 decimal places for USD
     if (currencyType === 'USD') {
       amount = parseFloat(amount.toFixed(2));
       displayAmount = amount.toFixed(2);
@@ -238,51 +246,45 @@ const CaisseRecuCard = ({
         convertedToHTG: currencyType === 'USD' ? amount * tauxUSD : amount,
         note: note
       };
+      
       setCashSequences(prev => [...prev, newSequence]);
       setInputValue('');
-
-      // RESET to "aucune" after adding a sequence with multiplier
+      
       if (!isDirectAmount && inputValue) {
         setSelectedPreset('aucune');
       }
     }
-  };
+  }, [inputValue, currencyType, selectedPreset, isDirectAmount, tauxUSD]);
 
-  // Handle removing a sequence
-  const handleRemoveSequence = (id) => {
+  // Remove sequence handler
+  const handleRemoveSequence = useCallback((id) => {
     setCashSequences(prev => prev.filter(seq => seq.id !== id));
-  };
+  }, []);
 
-  // Handle clearing all sequences
-  const handleClearAll = () => {
+  // Clear all sequences
+  const handleClearAll = useCallback(() => {
     setCashSequences([]);
-  };
+  }, []);
 
-  // Handle input change
-  const handleInputChange = (e) => {
-    setInputValue(e.target.value);
-  };
-
-  // Handle currency toggle
-  const handleCurrencyToggle = () => {
+  // Currency toggle
+  const handleCurrencyToggle = useCallback(() => {
     setCurrencyType(prev => {
       const newCurrency = prev === 'HTG' ? 'USD' : 'HTG';
-      // Reset to "aucune" when changing currency
       setSelectedPreset('aucune');
       setInputValue('');
       return newCurrency;
     });
-  };
+  }, []);
 
-  // Handle Enter key press
-  const handleKeyPress = (e) => {
+  // Key press handler
+  const handleKeyPress = useCallback((e) => {
     if (e.key === 'Enter') {
       handleAddSequence();
     }
-  };
+  }, [handleAddSequence]);
 
-  // Handle quick add button click (ORIGINAL FUNCTIONALITY - adds directly)
-  const handleQuickAdd = (amount) => {
+  // Quick add handler
+  const handleQuickAdd = useCallback((amount) => {
     const newSequence = {
       id: Date.now(),
       amount: amount,
@@ -292,40 +294,36 @@ const CaisseRecuCard = ({
       note: `${amount} ${currencyType}`
     };
     setCashSequences(prev => [...prev, newSequence]);
-  };
+  }, [currencyType, tauxUSD]);
 
-  // Handle preset selection
-  const handlePresetSelect = (presetValue) => {
+  // Preset selection handler
+  const handlePresetSelect = useCallback((presetValue) => {
     setSelectedPreset(presetValue);
     setShowPresets(false);
-    // Clear input when switching to direct amount mode
+    
     if (presetValue === 'aucune') {
       setInputValue('');
     } else {
-      // Auto-focus input when selecting a preset
       setTimeout(() => {
         const input = document.querySelector('input[type="number"]');
         if (input) input.focus();
       }, 100);
     }
-  };
+  }, []);
 
-  // Handle round amount selection
-  const handleRoundAmountSelect = (amount) => {
+  // Round amount handlers
+  const handleRoundAmountSelect = useCallback((amount) => {
     setRoundAmount(amount.toString());
     setShowRoundAmount(true);
-  };
+  }, []);
 
-  // Reset round amount
-  const handleResetRoundAmount = () => {
+  const handleResetRoundAmount = useCallback(() => {
     setRoundAmount('');
-  };
+  }, []);
 
-  // Apply round amount to cash sequences
-  const handleApplyRoundAmount = () => {
+  const handleApplyRoundAmount = useCallback(() => {
     if (!roundAmountDetails || !roundAmountDetails.isValid) return;
-
-    // Add the extra amount the customer gives
+    
     const extraAmount = roundAmountDetails.customerAdds;
     if (extraAmount > 0) {
       const newSequence = {
@@ -338,10 +336,43 @@ const CaisseRecuCard = ({
       };
       setCashSequences(prev => [...prev, newSequence]);
     }
-
-    // Reset round amount
+    
     setRoundAmount('');
-  };
+  }, [roundAmountDetails]);
+
+  // Set calculating state for large amounts
+  useEffect(() => {
+    if (shouldGiveChange && changeNeeded > 1000) {
+      setIsCalculating(true);
+      
+      if (calculationTimeoutRef.current) {
+        clearTimeout(calculationTimeoutRef.current);
+      }
+      
+      calculationTimeoutRef.current = setTimeout(() => {
+        setIsCalculating(false);
+      }, 100);
+    } else {
+      setIsCalculating(false);
+    }
+    
+    return () => {
+      if (calculationTimeoutRef.current) {
+        clearTimeout(calculationTimeoutRef.current);
+      }
+      if (inputDebounceRef.current) {
+        clearTimeout(inputDebounceRef.current);
+      }
+    };
+  }, [changeNeeded, shouldGiveChange]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (inputDebounceRef.current) clearTimeout(inputDebounceRef.current);
+      if (calculationTimeoutRef.current) clearTimeout(calculationTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <div className={`rounded-xl p-3 shadow-lg mb-3 ${
@@ -349,7 +380,7 @@ const CaisseRecuCard = ({
         ? 'bg-gradient-to-br from-orange-500 to-red-500' 
         : 'bg-gradient-to-br from-blue-500 to-indigo-500'
     } text-white`}>
-
+      
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
         <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
@@ -369,7 +400,7 @@ const CaisseRecuCard = ({
         )}
       </div>
 
-      {/* Total Deposits Row - Standalone above deposits */}
+      {/* Total Deposits Row */}
       {sellerDeposits.length > 0 && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2">
           <div className="flex items-center justify-between">
@@ -384,15 +415,13 @@ const CaisseRecuCard = ({
         </div>
       )}
 
-      {/* Deposits Breakdown Card */}
+      {/* Deposits Breakdown */}
       {sellerDeposits.length > 0 && (
         <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2 space-y-1">
           <div className="flex items-center gap-1 mb-1">
             <Calculator size={12} className="text-white opacity-90" />
             <p className="text-xs opacity-90">Détail des dépôts:</p>
           </div>
-
-          {/* Deposit breakdown - Shows ALL deposits */}
           <div className="space-y-1">
             {depositBreakdown.map((deposit) => (
               <div key={deposit.id} className="flex items-center justify-between text-xs">
@@ -411,7 +440,7 @@ const CaisseRecuCard = ({
         </div>
       )}
 
-      {/* Espèces Attendues Row - Standalone below deposits */}
+      {/* Espèces Attendues */}
       <div className={`rounded-lg p-2 mb-2 ${
         calculatedEspecesAttendues > 0 
           ? 'bg-green-500 bg-opacity-20 border border-green-400 border-opacity-30' 
@@ -449,7 +478,7 @@ const CaisseRecuCard = ({
 
       {/* Cash Sequences Section */}
       <div className="mb-3">
-        {/* Exchange Rate Info */}
+        {/* Exchange Rate */}
         <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2 flex items-center justify-between">
           <div className="flex items-center gap-1">
             <Globe size={12} className="text-blue-300" />
@@ -458,7 +487,7 @@ const CaisseRecuCard = ({
           <p className="text-sm font-bold text-blue-300">1 USD = {tauxUSD} HTG</p>
         </div>
 
-        {/* Total Cash Received Summary */}
+        {/* Total Cash Received */}
         {cashSequences.length > 0 && (
           <div className="bg-green-500 bg-opacity-20 rounded-lg p-2 mb-2 border border-green-400 border-opacity-30">
             <div className="flex items-center justify-between mb-2">
@@ -478,7 +507,6 @@ const CaisseRecuCard = ({
               </div>
             </div>
 
-            {/* Breakdown by currency - VERTICAL LAYOUT */}
             <div className="space-y-1.5 text-[10px]">
               <div className="bg-blue-500 bg-opacity-10 rounded p-1.5">
                 <div className="flex items-center justify-between">
@@ -559,9 +587,9 @@ const CaisseRecuCard = ({
           </div>
         )}
 
-        {/* Input field for adding cash sequences with preset selector */}
+        {/* Input Section */}
         <div className="relative mb-2">
-          {/* Currency selector and label */}
+          {/* Currency selector */}
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
               <button
@@ -619,14 +647,13 @@ const CaisseRecuCard = ({
                 />
               </button>
 
-              {/* Dropdown menu with grid layout - SIMILAR STYLE TO QUICK ADD BUTTONS */}
+              {/* Preset dropdown */}
               {showPresets && (
                 <div className={`absolute z-20 w-full mt-1 rounded-lg shadow-lg overflow-hidden border ${
                   currencyType === 'HTG'
                     ? 'bg-blue-900 border-blue-700'
                     : 'bg-green-900 border-green-700'
                 }`}>
-                  {/* "Aucune" option - full width */}
                   <button
                     onClick={() => handlePresetSelect('aucune')}
                     className={`w-full px-3 py-3 text-left text-xs hover:bg-opacity-50 transition-colors flex items-center justify-between border-b ${
@@ -647,7 +674,6 @@ const CaisseRecuCard = ({
                     )}
                   </button>
 
-                  {/* Grid of presets - SAME STYLE AS QUICK ADD BUTTONS */}
                   <div className="p-2">
                     <div className="grid grid-cols-3 gap-1.5">
                       {currentPresets.map((preset) => (
@@ -670,7 +696,6 @@ const CaisseRecuCard = ({
               )}
             </div>
 
-            {/* Helper text */}
             <p className="text-[10px] opacity-70 mt-1 text-center">
               {isDirectAmount 
                 ? "Entrez directement le montant" 
@@ -678,7 +703,7 @@ const CaisseRecuCard = ({
             </p>
           </div>
 
-          {/* Input with Add button - Different layout based on mode */}
+          {/* Input with Add button */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <span className="text-white font-bold text-xs">
@@ -719,7 +744,7 @@ const CaisseRecuCard = ({
             </div>
           </div>
 
-          {/* Preview of calculation */}
+          {/* Preview */}
           {!isDirectAmount && inputValue && !isNaN(parseFloat(inputValue)) && selectedPreset && selectedPreset !== 'aucune' && (
             <div className="mt-2 bg-white bg-opacity-10 rounded p-2 text-center">
               <p className="text-xs opacity-90">
@@ -734,7 +759,7 @@ const CaisseRecuCard = ({
           )}
         </div>
 
-        {/* Quick add buttons (ORIGINAL FUNCTIONALITY - adds directly) */}
+        {/* Quick add buttons */}
         <div className="grid grid-cols-4 gap-1 mb-2">
           {quickAddAmounts.map((amount) => (
             <button
@@ -779,7 +804,7 @@ const CaisseRecuCard = ({
             </p>
           </div>
 
-          {/* Warning if has remainder */}
+          {/* Warning for remainder */}
           {shouldGiveChange && hasRemainder && (
             <div className="bg-amber-500 bg-opacity-20 rounded-lg p-2 border border-amber-400 border-opacity-30">
               <div className="flex items-start gap-1.5">
@@ -799,15 +824,24 @@ const CaisseRecuCard = ({
             </div>
           )}
 
-          {/* Use the refactored ChangeCombinations component */}
+          {/* Change Combinations - with loading state */}
           {shouldGiveChange && (
             <>
-              <ChangeCombinations 
-                changeNeeded={changeNeeded}
-                shouldGiveChange={shouldGiveChange}
-              />
+              {isCalculating ? (
+                <div className="text-center py-4">
+                  <div className="inline-flex items-center justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    <span className="ml-2 text-xs opacity-70">Calcul des combinaisons...</span>
+                  </div>
+                </div>
+              ) : (
+                <ChangeCombinations 
+                  changeNeeded={changeNeeded}
+                  shouldGiveChange={shouldGiveChange}
+                />
+              )}
 
-              {/* Round Amount Preference Section */}
+              {/* Round Amount Preference */}
               <div className="border-t border-white border-opacity-20 pt-2">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1">
@@ -829,7 +863,7 @@ const CaisseRecuCard = ({
                   Le client veut recevoir un montant rond (ex: 50 au lieu de 45 HTG)
                 </p>
 
-                {/* Input for round amount */}
+                {/* Round amount input */}
                 <div className="relative mb-2">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <DollarSign size={12} className="text-purple-300" />
@@ -869,7 +903,7 @@ const CaisseRecuCard = ({
                   ))}
                 </div>
 
-                {/* Calculation result */}
+                {/* Round amount calculation result */}
                 {roundAmountDetails && (
                   <div className={`rounded-lg p-2 ${
                     roundAmountDetails.isValid
@@ -957,24 +991,10 @@ const CaisseRecuCard = ({
           </p>
         </div>
       )}
-
-      {/* Add some custom styles for better mobile experience */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(5px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
-        }
-        input[type="number"] {
-          -moz-appearance: textfield;
-        }
-      `}</style>
     </div>
   );
-};
+});
+
+CaisseRecuCard.displayName = 'CaisseRecuCard';
 
 export default CaisseRecuCard;
