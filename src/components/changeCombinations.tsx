@@ -1,184 +1,140 @@
-import React, { useMemo } from 'react';
-import { Sparkles, Coins, AlertCircle } from 'lucide-react';
+// components/easy/ChangeCombinations.js
+import React, { memo } from 'react';
+import { generateChangeCombinations } from '@/utils/changeCalculator';
 import { formaterArgent } from '@/utils/formatters';
-import { generateChangeCombinations, getMaximumGivableAmount } from '@/utils/changeCalculator';
+import { Calculator, Coins, Layers, Target, CheckCircle, XCircle } from 'lucide-react';
 
-const ChangeCombinations = ({ 
+// Memoized inner component for each combination
+const CombinationCard = memo(({ combo, index }) => {
+  const { 
+    breakdown, 
+    totalNotes, 
+    totalAmount, 
+    remainder, 
+    isExact, 
+    strategyName, 
+    description 
+  } = combo;
+
+  return (
+    <div className={`rounded-lg p-3 border-2 ${
+      isExact 
+        ? 'bg-green-50 border-green-200' 
+        : remainder > 0 
+          ? 'bg-amber-50 border-amber-200' 
+          : 'bg-blue-50 border-blue-200'
+    }`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            isExact ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+          }`}>
+            {isExact ? <CheckCircle size={16} /> : <Target size={16} />}
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-gray-900">{strategyName}</h4>
+            <p className="text-[10px] text-gray-600">{description}</p>
+          </div>
+        </div>
+        <div className={`text-xs px-2 py-1 rounded-full font-bold ${
+          isExact 
+            ? 'bg-green-100 text-green-700' 
+            : remainder > 0 
+              ? 'bg-amber-100 text-amber-700' 
+              : 'bg-blue-100 text-blue-700'
+        }`}>
+          Option {index + 1}
+        </div>
+      </div>
+
+      {/* Breakdown */}
+      <div className="mb-2">
+        <div className="flex items-center gap-1 mb-1">
+          <Coins size={12} className="text-gray-500" />
+          <p className="text-xs font-medium text-gray-700">Détail:</p>
+        </div>
+        <div className="grid grid-cols-4 gap-1 mb-2">
+          {breakdown.map((item, idx) => (
+            <div key={idx} className="bg-white rounded p-1.5 border border-gray-200 text-center">
+              <div className="text-xs font-bold text-gray-900">{item.count}×</div>
+              <div className="text-[10px] font-bold text-blue-600">{item.denomination}</div>
+              <div className="text-[9px] text-gray-500">HTG</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Totals */}
+      <div className="flex items-center justify-between text-xs">
+        <div className="space-y-1">
+          <div className="flex items-center gap-1">
+            <Layers size={10} className="text-gray-500" />
+            <span className="text-gray-600">Total billets:</span>
+            <span className="font-bold text-gray-900">{totalNotes}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Calculator size={10} className="text-gray-500" />
+            <span className="text-gray-600">Montant rendu:</span>
+            <span className="font-bold text-green-600">{formaterArgent(totalAmount)} HTG</span>
+          </div>
+        </div>
+        
+        {remainder > 0 && (
+          <div className="text-right">
+            <div className="flex items-center gap-1 justify-end">
+              <XCircle size={10} className="text-amber-500" />
+              <span className="text-[10px] font-medium text-amber-700">À abandonner:</span>
+            </div>
+            <div className="text-sm font-bold text-amber-600">{formaterArgent(remainder)} HTG</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+CombinationCard.displayName = 'CombinationCard';
+
+// Main component
+const ChangeCombinations = memo(({ 
   changeNeeded, 
   shouldGiveChange 
 }) => {
-  // Calculate givable amount and remainder
-  const givableAmount = getMaximumGivableAmount(changeNeeded);
-  const remainder = changeNeeded - givableAmount;
-
-  // Generate combinations
-  const combinations = useMemo(() => {
+  // Generate combinations with memoization
+  const combinations = React.useMemo(() => {
     if (!shouldGiveChange || changeNeeded <= 0) return [];
     return generateChangeCombinations(changeNeeded);
   }, [changeNeeded, shouldGiveChange]);
 
-  if (!shouldGiveChange || combinations.length === 0) {
+  if (!shouldGiveChange || !combinations || combinations.length === 0) {
     return null;
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-1 mb-2">
-        <Sparkles size={10} className="text-green-300" />
-        <p className="text-xs font-bold text-green-300">4 Combinaisons différentes:</p>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+            <Calculator size={12} className="text-indigo-600" />
+          </div>
+          <h4 className="text-sm font-bold text-gray-900">Combinaisons possibles:</h4>
+        </div>
+        <span className="text-xs text-gray-500">{combinations.length} options</span>
       </div>
-
-      {/* Denomination info */}
-      <div className="bg-blue-500 bg-opacity-10 rounded p-1.5 border border-blue-400 border-opacity-20 mb-2">
-        <p className="text-[9px] text-center text-blue-300">
-          Plus petit billet/monnaie = 5 HTG • Montant utilisable: {formaterArgent(givableAmount)} HTG
-        </p>
-      </div>
-
-      {/* Single column of 4 truly different combinations */}
+      
       <div className="space-y-2">
         {combinations.map((combo, index) => (
-          <div 
+          <CombinationCard 
             key={combo.key} 
-            className={`rounded-lg p-2 border ${
-              index === 0 
-                ? 'border-green-400 border-opacity-40 bg-green-500 bg-opacity-15 shadow-sm' 
-                : index === 1
-                ? 'border-blue-400 border-opacity-40 bg-blue-500 bg-opacity-10'
-                : index === 2
-                ? 'border-purple-400 border-opacity-40 bg-purple-500 bg-opacity-10'
-                : 'border-amber-400 border-opacity-40 bg-amber-500 bg-opacity-10'
-            }`}
-          >
-            {/* Option header with strategy name and description */}
-            <div className="mb-2">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    index === 0 ? 'bg-yellow-400' :
-                    index === 1 ? 'bg-blue-400' :
-                    index === 2 ? 'bg-purple-400' : 'bg-amber-400'
-                  }`}></div>
-                  <p className="text-xs font-bold text-green-300">
-                    Option {index + 1}: {combo.strategyName}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Coins size={10} className="text-green-300 opacity-70" />
-                  <span className="text-[10px] opacity-80">
-                    {combo.totalNotes} pièce{combo.totalNotes !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              </div>
-              <p className="text-[9px] opacity-80 ml-4">
-                {combo.description}
-              </p>
-            </div>
-
-            {/* Complete breakdown */}
-            {combo.breakdown.length > 0 ? (
-              <>
-                <div className="space-y-1.5 mb-2">
-                  {combo.breakdown.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${
-                          item.denomination >= 500 ? 'bg-green-500' : 
-                          item.denomination >= 100 ? 'bg-green-400' : 
-                          'bg-green-300'
-                        }`}></div>
-                        <span className="text-xs opacity-90">
-                          {item.count} × {formaterArgent(item.denomination)} HTG
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium opacity-70">=</span>
-                        <span className="text-xs font-bold text-green-300">
-                          {formaterArgent(item.total)} HTG
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Total and remainder info */}
-                <div className="pt-2 border-t border-white border-opacity-20">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span className="text-xs font-bold text-green-300">Total donné:</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm font-bold text-green-300">
-                          {formaterArgent(combo.totalAmount)}
-                        </span>
-                        <span className="text-[10px] opacity-70">HTG</span>
-                      </div>
-                    </div>
-
-                    {/* Show remainder if any */}
-                    {combo.remainder > 0 && (
-                      <div className="flex items-center justify-between pt-1 border-t border-amber-400 border-opacity-20">
-                        <div className="flex items-center gap-1">
-                          <AlertCircle size={10} className="text-amber-300" />
-                          <span className="text-[10px] text-amber-300">Reste abandonné:</span>
-                        </div>
-                        <span className="text-[11px] font-bold text-amber-300">
-                          {formaterArgent(combo.remainder)} HTG
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            ) : (
-              // Show empty state for amounts < 5 HTG
-              <div className="text-center py-3">
-                <p className="text-xs text-amber-300 font-bold mb-1">
-                  {combo.strategyName}
-                </p>
-                <p className="text-[10px] opacity-80">
-                  Le montant est inférieur à 5 HTG
-                </p>
-                <div className="mt-2 pt-2 border-t border-amber-400 border-opacity-20">
-                  <p className="text-[10px] font-bold text-amber-300">
-                    Total abandonné: {formaterArgent(combo.remainder)} HTG
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+            combo={combo} 
+            index={index}
+          />
         ))}
-      </div>
-
-      {/* Strategy comparison */}
-      <div className="bg-green-500 bg-opacity-5 rounded p-2 border border-green-400 border-opacity-10">
-        <div className="flex items-center gap-1 mb-1">
-          <Sparkles size={9} className="text-green-300" />
-          <p className="text-[10px] font-bold text-green-300">Comparaison des stratégies:</p>
-        </div>
-        <div className="space-y-1 text-[9px]">
-          <div className="flex items-start gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-0.5"></div>
-            <span className="opacity-80"><span className="font-bold">Option 1:</span> Moins de billets au total (recommandé)</span>
-          </div>
-          <div className="flex items-start gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-0.5"></div>
-            <span className="opacity-80"><span className="font-bold">Option 2:</span> Plus de billets de 500 HTG, moins de 1000 HTG</span>
-          </div>
-          <div className="flex items-start gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-0.5"></div>
-            <span className="opacity-80"><span className="font-bold">Option 3:</span> Plus de petits et moyens billets</span>
-          </div>
-          <div className="flex items-start gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5"></div>
-            <span className="opacity-80"><span className="font-bold">Option 4:</span> Répartition équilibrée entre tailles</span>
-          </div>
-        </div>
       </div>
     </div>
   );
-};
+});
+
+ChangeCombinations.displayName = 'ChangeCombinations';
 
 export default ChangeCombinations;
