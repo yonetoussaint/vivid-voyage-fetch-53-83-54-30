@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Trash2, X, Plus, Edit2, Save, RotateCcw, Check, DollarSign, Coins } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Trash2, X, Plus, Edit2, Save, RotateCcw, DollarSign, Coins } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const SequenceManager = ({
@@ -32,13 +32,10 @@ const SequenceManager = ({
 }) => {
   // Local state
   const [editingSequenceId, setEditingSequenceId] = useState(null);
+  const [gridInputs, setGridInputs] = useState(['', '', '', '', '', '', '', '', '']);
   
-  // Define 9 fixed multipliers for the input grid
-  const multipliers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-  
-  // Split into two columns (5 in first, 4 in second)
-  const column1Multipliers = [1, 2, 3, 4, 5];
-  const column2Multipliers = [6, 7, 8, 9];
+  // Refs for grid inputs
+  const gridInputRefs = useRef([]);
 
   // Get current presets based on currency - WITH NULL CHECK
   const getPresets = () => {
@@ -67,18 +64,52 @@ const SequenceManager = ({
     return vendorState?.preset || '1'; // Default to 1
   };
 
-  // Handle multiplier input click - sets the input value
-  const handleMultiplierClick = (multiplier) => {
-    handleInputChange(vendeur, multiplier.toString());
-    
-    // Focus the main input field
-    setTimeout(() => {
-      const input = document.querySelector(`[data-vendor="${vendeur}"]`);
-      if (input) {
-        input.focus();
-        input.select();
+  // Handle grid input change
+  const handleGridInputChange = (index, value) => {
+    // Only allow numbers
+    if (value === '' || /^\d*$/.test(value)) {
+      const newGridInputs = [...gridInputs];
+      newGridInputs[index] = value;
+      setGridInputs(newGridInputs);
+      
+      // If there's a value, also update the main input
+      if (value !== '') {
+        handleInputChange(vendeur, value);
       }
-    }, 50);
+    }
+  };
+
+  // Handle grid input focus
+  const handleGridInputFocus = (index, value) => {
+    // Update main input when grid input is focused
+    if (value !== '') {
+      handleInputChange(vendeur, value);
+    }
+  };
+
+  // Handle grid input blur
+  const handleGridInputBlur = (index, value) => {
+    // If grid input has value, add sequence
+    if (value && value !== '' && parseFloat(value) > 0) {
+      handleAddSequence(vendeur);
+      // Clear the grid input after adding
+      const newGridInputs = [...gridInputs];
+      newGridInputs[index] = '';
+      setGridInputs(newGridInputs);
+    }
+  };
+
+  // Handle grid input key press
+  const handleGridInputKeyPress = (index, value, e) => {
+    if (e.key === 'Enter') {
+      if (value && value !== '' && parseFloat(value) > 0) {
+        handleAddSequence(vendeur);
+        // Clear the grid input after adding
+        const newGridInputs = [...gridInputs];
+        newGridInputs[index] = '';
+        setGridInputs(newGridInputs);
+      }
+    }
   };
 
   // Handle editing a sequence
@@ -141,14 +172,6 @@ const SequenceManager = ({
         handleInputChange(vendeur, '1');
       }
     }
-
-    setTimeout(() => {
-      const input = document.querySelector(`[data-vendor="${vendeur}"]`);
-      if (input) {
-        input.focus();
-        input.select();
-      }
-    }, 100);
   };
 
   // Cancel editing
@@ -215,6 +238,8 @@ const SequenceManager = ({
       }
     }));
     handleInputChange(vendeur, '');
+    // Clear all grid inputs when currency changes
+    setGridInputs(['', '', '', '', '', '', '', '', '']);
   };
 
   // Check if we're in edit mode
@@ -295,46 +320,76 @@ const SequenceManager = ({
 
       {/* TWO-COLUMN MULTIPLIER INPUT GRID */}
       <div className="bg-white bg-opacity-5 rounded-lg p-2">
-        <div className="text-xs text-white text-opacity-70 mb-1.5 text-center">
-          Multiplicateurs rapides:
+        <div className="text-xs text-white text-opacity-70 mb-2 text-center">
+          Multiplicateurs rapides (tapez et appuyez sur Entrée):
         </div>
         
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-2 gap-2">
           {/* First Column - 5 inputs */}
-          <div className="space-y-1">
-            {column1Multipliers.map((multiplier) => (
-              <button
-                key={`mult-${multiplier}`}
-                onClick={() => handleMultiplierClick(multiplier)}
-                className={`w-full px-2 py-2 rounded text-xs font-medium transition-all active:scale-95 ${
-                  currentInputValue === multiplier.toString()
-                    ? currency === 'HTG'
-                      ? 'bg-blue-700 text-white shadow-sm'
-                      : 'bg-green-700 text-white shadow-sm'
-                    : 'bg-white bg-opacity-10 hover:bg-opacity-20 text-white'
-                }`}
-              >
-                × {multiplier}
-              </button>
+          <div className="space-y-2">
+            {[0, 1, 2, 3, 4].map((index) => (
+              <div key={`grid-input-${index}`} className="relative">
+                <input
+                  ref={el => gridInputRefs.current[index] = el}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={gridInputs[index]}
+                  onChange={(e) => handleGridInputChange(index, e.target.value)}
+                  onFocus={() => handleGridInputFocus(index, gridInputs[index])}
+                  onBlur={() => handleGridInputBlur(index, gridInputs[index])}
+                  onKeyPress={(e) => handleGridInputKeyPress(index, gridInputs[index], e)}
+                  placeholder="×"
+                  className={`w-full px-3 py-2 text-sm rounded border transition-all ${
+                    gridInputs[index] && parseFloat(gridInputs[index]) > 0
+                      ? currency === 'HTG'
+                        ? 'bg-blue-900 border-blue-500 text-white'
+                        : 'bg-green-900 border-green-500 text-white'
+                      : 'bg-white bg-opacity-10 border-white border-opacity-20 text-white placeholder-white placeholder-opacity-30'
+                  }`}
+                />
+                {gridInputs[index] && parseFloat(gridInputs[index]) > 0 && (
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                    <div className={`text-xs ${currency === 'HTG' ? 'text-blue-300' : 'text-green-300'}`}>
+                      {gridInputs[index]} ×
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
           
           {/* Second Column - 4 inputs */}
-          <div className="space-y-1">
-            {column2Multipliers.map((multiplier) => (
-              <button
-                key={`mult-${multiplier}`}
-                onClick={() => handleMultiplierClick(multiplier)}
-                className={`w-full px-2 py-2 rounded text-xs font-medium transition-all active:scale-95 ${
-                  currentInputValue === multiplier.toString()
-                    ? currency === 'HTG'
-                      ? 'bg-blue-700 text-white shadow-sm'
-                      : 'bg-green-700 text-white shadow-sm'
-                    : 'bg-white bg-opacity-10 hover:bg-opacity-20 text-white'
-                }`}
-              >
-                × {multiplier}
-              </button>
+          <div className="space-y-2">
+            {[5, 6, 7, 8].map((index) => (
+              <div key={`grid-input-${index}`} className="relative">
+                <input
+                  ref={el => gridInputRefs.current[index] = el}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={gridInputs[index]}
+                  onChange={(e) => handleGridInputChange(index, e.target.value)}
+                  onFocus={() => handleGridInputFocus(index, gridInputs[index])}
+                  onBlur={() => handleGridInputBlur(index, gridInputs[index])}
+                  onKeyPress={(e) => handleGridInputKeyPress(index, gridInputs[index], e)}
+                  placeholder="×"
+                  className={`w-full px-3 py-2 text-sm rounded border transition-all ${
+                    gridInputs[index] && parseFloat(gridInputs[index]) > 0
+                      ? currency === 'HTG'
+                        ? 'bg-blue-900 border-blue-500 text-white'
+                        : 'bg-green-900 border-green-500 text-white'
+                      : 'bg-white bg-opacity-10 border-white border-opacity-20 text-white placeholder-white placeholder-opacity-30'
+                  }`}
+                />
+                {gridInputs[index] && parseFloat(gridInputs[index]) > 0 && (
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                    <div className={`text-xs ${currency === 'HTG' ? 'text-blue-300' : 'text-green-300'}`}>
+                      {gridInputs[index]} ×
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -452,7 +507,7 @@ const SequenceManager = ({
                   }
                 }
               }}
-              placeholder="Multiplicateur (ou tapez un nombre)"
+              placeholder="Multiplicateur personnalisé"
               className="w-full px-3 py-3 text-sm bg-transparent text-white placeholder-white placeholder-opacity-50 focus:outline-none"
             />
           </div>
