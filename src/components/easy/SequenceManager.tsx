@@ -32,6 +32,13 @@ const SequenceManager = ({
 }) => {
   // Local state
   const [editingSequenceId, setEditingSequenceId] = useState(null);
+  
+  // Define 9 fixed multipliers for the input grid
+  const multipliers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  
+  // Split into two columns (5 in first, 4 in second)
+  const column1Multipliers = [1, 2, 3, 4, 5];
+  const column2Multipliers = [6, 7, 8, 9];
 
   // Get current presets based on currency - WITH NULL CHECK
   const getPresets = () => {
@@ -58,6 +65,20 @@ const SequenceManager = ({
   // Get preset value - WITH NULL CHECK
   const getPresetValue = () => {
     return vendorState?.preset || '1'; // Default to 1
+  };
+
+  // Handle multiplier input click - sets the input value
+  const handleMultiplierClick = (multiplier) => {
+    handleInputChange(vendeur, multiplier.toString());
+    
+    // Focus the main input field
+    setTimeout(() => {
+      const input = document.querySelector(`[data-vendor="${vendeur}"]`);
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 50);
   };
 
   // Handle editing a sequence
@@ -122,9 +143,10 @@ const SequenceManager = ({
     }
 
     setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
+      const input = document.querySelector(`[data-vendor="${vendeur}"]`);
+      if (input) {
+        input.focus();
+        input.select();
       }
     }, 100);
   };
@@ -179,20 +201,6 @@ const SequenceManager = ({
     }
   };
 
-  // Handle preset selection from grid
-  const handlePresetSelectFromGrid = (presetValue) => {
-    handlePresetSelect(vendeur, presetValue);
-    
-    // Focus the multiplier input after selection
-    setTimeout(() => {
-      const input = document.querySelector(`[data-vendor="${vendeur}"]`);
-      if (input) {
-        input.focus();
-        input.select();
-      }
-    }, 50);
-  };
-
   // Handle currency change
   const handleCurrencyChange = (currency) => {
     const presets = currency === 'HTG' ? htgPresets : usdPresets;
@@ -214,16 +222,7 @@ const SequenceManager = ({
   const selectedPresetLabel = getSelectedPresetLabel();
   const currency = getCurrency();
   const presetValue = getPresetValue();
-
-  // Get presets for the grid
-  const currentPresetsForGrid = getPresets();
-  
-  // Split presets into two columns (4 per column for 8 total)
-  const column1Presets = currentPresetsForGrid.slice(0, 4);
-  const column2Presets = currentPresetsForGrid.slice(4, 8);
-
-  // Input ref
-  const inputRef = React.useRef(null);
+  const currentInputValue = vendorInputs[vendeur] || '';
 
   return (
     <div className="space-y-3">
@@ -265,9 +264,9 @@ const SequenceManager = ({
         </div>
       </div>
 
-      {/* TWO-COLUMN CURRENCY BUTTONS - COMPACT VERSION */}
+      {/* TWO-COLUMN CURRENCY BUTTONS */}
       <div className="grid grid-cols-2 gap-2">
-        {/* HTG Button - COMPACT */}
+        {/* HTG Button */}
         <button
           onClick={() => handleCurrencyChange('HTG')}
           className={`flex items-center justify-center gap-2 p-2 rounded-lg border transition-all active:scale-95 ${
@@ -280,7 +279,7 @@ const SequenceManager = ({
           <span className="font-bold text-sm">HTG</span>
         </button>
 
-        {/* USD Button - COMPACT */}
+        {/* USD Button */}
         <button
           onClick={() => handleCurrencyChange('USD')}
           className={`flex items-center justify-center gap-2 p-2 rounded-lg border transition-all active:scale-95 ${
@@ -292,6 +291,53 @@ const SequenceManager = ({
           <DollarSign size={16} className={currency === 'USD' ? 'text-white' : 'text-green-300'} />
           <span className="font-bold text-sm">USD</span>
         </button>
+      </div>
+
+      {/* TWO-COLUMN MULTIPLIER INPUT GRID */}
+      <div className="bg-white bg-opacity-5 rounded-lg p-2">
+        <div className="text-xs text-white text-opacity-70 mb-1.5 text-center">
+          Multiplicateurs rapides:
+        </div>
+        
+        <div className="grid grid-cols-2 gap-1.5">
+          {/* First Column - 5 inputs */}
+          <div className="space-y-1">
+            {column1Multipliers.map((multiplier) => (
+              <button
+                key={`mult-${multiplier}`}
+                onClick={() => handleMultiplierClick(multiplier)}
+                className={`w-full px-2 py-2 rounded text-xs font-medium transition-all active:scale-95 ${
+                  currentInputValue === multiplier.toString()
+                    ? currency === 'HTG'
+                      ? 'bg-blue-700 text-white shadow-sm'
+                      : 'bg-green-700 text-white shadow-sm'
+                    : 'bg-white bg-opacity-10 hover:bg-opacity-20 text-white'
+                }`}
+              >
+                × {multiplier}
+              </button>
+            ))}
+          </div>
+          
+          {/* Second Column - 4 inputs */}
+          <div className="space-y-1">
+            {column2Multipliers.map((multiplier) => (
+              <button
+                key={`mult-${multiplier}`}
+                onClick={() => handleMultiplierClick(multiplier)}
+                className={`w-full px-2 py-2 rounded text-xs font-medium transition-all active:scale-95 ${
+                  currentInputValue === multiplier.toString()
+                    ? currency === 'HTG'
+                      ? 'bg-blue-700 text-white shadow-sm'
+                      : 'bg-green-700 text-white shadow-sm'
+                    : 'bg-white bg-opacity-10 hover:bg-opacity-20 text-white'
+                }`}
+              >
+                × {multiplier}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Sequences List */}
@@ -374,77 +420,23 @@ const SequenceManager = ({
         )}
       </div>
 
-      {/* Input Section */}
+      {/* Current Selection Display */}
+      <div className="text-center py-1.5 bg-white bg-opacity-5 rounded">
+        <div className="text-xs">
+          <span className="opacity-70">Valeur de base:</span>
+          <span className={`font-bold ml-1 ${currency === 'HTG' ? 'text-blue-300' : 'text-green-300'}`}>
+            {selectedPresetLabel} {currency}
+          </span>
+        </div>
+      </div>
+
+      {/* Main Input Section */}
       <div className="space-y-2">
-        {/* TWO-COLUMN PRESET GRID */}
-        <div className="bg-white bg-opacity-5 rounded-lg p-2">
-          <div className="text-xs text-white text-opacity-70 mb-1.5 text-center">
-            Sélectionnez un multiplicateur:
-          </div>
-          
-          <div className="grid grid-cols-2 gap-1.5">
-            {/* First Column */}
-            <div className="space-y-1">
-              {column1Presets.map((preset) => (
-                <button
-                  key={preset.value}
-                  onClick={() => handlePresetSelectFromGrid(preset.value)}
-                  className={`w-full px-2 py-1.5 rounded text-xs font-medium transition-all active:scale-95 flex items-center justify-between ${
-                    presetValue === preset.value
-                      ? currency === 'HTG'
-                        ? 'bg-blue-700 text-white shadow-sm'
-                        : 'bg-green-700 text-white shadow-sm'
-                      : 'bg-white bg-opacity-10 hover:bg-opacity-20 text-white'
-                  }`}
-                >
-                  <span>{preset.label}</span>
-                  {presetValue === preset.value && (
-                    <Check size={10} />
-                  )}
-                </button>
-              ))}
-            </div>
-            
-            {/* Second Column */}
-            <div className="space-y-1">
-              {column2Presets.map((preset) => (
-                <button
-                  key={preset.value}
-                  onClick={() => handlePresetSelectFromGrid(preset.value)}
-                  className={`w-full px-2 py-1.5 rounded text-xs font-medium transition-all active:scale-95 flex items-center justify-between ${
-                    presetValue === preset.value
-                      ? currency === 'HTG'
-                        ? 'bg-blue-700 text-white shadow-sm'
-                        : 'bg-green-700 text-white shadow-sm'
-                      : 'bg-white bg-opacity-10 hover:bg-opacity-20 text-white'
-                  }`}
-                >
-                  <span>{preset.label}</span>
-                  {presetValue === preset.value && (
-                    <Check size={10} />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Current Selection Display */}
-        <div className="text-center py-1.5 bg-white bg-opacity-5 rounded">
-          <div className="text-xs">
-            <span className="opacity-70">Multiplicateur actuel:</span>
-            <span className={`font-bold ml-1 ${currency === 'HTG' ? 'text-blue-300' : 'text-green-300'}`}>
-              × {selectedPresetLabel} {currency}
-            </span>
-          </div>
-        </div>
-
         {/* Input Row */}
         <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
           {/* Input Field */}
           <div className="flex-1">
             <input
-              ref={inputRef}
               type="number"
               min="1"
               step="1"
@@ -460,7 +452,7 @@ const SequenceManager = ({
                   }
                 }
               }}
-              placeholder="Entrez le nombre de séquences"
+              placeholder="Multiplicateur (ou tapez un nombre)"
               className="w-full px-3 py-3 text-sm bg-transparent text-white placeholder-white placeholder-opacity-50 focus:outline-none"
             />
           </div>
