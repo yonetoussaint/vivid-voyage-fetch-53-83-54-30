@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2, X, Plus, Edit2, Save, RotateCcw, DollarSign, Coins } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
@@ -32,83 +32,120 @@ const SequenceManager = ({
 }) => {
   // Local state
   const [editingSequenceId, setEditingSequenceId] = useState(null);
-  const [gridInputs, setGridInputs] = useState(['', '', '', '', '', '', '', '', '']);
   
-  // Refs for grid inputs
-  const gridInputRefs = useRef([]);
+  // Define bill denominations for each currency
+  const htgDenominations = [
+    { label: '1000 HTG', value: 1000 },
+    { label: '500 HTG', value: 500 },
+    { label: '250 HTG', value: 250 },
+    { label: '200 HTG', value: 200 },
+    { label: '100 HTG', value: 100 },
+    { label: '50 HTG', value: 50 },
+    { label: '25 HTG', value: 25 },
+    { label: '10 HTG', value: 10 },
+    { label: '5 HTG', value: 5 }
+  ];
 
-  // Get current presets based on currency - WITH NULL CHECK
-  const getPresets = () => {
-    if (!vendorState || !vendorState.currency) return htgPresets; // Default to HTG
-    return vendorState.currency === 'HTG' ? htgPresets : usdPresets;
+  const usdDenominations = [
+    { label: '100 USD', value: 100 },
+    { label: '50 USD', value: 50 },
+    { label: '20 USD', value: 20 },
+    { label: '10 USD', value: 10 },
+    { label: '5 USD', value: 5 },
+    { label: '2 USD', value: 2 },
+    { label: '1 USD', value: 1 }
+  ];
+
+  // Get current denominations based on currency
+  const getDenominations = () => {
+    if (!vendorState || !vendorState.currency) return htgDenominations;
+    return vendorState.currency === 'HTG' ? htgDenominations : usdDenominations;
   };
 
-  // Get selected preset label - WITH NULL CHECK
-  const getSelectedPresetLabel = () => {
-    if (!vendorState || !vendorState.preset) {
-      const presets = getPresets();
-      return presets[0]?.label || '';
-    }
-    const presets = getPresets();
-    const preset = presets.find(p => p.value === vendorState.preset);
-    return preset ? preset.label : presets[0]?.label || '';
-  };
+  // State for grid inputs (multipliers for each denomination)
+  const [gridMultipliers, setGridMultipliers] = useState({});
 
   // Get currency - WITH NULL CHECK
   const getCurrency = () => {
     return vendorState?.currency || 'HTG'; // Default to HTG
   };
 
-  // Get preset value - WITH NULL CHECK
-  const getPresetValue = () => {
-    return vendorState?.preset || '1'; // Default to 1
-  };
-
   // Handle grid input change
-  const handleGridInputChange = (index, value) => {
+  const handleGridInputChange = (denominationValue, value) => {
     // Only allow numbers
     if (value === '' || /^\d*$/.test(value)) {
-      const newGridInputs = [...gridInputs];
-      newGridInputs[index] = value;
-      setGridInputs(newGridInputs);
-      
-      // If there's a value, also update the main input
-      if (value !== '') {
-        handleInputChange(vendeur, value);
+      const newMultipliers = { ...gridMultipliers };
+      if (value === '') {
+        delete newMultipliers[denominationValue];
+      } else {
+        newMultipliers[denominationValue] = value;
       }
+      setGridMultipliers(newMultipliers);
     }
   };
 
-  // Handle grid input focus
-  const handleGridInputFocus = (index, value) => {
-    // Update main input when grid input is focused
-    if (value !== '') {
-      handleInputChange(vendeur, value);
-    }
-  };
-
-  // Handle grid input blur
-  const handleGridInputBlur = (index, value) => {
-    // If grid input has value, add sequence
-    if (value && value !== '' && parseFloat(value) > 0) {
+  // Handle adding sequence from grid input
+  const handleAddFromGrid = (denominationValue, multiplier) => {
+    if (multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
+      // Set the denomination as the preset value
+      handlePresetSelect(vendeur, denominationValue.toString());
+      // Set the multiplier as the input value
+      handleInputChange(vendeur, multiplier);
+      // Add the sequence
       handleAddSequence(vendeur);
-      // Clear the grid input after adding
-      const newGridInputs = [...gridInputs];
-      newGridInputs[index] = '';
-      setGridInputs(newGridInputs);
+      
+      // Clear that specific grid input
+      const newMultipliers = { ...gridMultipliers };
+      delete newMultipliers[denominationValue];
+      setGridMultipliers(newMultipliers);
     }
   };
 
   // Handle grid input key press
-  const handleGridInputKeyPress = (index, value, e) => {
+  const handleGridInputKeyPress = (denominationValue, multiplier, e) => {
     if (e.key === 'Enter') {
-      if (value && value !== '' && parseFloat(value) > 0) {
-        handleAddSequence(vendeur);
-        // Clear the grid input after adding
-        const newGridInputs = [...gridInputs];
-        newGridInputs[index] = '';
-        setGridInputs(newGridInputs);
+      handleAddFromGrid(denominationValue, multiplier);
+    }
+  };
+
+  // Calculate total from all grid inputs
+  const calculateGridTotal = () => {
+    const currency = getCurrency();
+    const denominations = getDenominations();
+    let total = 0;
+    
+    denominations.forEach(denom => {
+      const multiplier = gridMultipliers[denom.value];
+      if (multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
+        total += denom.value * parseFloat(multiplier);
       }
+    });
+    
+    return total;
+  };
+
+  // Add all grid inputs as separate sequences
+  const handleAddAllGridSequences = () => {
+    const currency = getCurrency();
+    const denominations = getDenominations();
+    let hasAdded = false;
+    
+    denominations.forEach(denom => {
+      const multiplier = gridMultipliers[denom.value];
+      if (multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
+        // Set the denomination as the preset value
+        handlePresetSelect(vendeur, denom.value.toString());
+        // Set the multiplier as the input value
+        handleInputChange(vendeur, multiplier);
+        // Add the sequence
+        handleAddSequence(vendeur);
+        hasAdded = true;
+      }
+    });
+    
+    // Clear all grid inputs
+    if (hasAdded) {
+      setGridMultipliers({});
     }
   };
 
@@ -123,24 +160,24 @@ const SequenceManager = ({
     if (multiplierMatch) {
       const [, multiplier, presetValue, currency] = multiplierMatch;
 
-      const preset = getPresets().find(p => {
-        const presetNum = parseFloat(p.value);
-        const valueNum = parseFloat(presetValue);
-        return presetNum === valueNum;
-      });
-
-      if (preset) {
+      const presetValueNum = parseFloat(presetValue);
+      
+      // Try to find matching denomination
+      const denominations = currency.toUpperCase() === 'HTG' ? htgDenominations : usdDenominations;
+      const matchingDenom = denominations.find(d => d.value === presetValueNum);
+      
+      if (matchingDenom) {
         setVendorPresets(prev => ({
           ...prev,
           [vendeur]: { 
             ...prev[vendeur], 
             currency: currency.toUpperCase(),
-            preset: preset.value
+            preset: presetValueNum.toString()
           }
         }));
         handleInputChange(vendeur, multiplier);
       } else {
-        const presets = getPresets();
+        const presets = currency.toUpperCase() === 'HTG' ? htgPresets : usdPresets;
         if (presets.length > 0) {
           setVendorPresets(prev => ({
             ...prev,
@@ -177,7 +214,7 @@ const SequenceManager = ({
   // Cancel editing
   const handleCancelEdit = () => {
     setEditingSequenceId(null);
-    const presets = getPresets();
+    const presets = getCurrency() === 'HTG' ? htgPresets : usdPresets;
     const smallestPreset = presets[0]?.value || '1';
     setVendorPresets(prev => ({
       ...prev,
@@ -194,13 +231,12 @@ const SequenceManager = ({
     if (!editingSequenceId || !vendorState) return;
 
     const inputValue = vendorInputs[vendeur];
-
     let amount = 0;
     let currency = getCurrency();
     let note = '';
 
     const multiplier = parseFloat(inputValue) || 1;
-    const presetValue = parseFloat(getPresetValue());
+    const presetValue = parseFloat(vendorState?.preset || '1');
     amount = presetValue * multiplier;
     note = multiplier === 1 
       ? `${presetValue} ${currency}`
@@ -239,15 +275,18 @@ const SequenceManager = ({
     }));
     handleInputChange(vendeur, '');
     // Clear all grid inputs when currency changes
-    setGridInputs(['', '', '', '', '', '', '', '', '']);
+    setGridMultipliers({});
   };
 
   // Check if we're in edit mode
   const isEditingMode = editingSequenceId !== null;
-  const selectedPresetLabel = getSelectedPresetLabel();
   const currency = getCurrency();
-  const presetValue = getPresetValue();
   const currentInputValue = vendorInputs[vendeur] || '';
+  const denominations = getDenominations();
+
+  // Split denominations into two columns
+  const firstColumnDenoms = denominations.slice(0, Math.ceil(denominations.length / 2));
+  const secondColumnDenoms = denominations.slice(Math.ceil(denominations.length / 2));
 
   return (
     <div className="space-y-3">
@@ -318,79 +357,106 @@ const SequenceManager = ({
         </button>
       </div>
 
-      {/* TWO-COLUMN MULTIPLIER INPUT GRID */}
-      <div className="bg-white bg-opacity-5 rounded-lg p-2">
+      {/* TWO-COLUMN DENOMINATION INPUT GRID */}
+      <div className="bg-white bg-opacity-5 rounded-lg p-3">
         <div className="text-xs text-white text-opacity-70 mb-2 text-center">
-          Multiplicateurs rapides (tapez et appuyez sur Entrée):
+          Entrez le nombre de billets pour chaque dénomination:
         </div>
         
-        <div className="grid grid-cols-2 gap-2">
-          {/* First Column - 5 inputs */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* First Column */}
           <div className="space-y-2">
-            {[0, 1, 2, 3, 4].map((index) => (
-              <div key={`grid-input-${index}`} className="relative">
-                <input
-                  ref={el => gridInputRefs.current[index] = el}
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={gridInputs[index]}
-                  onChange={(e) => handleGridInputChange(index, e.target.value)}
-                  onFocus={() => handleGridInputFocus(index, gridInputs[index])}
-                  onBlur={() => handleGridInputBlur(index, gridInputs[index])}
-                  onKeyPress={(e) => handleGridInputKeyPress(index, gridInputs[index], e)}
-                  placeholder="×"
-                  className={`w-full px-3 py-2 text-sm rounded border transition-all ${
-                    gridInputs[index] && parseFloat(gridInputs[index]) > 0
-                      ? currency === 'HTG'
-                        ? 'bg-blue-900 border-blue-500 text-white'
-                        : 'bg-green-900 border-green-500 text-white'
-                      : 'bg-white bg-opacity-10 border-white border-opacity-20 text-white placeholder-white placeholder-opacity-30'
-                  }`}
-                />
-                {gridInputs[index] && parseFloat(gridInputs[index]) > 0 && (
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                    <div className={`text-xs ${currency === 'HTG' ? 'text-blue-300' : 'text-green-300'}`}>
-                      {gridInputs[index]} ×
-                    </div>
+            {firstColumnDenoms.map((denom) => {
+              const multiplier = gridMultipliers[denom.value] || '';
+              return (
+                <div key={`grid-${denom.value}`} className="space-y-1">
+                  <div className="text-xs text-white text-opacity-70">{denom.label}</div>
+                  <div className="flex items-stretch bg-white bg-opacity-10 rounded border border-white border-opacity-20 overflow-hidden">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={multiplier}
+                      onChange={(e) => handleGridInputChange(denom.value, e.target.value)}
+                      onKeyPress={(e) => handleGridInputKeyPress(denom.value, multiplier, e)}
+                      placeholder="0"
+                      className="w-full px-3 py-2 text-sm bg-transparent text-white placeholder-white placeholder-opacity-50 focus:outline-none"
+                    />
+                    <button
+                      onClick={() => handleAddFromGrid(denom.value, multiplier)}
+                      disabled={!multiplier || parseFloat(multiplier) <= 0}
+                      className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
+                        multiplier && parseFloat(multiplier) > 0
+                          ? currency === 'HTG'
+                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                            : 'bg-green-500 text-white hover:bg-green-600'
+                          : 'bg-gray-600 text-gray-300'
+                      }`}
+                      title="Ajouter"
+                    >
+                      <Plus size={14} />
+                    </button>
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
           
-          {/* Second Column - 4 inputs */}
+          {/* Second Column */}
           <div className="space-y-2">
-            {[5, 6, 7, 8].map((index) => (
-              <div key={`grid-input-${index}`} className="relative">
-                <input
-                  ref={el => gridInputRefs.current[index] = el}
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={gridInputs[index]}
-                  onChange={(e) => handleGridInputChange(index, e.target.value)}
-                  onFocus={() => handleGridInputFocus(index, gridInputs[index])}
-                  onBlur={() => handleGridInputBlur(index, gridInputs[index])}
-                  onKeyPress={(e) => handleGridInputKeyPress(index, gridInputs[index], e)}
-                  placeholder="×"
-                  className={`w-full px-3 py-2 text-sm rounded border transition-all ${
-                    gridInputs[index] && parseFloat(gridInputs[index]) > 0
-                      ? currency === 'HTG'
-                        ? 'bg-blue-900 border-blue-500 text-white'
-                        : 'bg-green-900 border-green-500 text-white'
-                      : 'bg-white bg-opacity-10 border-white border-opacity-20 text-white placeholder-white placeholder-opacity-30'
-                  }`}
-                />
-                {gridInputs[index] && parseFloat(gridInputs[index]) > 0 && (
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                    <div className={`text-xs ${currency === 'HTG' ? 'text-blue-300' : 'text-green-300'}`}>
-                      {gridInputs[index]} ×
-                    </div>
+            {secondColumnDenoms.map((denom) => {
+              const multiplier = gridMultipliers[denom.value] || '';
+              return (
+                <div key={`grid-${denom.value}`} className="space-y-1">
+                  <div className="text-xs text-white text-opacity-70">{denom.label}</div>
+                  <div className="flex items-stretch bg-white bg-opacity-10 rounded border border-white border-opacity-20 overflow-hidden">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={multiplier}
+                      onChange={(e) => handleGridInputChange(denom.value, e.target.value)}
+                      onKeyPress={(e) => handleGridInputKeyPress(denom.value, multiplier, e)}
+                      placeholder="0"
+                      className="w-full px-3 py-2 text-sm bg-transparent text-white placeholder-white placeholder-opacity-50 focus:outline-none"
+                    />
+                    <button
+                      onClick={() => handleAddFromGrid(denom.value, multiplier)}
+                      disabled={!multiplier || parseFloat(multiplier) <= 0}
+                      className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
+                        multiplier && parseFloat(multiplier) > 0
+                          ? currency === 'HTG'
+                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                            : 'bg-green-500 text-white hover:bg-green-600'
+                          : 'bg-gray-600 text-gray-300'
+                      }`}
+                      title="Ajouter"
+                    >
+                      <Plus size={14} />
+                    </button>
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Grid Total and Add All Button */}
+        <div className="mt-3 pt-3 border-t border-white border-opacity-10">
+          <div className="flex items-center justify-between">
+            <div className="text-xs">
+              <span className="opacity-70">Total grille:</span>
+              <span className={`font-bold ml-1 ${currency === 'HTG' ? 'text-blue-300' : 'text-green-300'}`}>
+                {formaterArgent(calculateGridTotal())} {currency}
+              </span>
+            </div>
+            <button
+              onClick={handleAddAllGridSequences}
+              disabled={Object.keys(gridMultipliers).length === 0}
+              className="px-3 py-1.5 text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded font-medium hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Tout ajouter
+            </button>
           </div>
         </div>
       </div>
@@ -475,16 +541,6 @@ const SequenceManager = ({
         )}
       </div>
 
-      {/* Current Selection Display */}
-      <div className="text-center py-1.5 bg-white bg-opacity-5 rounded">
-        <div className="text-xs">
-          <span className="opacity-70">Valeur de base:</span>
-          <span className={`font-bold ml-1 ${currency === 'HTG' ? 'text-blue-300' : 'text-green-300'}`}>
-            {selectedPresetLabel} {currency}
-          </span>
-        </div>
-      </div>
-
       {/* Main Input Section */}
       <div className="space-y-2">
         {/* Input Row */}
@@ -552,18 +608,6 @@ const SequenceManager = ({
             </button>
           )}
         </div>
-
-        {/* Quick Preview */}
-        {vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0 && (
-          <div className="text-center">
-            <div className="text-xs opacity-80">
-              {vendorInputs[vendeur]} × {selectedPresetLabel} {currency} = 
-              <span className="font-bold ml-1">
-                {formaterArgent(calculatePresetAmount(vendeur))} {currency}
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* Add Complete Deposit Button */}
         {sequences.length > 0 && !isEditingMode && (
