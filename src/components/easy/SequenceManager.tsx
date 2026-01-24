@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, X, Plus, ChevronDown, Edit2, Save, RotateCcw, Check, ChevronUp, DollarSign, Coins } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Trash2, X, Plus, Edit2, Save, RotateCcw, Check, DollarSign, Coins } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const SequenceManager = ({
@@ -32,15 +32,6 @@ const SequenceManager = ({
 }) => {
   // Local state
   const [editingSequenceId, setEditingSequenceId] = useState(null);
-  const [showPresetWheel, setShowPresetWheel] = useState(false);
-  const [isDraggingWheel, setIsDraggingWheel] = useState(false);
-  const [dragStartY, setDragStartY] = useState(0);
-  const [wheelScrollTop, setWheelScrollTop] = useState(0);
-
-  const wheelRef = useRef(null);
-  const inputRef = useRef(null);
-  const dropdownContainerRef = useRef(null);
-  const dropdownButtonRef = useRef(null);
 
   // Get current presets based on currency - WITH NULL CHECK
   const getPresets = () => {
@@ -68,86 +59,6 @@ const SequenceManager = ({
   const getPresetValue = () => {
     return vendorState?.preset || '1'; // Default to 1
   };
-
-  // Handle wheel dragging
-  const handleWheelMouseDown = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingWheel(true);
-    setDragStartY(e.clientY);
-    if (wheelRef.current) {
-      setWheelScrollTop(wheelRef.current.scrollTop);
-    }
-  };
-
-  const handleWheelMouseMove = (e) => {
-    if (!isDraggingWheel || !wheelRef.current) return;
-
-    const deltaY = e.clientY - dragStartY;
-    wheelRef.current.scrollTop = wheelScrollTop - deltaY * 2;
-  };
-
-  const handleWheelMouseUp = () => {
-    setIsDraggingWheel(false);
-  };
-
-  // Click outside handler
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!showPresetWheel) return;
-
-      if (dropdownButtonRef.current && dropdownButtonRef.current.contains(event.target)) {
-        return;
-      }
-
-      if (dropdownContainerRef.current && dropdownContainerRef.current.contains(event.target)) {
-        return;
-      }
-
-      setShowPresetWheel(false);
-    };
-
-    const timer = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [showPresetWheel]);
-
-  // Handle wheel dragging events
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (isDraggingWheel) {
-        handleWheelMouseMove(e);
-      }
-    };
-
-    const handleMouseUp = () => {
-      handleWheelMouseUp();
-    };
-
-    if (isDraggingWheel) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDraggingWheel, dragStartY, wheelScrollTop]);
-
-  // Blur input when dropdown opens
-  useEffect(() => {
-    if (showPresetWheel && inputRef.current) {
-      inputRef.current.blur();
-    }
-  }, [showPresetWheel]);
 
   // Handle editing a sequence
   const handleEditSequence = (sequence) => {
@@ -268,55 +179,18 @@ const SequenceManager = ({
     }
   };
 
-  // Handle preset selection from wheel
-  const handleWheelPresetSelect = (presetValue) => {
+  // Handle preset selection from grid
+  const handlePresetSelectFromGrid = (presetValue) => {
     handlePresetSelect(vendeur, presetValue);
-    setShowPresetWheel(false);
     
+    // Focus the multiplier input after selection
     setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
+      const input = document.querySelector(`[data-vendor="${vendeur}"]`);
+      if (input) {
+        input.focus();
+        input.select();
       }
-    }, 150);
-  };
-
-  // Toggle preset wheel
-  const togglePresetWheel = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    const newState = !showPresetWheel;
-    setShowPresetWheel(newState);
-    
-    if (newState && inputRef.current) {
-      inputRef.current.blur();
-    } else if (!newState && inputRef.current) {
-      setTimeout(() => {
-        inputRef.current.focus();
-      }, 50);
-    }
-  };
-
-  // Handle input field focus
-  const handleInputFocus = () => {
-    if (showPresetWheel) {
-      if (inputRef.current) {
-        inputRef.current.blur();
-      }
-    }
-  };
-
-  // Handle input field click
-  const handleInputClick = (e) => {
-    if (showPresetWheel) {
-      e.preventDefault();
-      if (inputRef.current) {
-        inputRef.current.blur();
-      }
-    }
+    }, 50);
   };
 
   // Handle currency change
@@ -340,6 +214,16 @@ const SequenceManager = ({
   const selectedPresetLabel = getSelectedPresetLabel();
   const currency = getCurrency();
   const presetValue = getPresetValue();
+
+  // Get presets for the grid
+  const currentPresetsForGrid = getPresets();
+  
+  // Split presets into two columns (4 per column for 8 total)
+  const column1Presets = currentPresetsForGrid.slice(0, 4);
+  const column2Presets = currentPresetsForGrid.slice(4, 8);
+
+  // Input ref
+  const inputRef = React.useRef(null);
 
   return (
     <div className="space-y-3">
@@ -492,132 +376,133 @@ const SequenceManager = ({
 
       {/* Input Section */}
       <div className="space-y-2">
-        <div className="relative" ref={dropdownContainerRef}>
-          <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
-            {/* Input Field */}
-            <div className="flex-1">
-              <input
-                ref={inputRef}
-                type="number"
-                min="1"
-                step="1"
-                data-vendor={vendeur}
-                value={vendorInputs[vendeur] || ''}
-                onChange={(e) => handleInputChange(vendeur, e.target.value)}
-                onFocus={handleInputFocus}
-                onClick={handleInputClick}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    if (isEditingMode) {
-                      handleSaveEditedSequence();
-                    } else {
-                      handleAddSequence(vendeur);
-                    }
-                  }
-                }}
-                placeholder="Multiplicateur"
-                className="w-full px-3 py-3 text-sm bg-transparent text-white placeholder-white placeholder-opacity-50 focus:outline-none"
-              />
-            </div>
-
-            {/* Preset Selector Button */}
-            <button
-              ref={dropdownButtonRef}
-              data-dropdown-button
-              onClick={togglePresetWheel}
-              className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
-                currency === 'HTG'
-                  ? 'bg-blue-500 bg-opacity-20 text-blue-300 hover:bg-blue-500 hover:bg-opacity-30'
-                  : 'bg-green-500 bg-opacity-20 text-green-300 hover:green-500 hover:bg-opacity-30'
-              }`}
-            >
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-medium">× {selectedPresetLabel}</span>
-                <ChevronDown size={12} className={`transition-transform ${showPresetWheel ? 'rotate-180' : ''}`} />
-              </div>
-            </button>
-
-            {/* Add/Update Button */}
-            {isEditingMode ? (
-              <div className="flex">
+        {/* TWO-COLUMN PRESET GRID */}
+        <div className="bg-white bg-opacity-5 rounded-lg p-2">
+          <div className="text-xs text-white text-opacity-70 mb-1.5 text-center">
+            Sélectionnez un multiplicateur:
+          </div>
+          
+          <div className="grid grid-cols-2 gap-1.5">
+            {/* First Column */}
+            <div className="space-y-1">
+              {column1Presets.map((preset) => (
                 <button
-                  onClick={handleSaveEditedSequence}
-                  disabled={!vendorInputs[vendeur] || parseFloat(vendorInputs[vendeur]) <= 0}
-                  className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
-                    vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0
-                      ? 'bg-green-500 text-white hover:bg-green-600'
-                      : 'bg-gray-600 text-gray-300'
+                  key={preset.value}
+                  onClick={() => handlePresetSelectFromGrid(preset.value)}
+                  className={`w-full px-2 py-1.5 rounded text-xs font-medium transition-all active:scale-95 flex items-center justify-between ${
+                    presetValue === preset.value
+                      ? currency === 'HTG'
+                        ? 'bg-blue-700 text-white shadow-sm'
+                        : 'bg-green-700 text-white shadow-sm'
+                      : 'bg-white bg-opacity-10 hover:bg-opacity-20 text-white'
                   }`}
-                  title="Mettre à jour"
                 >
-                  <Save size={14} />
+                  <span>{preset.label}</span>
+                  {presetValue === preset.value && (
+                    <Check size={10} />
+                  )}
                 </button>
+              ))}
+            </div>
+            
+            {/* Second Column */}
+            <div className="space-y-1">
+              {column2Presets.map((preset) => (
                 <button
-                  onClick={handleCancelEdit}
-                  className="px-3 bg-red-500 text-white hover:bg-red-600 flex items-center justify-center"
-                  title="Annuler"
+                  key={preset.value}
+                  onClick={() => handlePresetSelectFromGrid(preset.value)}
+                  className={`w-full px-2 py-1.5 rounded text-xs font-medium transition-all active:scale-95 flex items-center justify-between ${
+                    presetValue === preset.value
+                      ? currency === 'HTG'
+                        ? 'bg-blue-700 text-white shadow-sm'
+                        : 'bg-green-700 text-white shadow-sm'
+                      : 'bg-white bg-opacity-10 hover:bg-opacity-20 text-white'
+                  }`}
                 >
-                  <RotateCcw size={12} />
+                  <span>{preset.label}</span>
+                  {presetValue === preset.value && (
+                    <Check size={10} />
+                  )}
                 </button>
-              </div>
-            ) : (
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Current Selection Display */}
+        <div className="text-center py-1.5 bg-white bg-opacity-5 rounded">
+          <div className="text-xs">
+            <span className="opacity-70">Multiplicateur actuel:</span>
+            <span className={`font-bold ml-1 ${currency === 'HTG' ? 'text-blue-300' : 'text-green-300'}`}>
+              × {selectedPresetLabel} {currency}
+            </span>
+          </div>
+        </div>
+
+        {/* Input Row */}
+        <div className="flex items-stretch bg-white bg-opacity-10 rounded-lg border border-white border-opacity-20 overflow-hidden">
+          {/* Input Field */}
+          <div className="flex-1">
+            <input
+              ref={inputRef}
+              type="number"
+              min="1"
+              step="1"
+              data-vendor={vendeur}
+              value={vendorInputs[vendeur] || ''}
+              onChange={(e) => handleInputChange(vendeur, e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  if (isEditingMode) {
+                    handleSaveEditedSequence();
+                  } else {
+                    handleAddSequence(vendeur);
+                  }
+                }
+              }}
+              placeholder="Entrez le nombre de séquences"
+              className="w-full px-3 py-3 text-sm bg-transparent text-white placeholder-white placeholder-opacity-50 focus:outline-none"
+            />
+          </div>
+
+          {/* Add/Update Button */}
+          {isEditingMode ? (
+            <div className="flex">
               <button
-                onClick={() => handleAddSequence(vendeur)}
+                onClick={handleSaveEditedSequence}
                 disabled={!vendorInputs[vendeur] || parseFloat(vendorInputs[vendeur]) <= 0}
                 className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
                   vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0
-                    ? currency === 'HTG'
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : 'bg-green-500 text-white hover:bg-green-600'
+                    ? 'bg-green-500 text-white hover:bg-green-600'
                     : 'bg-gray-600 text-gray-300'
                 }`}
-                title="Ajouter"
+                title="Mettre à jour"
               >
-                <Plus size={14} />
+                <Save size={14} />
               </button>
-            )}
-          </div>
-
-          {/* Dropdown Wheel */}
-          {showPresetWheel && (
-            <div 
-              className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden border border-white border-opacity-30 bg-gray-800 top-full"
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <div 
-                ref={wheelRef}
-                className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
-                onMouseDown={handleWheelMouseDown}
-                style={{ cursor: isDraggingWheel ? 'grabbing' : 'grab' }}
+              <button
+                onClick={handleCancelEdit}
+                className="px-3 bg-red-500 text-white hover:bg-red-600 flex items-center justify-center"
+                title="Annuler"
               >
-                {getPresets().map((preset) => (
-                  <button
-                    key={preset.value}
-                    onClick={() => handleWheelPresetSelect(preset.value)}
-                    className={`w-full px-3 py-2.5 text-left text-xs font-medium hover:bg-opacity-50 transition-colors flex items-center justify-between border-b border-white border-opacity-10 last:border-b-0 ${
-                      presetValue === preset.value
-                        ? currency === 'HTG'
-                          ? 'bg-blue-700 text-white'
-                          : 'bg-green-700 text-white'
-                        : currency === 'HTG'
-                          ? 'hover:bg-blue-800 text-blue-100'
-                          : 'hover:bg-green-800 text-green-100'
-                    }`}
-                  >
-                    <span>{preset.label} {currency}</span>
-                    {presetValue === preset.value && (
-                      <Check size={10} />
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-center py-1 bg-gray-900 bg-opacity-50">
-                <ChevronUp size={10} className="text-gray-400" />
-                <span className="text-[10px] text-gray-400 mx-2">Glisser pour faire défiler</span>
-                <ChevronDown size={10} className="text-gray-400" />
-              </div>
+                <RotateCcw size={12} />
+              </button>
             </div>
+          ) : (
+            <button
+              onClick={() => handleAddSequence(vendeur)}
+              disabled={!vendorInputs[vendeur] || parseFloat(vendorInputs[vendeur]) <= 0}
+              className={`px-3 flex items-center justify-center border-l border-white border-opacity-20 ${
+                vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0
+                  ? currency === 'HTG'
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                  : 'bg-gray-600 text-gray-300'
+              }`}
+              title="Ajouter"
+            >
+              <Plus size={14} />
+            </button>
           )}
         </div>
 
