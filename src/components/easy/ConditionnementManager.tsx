@@ -1,427 +1,297 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Package } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 
 const DENOMINATIONS = [1000, 500, 250, 100, 50, 25, 10];
 
 export default function LiasseCounter() {
-  // Load from localStorage on component mount
-  const [sequences, setSequences] = useState(() => {
-    const saved = localStorage.getItem('liasseSequences');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  const [liasses, setLiasses] = useState(() => {
-    const saved = localStorage.getItem('liasses');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  const [currentDenomination, setCurrentDenomination] = useState(1000);
-  const [currentCount, setCurrentCount] = useState('');
+  const [bills, setBills] = useState(
+    DENOMINATIONS.reduce((acc, denom) => ({ ...acc, [denom]: [] }), {})
+  );
+  const [currentInput, setCurrentInput] = useState(
+    DENOMINATIONS.reduce((acc, denom) => ({ ...acc, [denom]: '' }), {})
+  );
+  const [activeTab, setActiveTab] = useState(1000);
 
-  // Save to localStorage whenever sequences or liasses change
-  useEffect(() => {
-    localStorage.setItem('liasseSequences', JSON.stringify(sequences));
-    localStorage.setItem('liasses', JSON.stringify(liasses));
-  }, [sequences, liasses]);
-
-  // Add a new sequence of bills
-  const addSequence = () => {
-    const count = parseInt(currentCount);
-    if (isNaN(count) || count <= 0) return;
-
-    const newSequence = {
-      id: Date.now() + Math.random(),
-      denomination: currentDenomination,
-      count: count,
-      timestamp: new Date().toISOString(),
-      remaining: count
-    };
-
-    const updatedSequences = [...sequences, newSequence];
-    setSequences(updatedSequences);
-    setCurrentCount('');
-    
-    // Check and form liasses automatically
-    autoFormLiasses(updatedSequences);
-  };
-
-  // Remove a sequence
-  const removeSequence = (id) => {
-    const sequenceToRemove = sequences.find(s => s.id === id);
-    if (!sequenceToRemove) return;
-
-    // Remove all liasses that used bills from this sequence
-    const updatedLiasses = liasses.filter(liasse => 
-      !liasse.sequencesUsed?.includes(id)
-    );
-    
-    // Reset remaining counts for other sequences
-    const updatedSequences = sequences.map(seq => {
-      if (seq.id === id) return null;
-      
-      // If this sequence was in removed liasses, reset its remaining count
-      const wasInRemovedLiasses = liasses.some(l => 
-        l.sequencesUsed?.includes(seq.id) && 
-        updatedLiasses.every(ul => ul.id !== l.id)
-      );
-      
-      if (wasInRemovedLiasses) {
-        return {
-          ...seq,
-          remaining: seq.count
-        };
-      }
-      
-      return seq;
-    }).filter(Boolean);
-
-    setSequences(updatedSequences);
-    setLiasses(updatedLiasses);
-  };
-
-  // Automatically form liasses
-  const autoFormLiasses = (currentSequences) => {
-    const billsByDenom = {};
-    
-    // Group available bills by denomination
-    currentSequences.forEach(seq => {
-      if (seq.remaining > 0) {
-        if (!billsByDenom[seq.denomination]) {
-          billsByDenom[seq.denomination] = [];
-        }
-        billsByDenom[seq.denomination].push({
-          id: seq.id,
-          count: seq.remaining
-        });
-      }
-    });
-
-    let newLiasses = [];
-
-    // Form liasses for each denomination
-    Object.entries(billsByDenom).forEach(([denom, bills]) => {
-      const denomination = parseInt(denom);
-      let availableBills = [...bills];
-      
-      while (availableBills.reduce((sum, b) => sum + b.count, 0) >= 100) {
-        const liasseId = Date.now() + Math.random();
-        const newLiasse = {
-          id: liasseId,
-          denomination: denomination,
-          timestamp: new Date().toISOString(),
-          totalBills: 100,
-          sequencesUsed: []
-        };
-
-        let needed = 100;
-        const updatedAvailableBills = [];
-
-        for (let bill of availableBills) {
-          if (needed <= 0) {
-            updatedAvailableBills.push(bill);
-            continue;
-          }
-
-          const toUse = Math.min(bill.count, needed);
-          newLiasse.sequencesUsed.push(bill.id);
-          
-          needed -= toUse;
-          bill.count -= toUse;
-
-          if (bill.count > 0) {
-            updatedAvailableBills.push(bill);
-          }
-        }
-
-        if (newLiasse.sequencesUsed.length > 0) {
-          newLiasses.push(newLiasse);
-        }
-
-        availableBills = updatedAvailableBills;
-      }
-    });
-
-    if (newLiasses.length > 0) {
-      // Update sequences with new remaining counts
-      const updatedSequences = currentSequences.map(seq => {
-        const liassesUsingThisSeq = newLiasses.filter(l => 
-          l.sequencesUsed.includes(seq.id)
-        );
-        
-        if (liassesUsingThisSeq.length === 0) return seq;
-
-        return {
-          ...seq,
-          remaining: seq.remaining - 100 // Each liasse uses 100 bills total
-        };
-      });
-
-      setSequences(updatedSequences);
-      setLiasses(prev => [...prev, ...newLiasses]);
+  const addSequence = (denom) => {
+    const value = parseInt(currentInput[denom]);
+    if (!isNaN(value) && value > 0) {
+      setBills(prev => ({
+        ...prev,
+        [denom]: [...prev[denom], value]
+      }));
+      setCurrentInput(prev => ({ ...prev, [denom]: '' }));
     }
   };
 
-  // Calculate progress for current denomination
-  const getCurrentProgress = () => {
-    const availableBills = sequences
-      .filter(seq => seq.denomination === currentDenomination && seq.remaining > 0)
-      .reduce((sum, seq) => sum + seq.remaining, 0);
+  const removeSequence = (denom, index) => {
+    setBills(prev => ({
+      ...prev,
+      [denom]: prev[denom].filter((_, i) => i !== index)
+    }));
+  };
 
+  const getTotalBills = (denom) => {
+    return bills[denom].reduce((sum, val) => sum + val, 0);
+  };
+
+  const getLiasses = (denom) => {
+    const total = getTotalBills(denom);
     return {
-      available: availableBills,
-      needed: Math.max(0, 100 - availableBills),
-      progress: Math.min(100, (availableBills / 100) * 100),
-      canForm: availableBills >= 100
+      complete: Math.floor(total / 100),
+      remaining: total % 100
     };
   };
 
-  const progress = getCurrentProgress();
-  
-  // Format time for display
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const getDepartageInstructions = (denom) => {
+    const sequences = bills[denom];
+    if (sequences.length === 0) return [];
+
+    const instructions = [];
+    let remaining = [...sequences];
+    let liasseNum = 1;
+
+    while (remaining.some(val => val > 0)) {
+      const instruction = {
+        liasseNum,
+        steps: []
+      };
+
+      let currentTotal = 0;
+
+      for (let i = 0; i < remaining.length; i++) {
+        if (remaining[i] === 0) continue;
+
+        const needed = 100 - currentTotal;
+        if (needed === 0) break;
+
+        const toTake = Math.min(remaining[i], needed);
+        const originalAmount = remaining[i];
+        
+        instruction.steps.push({
+          sequenceNum: i + 1,
+          take: toTake,
+          from: originalAmount,
+          remaining: originalAmount - toTake
+        });
+
+        remaining[i] -= toTake;
+        currentTotal += toTake;
+      }
+
+      if (currentTotal > 0) {
+        instruction.total = currentTotal;
+        instruction.isComplete = currentTotal === 100;
+        instructions.push(instruction);
+        liasseNum++;
+      } else {
+        break;
+      }
+    }
+
+    return instructions;
   };
 
-  // Calculate totals
-  const totals = {
-    totalBills: sequences.reduce((sum, seq) => sum + seq.count, 0),
-    totalLiasses: liasses.length,
-    remainingBills: sequences.reduce((sum, seq) => sum + seq.remaining, 0)
+  const renderDenomination = (denom) => {
+    const liasseInfo = getLiasses(denom);
+    const total = getTotalBills(denom);
+    const instructions = getDepartageInstructions(denom);
+
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg sm:rounded-xl p-2 sm:p-4 border border-slate-200">
+            <div className="text-[10px] sm:text-xs text-slate-600 font-medium mb-0.5 sm:mb-1">Total</div>
+            <div className="text-lg sm:text-2xl font-bold text-slate-900">{total}</div>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg sm:rounded-xl p-2 sm:p-4 border border-emerald-200">
+            <div className="text-[10px] sm:text-xs text-emerald-700 font-medium mb-0.5 sm:mb-1">Liasses</div>
+            <div className="text-lg sm:text-2xl font-bold text-emerald-900">{liasseInfo.complete}</div>
+          </div>
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg sm:rounded-xl p-2 sm:p-4 border border-amber-200">
+            <div className="text-[10px] sm:text-xs text-amber-700 font-medium mb-0.5 sm:mb-1">Reste</div>
+            <div className="text-lg sm:text-2xl font-bold text-amber-900">{liasseInfo.remaining}</div>
+          </div>
+        </div>
+
+        {/* Input area */}
+        <div className="flex gap-2">
+          <input
+            type="number"
+            value={currentInput[denom]}
+            onChange={(e) => setCurrentInput(prev => ({
+              ...prev,
+              [denom]: e.target.value
+            }))}
+            onKeyPress={(e) => e.key === 'Enter' && addSequence(denom)}
+            placeholder="Nombre de billets..."
+            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-white border border-slate-200 rounded-lg sm:rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
+          />
+          <button
+            onClick={() => addSequence(denom)}
+            className="bg-emerald-500 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:bg-emerald-600 active:bg-emerald-700 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base font-medium shadow-sm hover:shadow whitespace-nowrap"
+          >
+            <Plus size={16} className="sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">Ajouter</span>
+            <span className="xs:hidden">+</span>
+          </button>
+        </div>
+
+        {/* Sequences */}
+        {bills[denom].length > 0 && (
+          <div>
+            <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">
+              Séquences
+            </div>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
+              {bills[denom].map((count, idx) => (
+                <div
+                  key={idx}
+                  className="bg-slate-100 border border-slate-200 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 hover:bg-slate-200 transition-colors"
+                >
+                  <span className="text-[10px] sm:text-sm font-medium text-slate-700">
+                    #{idx + 1}
+                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-900">
+                    {count}
+                  </span>
+                  <button
+                    onClick={() => removeSequence(denom, idx)}
+                    className="text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    <Trash2 size={12} className="sm:w-3.5 sm:h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Departage Instructions */}
+        {instructions.length > 0 && (
+          <div>
+            <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">
+              Instructions de départage
+            </div>
+            <div className="space-y-2 sm:space-y-3">
+              {instructions.map((inst) => (
+                <div
+                  key={inst.liasseNum}
+                  className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 ${
+                    inst.isComplete 
+                      ? 'bg-emerald-50 border-emerald-300' 
+                      : 'bg-amber-50 border-amber-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900">
+                        Liasse {inst.liasseNum}
+                      </span>
+                      {inst.isComplete && (
+                        <span className="text-[9px] sm:text-xs bg-emerald-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full font-medium">
+                          Complète
+                        </span>
+                      )}
+                      {!inst.isComplete && (
+                        <span className="text-[9px] sm:text-xs bg-amber-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full font-medium">
+                          Incomplète
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs sm:text-sm font-bold text-slate-900">
+                      {inst.total}/100
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-1.5 sm:space-y-2">
+                    {inst.steps.map((step, idx) => (
+                      <div key={idx} className="text-[11px] sm:text-sm bg-white/60 rounded-lg p-2 border border-slate-200">
+                        <span className="font-semibold text-slate-800">
+                          Séq. #{step.sequenceNum}:
+                        </span>{' '}
+                        Prenez{' '}
+                        <span className="font-bold text-emerald-700">
+                          {step.take}
+                        </span>
+                        {' '}sur {step.from}
+                        {step.remaining > 0 && (
+                          <span className="text-amber-700 font-semibold">
+                            {' '}→ reste {step.remaining}
+                          </span>
+                        )}
+                        {step.remaining === 0 && (
+                          <span className="text-slate-500">
+                            {' '}✓
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 p-2 sm:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3">
-          <h1 className="text-xl font-bold text-slate-900">Compteur de Liasses</h1>
-          <p className="text-sm text-slate-600">Ajoutez des billets - les liasses se forment automatiquement à 100</p>
+        <div className="mb-4 sm:mb-6 px-2 sm:px-0">
+          <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 mb-1 sm:mb-2">
+            Compteur de Liasses
+          </h1>
+          <p className="text-xs sm:text-base text-slate-600">
+            Gérez vos billets par dénomination
+          </p>
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
-          {/* Left Column - Input */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Input Section */}
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <div className="grid grid-cols-4 gap-2 mb-4">
-                {DENOMINATIONS.map(denom => (
-                  <button
-                    key={denom}
-                    onClick={() => setCurrentDenomination(denom)}
-                    className={`py-3 rounded-lg font-medium transition-all ${
-                      currentDenomination === denom
-                        ? 'bg-slate-900 text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    {denom}G
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={currentCount}
-                  onChange={(e) => setCurrentCount(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addSequence()}
-                  placeholder="Nombre de billets..."
-                  className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
-                  min="1"
-                />
+        {/* Tabs Header */}
+        <div className="bg-white rounded-lg sm:rounded-2xl shadow-sm mb-3 sm:mb-4 p-1 overflow-hidden border border-slate-200">
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
+            {DENOMINATIONS.map((denom) => {
+              const isActive = activeTab === denom;
+              
+              return (
                 <button
-                  onClick={addSequence}
-                  disabled={!currentCount || parseInt(currentCount) <= 0}
-                  className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 ${
-                    currentCount && parseInt(currentCount) > 0
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-slate-200 text-slate-400'
+                  key={denom}
+                  onClick={() => setActiveTab(denom)}
+                  className={`flex-shrink-0 snap-center min-w-[60px] sm:min-w-[80px] px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-all duration-200 font-medium ${
+                    isActive
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'bg-transparent text-slate-600 hover:bg-slate-50 active:bg-slate-100'
                   }`}
                 >
-                  <Plus size={20} />
-                  Ajouter
-                </button>
-              </div>
-            </div>
-
-            {/* Progress Section */}
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="font-medium text-slate-900">
-                  Progression ({currentDenomination}G)
-                </div>
-                <div className="text-lg font-bold">
-                  {progress.available}/100
-                </div>
-              </div>
-              
-              <div className="h-3 bg-slate-200 rounded-full overflow-hidden mb-2">
-                <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    progress.progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'
-                  }`}
-                  style={{ width: `${progress.progress}%` }}
-                />
-              </div>
-              
-              <div className={`text-sm font-medium ${
-                progress.needed === 0 ? 'text-emerald-600' : 'text-amber-600'
-              }`}>
-                {progress.needed === 0 
-                  ? '✓ Prêt pour liasse (se formera automatiquement)'
-                  : `Encore ${progress.needed} billets pour liasse`
-                }
-              </div>
-            </div>
-
-            {/* Sequences List */}
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-              <div className="p-4 border-b border-slate-200 bg-slate-50">
-                <div className="font-medium text-slate-900">Séquences ajoutées</div>
-              </div>
-              <div className="overflow-y-auto max-h-[300px]">
-                {sequences.length === 0 ? (
-                  <div className="p-8 text-center text-slate-500">
-                    Aucune séquence ajoutée
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100">
-                    {[...sequences].reverse().map(seq => (
-                      <div key={seq.id} className="p-4 hover:bg-slate-50">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className={`px-3 py-1 rounded-lg font-bold ${
-                              seq.remaining > 0 
-                                ? 'bg-blue-100 text-blue-800' 
-                                : 'bg-slate-100 text-slate-600'
-                            }`}>
-                              {seq.denomination}G
-                            </div>
-                            <div>
-                              <div className="font-bold text-slate-900">
-                                {seq.count} billets
-                              </div>
-                              <div className="text-sm text-slate-500">
-                                {formatTime(seq.timestamp)} • Reste: {seq.remaining}
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => removeSequence(seq.id)}
-                            className="text-red-500 hover:text-red-700 p-2"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Stats & Liasses */}
-          <div className="space-y-4">
-            {/* Quick Stats */}
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <div className="space-y-3">
-                <div>
-                  <div className="text-sm text-slate-600">Total billets</div>
-                  <div className="text-2xl font-bold text-slate-900">
-                    {totals.totalBills}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-slate-600">Liasses formées</div>
-                  <div className="text-2xl font-bold text-emerald-600">
-                    {totals.totalLiasses}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-slate-600">Billets restants</div>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {totals.remainingBills}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Liasses List */}
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-              <div className="p-4 border-b border-slate-200 bg-slate-50">
-                <div className="flex items-center gap-2 font-medium text-slate-900">
-                  <Package size={18} />
-                  Liasses ({liasses.length})
-                </div>
-              </div>
-              <div className="overflow-y-auto max-h-[400px]">
-                {liasses.length === 0 ? (
-                  <div className="p-6 text-center text-slate-500 text-sm">
-                    Les liasses apparaîtront ici automatiquement à 100 billets
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100">
-                    {[...liasses].reverse().map(liasse => (
-                      <div key={liasse.id} className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="font-bold text-slate-900">
-                            {liasse.denomination}G
-                          </div>
-                          <div className="text-sm text-slate-500">
-                            {formatTime(liasse.timestamp)}
-                          </div>
-                        </div>
-                        <div className="text-sm text-emerald-600 font-medium">
-                          100 billets • {liasse.denomination * 100} G
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Progress by Denomination */}
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <div className="font-medium text-slate-900 mb-3">Progression par valeur</div>
-              <div className="space-y-2">
-                {DENOMINATIONS.map(denom => {
-                  const availableBills = sequences
-                    .filter(seq => seq.denomination === denom && seq.remaining > 0)
-                    .reduce((sum, seq) => sum + seq.remaining, 0);
-                  
-                  const progressPercent = Math.min(100, (availableBills / 100) * 100);
-                  
-                  return (
-                    <div key={denom} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-700">{denom}G</span>
-                        <span className="font-medium">{availableBills}/100</span>
-                      </div>
-                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            availableBills >= 100 ? 'bg-emerald-500' : 'bg-blue-500'
-                          }`}
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
+                  <div className="text-center">
+                    <div className={`text-xs sm:text-sm font-semibold`}>
+                      {denom} G
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Footer Note */}
-        <div className="px-4 py-3 text-center text-sm text-slate-500 border-t border-slate-200 bg-white">
-          Les données sont sauvegardées automatiquement
+        {/* Tab Content */}
+        <div className="bg-white rounded-lg sm:rounded-2xl shadow-sm p-3 sm:p-6 border border-slate-200">
+          {renderDenomination(activeTab)}
         </div>
       </div>
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}} />
     </div>
   );
 }
