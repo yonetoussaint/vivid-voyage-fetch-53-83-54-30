@@ -70,6 +70,46 @@ const SequenceManager = ({
     return vendorState?.currency || 'HTG'; // Default to HTG
   };
 
+  // Create a direct add function that doesn't mess with the shared state
+  const addSequenceDirectly = (presetValue, multiplier) => {
+    const currency = getCurrency();
+    
+    if (!multiplier || parseFloat(multiplier) <= 0) return null;
+    
+    const amount = presetValue * parseFloat(multiplier);
+    const note = multiplier === '1' 
+      ? `${presetValue} ${currency}`
+      : `${multiplier} × ${presetValue} ${currency}`;
+    
+    const newSequence = {
+      id: Date.now() + Math.random(),
+      amount: currency === 'USD' ? parseFloat(amount.toFixed(2)) : amount,
+      currency,
+      note,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    // We need to update the parent state
+    // Since we don't have direct access to setSequences, we'll use a different approach
+    // We'll temporarily set the input and then add the sequence
+    // Save current input value
+    const currentInput = vendorInputs[vendeur];
+    
+    // Set the denomination as preset
+    handlePresetSelect(vendeur, presetValue.toString());
+    // Set the multiplier as input
+    handleInputChange(vendeur, multiplier);
+    // Add the sequence
+    handleAddSequence(vendeur);
+    
+    // Restore the original input value
+    setTimeout(() => {
+      handleInputChange(vendeur, currentInput);
+    }, 10);
+    
+    return newSequence;
+  };
+
   // Handle grid input change
   const handleGridInputChange = (denominationValue, value) => {
     // Only allow numbers
@@ -87,17 +127,23 @@ const SequenceManager = ({
   // Handle adding sequence from grid input
   const handleAddFromGrid = (denominationValue, multiplier) => {
     if (multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
-      // Set the denomination as the preset value
-      handlePresetSelect(vendeur, denominationValue.toString());
-      // Set the multiplier as the input value
-      handleInputChange(vendeur, multiplier);
-      // Add the sequence
-      handleAddSequence(vendeur);
+      // Save current input and preset
+      const currentInput = vendorInputs[vendeur];
+      const currentPreset = vendorState?.preset || '1';
+      
+      // Add the sequence directly
+      addSequenceDirectly(denominationValue, multiplier);
       
       // Clear that specific grid input
       const newMultipliers = { ...gridMultipliers };
       delete newMultipliers[denominationValue];
       setGridMultipliers(newMultipliers);
+      
+      // Restore original input and preset after a delay
+      setTimeout(() => {
+        handlePresetSelect(vendeur, currentPreset);
+        handleInputChange(vendeur, currentInput);
+      }, 50);
     }
   };
 
@@ -128,24 +174,45 @@ const SequenceManager = ({
   const handleAddAllGridSequences = () => {
     const currency = getCurrency();
     const denominations = getDenominations();
-    let hasAdded = false;
     
+    // Save current input and preset
+    const currentInput = vendorInputs[vendeur];
+    const currentPreset = vendorState?.preset || '1';
+    
+    let sequencesToAdd = [];
+    
+    // First, collect all sequences to add
     denominations.forEach(denom => {
       const multiplier = gridMultipliers[denom.value];
       if (multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
-        // Set the denomination as the preset value
-        handlePresetSelect(vendeur, denom.value.toString());
-        // Set the multiplier as the input value
-        handleInputChange(vendeur, multiplier);
-        // Add the sequence
-        handleAddSequence(vendeur);
-        hasAdded = true;
+        sequencesToAdd.push({ denom, multiplier });
       }
     });
     
-    // Clear all grid inputs
-    if (hasAdded) {
-      setGridMultipliers({});
+    // Then add them one by one
+    sequencesToAdd.forEach(({ denom, multiplier }, index) => {
+      setTimeout(() => {
+        // Add the sequence
+        addSequenceDirectly(denom.value, multiplier);
+        
+        // If this is the last one, restore original state
+        if (index === sequencesToAdd.length - 1) {
+          setTimeout(() => {
+            handlePresetSelect(vendeur, currentPreset);
+            handleInputChange(vendeur, currentInput);
+            // Clear all grid inputs
+            setGridMultipliers({});
+          }, 50);
+        }
+      }, index * 100); // Small delay between adds to avoid state conflicts
+    });
+    
+    // If no sequences to add, still restore state
+    if (sequencesToAdd.length === 0) {
+      setTimeout(() => {
+        handlePresetSelect(vendeur, currentPreset);
+        handleInputChange(vendeur, currentInput);
+      }, 50);
     }
   };
 
