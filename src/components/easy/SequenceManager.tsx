@@ -28,7 +28,11 @@ const SequenceManager = ({
   // Configuration
   htgPresets,
   usdPresets,
-  TAUX_DE_CHANGE = 132
+  TAUX_DE_CHANGE = 132,
+  
+  // New props for editing mode
+  editingMode = false,
+  onCancelEdit
 }) => {
   // Local state
   const [editingSequenceId, setEditingSequenceId] = useState(null);
@@ -58,7 +62,7 @@ const SequenceManager = ({
     { label: '0.25 USD', value: 0.25, color: 'bg-indigo-500' }
   ];
 
-  // State for grid inputs (multipliers for each denomination)
+  // State for money counter grid
   const [gridInputs, setGridInputs] = useState({});
   const [lockedInputs, setLockedInputs] = useState({});
   const [currentFocusedField, setCurrentFocusedField] = useState(null);
@@ -84,9 +88,9 @@ const SequenceManager = ({
       }
     });
     
-    // Only update if there are new denominations
     if (Object.keys(initialInputs).length > 0) {
       setGridInputs(prev => ({ ...prev, ...initialInputs }));
+      setLockedInputs({});
     }
   }, [vendorState?.currency]);
 
@@ -106,7 +110,6 @@ const SequenceManager = ({
   // Handle grid input focus
   const handleGridInputFocus = (denominationValue) => {
     if (lockedInputs[denominationValue]) {
-      // Don't allow focus if locked
       return false;
     }
     
@@ -176,44 +179,88 @@ const SequenceManager = ({
     return total;
   };
 
+  // Add sequence from grid input
+  const addSequenceFromGrid = (denominationValue, multiplier) => {
+    if (multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
+      // Save current state
+      const currentInput = vendorInputs[vendeur] || '';
+      const currentPresetValue = vendorState?.preset || '1';
+      
+      // Set the denomination as preset
+      handlePresetSelect(vendeur, denominationValue.toString());
+      // Set the multiplier as input
+      handleInputChange(vendeur, multiplier);
+      
+      // Add the sequence
+      setTimeout(() => {
+        handleAddSequence(vendeur);
+        
+        // Restore original state
+        setTimeout(() => {
+          const presets = getCurrency() === 'HTG' ? htgPresets : usdPresets;
+          const smallestPreset = presets[0]?.value || '1';
+          handlePresetSelect(vendeur, smallestPreset);
+          handleInputChange(vendeur, currentInput);
+        }, 50);
+      }, 50);
+      
+      // Clear that specific grid input
+      const newInputs = { ...gridInputs };
+      delete newInputs[denominationValue];
+      setGridInputs(newInputs);
+      
+      // Also unlock it
+      const newLocks = { ...lockedInputs };
+      delete newLocks[denominationValue];
+      setLockedInputs(newLocks);
+    }
+  };
+
   // Add all grid inputs as sequences
   const handleAddAllGridSequences = () => {
-    const currency = getCurrency();
     const denominations = getDenominations();
     
-    let hasAddedAny = false;
+    // Save current state
+    const currentInput = vendorInputs[vendeur] || '';
+    const currentPresetValue = vendorState?.preset || '1';
     
-    denominations.forEach(denom => {
-      const multiplier = gridInputs[denom.value];
-      if (multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
-        // Save current state
-        const currentInput = vendorInputs[vendeur] || '';
-        const currentPresetValue = vendorState?.preset || '1';
-        
+    // Get all entries with values
+    const entries = denominations
+      .map(denom => ({
+        denom,
+        multiplier: gridInputs[denom.value]
+      }))
+      .filter(entry => entry.multiplier && entry.multiplier !== '' && parseFloat(entry.multiplier) > 0);
+    
+    if (entries.length === 0) return;
+    
+    // Reset grid first
+    resetGridInputs();
+    
+    // Process each entry
+    entries.forEach(({ denom, multiplier }, index) => {
+      setTimeout(() => {
         // Set the denomination as preset
         handlePresetSelect(vendeur, denom.value.toString());
         // Set the multiplier as input
         handleInputChange(vendeur, multiplier);
         
-        // Add the sequence after a short delay
+        // Add the sequence
         setTimeout(() => {
           handleAddSequence(vendeur);
           
-          // Restore original state
-          setTimeout(() => {
-            handlePresetSelect(vendeur, currentPresetValue);
-            handleInputChange(vendeur, currentInput);
-          }, 50);
-        }, 50);
-        
-        hasAddedAny = true;
-      }
+          // If last entry, restore original state
+          if (index === entries.length - 1) {
+            setTimeout(() => {
+              const presets = getCurrency() === 'HTG' ? htgPresets : usdPresets;
+              const smallestPreset = presets[0]?.value || '1';
+              handlePresetSelect(vendeur, smallestPreset);
+              handleInputChange(vendeur, currentInput);
+            }, 100);
+          }
+        }, 100);
+      }, index * 200);
     });
-    
-    // Reset grid inputs if we added any sequences
-    if (hasAddedAny) {
-      resetGridInputs();
-    }
   };
 
   // Handle editing a sequence
@@ -278,8 +325,8 @@ const SequenceManager = ({
     }
   };
 
-  // Cancel editing
-  const handleCancelEdit = () => {
+  // Cancel editing a sequence
+  const handleCancelSequenceEdit = () => {
     setEditingSequenceId(null);
     const presets = getCurrency() === 'HTG' ? htgPresets : usdPresets;
     const smallestPreset = presets[0]?.value || '1';
@@ -323,7 +370,7 @@ const SequenceManager = ({
       };
 
       handleUpdateSequence(editingSequenceId, updatedSequence);
-      handleCancelEdit();
+      handleCancelSequenceEdit();
     }
   };
 
@@ -346,7 +393,7 @@ const SequenceManager = ({
   };
 
   // Check if we're in edit mode
-  const isEditingMode = editingSequenceId !== null;
+  const isEditingSequence = editingSequenceId !== null;
   const currency = getCurrency();
   const currentInputValue = vendorInputs[vendeur] || '';
   const denominations = getDenominations();
@@ -430,7 +477,7 @@ const SequenceManager = ({
         </button>
       </div>
 
-      {/* TWO-COLUMN MONEY COUNTER GRID */}
+      {/* MONEY COUNTER GRID */}
       <div className="bg-white bg-opacity-5 rounded-lg p-3">
         <div className="flex items-center justify-between mb-3">
           <div>
@@ -498,6 +545,11 @@ const SequenceManager = ({
                     onChange={(e) => handleGridInputChange(denom.value, e.target.value)}
                     onFocus={() => handleGridInputFocus(denom.value)}
                     onBlur={() => handleGridInputBlur(denom.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && value && parseFloat(value) > 0) {
+                        addSequenceFromGrid(denom.value, value);
+                      }
+                    }}
                     className={`w-full text-sm font-bold ${
                       isLocked 
                         ? currency === 'HTG' 
@@ -556,6 +608,11 @@ const SequenceManager = ({
                     onChange={(e) => handleGridInputChange(denom.value, e.target.value)}
                     onFocus={() => handleGridInputFocus(denom.value)}
                     onBlur={() => handleGridInputBlur(denom.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && value && parseFloat(value) > 0) {
+                        addSequenceFromGrid(denom.value, value);
+                      }
+                    }}
                     className={`w-full text-sm font-bold ${
                       isLocked 
                         ? currency === 'HTG' 
@@ -624,7 +681,7 @@ const SequenceManager = ({
                           <Save size={10} />
                         </button>
                         <button
-                          onClick={handleCancelEdit}
+                          onClick={handleCancelSequenceEdit}
                           className="p-1 text-red-400 hover:bg-red-500 hover:bg-opacity-20 rounded"
                           title="Annuler"
                         >
@@ -672,7 +729,7 @@ const SequenceManager = ({
               onChange={(e) => handleInputChange(vendeur, e.target.value)}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
-                  if (isEditingMode) {
+                  if (isEditingSequence) {
                     handleSaveEditedSequence();
                   } else {
                     handleAddSequence(vendeur);
@@ -685,7 +742,7 @@ const SequenceManager = ({
           </div>
 
           {/* Add/Update Button */}
-          {isEditingMode ? (
+          {isEditingSequence ? (
             <div className="flex">
               <button
                 onClick={handleSaveEditedSequence}
@@ -700,7 +757,7 @@ const SequenceManager = ({
                 <Save size={14} />
               </button>
               <button
-                onClick={handleCancelEdit}
+                onClick={handleCancelSequenceEdit}
                 className="px-3 bg-red-500 text-white hover:bg-red-600 flex items-center justify-center"
                 title="Annuler"
               >
@@ -726,13 +783,17 @@ const SequenceManager = ({
         </div>
 
         {/* Add Complete Deposit Button */}
-        {sequences.length > 0 && !isEditingMode && (
+        {sequences.length > 0 && !isEditingSequence && (
           <button
             onClick={() => handleAddCompleteDeposit(vendeur)}
-            className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 active:opacity-80 transition-opacity text-sm"
+            className={`w-full py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 active:opacity-80 transition-opacity text-sm ${
+              editingMode
+                ? 'bg-gradient-to-r from-green-500 to-emerald-600'
+                : 'bg-gradient-to-r from-blue-500 to-purple-600'
+            } text-white`}
           >
             <Plus size={14} />
-            <span>Ajouter dépôt</span>
+            <span>{editingMode ? 'Mettre à jour dépôt' : 'Ajouter dépôt'}</span>
             <span className="text-xs">
               {/* Show summary of what will be added */}
               {sequencesTotalByCurrency?.HTG > 0 && (
