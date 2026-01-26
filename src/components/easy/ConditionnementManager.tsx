@@ -10,7 +10,6 @@ export default function LiasseCounter() {
   const [currentInput, setCurrentInput] = useState(
     DENOMINATIONS.reduce((acc, denom) => ({ ...acc, [denom]: '' }), {})
   );
-  const [activeTab, setActiveTab] = useState(1000);
 
   const addSequence = (denom) => {
     const value = parseInt(currentInput[denom]);
@@ -66,7 +65,7 @@ export default function LiasseCounter() {
 
         const toTake = Math.min(remaining[i], needed);
         const originalAmount = remaining[i];
-        
+
         instruction.steps.push({
           sequenceNum: i + 1,
           take: toTake,
@@ -97,20 +96,22 @@ export default function LiasseCounter() {
     const instructions = getDepartageInstructions(denom);
 
     return (
-      <div className="space-y-4 sm:space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">
-          <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg sm:rounded-xl p-2 sm:p-4 border border-slate-200">
-            <div className="text-[10px] sm:text-xs text-slate-600 font-medium mb-0.5 sm:mb-1">Total</div>
-            <div className="text-lg sm:text-2xl font-bold text-slate-900">{total}</div>
-          </div>
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg sm:rounded-xl p-2 sm:p-4 border border-emerald-200">
-            <div className="text-[10px] sm:text-xs text-emerald-700 font-medium mb-0.5 sm:mb-1">Liasses</div>
-            <div className="text-lg sm:text-2xl font-bold text-emerald-900">{liasseInfo.complete}</div>
-          </div>
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg sm:rounded-xl p-2 sm:p-4 border border-amber-200">
-            <div className="text-[10px] sm:text-xs text-amber-700 font-medium mb-0.5 sm:mb-1">Reste</div>
-            <div className="text-lg sm:text-2xl font-bold text-amber-900">{liasseInfo.remaining}</div>
+      <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8 last:mb-0">
+        {/* Denomination Header */}
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+            {denom} Gourdes
+          </h2>
+          <div className="flex gap-2 sm:gap-3">
+            <div className="text-xs sm:text-sm text-slate-600">
+              <span className="font-medium">Total:</span> {total}
+            </div>
+            <div className="text-xs sm:text-sm text-emerald-700 font-medium">
+              <span className="font-normal">Liasses:</span> {liasseInfo.complete}
+            </div>
+            <div className="text-xs sm:text-sm text-amber-700 font-medium">
+              <span className="font-normal">Reste:</span> {liasseInfo.remaining}
+            </div>
           </div>
         </div>
 
@@ -203,7 +204,7 @@ export default function LiasseCounter() {
                       {inst.total}/100
                     </span>
                   </div>
-                  
+
                   <div className="space-y-1.5 sm:space-y-2">
                     {inst.steps.map((step, idx) => (
                       <div key={idx} className="text-[11px] sm:text-sm bg-white/60 rounded-lg p-2 border border-slate-200">
@@ -241,7 +242,7 @@ export default function LiasseCounter() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 p-2 sm:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-4 sm:mb-6 px-2 sm:px-0">
+        <div className="mb-6 sm:mb-8 px-2 sm:px-0">
           <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 mb-1 sm:mb-2">
             Compteur de Liasses
           </h1>
@@ -250,48 +251,18 @@ export default function LiasseCounter() {
           </p>
         </div>
 
-        {/* Tabs Header */}
-        <div className="bg-white rounded-lg sm:rounded-2xl shadow-sm mb-3 sm:mb-4 p-1 overflow-hidden border border-slate-200">
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
-            {DENOMINATIONS.map((denom) => {
-              const isActive = activeTab === denom;
-              
-              return (
-                <button
-                  key={denom}
-                  onClick={() => setActiveTab(denom)}
-                  className={`flex-shrink-0 snap-center min-w-[60px] sm:min-w-[80px] px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-all duration-200 font-medium ${
-                    isActive
-                      ? 'bg-slate-900 text-white shadow-sm'
-                      : 'bg-transparent text-slate-600 hover:bg-slate-50 active:bg-slate-100'
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className={`text-xs sm:text-sm font-semibold`}>
-                      {denom} G
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Tab Content */}
+        {/* All Denominations */}
         <div className="bg-white rounded-lg sm:rounded-2xl shadow-sm p-3 sm:p-6 border border-slate-200">
-          {renderDenomination(activeTab)}
+          {DENOMINATIONS.map((denom) => (
+            <div key={denom}>
+              {renderDenomination(denom)}
+              {denom !== DENOMINATIONS[DENOMINATIONS.length - 1] && (
+                <hr className="my-4 sm:my-6 border-slate-200" />
+              )}
+            </div>
+          ))}
         </div>
       </div>
-
-      <style dangerouslySetInnerHTML={{__html: `
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}} />
     </div>
   );
 }
