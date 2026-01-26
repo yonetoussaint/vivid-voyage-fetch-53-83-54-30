@@ -384,9 +384,18 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     setVendorInputs(prev => ({ ...prev, [vendeur]: value }));
   };
 
-  const handleAddSequence = (vendeur) => {
-    const vendorState = vendorPresets[vendeur];
-    const inputValue = vendorInputs[vendeur];
+  // UPDATED: handleAddSequence now accepts custom preset and multiplier
+  const handleAddSequence = (vendeur, customPreset = null, customMultiplier = null) => {
+    let vendorState = vendorPresets[vendeur];
+    let inputValue = vendorInputs[vendeur];
+
+    // Use custom values if provided (from grid)
+    if (customPreset !== null) {
+      vendorState = { ...vendorState, preset: customPreset.toString() };
+    }
+    if (customMultiplier !== null) {
+      inputValue = customMultiplier.toString();
+    }
 
     if (!vendorState) {
       initializeVendorState(vendeur, 'HTG');
@@ -398,19 +407,12 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     let currency = vendorState.currency;
     let note = '';
 
-    if (inputValue && !isNaN(parseFloat(inputValue))) {
-      const multiplier = parseFloat(inputValue);
-      const presetValue = parseFloat(vendorState.preset);
-      amount = presetValue * multiplier;
-      note = multiplier === 1 
-        ? `${presetValue} ${currency}`
-        : `${multiplier} × ${presetValue} ${currency}`;
-    } else {
-      // Default to 1 × preset
-      const presetValue = parseFloat(vendorState.preset);
-      amount = presetValue;
-      note = `${presetValue} ${currency}`;
-    }
+    const multiplier = parseFloat(inputValue || 1);
+    const presetValue = parseFloat(vendorState.preset);
+    amount = presetValue * multiplier;
+    note = multiplier === 1 
+      ? `${presetValue} ${currency}`
+      : `${multiplier} × ${presetValue} ${currency}`;
 
     if (currency === 'USD') {
       amount = parseFloat(amount.toFixed(2));
@@ -432,7 +434,10 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
       }));
 
       // Clear input but keep same preset selected
-      setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
+      if (customMultiplier === null) {
+        // Only clear if not from grid (grid handles its own clearing)
+        setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
+      }
     }
   };
 
@@ -585,53 +590,51 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                     </div>
 
                     {/* ALWAYS VISIBLE Sequence Manager - UPDATED PROPS */}
-                   
-<SequenceManager
-  vendeur={vendeur}
-  vendorState={vendorState}
-  sequences={sequences}
-  sequencesTotal={sequencesTotal}
-  sequencesTotalByCurrency={sequencesTotalByCurrency}
-  totalSequencesHTG={totalSequencesHTG}
-  vendorInputs={vendorInputs}
-  currentPresets={currentPresets}
-  handleClearSequences={handleClearSequences}
-  handleRemoveSequence={handleRemoveSequence}
-  handleUpdateSequence={(sequenceId, updatedSequence) => 
-    handleUpdateSequence(vendeur, sequenceId, updatedSequence)
-  }
-  handlePresetSelect={handlePresetSelect}
-  handleInputChange={handleInputChange}
-  handleAddSequence={handleAddSequence}
-  handleAddCompleteDeposit={isEditingMode ? 
-    () => saveEditedDeposit(vendeur) : 
-    () => handleAddCompleteDeposit(vendeur)}
-  calculatePresetAmount={calculatePresetAmount}
-  htgPresets={htgPresets}
-  usdPresets={usdPresets}
-  setVendorPresets={setVendorPresets}
-  TAUX_DE_CHANGE={TAUX_DE_CHANGE}
-  // Add these new props for editing mode
-  editingMode={isEditingMode}
-  onCancelEdit={() => cancelEdit(vendeur)}
-/>
+                    <SequenceManager
+                      vendeur={vendeur}
+                      vendorState={vendorState}
+                      sequences={sequences}
+                      sequencesTotal={sequencesTotal}
+                      sequencesTotalByCurrency={sequencesTotalByCurrency}
+                      totalSequencesHTG={totalSequencesHTG}
+                      vendorInputs={vendorInputs}
+                      currentPresets={currentPresets}
+                      handleClearSequences={handleClearSequences}
+                      handleRemoveSequence={handleRemoveSequence}
+                      handleUpdateSequence={(sequenceId, updatedSequence) => 
+                        handleUpdateSequence(vendeur, sequenceId, updatedSequence)
+                      }
+                      handlePresetSelect={handlePresetSelect}
+                      handleInputChange={handleInputChange}
+                      handleAddSequence={handleAddSequence}
+                      handleAddCompleteDeposit={isEditingMode ? 
+                        () => saveEditedDeposit(vendeur) : 
+                        () => handleAddCompleteDeposit(vendeur)}
+                      calculatePresetAmount={calculatePresetAmount}
+                      htgPresets={htgPresets}
+                      usdPresets={usdPresets}
+                      setVendorPresets={setVendorPresets}
+                      TAUX_DE_CHANGE={TAUX_DE_CHANGE}
+                      editingMode={isEditingMode}
+                      onCancelEdit={() => cancelEdit(vendeur)}
+                    />
                   </div>
 
                   {/* Use DepositsSummary with edit/delete actions */}
                   <DepositsSummary
-  vendeur={vendeur}
-  depots={depots}
-  isRecentlyAdded={isRecentlyAdded}
-  getMontantHTG={getMontantHTG}
-  isUSDDepot={isUSDDepot}
-  getOriginalDepotAmount={getOriginalDepotAmount}
-  getDepositDisplay={getDepositDisplay}
-  onEditDeposit={handleEditDeposit}
-  onDeleteDeposit={supprimerDepot}
-  editingDeposit={editingDeposit}
-  isEditingThisDeposit={isEditingThisDeposit}
-  exchangeRate={TAUX_DE_CHANGE} // ADDED THIS LINE
-/>
+                    vendeur={vendeur}
+                    depots={depots}
+                    isRecentlyAdded={isRecentlyAdded}
+                    getMontantHTG={getMontantHTG}
+                    isUSDDepot={isUSDDepot}
+                    getOriginalDepotAmount={getOriginalDepotAmount}
+                    getDepositDisplay={getDepositDisplay}
+                    onEditDeposit={handleEditDeposit}
+                    onDeleteDeposit={supprimerDepot}
+                    editingDeposit={editingDeposit}
+                    isEditingThisDeposit={isEditingThisDeposit}
+                    exchangeRate={TAUX_DE_CHANGE}
+                  />
                 </VendorDepositCard>
               );
             })
