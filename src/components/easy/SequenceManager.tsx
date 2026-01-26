@@ -364,9 +364,19 @@ const SequenceManager = ({
   // Sort denominations from highest to lowest
   const sortedDenominations = [...denominations].sort((a, b) => b.value - a.value);
 
-  // Split denominations into two columns
-  const firstColumnDenoms = sortedDenominations.slice(0, Math.ceil(sortedDenominations.length / 2));
-  const secondColumnDenoms = sortedDenominations.slice(Math.ceil(sortedDenominations.length / 2));
+  // Create zig-zag pattern across two columns
+  // First column: 1000, 250, 100, 25, 5 (even indices: 0, 2, 4, 6, 8)
+  // Second column: 500, 200, 50, 10 (odd indices: 1, 3, 5, 7)
+  const firstColumnDenoms = [];
+  const secondColumnDenoms = [];
+
+  sortedDenominations.forEach((denom, index) => {
+    if (index % 2 === 0) {
+      firstColumnDenoms.push(denom);
+    } else {
+      secondColumnDenoms.push(denom);
+    }
+  });
 
   // Calculate grid total
   const gridTotal = calculateGridTotal();
@@ -469,7 +479,7 @@ const SequenceManager = ({
         </div>
         
         <div className="grid grid-cols-2 gap-2">
-          {/* First Column */}
+          {/* First Column (even indices: 0, 2, 4, 6, 8) */}
           <div className="space-y-2">
             {firstColumnDenoms.map((denom) => {
               const value = gridInputs[denom.value] || '';
@@ -528,7 +538,7 @@ const SequenceManager = ({
             })}
           </div>
           
-          {/* Second Column */}
+          {/* Second Column (odd indices: 1, 3, 5, 7) */}
           <div className="space-y-2">
             {secondColumnDenoms.map((denom) => {
               const value = gridInputs[denom.value] || '';
