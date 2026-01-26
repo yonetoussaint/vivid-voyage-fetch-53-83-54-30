@@ -16,6 +16,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   const [depositSequences, setDepositSequences] = useState({});
   const [recentlyAdded, setRecentlyAdded] = useState({});
   const [editingDeposit, setEditingDeposit] = useState(null); // { vendeur: string, index: number }
+  const [expandedVendor, setExpandedVendor] = useState(null); // NEW: Track expanded vendor
 
   // Presets - HTG from 1 to 1000, USD from 1 to 100
   const htgPresets = [
@@ -38,6 +39,31 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     { value: '50', label: '50' },
     { value: '100', label: '100' }
   ];
+
+  // NEW: Function to handle toggling vendor cards
+  const handleToggleVendor = (vendeur) => {
+    if (expandedVendor === vendeur) {
+      // Collapse if clicking the same vendor
+      setExpandedVendor(null);
+    } else {
+      // Expand the clicked vendor
+      setExpandedVendor(vendeur);
+    }
+  };
+
+  // NEW: Auto-expand the first vendor if none is expanded and there are vendors
+  useEffect(() => {
+    if (vendeurs.length > 0 && expandedVendor === null && !editingDeposit) {
+      setExpandedVendor(vendeurs[0]);
+    }
+  }, [vendeurs, editingDeposit]);
+
+  // NEW: Auto-collapse when editing starts
+  useEffect(() => {
+    if (editingDeposit && expandedVendor !== editingDeposit.vendeur) {
+      setExpandedVendor(editingDeposit.vendeur);
+    }
+  }, [editingDeposit]);
 
   // Helper Functions
   const convertirUSDversHTG = (montantUSD) => {
@@ -532,6 +558,9 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
             <DollarSign size={20} />
             <h3 className="text-lg font-bold">Dépôts - Shift {shift}</h3>
           </div>
+          <div className="text-sm opacity-80">
+            {vendeurs.length} vendeur{vendeurs.length !== 1 ? 's' : ''}
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -560,6 +589,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
               const sequencesTotalByCurrency = calculateSequencesTotalByCurrency(vendeur);
               const totalSequencesHTG = calculateTotalSequencesHTG(vendeur);
               const isEditingMode = editingDeposit?.vendeur === vendeur;
+              const isExpanded = expandedVendor === vendeur; // NEW: Check if this vendor is expanded
 
               return (
                 <VendorDepositCard
@@ -568,73 +598,80 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                   donneesVendeur={donneesVendeur}
                   especesAttendues={especesAttendues}
                   totalDepotHTG={totalDepotHTG}
+                  isExpanded={isExpanded} // NEW: Pass expanded state
+                  onToggle={() => handleToggleVendor(vendeur)} // NEW: Pass toggle handler
                 >
-                  {/* SEQUENTIAL DEPOSITS ONLY - Always Visible */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-semibold">
-                        {isEditingMode ? 
-                          `Éditer Dépôt #${editingDeposit.index + 1}` : 
-                          'Ajouter Nouveau Dépôt (Séquentiel)'}
-                      </span>
-                      <div className="flex flex-wrap gap-1">
-                        {isEditingMode && (
-                          <button
-                            onClick={() => cancelEdit(vendeur)}
-                            className="px-2 py-1.5 rounded-lg font-bold text-xs bg-red-500 text-white active:scale-95 transition"
-                          >
-                            Annuler
-                          </button>
-                        )}
+                  {/* Only render children if expanded or editing */}
+                  {(isExpanded || isEditingMode) && (
+                    <>
+                      {/* SEQUENTIAL DEPOSITS ONLY - Always Visible */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-semibold">
+                            {isEditingMode ? 
+                              `Éditer Dépôt #${editingDeposit.index + 1}` : 
+                              'Ajouter Nouveau Dépôt (Séquentiel)'}
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {isEditingMode && (
+                              <button
+                                onClick={() => cancelEdit(vendeur)}
+                                className="px-2 py-1.5 rounded-lg font-bold text-xs bg-red-500 text-white active:scale-95 transition"
+                              >
+                                Annuler
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* ALWAYS VISIBLE Sequence Manager - UPDATED PROPS */}
+                        <SequenceManager
+                          vendeur={vendeur}
+                          vendorState={vendorState}
+                          sequences={sequences}
+                          sequencesTotal={sequencesTotal}
+                          sequencesTotalByCurrency={sequencesTotalByCurrency}
+                          totalSequencesHTG={totalSequencesHTG}
+                          vendorInputs={vendorInputs}
+                          currentPresets={currentPresets}
+                          handleClearSequences={handleClearSequences}
+                          handleRemoveSequence={handleRemoveSequence}
+                          handleUpdateSequence={(sequenceId, updatedSequence) => 
+                            handleUpdateSequence(vendeur, sequenceId, updatedSequence)
+                          }
+                          handlePresetSelect={handlePresetSelect}
+                          handleInputChange={handleInputChange}
+                          handleAddSequence={handleAddSequence}
+                          handleAddCompleteDeposit={isEditingMode ? 
+                            () => saveEditedDeposit(vendeur) : 
+                            () => handleAddCompleteDeposit(vendeur)}
+                          calculatePresetAmount={calculatePresetAmount}
+                          htgPresets={htgPresets}
+                          usdPresets={usdPresets}
+                          setVendorPresets={setVendorPresets}
+                          TAUX_DE_CHANGE={TAUX_DE_CHANGE}
+                          editingMode={isEditingMode}
+                          onCancelEdit={() => cancelEdit(vendeur)}
+                        />
                       </div>
-                    </div>
 
-                    {/* ALWAYS VISIBLE Sequence Manager - UPDATED PROPS */}
-                    <SequenceManager
-                      vendeur={vendeur}
-                      vendorState={vendorState}
-                      sequences={sequences}
-                      sequencesTotal={sequencesTotal}
-                      sequencesTotalByCurrency={sequencesTotalByCurrency}
-                      totalSequencesHTG={totalSequencesHTG}
-                      vendorInputs={vendorInputs}
-                      currentPresets={currentPresets}
-                      handleClearSequences={handleClearSequences}
-                      handleRemoveSequence={handleRemoveSequence}
-                      handleUpdateSequence={(sequenceId, updatedSequence) => 
-                        handleUpdateSequence(vendeur, sequenceId, updatedSequence)
-                      }
-                      handlePresetSelect={handlePresetSelect}
-                      handleInputChange={handleInputChange}
-                      handleAddSequence={handleAddSequence}
-                      handleAddCompleteDeposit={isEditingMode ? 
-                        () => saveEditedDeposit(vendeur) : 
-                        () => handleAddCompleteDeposit(vendeur)}
-                      calculatePresetAmount={calculatePresetAmount}
-                      htgPresets={htgPresets}
-                      usdPresets={usdPresets}
-                      setVendorPresets={setVendorPresets}
-                      TAUX_DE_CHANGE={TAUX_DE_CHANGE}
-                      editingMode={isEditingMode}
-                      onCancelEdit={() => cancelEdit(vendeur)}
-                    />
-                  </div>
-
-                  {/* Use DepositsSummary with edit/delete actions */}
-                  <DepositsSummary
-                    vendeur={vendeur}
-                    depots={depots}
-                    isRecentlyAdded={isRecentlyAdded}
-                    getMontantHTG={getMontantHTG}
-                    isUSDDepot={isUSDDepot}
-                    getOriginalDepotAmount={getOriginalDepotAmount}
-                    getDepositDisplay={getDepositDisplay}
-                    onEditDeposit={handleEditDeposit}
-                    onDeleteDeposit={supprimerDepot}
-                    editingDeposit={editingDeposit}
-                    isEditingThisDeposit={isEditingThisDeposit}
-                    exchangeRate={TAUX_DE_CHANGE}
-                  />
+                      {/* Use DepositsSummary with edit/delete actions */}
+                      <DepositsSummary
+                        vendeur={vendeur}
+                        depots={depots}
+                        isRecentlyAdded={isRecentlyAdded}
+                        getMontantHTG={getMontantHTG}
+                        isUSDDepot={isUSDDepot}
+                        getOriginalDepotAmount={getOriginalDepotAmount}
+                        getDepositDisplay={getDepositDisplay}
+                        onEditDeposit={handleEditDeposit}
+                        onDeleteDeposit={supprimerDepot}
+                        editingDeposit={editingDeposit}
+                        isEditingThisDeposit={isEditingThisDeposit}
+                        exchangeRate={TAUX_DE_CHANGE}
+                      />
+                    </>
+                  )}
                 </VendorDepositCard>
               );
             })
