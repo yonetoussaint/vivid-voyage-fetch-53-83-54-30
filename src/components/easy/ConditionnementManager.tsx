@@ -156,7 +156,7 @@ export default function LiasseCounter() {
             >
               <Plus size={16} className="sm:w-5 sm:h-5" />
               <span className="hidden xs:inline">Ajouter</span>
-              <span className="xs:hidden">+</span>
+              <span className="xs:hidden">Ajouter</span>
             </button>
           </div>
 
