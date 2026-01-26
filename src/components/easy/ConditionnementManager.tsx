@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, RotateCcw, Check, X } from 'lucide-react';
 
 export default function LiasseCounter() {
   const [sequences, setSequences] = useState(() => {
@@ -8,19 +8,61 @@ export default function LiasseCounter() {
     return saved ? JSON.parse(saved) : [];
   });
   const [currentInput, setCurrentInput] = useState('');
+  const [buttonState, setButtonState] = useState('default'); // 'default', 'loading', 'success', 'error'
+  const timeoutRef = useRef(null);
+
+  // Clear any existing timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   // Save to localStorage whenever sequences change
   useEffect(() => {
     localStorage.setItem('liasseCounterSequences', JSON.stringify(sequences));
   }, [sequences]);
 
+  // Reset button to default state after a delay
+  const resetButtonState = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      setButtonState('default');
+    }, 2000);
+  };
+
   const addSequence = () => {
     const value = parseInt(currentInput);
-    if (!isNaN(value) && value > 0) {
+    
+    // Error state: empty or invalid input
+    if (currentInput === '' || isNaN(value)) {
+      setButtonState('error');
+      resetButtonState();
+      return;
+    }
+    
+    // Error state: zero or negative number
+    if (value <= 0) {
+      setButtonState('error');
+      resetButtonState();
+      return;
+    }
+    
+    // Loading state (brief animation)
+    setButtonState('loading');
+    
+    // Simulate processing time (better UX)
+    setTimeout(() => {
       const newSequences = [...sequences, value];
       setSequences(newSequences);
       setCurrentInput('');
-    }
+      setButtonState('success');
+      resetButtonState();
+    }, 300);
   };
 
   const removeSequence = (index) => {
@@ -98,6 +140,52 @@ export default function LiasseCounter() {
   const liasseInfo = getLiasses();
   const instructions = getDepartageInstructions();
 
+  // Determine button properties based on state
+  const getButtonConfig = () => {
+    const configs = {
+      default: {
+        icon: Plus,
+        text: 'Ajouter',
+        bgColor: 'bg-emerald-500',
+        hoverColor: 'hover:bg-emerald-600',
+        activeColor: 'active:bg-emerald-700',
+        textColor: 'text-white',
+        disabled: false,
+      },
+      loading: {
+        icon: null, // Loading spinner
+        text: 'Ajout...',
+        bgColor: 'bg-emerald-500',
+        hoverColor: '',
+        activeColor: '',
+        textColor: 'text-white',
+        disabled: true,
+      },
+      success: {
+        icon: Check,
+        text: 'Ajouté !',
+        bgColor: 'bg-emerald-600',
+        hoverColor: '',
+        activeColor: '',
+        textColor: 'text-white',
+        disabled: true,
+      },
+      error: {
+        icon: X,
+        text: 'Invalide',
+        bgColor: 'bg-red-500',
+        hoverColor: '',
+        activeColor: '',
+        textColor: 'text-white',
+        disabled: true,
+      },
+    };
+    
+    return configs[buttonState] || configs.default;
+  };
+
+  const buttonConfig = getButtonConfig();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 p-2 sm:p-6">
       <div className="max-w-4xl mx-auto">
@@ -144,17 +232,37 @@ export default function LiasseCounter() {
             <input
               type="number"
               value={currentInput}
-              onChange={(e) => setCurrentInput(e.target.value)}
+              onChange={(e) => {
+                setCurrentInput(e.target.value);
+                // Reset button to default when user starts typing
+                if (buttonState !== 'default') {
+                  if (timeoutRef.current) {
+                    clearTimeout(timeoutRef.current);
+                  }
+                  setButtonState('default');
+                }
+              }}
               onKeyPress={(e) => e.key === 'Enter' && addSequence()}
               placeholder="Nombre de billets..."
               className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-white border border-slate-200 rounded-lg sm:rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
             />
             <button
               onClick={addSequence}
-              className="bg-emerald-500 text-white px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:bg-emerald-600 active:bg-emerald-700 transition-all flex items-center justify-center gap-2 text-sm sm:text-base font-medium shadow-sm hover:shadow min-w-[120px]"
+              disabled={buttonConfig.disabled}
+              className={`${buttonConfig.bgColor} ${buttonConfig.hoverColor} ${buttonConfig.activeColor} ${buttonConfig.textColor} px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-2 text-sm sm:text-base font-medium shadow-sm hover:shadow min-w-[120px] disabled:opacity-90 disabled:cursor-not-allowed relative`}
             >
-              <Plus size={18} className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Ajouter</span>
+              {/* Loading Spinner */}
+              {buttonState === 'loading' && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+              
+              {/* Icon and Text */}
+              <div className={`flex items-center gap-2 ${buttonState === 'loading' ? 'opacity-0' : 'opacity-100'}`}>
+                {buttonConfig.icon && <buttonConfig.icon size={18} className="w-4 h-4 sm:w-5 sm:h-5" />}
+                <span>{buttonConfig.text}</span>
+              </div>
             </button>
           </div>
 
