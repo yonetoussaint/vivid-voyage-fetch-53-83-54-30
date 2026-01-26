@@ -140,8 +140,35 @@ export default function LiasseCounter() {
   const liasseInfo = getLiasses();
   const instructions = getDepartageInstructions();
 
-  // Determine button properties based on state
+  // Determine button properties based on state and input
   const getButtonConfig = () => {
+    // Disabled (gray) state when input is empty
+    if (currentInput === '') {
+      return {
+        icon: Plus,
+        text: 'Ajouter',
+        bgColor: 'bg-slate-300',
+        hoverColor: '',
+        activeColor: '',
+        textColor: 'text-slate-500',
+        disabled: true,
+      };
+    }
+
+    const value = parseInt(currentInput);
+    // Disabled (gray) state when input is 0
+    if (value === 0) {
+      return {
+        icon: Plus,
+        text: 'Ajouter',
+        bgColor: 'bg-slate-300',
+        hoverColor: '',
+        activeColor: '',
+        textColor: 'text-slate-500',
+        disabled: true,
+      };
+    }
+
     const configs = {
       default: {
         icon: Plus,
@@ -242,7 +269,7 @@ export default function LiasseCounter() {
                   setButtonState('default');
                 }
               }}
-              onKeyPress={(e) => e.key === 'Enter' && addSequence()}
+              onKeyPress={(e) => e.key === 'Enter' && currentInput !== '' && parseInt(currentInput) > 0 && addSequence()}
               placeholder="Nombre de billets..."
               className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-white border border-slate-200 rounded-lg sm:rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
             />
