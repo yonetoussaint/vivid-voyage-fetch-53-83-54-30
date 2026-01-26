@@ -72,22 +72,52 @@ const SequenceManager = ({
     return vendorState?.currency || 'HTG'; // Default to HTG
   };
 
-  // Create a sequence object directly
-  const createSequence = (presetValue, multiplier) => {
+  // Create a sequence directly and add it
+  const addDenominationSequence = (denominationValue, multiplier) => {
     const currency = getCurrency();
     
-    const amount = presetValue * parseFloat(multiplier);
-    const note = parseFloat(multiplier) === 1 
-      ? `${presetValue} ${currency}`
-      : `${multiplier} × ${presetValue} ${currency}`;
+    if (!multiplier || parseFloat(multiplier) <= 0) return;
     
-    return {
+    // Create the sequence object
+    const amount = denominationValue * parseFloat(multiplier);
+    const note = parseFloat(multiplier) === 1 
+      ? `${denominationValue} ${currency}`
+      : `${multiplier} × ${denominationValue} ${currency}`;
+    
+    const newSequence = {
       id: Date.now() + Math.random(),
       amount: currency === 'USD' ? parseFloat(amount.toFixed(2)) : amount,
       currency,
       note,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
+    
+    // We need to add this to the parent's sequences
+    // Since we don't have direct access to setSequences, we need to use a different approach
+    // We'll create a custom event or use a callback
+    
+    // For now, let's use the existing handleAddSequence but with a workaround
+    // Save current state
+    const currentInput = vendorInputs[vendeur] || '';
+    const currentPresetValue = vendorState?.preset || '1';
+    
+    // Temporarily set the state to our denomination values
+    // Use a timeout to ensure state updates happen in order
+    setTimeout(() => {
+      handlePresetSelect(vendeur, denominationValue.toString());
+      handleInputChange(vendeur, multiplier);
+      
+      // Now add the sequence
+      setTimeout(() => {
+        handleAddSequence(vendeur);
+        
+        // Restore original state
+        setTimeout(() => {
+          handlePresetSelect(vendeur, currentPresetValue);
+          handleInputChange(vendeur, currentInput);
+        }, 50);
+      }, 100);
+    }, 0);
   };
 
   // Handle grid input change
@@ -107,30 +137,8 @@ const SequenceManager = ({
   // Handle adding sequence from grid input
   const handleAddFromGrid = (denominationValue, multiplier) => {
     if (multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
-      // Create the sequence
-      const newSequence = createSequence(denominationValue, multiplier);
-      
-      // Update the sequence using the parent function
-      // We need to simulate adding via the existing flow
-      // First save current state
-      const currentInput = vendorInputs[vendeur] || '';
-      const currentPresetValue = vendorState?.preset || '1';
-      
-      // Temporarily set the state to match our denomination
-      handlePresetSelect(vendeur, denominationValue.toString());
-      handleInputChange(vendeur, multiplier);
-      
-      // Now add the sequence - but we need to ensure it uses our values
-      // Since handleAddSequence uses the current state, it should now use our values
-      setTimeout(() => {
-        handleAddSequence(vendeur);
-        
-        // Restore original state
-        setTimeout(() => {
-          handlePresetSelect(vendeur, currentPresetValue);
-          handleInputChange(vendeur, currentInput);
-        }, 50);
-      }, 50);
+      // Add the sequence directly
+      addDenominationSequence(denominationValue, multiplier);
       
       // Clear that specific grid input
       const newMultipliers = { ...gridMultipliers };
@@ -162,14 +170,9 @@ const SequenceManager = ({
     return total;
   };
 
-  // Add all grid inputs as separate sequences
+  // Add all grid inputs as separate sequences - NEW SIMPLIFIED VERSION
   const handleAddAllGridSequences = () => {
-    const currency = getCurrency();
     const denominations = getDenominations();
-    
-    // Save current state
-    const currentInput = vendorInputs[vendeur] || '';
-    const currentPresetValue = vendorState?.preset || '1';
     
     // Get all denominations with multipliers
     const entries = denominations
@@ -181,29 +184,26 @@ const SequenceManager = ({
     
     if (entries.length === 0) return;
     
-    // Clear grid inputs first
-    setGridMultipliers({});
+    // Save current state
+    const currentInput = vendorInputs[vendeur] || '';
+    const currentPresetValue = vendorState?.preset || '1';
     
-    // Add each sequence
+    // Process each entry with proper delays
     entries.forEach(({ denom, multiplier }, index) => {
       setTimeout(() => {
-        // Set the state for this denomination
-        handlePresetSelect(vendeur, denom.value.toString());
-        handleInputChange(vendeur, multiplier);
+        // Add this specific denomination
+        addDenominationSequence(denom.value, multiplier);
         
-        // Add the sequence
-        setTimeout(() => {
-          handleAddSequence(vendeur);
-          
-          // If this is the last entry, restore original state
-          if (index === entries.length - 1) {
-            setTimeout(() => {
-              handlePresetSelect(vendeur, currentPresetValue);
-              handleInputChange(vendeur, currentInput);
-            }, 100);
-          }
-        }, 100);
-      }, index * 200); // Stagger the additions
+        // If this is the last entry, clear grid inputs
+        if (index === entries.length - 1) {
+          setTimeout(() => {
+            setGridMultipliers({});
+            // Ensure original state is restored
+            handlePresetSelect(vendeur, currentPresetValue);
+            handleInputChange(vendeur, currentInput);
+          }, entries.length * 150 + 100);
+        }
+      }, index * 150); // Stagger the additions
     });
   };
 
@@ -426,6 +426,8 @@ const SequenceManager = ({
           <div className="space-y-2">
             {firstColumnDenoms.map((denom) => {
               const multiplier = gridMultipliers[denom.value] || '';
+              const totalForDenom = multiplier && parseFloat(multiplier) > 0 ? denom.value * parseFloat(multiplier) : 0;
+              
               return (
                 <div key={`grid-${denom.value}`} className="space-y-1">
                   <div className="text-xs text-white text-opacity-70">{denom.label}</div>
@@ -455,6 +457,11 @@ const SequenceManager = ({
                       <Plus size={14} />
                     </button>
                   </div>
+                  {totalForDenom > 0 && (
+                    <div className="text-[10px] text-right opacity-70">
+                      = {formaterArgent(totalForDenom)} {currency}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -464,6 +471,8 @@ const SequenceManager = ({
           <div className="space-y-2">
             {secondColumnDenoms.map((denom) => {
               const multiplier = gridMultipliers[denom.value] || '';
+              const totalForDenom = multiplier && parseFloat(multiplier) > 0 ? denom.value * parseFloat(multiplier) : 0;
+              
               return (
                 <div key={`grid-${denom.value}`} className="space-y-1">
                   <div className="text-xs text-white text-opacity-70">{denom.label}</div>
@@ -493,6 +502,11 @@ const SequenceManager = ({
                       <Plus size={14} />
                     </button>
                   </div>
+                  {totalForDenom > 0 && (
+                    <div className="text-[10px] text-right opacity-70">
+                      = {formaterArgent(totalForDenom)} {currency}
+                    </div>
+                  )}
                 </div>
               );
             })}
