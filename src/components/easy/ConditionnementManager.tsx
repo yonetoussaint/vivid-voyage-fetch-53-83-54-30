@@ -102,7 +102,7 @@ export default function LiasseCounter() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 p-2 sm:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header with Reset Button */}
-        <div className="mb-4 sm:mb-6 px-2 sm:px-0 flex justify-between items-start">
+        <div className="mb-4 sm:mb-6 px-2 sm:px-0 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
           <div>
             <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 mb-1 sm:mb-2">
               Compteur de Liasses
@@ -114,11 +114,10 @@ export default function LiasseCounter() {
           {sequences.length > 0 && (
             <button
               onClick={resetAll}
-              className="bg-white text-red-600 hover:bg-red-50 active:bg-red-100 border border-red-200 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all flex items-center gap-1.5 sm:gap-2 text-sm font-medium shadow-sm hover:shadow whitespace-nowrap mt-1"
+              className="bg-white text-red-600 hover:bg-red-50 active:bg-red-100 border border-red-200 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-sm font-medium shadow-sm hover:shadow w-full sm:w-auto"
             >
               <RotateCcw size={16} className="sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Tout réinitialiser</span>
-              <span className="sm:hidden">Réinit.</span>
+              <span>Tout réinitialiser</span>
             </button>
           )}
         </div>
@@ -140,30 +139,29 @@ export default function LiasseCounter() {
             </div>
           </div>
 
-          {/* Input area */}
-          <div className="flex gap-2 mb-4 sm:mb-6">
+          {/* Input area - Fixed for mobile */}
+          <div className="flex flex-col xs:flex-row gap-2 mb-4 sm:mb-6">
             <input
               type="number"
               value={currentInput}
               onChange={(e) => setCurrentInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && addSequence()}
-              placeholder="Nombre de billets dans la séquence..."
+              placeholder="Nombre de billets..."
               className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-white border border-slate-200 rounded-lg sm:rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
             />
             <button
               onClick={addSequence}
-              className="bg-emerald-500 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:bg-emerald-600 active:bg-emerald-700 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base font-medium shadow-sm hover:shadow whitespace-nowrap"
+              className="bg-emerald-500 text-white px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:bg-emerald-600 active:bg-emerald-700 transition-all flex items-center justify-center gap-2 text-sm sm:text-base font-medium shadow-sm hover:shadow min-w-[120px]"
             >
-              <Plus size={16} className="sm:w-5 sm:h-5" />
-              <span className="hidden xs:inline">Ajouter</span>
-              <span className="xs:hidden">Ajouter</span>
+              <Plus size={18} className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Ajouter</span>
             </button>
           </div>
 
           {/* Sequences */}
           {sequences.length > 0 && (
             <div className="mb-4 sm:mb-6">
-              <div className="flex justify-between items-center mb-2 sm:mb-3">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 sm:mb-3 gap-1">
                 <div className="text-[10px] sm:text-xs font-semibold text-slate-700 uppercase tracking-wide">
                   Séquences ({sequences.length})
                 </div>
