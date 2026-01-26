@@ -94,6 +94,56 @@ const SequenceManager = ({
     }
   }, [vendorState?.currency]);
 
+  // DIRECT FUNCTION TO ADD GRID SEQUENCE - FIXED VERSION
+  const addGridSequenceDirectly = (denominationValue, multiplierStr) => {
+    if (!multiplierStr || multiplierStr === '' || parseFloat(multiplierStr) <= 0) return;
+    
+    const currency = getCurrency();
+    const multiplierNum = parseFloat(multiplierStr);
+    const amount = denominationValue * multiplierNum;
+    
+    // Create the sequence object
+    const note = multiplierNum === 1 
+      ? `${denominationValue} ${currency}`
+      : `${multiplierStr} × ${denominationValue} ${currency}`;
+    
+    const newSequence = {
+      id: Date.now() + Math.random(),
+      amount: currency === 'USD' ? parseFloat(amount.toFixed(2)) : amount,
+      currency,
+      note,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    // Add to sequences directly using handleUpdateSequence
+    // We need to add to existing sequences array
+    const currentSequences = sequences || [];
+    const updatedSequences = [...currentSequences, newSequence];
+    
+    // Since we can't directly set sequences, we need to simulate the addition
+    // Save current state
+    const currentInput = vendorInputs[vendeur] || '';
+    const currentPresetValue = vendorState?.preset || '1';
+    
+    // Set the correct state for this denomination
+    handlePresetSelect(vendeur, denominationValue.toString());
+    handleInputChange(vendeur, multiplierStr);
+    
+    // Use a timeout to ensure state is updated
+    setTimeout(() => {
+      // Call handleAddSequence which will use the correct preset and multiplier
+      handleAddSequence(vendeur);
+      
+      // Restore original state
+      setTimeout(() => {
+        handlePresetSelect(vendeur, currentPresetValue);
+        handleInputChange(vendeur, currentInput);
+      }, 50);
+    }, 50);
+    
+    return newSequence;
+  };
+
   // Handle grid input change
   const handleGridInputChange = (denominationValue, value) => {
     if (lockedInputs[denominationValue]) return;
@@ -179,50 +229,26 @@ const SequenceManager = ({
     return total;
   };
 
-  // Add sequence from grid input
-  const addSequenceFromGrid = (denominationValue, multiplier) => {
-    if (multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
-      // Save current state
-      const currentInput = vendorInputs[vendeur] || '';
-      const currentPresetValue = vendorState?.preset || '1';
+  // Add sequence from grid input when Enter is pressed
+  const handleGridInputKeyPress = (denominationValue, multiplier, e) => {
+    if (e.key === 'Enter' && multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
+      // Add the sequence directly
+      addGridSequenceDirectly(denominationValue, multiplier);
       
-      // Set the denomination as preset
-      handlePresetSelect(vendeur, denominationValue.toString());
-      // Set the multiplier as input
-      handleInputChange(vendeur, multiplier);
-      
-      // Add the sequence
-      setTimeout(() => {
-        handleAddSequence(vendeur);
-        
-        // Restore original state
-        setTimeout(() => {
-          const presets = getCurrency() === 'HTG' ? htgPresets : usdPresets;
-          const smallestPreset = presets[0]?.value || '1';
-          handlePresetSelect(vendeur, smallestPreset);
-          handleInputChange(vendeur, currentInput);
-        }, 50);
-      }, 50);
-      
-      // Clear that specific grid input
+      // Clear and unlock the field
       const newInputs = { ...gridInputs };
       delete newInputs[denominationValue];
       setGridInputs(newInputs);
       
-      // Also unlock it
       const newLocks = { ...lockedInputs };
       delete newLocks[denominationValue];
       setLockedInputs(newLocks);
     }
   };
 
-  // Add all grid inputs as sequences
+  // Add all grid inputs as sequences - COMPLETELY REWRITTEN
   const handleAddAllGridSequences = () => {
     const denominations = getDenominations();
-    
-    // Save current state
-    const currentInput = vendorInputs[vendeur] || '';
-    const currentPresetValue = vendorState?.preset || '1';
     
     // Get all entries with values
     const entries = denominations
@@ -234,10 +260,11 @@ const SequenceManager = ({
     
     if (entries.length === 0) return;
     
-    // Reset grid first
-    resetGridInputs();
+    // Save current state
+    const currentInput = vendorInputs[vendeur] || '';
+    const currentPresetValue = vendorState?.preset || '1';
     
-    // Process each entry
+    // Process each entry one by one with delays
     entries.forEach(({ denom, multiplier }, index) => {
       setTimeout(() => {
         // Set the denomination as preset
@@ -249,17 +276,16 @@ const SequenceManager = ({
         setTimeout(() => {
           handleAddSequence(vendeur);
           
-          // If last entry, restore original state
+          // If last entry, restore original state and reset grid
           if (index === entries.length - 1) {
             setTimeout(() => {
-              const presets = getCurrency() === 'HTG' ? htgPresets : usdPresets;
-              const smallestPreset = presets[0]?.value || '1';
-              handlePresetSelect(vendeur, smallestPreset);
+              handlePresetSelect(vendeur, currentPresetValue);
               handleInputChange(vendeur, currentInput);
+              resetGridInputs();
             }, 100);
           }
         }, 100);
-      }, index * 200);
+      }, index * 300); // Increased delay to ensure each sequence is added properly
     });
   };
 
@@ -545,11 +571,7 @@ const SequenceManager = ({
                     onChange={(e) => handleGridInputChange(denom.value, e.target.value)}
                     onFocus={() => handleGridInputFocus(denom.value)}
                     onBlur={() => handleGridInputBlur(denom.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && value && parseFloat(value) > 0) {
-                        addSequenceFromGrid(denom.value, value);
-                      }
-                    }}
+                    onKeyPress={(e) => handleGridInputKeyPress(denom.value, value, e)}
                     className={`w-full text-sm font-bold ${
                       isLocked 
                         ? currency === 'HTG' 
@@ -608,11 +630,7 @@ const SequenceManager = ({
                     onChange={(e) => handleGridInputChange(denom.value, e.target.value)}
                     onFocus={() => handleGridInputFocus(denom.value)}
                     onBlur={() => handleGridInputBlur(denom.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && value && parseFloat(value) > 0) {
-                        addSequenceFromGrid(denom.value, value);
-                      }
-                    }}
+                    onKeyPress={(e) => handleGridInputKeyPress(denom.value, value, e)}
                     className={`w-full text-sm font-bold ${
                       isLocked 
                         ? currency === 'HTG' 
@@ -781,6 +799,18 @@ const SequenceManager = ({
             </button>
           )}
         </div>
+
+        {/* Quick Preview for main input */}
+        {vendorInputs[vendeur] && parseFloat(vendorInputs[vendeur]) > 0 && (
+          <div className="text-center">
+            <div className="text-xs opacity-80">
+              {vendorInputs[vendeur]} × {vendorState?.preset || '1'} {currency} = 
+              <span className="font-bold ml-1">
+                {formaterArgent(calculatePresetAmount(vendeur))} {currency}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Add Complete Deposit Button */}
         {sequences.length > 0 && !isEditingSequence && (
