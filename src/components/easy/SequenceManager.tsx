@@ -94,56 +94,6 @@ const SequenceManager = ({
     }
   }, [vendorState?.currency]);
 
-  // DIRECT FUNCTION TO ADD GRID SEQUENCE - FIXED VERSION
-  const addGridSequenceDirectly = (denominationValue, multiplierStr) => {
-    if (!multiplierStr || multiplierStr === '' || parseFloat(multiplierStr) <= 0) return;
-    
-    const currency = getCurrency();
-    const multiplierNum = parseFloat(multiplierStr);
-    const amount = denominationValue * multiplierNum;
-    
-    // Create the sequence object
-    const note = multiplierNum === 1 
-      ? `${denominationValue} ${currency}`
-      : `${multiplierStr} × ${denominationValue} ${currency}`;
-    
-    const newSequence = {
-      id: Date.now() + Math.random(),
-      amount: currency === 'USD' ? parseFloat(amount.toFixed(2)) : amount,
-      currency,
-      note,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    
-    // Add to sequences directly using handleUpdateSequence
-    // We need to add to existing sequences array
-    const currentSequences = sequences || [];
-    const updatedSequences = [...currentSequences, newSequence];
-    
-    // Since we can't directly set sequences, we need to simulate the addition
-    // Save current state
-    const currentInput = vendorInputs[vendeur] || '';
-    const currentPresetValue = vendorState?.preset || '1';
-    
-    // Set the correct state for this denomination
-    handlePresetSelect(vendeur, denominationValue.toString());
-    handleInputChange(vendeur, multiplierStr);
-    
-    // Use a timeout to ensure state is updated
-    setTimeout(() => {
-      // Call handleAddSequence which will use the correct preset and multiplier
-      handleAddSequence(vendeur);
-      
-      // Restore original state
-      setTimeout(() => {
-        handlePresetSelect(vendeur, currentPresetValue);
-        handleInputChange(vendeur, currentInput);
-      }, 50);
-    }, 50);
-    
-    return newSequence;
-  };
-
   // Handle grid input change
   const handleGridInputChange = (denominationValue, value) => {
     if (lockedInputs[denominationValue]) return;
@@ -232,8 +182,8 @@ const SequenceManager = ({
   // Add sequence from grid input when Enter is pressed
   const handleGridInputKeyPress = (denominationValue, multiplier, e) => {
     if (e.key === 'Enter' && multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
-      // Add the sequence directly
-      addGridSequenceDirectly(denominationValue, multiplier);
+      // Add the sequence directly with custom preset
+      handleAddSequence(vendeur, denominationValue, multiplier);
       
       // Clear and unlock the field
       const newInputs = { ...gridInputs };
@@ -246,7 +196,7 @@ const SequenceManager = ({
     }
   };
 
-  // Add all grid inputs as sequences - COMPLETELY REWRITTEN
+  // Add all grid inputs as sequences
   const handleAddAllGridSequences = () => {
     const denominations = getDenominations();
     
@@ -260,32 +210,19 @@ const SequenceManager = ({
     
     if (entries.length === 0) return;
     
-    // Save current state
-    const currentInput = vendorInputs[vendeur] || '';
-    const currentPresetValue = vendorState?.preset || '1';
-    
     // Process each entry one by one with delays
     entries.forEach(({ denom, multiplier }, index) => {
       setTimeout(() => {
-        // Set the denomination as preset
-        handlePresetSelect(vendeur, denom.value.toString());
-        // Set the multiplier as input
-        handleInputChange(vendeur, multiplier);
+        // Call handleAddSequence with custom preset and multiplier
+        handleAddSequence(vendeur, denom.value, multiplier);
         
-        // Add the sequence
-        setTimeout(() => {
-          handleAddSequence(vendeur);
-          
-          // If last entry, restore original state and reset grid
-          if (index === entries.length - 1) {
-            setTimeout(() => {
-              handlePresetSelect(vendeur, currentPresetValue);
-              handleInputChange(vendeur, currentInput);
-              resetGridInputs();
-            }, 100);
-          }
-        }, 100);
-      }, index * 300); // Increased delay to ensure each sequence is added properly
+        // If last entry, reset grid
+        if (index === entries.length - 1) {
+          setTimeout(() => {
+            resetGridInputs();
+          }, 100);
+        }
+      }, index * 100);
     });
   };
 
