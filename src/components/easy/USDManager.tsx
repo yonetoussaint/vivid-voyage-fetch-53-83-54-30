@@ -119,7 +119,7 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
         )}
 
         {/* USD Entries List - Compact */}
-        <div className="px-3 space-y-2 mb-3 max-h-[50vh] overflow-y-auto">
+        <div className="px-3 space-y-2 mb-4 max-h-[50vh] overflow-y-auto">
           {(!usdVentes[shift] || usdVentes[shift].length === 0) ? (
             <div className="bg-white/10 rounded-xl p-4 text-center">
               <div className="bg-white/20 w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-2">
@@ -129,9 +129,11 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
               <p className="text-white/50 text-[10px]">Tapez "Ajouter" pour commencer</p>
               <button
                 onClick={() => ajouterUSD()}
-                className="mt-3 bg-white text-blue-700 px-3 py-1.5 rounded-lg font-semibold text-xs active:scale-95 transition-all duration-200 shadow-sm"
+                className="mt-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2.5 rounded-xl font-semibold text-sm active:scale-[0.98] transition-all duration-200 shadow-lg flex items-center justify-center gap-2 mx-auto"
               >
-                <Plus className="h-3 w-3 inline mr-1" />
+                <div className="bg-white/20 p-1 rounded-lg">
+                  <Plus className="h-3 w-3" />
+                </div>
                 Premier Dépôt
               </button>
             </div>
@@ -227,16 +229,23 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
           )}
         </div>
 
-        {/* Quick Add Button - Compact */}
-        <div className="px-0">
+        {/* Nouveau Dépôt USD Button - Squircle with proper padding */}
+        <div className="px-4 mb-4">
           <button
             onClick={() => ajouterUSD()}
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 shadow-lg mb-3 min-h-[52px]"
+            className="w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white py-3.5 px-4 font-bold flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-200 shadow-xl hover:shadow-2xl hover:from-emerald-600 hover:via-emerald-700 hover:to-teal-700 rounded-2xl border-2 border-emerald-400/30"
+            style={{
+              borderRadius: '20px',
+              minHeight: '56px'
+            }}
           >
-            <div className="bg-white/20 p-1 rounded-lg">
-              <Plus className="h-4 w-4" />
+            <div className="bg-white/25 p-2 rounded-xl backdrop-blur-sm">
+              <Plus className="h-5 w-5" />
             </div>
-            <span className="text-sm">Nouveau Dépôt USD</span>
+            <div className="flex flex-col items-start">
+              <span className="text-base font-extrabold tracking-wide">NOUVEAU DÉPÔT USD</span>
+              <span className="text-xs opacity-90 font-normal">Ajouter une transaction</span>
+            </div>
           </button>
         </div>
 
@@ -360,6 +369,24 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
         
         input, button {
           font-size: 16px;
+        }
+        
+        /* Custom squircle effect */
+        .squircle-button {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .squircle-button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+          border-radius: 20px;
+          pointer-events: none;
         }
       `}</style>
     </div>
