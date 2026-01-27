@@ -210,12 +210,12 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
                           <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-lg p-2">
                             <div className="text-[10px] opacity-90 mb-0.5">En HTG</div>
                             <div className="font-bold text-sm">{formaterMontant(breakdown.htg)}</div>
-                            <div className="text-[10px] opacity-80">Gourdes</div>
+                            <div className="text-[10px] opacity-80">Gourdes Haïtien</div>
                           </div>
                           <div className="bg-gradient-to-br from-white/15 to-white/10 rounded-lg p-2">
                             <div className="text-[10px] opacity-90 mb-0.5">En HTD</div>
                             <div className="font-bold text-sm">{formaterMontant(breakdown.htd)}</div>
-                            <div className="text-[10px] opacity-80">Dola</div>
+                            <div className="text-[10px] opacity-80">Dola Haïtien</div>
                           </div>
                         </div>
                       </div>
@@ -254,12 +254,12 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
               <div className="bg-gradient-to-br from-white/15 to-white/10 rounded-lg p-2">
                 <div className="text-[10px] opacity-90 mb-0.5">HTG Total</div>
                 <div className="font-bold text-sm">{formaterMontant(totalHTG)}</div>
-                <div className="text-[10px] opacity-80">Gourdes</div>
+                <div className="text-[10px] opacity-80">Gourdes Haïtien</div>
               </div>
               <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg p-2 shadow-sm">
                 <div className="text-[10px] opacity-90 mb-0.5">HTD Total</div>
                 <div className="font-bold text-sm">{formaterMontant(totalHTD)}</div>
-                <div className="text-[10px] opacity-80">Dola</div>
+                <div className="text-[10px] opacity-80">Dola Haïtien</div>
               </div>
             </div>
 
