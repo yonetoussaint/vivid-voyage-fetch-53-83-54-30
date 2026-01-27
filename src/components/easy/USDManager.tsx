@@ -46,7 +46,7 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-0 rounded-3xl overflow-hidden shadow-2xl">
 
         {/* Header with Ultra Simple Rate Board - USD to HTG only */}
-        <div className="px-4 py-3">
+        <div className="px-3 py-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="bg-white/20 p-1.5 rounded-xl">
