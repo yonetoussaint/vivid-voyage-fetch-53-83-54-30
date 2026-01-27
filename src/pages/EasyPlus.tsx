@@ -221,8 +221,9 @@ const AppPage = ({ children, appId, onBack, appTitle }) => {
       </div>
 
       {/* App Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
+      <!-- Mobile-first container with p-2 spacing system -->
+<div class="w-full px-2 py-3 sm:px-3 sm:py-4">
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 md:p-5 lg:p-6">
           {children}
         </div>
       </div>
