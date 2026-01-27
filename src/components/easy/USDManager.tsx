@@ -6,7 +6,7 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
   const TAUX_USD_HTG = 132; // 1 USD = 132 HTG (taux réel)
   const TAUX_HTG_HTD = 5; // 1 HTD = 5 HTG (Dola)
   const TAUX_USD_HTD = TAUX_USD_HTG / TAUX_HTG_HTD; // 1 USD = 26.4 HTD (132/5)
-  
+
   const [showDetails, setShowDetails] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState({});
 
@@ -36,20 +36,20 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
     const usd = parseFloat(usdAmount) || 0;
     const htg = usd * TAUX_USD_HTG;
     const htd = usd * TAUX_USD_HTD;
-    
+
     return { usd, htg, htd };
   };
 
   return (
     <div className="space-y-0">
-      {/* Main Converter Card - No side padding */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-0">
-        
+      {/* Main Converter Card - Curved outer container */}
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-0 rounded-3xl overflow-hidden shadow-2xl">
+
         {/* Header with Conversion Info */}
         <div className="px-4 py-4">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
-              <div className="bg-white/20 p-2 rounded-xl">
+              <div className="bg-white/20 p-2 rounded-2xl">
                 <Globe className="h-6 w-6" />
               </div>
               <div className="flex-1">
@@ -60,41 +60,43 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
                   </div>
                 </div>
                 <p className="text-xs opacity-90 mt-1">Convertisseur Dépôts NPT</p>
-                
-                {/* Exchange Rate Banner */}
-                <div className="mt-3 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-lg p-3">
+
+                {/* Exchange Rate Banner with curved corners */}
+                <div className="mt-3 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-3 shadow-lg">
                   <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-white/10 rounded p-2">
+                    <div className="bg-white/10 rounded-xl p-2">
                       <div className="text-xs opacity-90">1 USD</div>
                       <div className="font-bold text-sm">= {TAUX_USD_HTG} HTG</div>
                     </div>
                     <div className="flex items-center justify-center opacity-60">
                       <ChevronRight className="h-4 w-4" />
                     </div>
-                    <div className="bg-white/15 rounded p-2">
+                    <div className="bg-white/15 rounded-xl p-2">
                       <div className="text-xs opacity-90">1 HTD</div>
                       <div className="font-bold text-sm">= 5 HTG</div>
                     </div>
                   </div>
                   <div className="mt-2 pt-2 border-t border-white/20 text-center">
-                    <div className="font-bold text-sm">1 USD = {TAUX_USD_HTD.toFixed(2)} HTD</div>
+                    <div className="font-bold text-lg bg-gradient-to-r from-white to-emerald-200 bg-clip-text text-transparent">
+                      1 USD = {TAUX_USD_HTD.toFixed(2)} HTD
+                    </div>
                     <div className="text-xs opacity-90 mt-1">(Dola Haïtien)</div>
                   </div>
                 </div>
               </div>
             </div>
-            
-            {/* Quick Actions */}
+
+            {/* Quick Actions with curved buttons */}
             <div className="flex flex-col gap-2">
               <button 
                 onClick={() => setShowDetails(!showDetails)}
-                className="bg-white/20 p-2 rounded-lg hover:bg-white/30 active:scale-95"
+                className="bg-white/20 p-2 rounded-xl hover:bg-white/30 active:scale-95 transition-all duration-200"
               >
                 {showDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               <button 
                 onClick={() => ajouterUSD()}
-                className="bg-white text-blue-700 p-2 rounded-lg hover:bg-blue-50 active:scale-95"
+                className="bg-white text-blue-700 p-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all duration-200 shadow-md"
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -102,31 +104,31 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
           </div>
         </div>
 
-        {/* Detailed Conversion Summary */}
+        {/* Detailed Conversion Summary with smooth curves */}
         {showDetails && (
-          <div className="mb-4 bg-white/10 p-4 animate-fadeIn">
+          <div className="mb-4 bg-white/10 p-4 animate-fadeIn mx-4 rounded-2xl shadow-inner">
             <div className="flex items-center gap-2 mb-3">
               <Calculator className="h-4 w-4" />
               <h4 className="font-semibold">Détails de Conversion</h4>
             </div>
-            
+
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/10 rounded-lg p-3">
+                <div className="bg-white/10 rounded-xl p-3">
                   <div className="text-xs opacity-90 mb-1">Total USD Dépôts</div>
                   <div className="font-bold text-lg">${formaterMontant(totalUSD)}</div>
                   <div className="text-xs mt-1 opacity-80">
                     {usdVentes[shift]?.length || 0} séquence{usdVentes[shift]?.length !== 1 ? 's' : ''}
                   </div>
                 </div>
-                <div className="bg-white/15 rounded-lg p-3">
+                <div className="bg-white/15 rounded-xl p-3">
                   <div className="text-xs opacity-90 mb-1">Total HTD (Dola)</div>
                   <div className="font-bold text-lg">{formaterMontant(totalHTD)} HTD</div>
                   <div className="text-xs mt-1 opacity-80">Valeur finale</div>
                 </div>
               </div>
-              
-              <div className="bg-gradient-to-r from-blue-800/50 to-indigo-800/50 rounded-lg p-3">
+
+              <div className="bg-gradient-to-r from-blue-800/50 to-indigo-800/50 rounded-2xl p-3 shadow-inner">
                 <div className="text-center text-sm font-semibold mb-2">Récapitulatif de Conversion</div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="text-xs opacity-90">USD</div>
@@ -144,10 +146,10 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
           </div>
         )}
 
-        {/* USD Entries List - Mobile Optimized */}
+        {/* USD Entries List - Mobile Optimized with curves */}
         <div className="px-4 space-y-3 mb-4 max-h-[60vh] overflow-y-auto">
           {(!usdVentes[shift] || usdVentes[shift].length === 0) ? (
-            <div className="bg-white/10 rounded-xl p-6 text-center">
+            <div className="bg-white/10 rounded-2xl p-6 text-center">
               <div className="bg-white/20 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
                 <DollarSign className="h-6 w-6 opacity-70" />
               </div>
@@ -155,7 +157,7 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
               <p className="text-white/50 text-xs">Tapez "Ajouter" pour commencer</p>
               <button
                 onClick={() => ajouterUSD()}
-                className="mt-4 bg-white text-blue-700 px-4 py-2 rounded-lg font-semibold text-sm active:scale-95"
+                className="mt-4 bg-white text-blue-700 px-4 py-2 rounded-xl font-semibold text-sm active:scale-95 transition-all duration-200 shadow-md"
               >
                 <Plus className="h-4 w-4 inline mr-2" />
                 Premier Dépôt
@@ -165,16 +167,16 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
             usdVentes[shift].map((usd, index) => {
               const breakdown = calculateIndividualBreakdown(usd);
               const isExpanded = showBreakdown[index];
-              
+
               return (
-                <div key={index} className="bg-white/15 rounded-xl overflow-hidden">
+                <div key={index} className="bg-white/15 rounded-2xl overflow-hidden shadow-md">
                   {/* Entry Header - Touch Friendly */}
                   <div 
-                    className="flex items-center justify-between px-4 py-3 bg-white/20 active:bg-white/30 min-h-[60px]"
+                    className="flex items-center justify-between px-4 py-3 bg-white/20 active:bg-white/30 min-h-[60px] cursor-pointer"
                     onClick={() => toggleBreakdown(index)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center">
+                      <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-8 h-8 rounded-xl flex items-center justify-center shadow-sm">
                         <span className="font-bold text-sm">{index + 1}</span>
                       </div>
                       <div>
@@ -192,24 +194,24 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
                           e.stopPropagation();
                           supprimerUSD(index);
                         }}
-                        className="bg-red-500/20 text-red-300 p-1.5 rounded-lg active:scale-95 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                        className="bg-gradient-to-br from-red-500/20 to-red-600/20 text-red-300 p-1.5 rounded-xl active:scale-95 min-h-[36px] min-w-[36px] flex items-center justify-center shadow-sm transition-all duration-200"
                         aria-label="Supprimer"
                       >
                         <Minus className="h-4 w-4" />
                       </button>
-                      <div className={`transition-transform ${isExpanded ? 'rotate-180' : ''} min-h-[36px] min-w-[36px] flex items-center justify-center`}>
+                      <div className={`transition-all duration-300 ${isExpanded ? 'rotate-180' : ''} min-h-[36px] min-w-[36px] flex items-center justify-center`}>
                         <ChevronDown className="h-4 w-4" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Expanded Details */}
+                  {/* Expanded Details with smooth curves */}
                   {isExpanded && (
-                    <div className="px-4 py-3 bg-white/10 animate-slideDown">
+                    <div className="px-4 py-3 bg-gradient-to-br from-white/5 to-white/10 animate-slideDown">
                       {/* Input for Editing */}
                       <div className="mb-4">
                         <label className="block text-xs opacity-90 mb-2">Modifier le montant USD</label>
-                        <div className="flex items-center gap-2 bg-white/10 rounded-lg p-2">
+                        <div className="flex items-center gap-2 bg-white/10 rounded-xl p-2">
                           <span className="font-bold text-lg">$</span>
                           <input
                             type="number"
@@ -217,13 +219,13 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
                             value={usd}
                             onChange={(e) => mettreAJourUSD(index, e.target.value)}
                             placeholder="0.00"
-                            className="flex-1 bg-transparent text-white text-xl font-bold text-center placeholder-white/50 focus:outline-none"
+                            className="flex-1 bg-transparent text-white text-xl font-bold text-center placeholder-white/50 focus:outline-none rounded-lg px-2"
                             inputMode="decimal"
                             min="0"
                           />
                           <button 
                             onClick={() => copyToClipboard(usd)}
-                            className="p-1.5 bg-white/10 rounded-lg active:scale-95 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                            className="p-1.5 bg-white/10 rounded-lg active:scale-95 min-h-[36px] min-w-[36px] flex items-center justify-center transition-all duration-200"
                           >
                             <Copy className="h-4 w-4" />
                           </button>
@@ -233,12 +235,12 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
                       {/* Detailed Conversion */}
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-white/10 rounded-lg p-3">
+                          <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-3">
                             <div className="text-xs opacity-90 mb-1">Valeur en HTG</div>
                             <div className="font-bold text-lg">{formaterMontant(breakdown.htg)}</div>
                             <div className="text-xs mt-1 opacity-80">Gourdes</div>
                           </div>
-                          <div className="bg-white/15 rounded-lg p-3">
+                          <div className="bg-gradient-to-br from-white/15 to-white/10 rounded-xl p-3">
                             <div className="text-xs opacity-90 mb-1">Valeur en HTD</div>
                             <div className="font-bold text-lg">{formaterMontant(breakdown.htd)}</div>
                             <div className="text-xs mt-1 opacity-80">Dola</div>
@@ -246,7 +248,7 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
                         </div>
 
                         {/* Conversion Steps */}
-                        <div className="bg-white/10 rounded-lg p-3">
+                        <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-3">
                           <div className="text-xs opacity-90 mb-2">Calcul détaillé:</div>
                           <div className="space-y-2 text-sm">
                             <div className="flex items-center justify-between">
@@ -272,68 +274,69 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
           )}
         </div>
 
-        {/* Quick Add Button - Full width */}
+        {/* Quick Add Button - Full width with curved corners */}
         <div className="px-0">
           <button
             onClick={() => ajouterUSD()}
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 font-bold flex items-center justify-center gap-3 active:scale-95 transition-transform shadow-lg mb-4 min-h-[60px]"
+            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 font-bold flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-200 shadow-xl mb-4 min-h-[60px]"
+            style={{ borderRadius: '0px 0px 0px 0px' }}
           >
-            <div className="bg-white/20 p-1.5 rounded-lg">
+            <div className="bg-white/20 p-1.5 rounded-xl">
               <Plus className="h-5 w-5" />
             </div>
             <span className="text-lg">Nouveau Dépôt USD</span>
           </button>
         </div>
 
-        {/* Final Summary - Full width */}
-        <div className="bg-white/10 px-4 py-4">
+        {/* Final Summary - Full width with curves */}
+        <div className="bg-gradient-to-br from-white/10 to-white/5 px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
             <Info className="h-4 w-4" />
             <h4 className="font-semibold">Résumé Final</h4>
           </div>
-          
+
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-white/10 rounded-lg p-3">
+              <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-3">
                 <div className="text-xs opacity-90 mb-1">USD Total</div>
                 <div className="font-bold text-lg">${formaterMontant(totalUSD)}</div>
               </div>
-              <div className="bg-white/15 rounded-lg p-3">
+              <div className="bg-gradient-to-br from-white/15 to-white/10 rounded-xl p-3">
                 <div className="text-xs opacity-90 mb-1">HTG Total</div>
                 <div className="font-bold text-lg">{formaterMontant(totalHTG)}</div>
               </div>
-              <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg p-3">
+              <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 shadow-md">
                 <div className="text-xs opacity-90 mb-1">HTD Total</div>
                 <div className="font-bold text-lg">{formaterMontant(totalHTD)}</div>
                 <div className="text-xs opacity-90">Dola</div>
               </div>
             </div>
-            
-            {/* Conversion Summary Bar */}
-            <div className="bg-gradient-to-r from-blue-800/50 to-indigo-800/50 rounded-lg p-3">
+
+            {/* Conversion Summary Bar with curves */}
+            <div className="bg-gradient-to-r from-blue-800/50 to-indigo-800/50 rounded-2xl p-3 shadow-inner">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold">Conversion Totale</span>
                 <button 
                   onClick={() => copyToClipboard(`${formaterMontant(totalUSD)} USD = ${formaterMontant(totalHTD)} HTD`)}
-                  className="text-xs bg-white/10 px-2 py-1 rounded active:scale-95 min-h-[28px] min-w-[60px] flex items-center justify-center"
+                  className="text-xs bg-white/10 px-3 py-1.5 rounded-xl active:scale-95 min-h-[28px] min-w-[60px] flex items-center justify-center transition-all duration-200"
                 >
                   Copier
                 </button>
               </div>
               <div className="flex items-center justify-center gap-2 text-sm flex-wrap">
-                <div className="bg-white/20 px-3 py-1.5 rounded-lg">
+                <div className="bg-gradient-to-br from-white/20 to-white/10 px-3 py-1.5 rounded-xl shadow-sm">
                   ${formaterMontant(totalUSD)}
                 </div>
                 <div className="opacity-70">
                   <ChevronRight className="h-4 w-4" />
                 </div>
-                <div className="bg-white/20 px-3 py-1.5 rounded-lg">
+                <div className="bg-gradient-to-br from-white/20 to-white/10 px-3 py-1.5 rounded-xl shadow-sm">
                   {formaterMontant(totalHTG)} HTG
                 </div>
                 <div className="opacity-70">
                   <ChevronRight className="h-4 w-4" />
                 </div>
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-3 py-1.5 rounded-lg font-bold">
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-3 py-1.5 rounded-xl font-bold shadow-md">
                   {formaterMontant(totalHTD)} HTD
                 </div>
               </div>
@@ -342,18 +345,18 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons with curves */}
             <div className="grid grid-cols-2 gap-3">
               <button 
                 onClick={() => setShowDetails(!showDetails)}
-                className="bg-white/10 py-3 rounded-lg flex items-center justify-center gap-2 active:scale-95 min-h-[44px]"
+                className="bg-gradient-to-br from-white/10 to-white/5 py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 min-h-[44px] transition-all duration-200 shadow-sm"
               >
                 {showDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 <span className="text-sm">{showDetails ? 'Moins' : 'Plus'}</span>
               </button>
               <button 
                 onClick={() => copyToClipboard(`Dépôts NPT - Shift ${shift}: $${formaterMontant(totalUSD)} USD = ${formaterMontant(totalHTD)} HTD`)}
-                className="bg-white/20 py-3 rounded-lg flex items-center justify-center gap-2 active:scale-95 min-h-[44px]"
+                className="bg-gradient-to-br from-white/20 to-white/10 py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 min-h-[44px] transition-all duration-200 shadow-sm"
               >
                 <Copy className="h-4 w-4" />
                 <span className="text-sm">Copier Résumé</span>
@@ -371,8 +374,16 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
         }
         
         @keyframes slideDown {
-          from { max-height: 0; opacity: 0; }
-          to { max-height: 500px; opacity: 1; }
+          from { 
+            max-height: 0; 
+            opacity: 0; 
+            transform: scaleY(0.8);
+          }
+          to { 
+            max-height: 500px; 
+            opacity: 1;
+            transform: scaleY(1);
+          }
         }
         
         .animate-fadeIn {
@@ -380,7 +391,7 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
         }
         
         .animate-slideDown {
-          animation: slideDown 0.3s ease-out;
+          animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         /* Touch-friendly tap targets */
@@ -388,10 +399,28 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
           font-size: 16px; /* Prevents zoom on iOS */
         }
         
-        /* Remove any horizontal padding/margin constraints */
-        :global(.px-4) {
-          padding-left: 1rem;
-          padding-right: 1rem;
+        /* Smooth transitions for interactive elements */
+        button {
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Custom scrollbar with curves */
+        ::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.4);
         }
         
         /* Ensure full width usage */
