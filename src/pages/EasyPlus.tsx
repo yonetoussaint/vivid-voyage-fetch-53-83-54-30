@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
 import VendeursManager from '@/components/easy/VendeursManager';
@@ -11,9 +10,7 @@ import PumpInputView from '@/components/easy/PumpInputView';
 import { useStationData } from '@/hooks/useStationData';
 
 // Dashboard Component (Grid of Apps)
-const Dashboard = ({ date, shift, setDate, setShift, handleReinitialiserShift, handleReinitialiserJour }) => {
-  const navigate = useNavigate();
-  
+const Dashboard = ({ date, shift, setDate, setShift, handleReinitialiserShift, handleReinitialiserJour, onAppSelect }) => {
   const apps = [
     {
       id: 'pumps',
@@ -97,7 +94,7 @@ const Dashboard = ({ date, shift, setDate, setShift, handleReinitialiserShift, h
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+      <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-center py-4 space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-3">
@@ -149,21 +146,21 @@ const Dashboard = ({ date, shift, setDate, setShift, handleReinitialiserShift, h
           {apps.map((app) => (
             <button
               key={app.id}
-              onClick={() => navigate(`/app/${app.id}`)}
-              className="flex flex-col items-center justify-center p-6 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+              onClick={() => onAppSelect(app.id)}
+              className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 active:scale-95 min-h-[180px]"
             >
-              <div className={`${app.color} p-4 rounded-2xl mb-4 text-white`}>
+              <div className={`${app.color} p-3 rounded-2xl mb-3 text-white`}>
                 {app.icon}
               </div>
-              <h3 className="font-semibold text-gray-900 text-lg mb-2 text-center">
+              <h3 className="font-semibold text-gray-900 text-base mb-1 text-center">
                 {app.title}
               </h3>
-              <p className="text-gray-600 text-sm text-center">
+              <p className="text-gray-600 text-xs text-center mb-2">
                 {app.description}
               </p>
-              <div className="mt-4 text-blue-600 flex items-center">
-                <span className="text-sm">Ouvrir</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="mt-1 text-blue-600 flex items-center">
+                <span className="text-xs">Ouvrir</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </div>
@@ -176,7 +173,7 @@ const Dashboard = ({ date, shift, setDate, setShift, handleReinitialiserShift, h
 };
 
 // App Wrapper Component (for individual app pages)
-const AppWrapper = ({ children, appId, onBack, appTitle }) => {
+const AppPage = ({ children, appId, onBack, appTitle }) => {
   const apps = {
     pumps: { title: 'Pompes & Propane', color: 'bg-blue-500' },
     vendeurs: { title: 'Vendeurs', color: 'bg-green-500' },
@@ -194,25 +191,30 @@ const AppWrapper = ({ children, appId, onBack, appTitle }) => {
       {/* App Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center py-4">
-            <button
-              onClick={onBack}
-              className="mr-4 p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-            <div className="flex items-center space-x-3">
-              <div className={`w-10 h-10 ${app.color} rounded-lg flex items-center justify-center`}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center">
+              <button
+                onClick={onBack}
+                className="mr-4 p-2 hover:bg-gray-100 rounded-lg flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
+                <span className="ml-2 text-gray-700">Retour</span>
+              </button>
+              <div className="flex items-center space-x-3">
+                <div className={`w-8 h-8 ${app.color} rounded-lg flex items-center justify-center`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">{app.title}</h1>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{app.title}</h1>
-                <p className="text-sm text-gray-600">Application de gestion</p>
-              </div>
+            </div>
+            <div className="text-sm text-gray-500">
+              {app.description || 'Application de gestion'}
             </div>
           </div>
         </div>
@@ -220,7 +222,7 @@ const AppWrapper = ({ children, appId, onBack, appTitle }) => {
 
       {/* App Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
           {children}
         </div>
       </div>
@@ -228,11 +230,11 @@ const AppWrapper = ({ children, appId, onBack, appTitle }) => {
   );
 };
 
-// Main App Router
-const AppRouter = () => {
+const SystemeStationService = () => {
   const [shift, setShift] = useState('AM');
   const [conditionnements, setConditionnements] = useState([]);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [activeApp, setActiveApp] = useState(null); // null = dashboard, 'pumps' = pumps app, etc.
   const [pompeEtendue, setPompeEtendue] = useState('P1');
   const [showContact, setShowContact] = useState(false);
 
@@ -287,42 +289,20 @@ const AppRouter = () => {
     setPompeEtendue('P1');
   };
 
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Contact Modal Component (same as before)
-  const ContactModal = () => {
-    if (!showContact) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
-          {/* Modal content remains the same */}
-          {/* ... */}
-        </div>
-      </div>
-    );
+  const handleAppSelect = (appId) => {
+    setActiveApp(appId);
   };
 
-  // Check if we're in an app page or dashboard
-  const isAppPage = location.pathname.startsWith('/app/');
+  const handleBackToDashboard = () => {
+    setActiveApp(null);
+  };
 
-  return (
-    <>
-      <Routes>
-        <Route path="/" element={
-          <Dashboard 
-            date={date}
-            shift={shift}
-            setDate={setDate}
-            setShift={setShift}
-            handleReinitialiserShift={handleReinitialiserShift}
-            handleReinitialiserJour={handleReinitialiserJour}
-          />
-        } />
-        
-        <Route path="/app/pumps" element={
-          <AppWrapper appId="pumps" onBack={() => navigate('/')}>
+  // Render the active app
+  const renderApp = () => {
+    switch (activeApp) {
+      case 'pumps':
+        return (
+          <AppPage appId="pumps" onBack={handleBackToDashboard}>
             <PumpInputView
               shift={shift}
               pompeEtendue={pompeEtendue}
@@ -343,11 +323,11 @@ const AppRouter = () => {
               showPropane={true}
               tousDepots={tousDepots}
             />
-          </AppWrapper>
-        } />
-
-        <Route path="/app/vendeurs" element={
-          <AppWrapper appId="vendeurs" onBack={() => navigate('/')}>
+          </AppPage>
+        );
+      case 'vendeurs':
+        return (
+          <AppPage appId="vendeurs" onBack={handleBackToDashboard}>
             <VendeursManager
               vendeurs={vendeurs}
               nouveauVendeur={nouveauVendeur}
@@ -356,11 +336,11 @@ const AppRouter = () => {
               supprimerVendeur={supprimerVendeur}
               getNombreAffectations={getNombreAffectations}
             />
-          </AppWrapper>
-        } />
-
-        <Route path="/app/conditionnement" element={
-          <AppWrapper appId="conditionnement" onBack={() => navigate('/')}>
+          </AppPage>
+        );
+      case 'conditionnement':
+        return (
+          <AppPage appId="conditionnement" onBack={handleBackToDashboard}>
             <ConditionnementManager
               shift={shift}
               date={date}
@@ -368,11 +348,11 @@ const AppRouter = () => {
               tousDepots={tousDepots}
               onConditionnementUpdate={setConditionnements}
             />
-          </AppWrapper>
-        } />
-
-        <Route path="/app/depots" element={
-          <AppWrapper appId="depots" onBack={() => navigate('/')}>
+          </AppPage>
+        );
+      case 'depots':
+        return (
+          <AppPage appId="depots" onBack={handleBackToDashboard}>
             <DepotsManager
               shift={shift}
               vendeurs={vendeurs}
@@ -382,11 +362,11 @@ const AppRouter = () => {
               ajouterDepot={ajouterDepot}
               supprimerDepot={supprimerDepot}
             />
-          </AppWrapper>
-        } />
-
-        <Route path="/app/stock" element={
-          <AppWrapper appId="stock" onBack={() => navigate('/')}>
+          </AppPage>
+        );
+      case 'stock':
+        return (
+          <AppPage appId="stock" onBack={handleBackToDashboard}>
             <StockRestant
               date={date}
               shift={shift}
@@ -395,11 +375,11 @@ const AppRouter = () => {
               pompes={pompes}
               prix={prix}
             />
-          </AppWrapper>
-        } />
-
-        <Route path="/app/usd" element={
-          <AppWrapper appId="usd" onBack={() => navigate('/')}>
+          </AppPage>
+        );
+      case 'usd':
+        return (
+          <AppPage appId="usd" onBack={handleBackToDashboard}>
             <USDManager
               shift={shift}
               usdVentes={ventesUSD}
@@ -408,11 +388,11 @@ const AppRouter = () => {
               supprimerUSD={supprimerUSD}
               tauxUSD={tauxUSD}
             />
-          </AppWrapper>
-        } />
-
-        <Route path="/app/report" element={
-          <AppWrapper appId="report" onBack={() => navigate('/')}>
+          </AppPage>
+        );
+      case 'report':
+        return (
+          <AppPage appId="report" onBack={handleBackToDashboard}>
             <ReportView
               date={date}
               totauxAM={totauxAM}
@@ -428,12 +408,112 @@ const AppRouter = () => {
               prixPropane={prixPropane}
               pompes={pompes}
             />
-          </AppWrapper>
-        } />
-      </Routes>
+          </AppPage>
+        );
+      default:
+        return (
+          <Dashboard 
+            date={date}
+            shift={shift}
+            setDate={setDate}
+            setShift={setShift}
+            handleReinitialiserShift={handleReinitialiserShift}
+            handleReinitialiserJour={handleReinitialiserJour}
+            onAppSelect={handleAppSelect}
+          />
+        );
+    }
+  };
+
+  // Contact Modal Component
+  const ContactModal = () => {
+    if (!showContact) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
+          <div className="flex justify-between items-center p-6 border-b border-gray-200">
+            <h3 className="text-xl font-semibold text-gray-900">Support Technique</h3>
+            <button
+              onClick={() => setShowContact(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div>
+              <p className="text-gray-600 mb-4">
+                Pour toute question technique, problème rencontré, ou suggestion d'amélioration de l'application
+              </p>
+
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <a 
+                      href="mailto:dev@example.com" 
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      dev@example.com
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm text-gray-500">Téléphone</p>
+                    <a 
+                      href="tel:+1234567890" 
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      +1 (234) 567-890
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-2">Informations importantes</h4>
+              <p className="text-sm text-gray-600 mb-3">
+                Pour un support efficace, veuillez inclure:
+              </p>
+              <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                <li>Nom de la station</li>
+                <li>Date et shift concerné</li>
+                <li>Description détaillée du problème</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="px-6 py-4 bg-gray-50 rounded-b-lg">
+            <button
+              onClick={() => setShowContact(false)}
+              className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {renderApp()}
 
       {/* Footer only on dashboard */}
-      {!isAppPage && (
+      {!activeApp && (
         <footer className="mt-12 pt-6 border-t border-gray-200 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -462,8 +542,8 @@ const AppRouter = () => {
         </footer>
       )}
 
-      {/* Floating Contact Button for mobile */}
-      {!isAppPage && (
+      {/* Floating Contact Button for mobile - only on dashboard */}
+      {!activeApp && (
         <button
           onClick={() => setShowContact(true)}
           className="md:hidden fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg z-40 transition-colors"
@@ -477,15 +557,6 @@ const AppRouter = () => {
 
       <ContactModal />
     </>
-  );
-};
-
-// Main App Component with Router
-const SystemeStationService = () => {
-  return (
-    <Router>
-      <AppRouter />
-    </Router>
   );
 };
 
