@@ -45,15 +45,15 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
       {/* Main Converter Card - Compact design */}
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-0 rounded-3xl overflow-hidden shadow-2xl">
 
-        {/* Header with Ultra Simple Rate Board */}
+        {/* Header with Ultra Simple Rate Board - USD to HTG only */}
         <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="bg-white/20 p-1.5 rounded-xl">
                 <Globe className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="font-bold text-base">USD → HTD</h3>
+                <h3 className="font-bold text-base">USD → HTD Converter</h3>
                 <div className="text-[10px] opacity-90">Shift {shift} • Convertisseur NPT</div>
               </div>
             </div>
@@ -75,26 +75,18 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
             </div>
           </div>
 
-          {/* Ultra Simple Rate Board */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-emerald-600 to-teal-700 rounded-xl px-3 py-2 text-xs">
-            <div className="flex items-center gap-1.5">
-              <div className="bg-white/20 px-2 py-0.5 rounded-lg font-bold">1 USD</div>
-              <ChevronRight className="h-3 w-3 opacity-70" />
-              <div className="opacity-90">132 HTG</div>
-            </div>
-            
-            <div className="h-4 w-px bg-white/30"></div>
-            
-            <div className="flex items-center gap-1.5">
-              <div className="opacity-90">5 HTG</div>
-              <ChevronRight className="h-3 w-3 opacity-70" />
-              <div className="bg-white/20 px-2 py-0.5 rounded-lg font-bold">1 HTD</div>
-            </div>
-            
-            <div className="h-4 w-px bg-white/30"></div>
-            
-            <div className="bg-gradient-to-r from-white to-emerald-200 bg-clip-text text-transparent font-bold">
-              1 USD = {TAUX_USD_HTD.toFixed(1)} HTD
+          {/* Ultra Simple Rate Board - USD to HTG only */}
+          <div className="flex items-center justify-center bg-gradient-to-r from-emerald-600 to-teal-700 rounded-xl px-4 py-3">
+            <div className="text-center">
+              <div className="text-xs opacity-90 mb-1">Taux de Change</div>
+              <div className="flex items-center justify-center gap-2 text-lg font-bold">
+                <div className="bg-white/20 px-3 py-1.5 rounded-lg">1 USD</div>
+                <ChevronRight className="h-5 w-5 opacity-80" />
+                <div className="bg-white/20 px-3 py-1.5 rounded-lg">{TAUX_USD_HTG} HTG</div>
+              </div>
+              <div className="text-[10px] opacity-90 mt-2">
+                Conversion: USD × 132 ÷ 5 = HTD • 1 USD = {TAUX_USD_HTD.toFixed(1)} HTD
+              </div>
             </div>
           </div>
         </div>
@@ -218,10 +210,12 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
                           <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-lg p-2">
                             <div className="text-[10px] opacity-90 mb-0.5">En HTG</div>
                             <div className="font-bold text-sm">{formaterMontant(breakdown.htg)}</div>
+                            <div className="text-[10px] opacity-80">($ × {TAUX_USD_HTG})</div>
                           </div>
                           <div className="bg-gradient-to-br from-white/15 to-white/10 rounded-lg p-2">
                             <div className="text-[10px] opacity-90 mb-0.5">En HTD</div>
                             <div className="font-bold text-sm">{formaterMontant(breakdown.htd)}</div>
+                            <div className="text-[10px] opacity-80">(÷ {TAUX_HTG_HTD})</div>
                           </div>
                         </div>
                       </div>
@@ -262,10 +256,12 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
               <div className="bg-gradient-to-br from-white/15 to-white/10 rounded-lg p-2">
                 <div className="text-[10px] opacity-90 mb-0.5">HTG Total</div>
                 <div className="font-bold text-sm">{formaterMontant(totalHTG)}</div>
+                <div className="text-[10px] opacity-80">(× {TAUX_USD_HTG})</div>
               </div>
               <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg p-2 shadow-sm">
                 <div className="text-[10px] opacity-90 mb-0.5">HTD Total</div>
                 <div className="font-bold text-sm">{formaterMontant(totalHTD)}</div>
+                <div className="text-[10px] opacity-80">(÷ {TAUX_HTG_HTD})</div>
               </div>
             </div>
 
@@ -294,7 +290,7 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
                 </div>
               </div>
               <div className="text-center text-[10px] opacity-90 mt-1">
-                1 USD = {TAUX_USD_HTG} HTG, 1 HTD = {TAUX_HTG_HTD} HTG
+                1 USD = {TAUX_USD_HTG} HTG • 1 HTD = {TAUX_HTG_HTD} HTG
               </div>
             </div>
 
