@@ -188,21 +188,35 @@ const AppPage = ({ children, appId, onBack, appTitle }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile-optimized App Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+      {/* Sticky Header - Always visible while scrolling */}
+      <div className="bg-white shadow-sm border-b fixed top-0 left-0 right-0 z-50">
         <div className="px-2 sm:px-3 md:px-4 lg:px-6">
-          <div className="flex items-center justify-between py-2 sm:py-3 md:py-4">
+          <div className="flex items-center justify-between py-2 sm:py-3">
             {/* Left side - Back button and app info */}
             <div className="flex items-center flex-1 min-w-0">
               <button
                 onClick={onBack}
-                className="p-1.5 sm:p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg flex items-center touch-manipulation"
+                className="p-1.5 sm:p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg flex items-center touch-manipulation transition-colors duration-200"
                 aria-label="Retour"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                {/* Chevron Left Icon */}
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M15 19l-7-7 7-7" 
+                  />
                 </svg>
-                <span className="ml-1.5 sm:ml-2 text-sm sm:text-base text-gray-700 hidden xs:inline">Retour</span>
+                <span className="ml-1.5 sm:ml-2 text-sm sm:text-base text-gray-700 hidden xs:inline">
+                  Retour
+                </span>
               </button>
               
               <div className="flex items-center space-x-2 sm:space-x-3 ml-1 sm:ml-2 flex-1 min-w-0">
@@ -219,20 +233,20 @@ const AppPage = ({ children, appId, onBack, appTitle }) => {
               </div>
             </div>
 
-            {/* Right side - Description (hidden on smallest screens) */}
-            <div className="text-xs sm:text-sm text-gray-500 ml-2 hidden xs:block flex-shrink-0">
+            {/* Right side - Description */}
+            <div className="text-xs sm:text-sm text-gray-500 ml-2 hidden xs:block flex-shrink-0 whitespace-nowrap">
               {app.description || 'Gestion'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile-first Content Area */}
-      <div className="w-full px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4">
+      {/* Content Area with padding-top to account for fixed header */}
+      <div className="pt-14 sm:pt-16 md:pt-18 w-full px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4">
         <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 
                        p-3 sm:p-4 md:p-5 lg:p-6 
                        max-w-full overflow-x-auto">
-          <div className="min-w-0"> {/* Prevents content overflow */}
+          <div className="min-w-0">
             {children}
           </div>
         </div>
