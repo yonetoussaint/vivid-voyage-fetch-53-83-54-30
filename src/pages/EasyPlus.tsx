@@ -243,7 +243,7 @@ const AppPage = ({ children, appId, onBack, appTitle }) => {
       {/* Content Area - Edge to edge */}
       <div className="pt-16 w-full px-0 py-3">
         <div className="bg-white shadow-sm border border-gray-200 
-                       p-4 sm:p-5 
+                       p-2 sm:p-5 
                        max-w-full overflow-x-auto">
           <div className="min-w-0">
             {children}
