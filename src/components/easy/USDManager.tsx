@@ -250,6 +250,7 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
               <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-lg p-2">
                 <div className="text-[10px] opacity-90 mb-0.5">USD Total</div>
                 <div className="font-bold text-sm">${formaterMontant(totalUSD)}</div>
+                <div className="text-[10px] opacity-80">Dollar américain</div>
               </div>
               <div className="bg-gradient-to-br from-white/15 to-white/10 rounded-lg p-2">
                 <div className="text-[10px] opacity-90 mb-0.5">HTG Total</div>
