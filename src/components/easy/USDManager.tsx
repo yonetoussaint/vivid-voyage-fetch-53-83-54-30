@@ -45,7 +45,7 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
   return (
     <div className="space-y-3">
       {/* Main Converter Card */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white rounded-2xl p-4 shadow-2xl">
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white rounded-2xl p-2 shadow-2xl">
         
         {/* Header with Conversion Info */}
         <div className="flex items-start justify-between mb-4">
