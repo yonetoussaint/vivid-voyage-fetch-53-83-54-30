@@ -11,8 +11,6 @@ const VendorDepositCard = ({
   isExpanded = false,
   onToggle = () => {}
 }) => {
-  const remainingBalance = especesAttendues - totalDepotHTG;
-
   return (
     <div className="bg-white bg-opacity-15 rounded-lg p-2 space-y-0">
       {/* Collapsible Header */}
@@ -34,19 +32,19 @@ const VendorDepositCard = ({
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Balance indicator */}
+            {/* Espèces Attendues indicator */}
             <div className={`px-3 py-1 rounded-full text-sm font-bold text-center min-w-[120px] ${
-              remainingBalance > 100 
+              especesAttendues > 100 
                 ? 'bg-green-500' 
-                : remainingBalance > 0 
+                : especesAttendues > 0 
                 ? 'bg-yellow-500' 
-                : remainingBalance < -100 
+                : especesAttendues < -100 
                 ? 'bg-red-500' 
                 : 'bg-orange-500'
             }`}>
               <div className="flex flex-col items-center">
-                <span className="text-[10px] opacity-90">Balance</span>
-                <span>{formaterArgent(remainingBalance)} HTG</span>
+                <span className="text-[10px] opacity-90">Espèces Attendues</span>
+                <span>{formaterArgent(especesAttendues)} HTG</span>
               </div>
             </div>
             
