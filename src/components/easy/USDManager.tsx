@@ -227,8 +227,8 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
           )}
         </div>
 
-        {/* Nouveau Dépôt USD Button - Ultra Simple */}
-        <div className="px-4 mb-4">
+        {/* Nouveau Dépôt USD Button - Ultra Simple with consistent padding */}
+        <div className="px-3 mb-3">
           <button
             onClick={() => ajouterUSD()}
             className="w-full bg-emerald-600 text-white py-3 px-4 font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 rounded-xl"
