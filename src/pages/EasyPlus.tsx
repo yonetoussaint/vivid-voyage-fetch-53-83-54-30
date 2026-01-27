@@ -188,43 +188,53 @@ const AppPage = ({ children, appId, onBack, appTitle }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* App Header */}
+      {/* Mobile-optimized App Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center">
+        <div className="px-2 sm:px-3 md:px-4 lg:px-6">
+          <div className="flex items-center justify-between py-2 sm:py-3 md:py-4">
+            {/* Left side - Back button and app info */}
+            <div className="flex items-center flex-1 min-w-0">
               <button
                 onClick={onBack}
-                className="mr-4 p-2 hover:bg-gray-100 rounded-lg flex items-center"
+                className="p-1.5 sm:p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg flex items-center touch-manipulation"
+                aria-label="Retour"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                <span className="ml-2 text-gray-700">Retour</span>
+                <span className="ml-1.5 sm:ml-2 text-sm sm:text-base text-gray-700 hidden xs:inline">Retour</span>
               </button>
-              <div className="flex items-center space-x-3">
-                <div className={`w-8 h-8 ${app.color} rounded-lg flex items-center justify-center`}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              
+              <div className="flex items-center space-x-2 sm:space-x-3 ml-1 sm:ml-2 flex-1 min-w-0">
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 ${app.color} rounded-lg flex-shrink-0 flex items-center justify-center`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">{app.title}</h1>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 truncate">
+                    {app.title}
+                  </h1>
                 </div>
               </div>
             </div>
-            <div className="text-sm text-gray-500">
-              {app.description || 'Application de gestion'}
+
+            {/* Right side - Description (hidden on smallest screens) */}
+            <div className="text-xs sm:text-sm text-gray-500 ml-2 hidden xs:block flex-shrink-0">
+              {app.description || 'Gestion'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* App Content */}
-      <!-- Mobile-first container with p-2 spacing system -->
-<div class="w-full px-2 py-3 sm:px-3 sm:py-4">
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 md:p-5 lg:p-6">
-          {children}
+      {/* Mobile-first Content Area */}
+      <div className="w-full px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4">
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 
+                       p-3 sm:p-4 md:p-5 lg:p-6 
+                       max-w-full overflow-x-auto">
+          <div className="min-w-0"> {/* Prevents content overflow */}
+            {children}
+          </div>
         </div>
       </div>
     </div>
