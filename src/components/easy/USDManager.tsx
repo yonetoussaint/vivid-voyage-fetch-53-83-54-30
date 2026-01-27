@@ -263,35 +263,6 @@ const USDtoHTDConverter = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, suppr
               </div>
             </div>
 
-            {/* Conversion Summary Bar - Compact */}
-            <div className="bg-gradient-to-r from-blue-800/50 to-indigo-800/50 rounded-xl p-2">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold">Conversion Totale</span>
-                <button 
-                  onClick={() => copyToClipboard(`${formaterMontant(totalUSD)} USD = ${formaterMontant(totalHTD)} HTD`)}
-                  className="text-[10px] bg-white/10 px-2 py-0.5 rounded-lg active:scale-95 min-h-[24px] min-w-[50px] flex items-center justify-center transition-all duration-200"
-                >
-                  Copier
-                </button>
-              </div>
-              <div className="flex items-center justify-center gap-1 text-xs flex-wrap">
-                <div className="bg-gradient-to-br from-white/20 to-white/10 px-2 py-1 rounded-lg">
-                  ${formaterMontant(totalUSD)}
-                </div>
-                <ChevronRight className="h-3 w-3 opacity-70" />
-                <div className="bg-gradient-to-br from-white/20 to-white/10 px-2 py-1 rounded-lg">
-                  {formaterMontant(totalHTG)} HTG
-                </div>
-                <ChevronRight className="h-3 w-3 opacity-70" />
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-2 py-1 rounded-lg font-bold">
-                  {formaterMontant(totalHTD)} HTD
-                </div>
-              </div>
-              <div className="text-center text-[10px] opacity-90 mt-1">
-                1 USD = {TAUX_USD_HTG} HTG • 1 HTD = {TAUX_HTG_HTD} HTG
-              </div>
-            </div>
-
             {/* Action Buttons - Compact */}
             <div className="grid grid-cols-2 gap-2">
               <button 
