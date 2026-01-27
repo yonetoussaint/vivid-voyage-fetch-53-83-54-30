@@ -10,9 +10,42 @@ import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
 import { useStationData } from '@/hooks/useStationData';
 
+// App grid item component
+const AppCard = ({ icon, title, description, isActive, onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative flex flex-col items-center justify-center p-6 rounded-2xl transition-all duration-200 ${
+        isActive 
+          ? 'bg-blue-50 border-2 border-blue-200 shadow-lg scale-[1.02]' 
+          : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-md hover:bg-blue-50'
+      }`}
+    >
+      <div className={`p-3 rounded-full mb-4 ${
+        isActive ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
+      }`}>
+        {icon}
+      </div>
+      <h3 className={`font-semibold text-lg mb-2 ${
+        isActive ? 'text-blue-800' : 'text-gray-800'
+      }`}>
+        {title}
+      </h3>
+      <p className={`text-sm text-center ${
+        isActive ? 'text-blue-600' : 'text-gray-500'
+      }`}>
+        {description}
+      </p>
+      {isActive && (
+        <div className="absolute top-3 right-3 w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+      )}
+    </button>
+  );
+};
+
 const SystemeStationService = () => {
   const [shift, setShift] = useState('AM');
-const [conditionnements, setConditionnements] = useState([]);
+  const [conditionnements, setConditionnements] = useState([]);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [activeView, setActiveView] = useState('pumps');
   const [pompeEtendue, setPompeEtendue] = useState('P1');
@@ -55,17 +88,89 @@ const [conditionnements, setConditionnements] = useState([]);
 
   const pompes = ['P1', 'P2', 'P3', 'P4', 'P5'];
 
-  // Fonction pour changer de vue
-  const handleViewChange = (view) => {
-    setActiveView(view);
-    if (view === 'pumps') {
-      setPompeEtendue('P1');
+  // Define all apps with their metadata
+  const apps = [
+    {
+      id: 'pumps',
+      title: 'Pompes & Propane',
+      description: 'Gestion des pompes et du propane',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      ),
+      color: 'blue'
+    },
+    {
+      id: 'vendeurs',
+      title: 'Vendeurs',
+      description: 'Gérer les vendeurs',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0c-.83-.672-1.388-1.242-1.807-1.707" />
+        </svg>
+      ),
+      color: 'green'
+    },
+    {
+      id: 'conditionnement',
+      title: 'Conditionnement',
+      description: 'Gestion conditionnement',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      ),
+      color: 'purple'
+    },
+    {
+      id: 'depots',
+      title: 'Dépôts',
+      description: 'Gestion des dépôts',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ),
+      color: 'orange'
+    },
+    {
+      id: 'stock',
+      title: 'Stock Restant',
+      description: 'Voir le stock disponible',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      ),
+      color: 'red'
+    },
+    {
+      id: 'usd',
+      title: 'Ventes USD',
+      description: 'Gestion ventes en dollars',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      color: 'yellow'
+    },
+    {
+      id: 'report',
+      title: 'Rapports',
+      description: 'Voir les rapports',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      color: 'indigo'
     }
-  };
+  ];
 
-  // Handle pump/propane tab selection
+  // Handle pump/propane tab selection within the pumps app
   const handlePompeSelection = (selection) => {
-    setActiveView('pumps'); // Always stay in pumps view
     setPompeEtendue(selection);
   };
 
@@ -79,7 +184,6 @@ const [conditionnements, setConditionnements] = useState([]);
 
   const handleReinitialiserJour = () => {
     reinitialiserJour();
-    setActiveView('pumps');
     setPompeEtendue('P1');
   };
 
@@ -97,16 +201,16 @@ const [conditionnements, setConditionnements] = useState([]);
             getNombreAffectations={getNombreAffectations}
           />
         );
-case 'conditionnement':
-  return (
-    <ConditionnementManager
-      shift={shift}
-      date={date}
-      vendeurs={vendeurs}
-      tousDepots={tousDepots} // ADD THIS LINE
-      onConditionnementUpdate={setConditionnements}
-    />
-  );
+      case 'conditionnement':
+        return (
+          <ConditionnementManager
+            shift={shift}
+            date={date}
+            vendeurs={vendeurs}
+            tousDepots={tousDepots}
+            onConditionnementUpdate={setConditionnements}
+          />
+        );
       case 'depots':
         return (
           <DepotsManager
@@ -187,7 +291,7 @@ case 'conditionnement':
     }
   };
 
-  // Contact Modal Component
+  // Contact Modal Component (unchanged)
   const ContactModal = () => {
     if (!showContact) return null;
 
@@ -272,26 +376,96 @@ case 'conditionnement':
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar
-        date={date}
-        setDate={setDate}
-        shift={shift}
-        setShift={setShift}
-        activeView={activeView}
-        onViewChange={handleViewChange}
-        onResetShift={handleReinitialiserShift}
-        onResetDay={handleReinitialiserJour}
-      />
+      {/* Simplified Navbar (removed tabs) */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center py-4 space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Station Service</h1>
+                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                  <span>{date}</span>
+                  <span className="flex items-center">
+                    <span className={`w-2 h-2 rounded-full mr-2 ${shift === 'AM' ? 'bg-green-500' : 'bg-blue-500'}`}></span>
+                    Shift {shift}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleReinitialiserShift}
+                className="px-4 py-2 text-sm bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded-lg transition-colors"
+              >
+                Réinitialiser Shift
+              </button>
+              <button
+                onClick={handleReinitialiserJour}
+                className="px-4 py-2 text-sm bg-red-100 text-red-800 hover:bg-red-200 rounded-lg transition-colors"
+              >
+                Réinitialiser Jour
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <ShiftManager shift={shift} />
 
-      <div className="p-2 max-w-2xl mx-auto">
-        {renderView()}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Dashboard Grid */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Tableau de Bord</h2>
+          <p className="text-gray-600">Sélectionnez une application pour commencer</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
+          {apps.map((app) => (
+            <AppCard
+              key={app.id}
+              icon={app.icon}
+              title={app.title}
+              description={app.description}
+              isActive={activeView === app.id}
+              onClick={() => setActiveView(app.id)}
+            />
+          ))}
+        </div>
+
+        {/* Current App View */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {apps.find(app => app.id === activeView)?.icon}
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {apps.find(app => app.id === activeView)?.title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setActiveView(null)}
+                className="text-sm text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg"
+              >
+                Minimiser
+              </button>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            {renderView()}
+          </div>
+        </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer (unchanged) */}
       <footer className="mt-12 pt-6 border-t border-gray-200 bg-white">
-        <div className="max-w-2xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
               <p className="text-gray-600 text-sm">
