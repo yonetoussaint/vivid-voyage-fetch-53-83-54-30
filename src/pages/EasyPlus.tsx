@@ -93,10 +93,10 @@ const Dashboard = ({ date, shift, setDate, setShift, handleReinitialiserShift, h
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center py-4 space-y-4 sm:space-y-0">
+      {/* Header - Edge to edge */}
+      <div className="bg-white shadow-sm border-b px-0">
+        <div className="px-3 py-3">
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -104,7 +104,7 @@ const Dashboard = ({ date, shift, setDate, setShift, handleReinitialiserShift, h
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Station Service</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Station Service</h1>
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
                   <span>{date}</span>
                   <span className="flex items-center">
@@ -114,17 +114,17 @@ const Dashboard = ({ date, shift, setDate, setShift, handleReinitialiserShift, h
                 </div>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-3">
+
+            <div className="flex items-center space-x-2">
               <button
                 onClick={handleReinitialiserShift}
-                className="px-4 py-2 text-sm bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded-lg transition-colors"
+                className="px-3 py-2 text-sm bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded-lg transition-colors min-h-[36px]"
               >
                 Réinitialiser Shift
               </button>
               <button
                 onClick={handleReinitialiserJour}
-                className="px-4 py-2 text-sm bg-red-100 text-red-800 hover:bg-red-200 rounded-lg transition-colors"
+                className="px-3 py-2 text-sm bg-red-100 text-red-800 hover:bg-red-200 rounded-lg transition-colors min-h-[36px]"
               >
                 Réinitialiser Jour
               </button>
@@ -135,27 +135,27 @@ const Dashboard = ({ date, shift, setDate, setShift, handleReinitialiserShift, h
 
       <ShiftManager shift={shift} />
 
-      {/* Dashboard Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-10">
-          <h2 className="text-3xl font-bold text-gray-800 mb-3">Applications</h2>
-          <p className="text-gray-600">Sélectionnez une application pour commencer</p>
+      {/* Dashboard Grid - Edge to edge */}
+      <div className="px-3 py-6">
+        <div className="mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Applications</h2>
+          <p className="text-gray-600 text-sm sm:text-base">Sélectionnez une application pour commencer</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           {apps.map((app) => (
             <button
               key={app.id}
               onClick={() => onAppSelect(app.id)}
-              className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 active:scale-95 min-h-[180px]"
+              className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 active:scale-95 min-h-[160px] sm:min-h-[180px]"
             >
               <div className={`${app.color} p-3 rounded-2xl mb-3 text-white`}>
                 {app.icon}
               </div>
-              <h3 className="font-semibold text-gray-900 text-base mb-1 text-center">
+              <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 text-center">
                 {app.title}
               </h3>
-              <p className="text-gray-600 text-xs text-center mb-2">
+              <p className="text-gray-600 text-xs sm:text-sm text-center mb-2">
                 {app.description}
               </p>
               <div className="mt-1 text-blue-600 flex items-center">
@@ -188,21 +188,20 @@ const AppPage = ({ children, appId, onBack, appTitle }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sticky Header - Always visible while scrolling */}
-      <div className="bg-white shadow-sm border-b fixed top-0 left-0 right-0 z-50">
-        <div className="px-2 sm:px-3 md:px-4 lg:px-6">
-          <div className="flex items-center justify-between py-2 sm:py-3">
+      {/* Sticky Header - Edge to edge */}
+      <div className="bg-white shadow-sm border-b fixed top-0 left-0 right-0 z-50 px-0">
+        <div className="px-3">
+          <div className="flex items-center justify-between py-3">
             {/* Left side - Back button and app info */}
             <div className="flex items-center flex-1 min-w-0">
               <button
                 onClick={onBack}
-                className="p-1.5 sm:p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg flex items-center touch-manipulation transition-colors duration-200"
+                className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg flex items-center touch-manipulation transition-colors duration-200 min-h-[44px] min-w-[44px] justify-center"
                 aria-label="Retour"
               >
-                {/* Chevron Left Icon */}
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" 
+                  className="h-6 w-6 text-gray-600" 
                   fill="none" 
                   viewBox="0 0 24 24" 
                   stroke="currentColor"
@@ -214,19 +213,19 @@ const AppPage = ({ children, appId, onBack, appTitle }) => {
                     d="M15 19l-7-7 7-7" 
                   />
                 </svg>
-                <span className="ml-1.5 sm:ml-2 text-sm sm:text-base text-gray-700 hidden xs:inline">
+                <span className="ml-2 text-gray-700 hidden xs:inline text-base">
                   Retour
                 </span>
               </button>
-              
-              <div className="flex items-center space-x-2 sm:space-x-3 ml-1 sm:ml-2 flex-1 min-w-0">
-                <div className={`w-7 h-7 sm:w-8 sm:h-8 ${app.color} rounded-lg flex-shrink-0 flex items-center justify-center`}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+              <div className="flex items-center space-x-3 ml-2 flex-1 min-w-0">
+                <div className={`w-8 h-8 ${app.color} rounded-lg flex-shrink-0 flex items-center justify-center`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 truncate">
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
                     {app.title}
                   </h1>
                 </div>
@@ -234,17 +233,17 @@ const AppPage = ({ children, appId, onBack, appTitle }) => {
             </div>
 
             {/* Right side - Description */}
-            <div className="text-xs sm:text-sm text-gray-500 ml-2 hidden xs:block flex-shrink-0 whitespace-nowrap">
-              {app.description || 'Gestion'}
+            <div className="text-sm text-gray-500 ml-2 hidden sm:block flex-shrink-0 whitespace-nowrap">
+              Gestion
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content Area with padding-top to account for fixed header */}
-      <div className="pt-14 sm:pt-16 md:pt-18 w-full px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4">
-        <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 
-                       p-3 sm:p-4 md:p-5 lg:p-6 
+      {/* Content Area - Edge to edge */}
+      <div className="pt-16 w-full px-0 py-3">
+        <div className="bg-white shadow-sm border border-gray-200 
+                       p-4 sm:p-5 
                        max-w-full overflow-x-auto">
           <div className="min-w-0">
             {children}
@@ -455,19 +454,20 @@ const SystemeStationService = () => {
     if (!showContact) return null;
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-3">
         <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
-          <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <div className="flex justify-between items-center p-5 border-b border-gray-200">
             <h3 className="text-xl font-semibold text-gray-900">Support Technique</h3>
             <button
               onClick={() => setShowContact(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 p-1"
+              aria-label="Fermer"
             >
               ✕
             </button>
           </div>
 
-          <div className="p-6 space-y-4">
+          <div className="p-5 space-y-4">
             <div>
               <p className="text-gray-600 mb-4">
                 Pour toute question technique, problème rencontré, ou suggestion d'amélioration de l'application
@@ -520,10 +520,10 @@ const SystemeStationService = () => {
             </div>
           </div>
 
-          <div className="px-6 py-4 bg-gray-50 rounded-b-lg">
+          <div className="px-5 py-4 bg-gray-50 rounded-b-lg">
             <button
               onClick={() => setShowContact(false)}
-              className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
+              className="w-full px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors min-h-[44px]"
             >
               Fermer
             </button>
@@ -537,10 +537,10 @@ const SystemeStationService = () => {
     <>
       {renderApp()}
 
-      {/* Footer only on dashboard */}
+      {/* Footer only on dashboard - Edge to edge */}
       {!activeApp && (
-        <footer className="mt-12 pt-6 border-t border-gray-200 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <footer className="mt-12 pt-6 border-t border-gray-200 bg-white px-0">
+          <div className="px-3">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-center md:text-left">
                 <p className="text-gray-600 text-sm">
@@ -554,7 +554,7 @@ const SystemeStationService = () => {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowContact(true)}
-                  className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors min-h-[36px]"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-2 0c0 .993-.241 1.929-.668 2.754l-1.524-1.525a3.997 3.997 0 00.078-2.183l1.562-1.562C15.802 6.249 16 7.1 16 8zm-5.165 3.913l1.58 1.58A5.98 5.98 0 0110 16a5.976 5.976 0 01-2.516-.552l1.562-1.562a4.006 4.006 0 001.789.027zm-4.677-2.796a4.002 4.002 0 01-.041-2.08l-.08.08-1.53-1.533A5.98 5.98 0 004 10c0 .954.223 1.856.619 2.657l1.54-1.54zm1.088-6.45A5.974 5.974 0 0110 4c.954 0 1.856.223 2.657.619l-1.54 1.54a4.002 4.002 0 00-2.346.033L7.246 4.668zM12 10a2 2 0 11-4 0 2 2 0 014 0z" clipRule="evenodd" />
@@ -571,7 +571,7 @@ const SystemeStationService = () => {
       {!activeApp && (
         <button
           onClick={() => setShowContact(true)}
-          className="md:hidden fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg z-40 transition-colors"
+          className="md:hidden fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg z-40 transition-colors min-h-[56px] min-w-[56px] flex items-center justify-center"
           aria-label="Contact Support"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
