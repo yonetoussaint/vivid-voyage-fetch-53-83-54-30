@@ -7,6 +7,7 @@ import USDManager from '@/components/easy/USDManager';
 import StockRestant from '@/components/easy/StockRestant';
 import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
+import Rapport from '@/components/easy/Rapport'; // Add this import
 import { useStationData } from '@/hooks/useStationData';
 
 // Dashboard Component (Grid of Apps)
@@ -88,6 +89,17 @@ const Dashboard = ({ date, shift, setDate, setShift, handleReinitialiserShift, h
         </svg>
       ),
       color: 'bg-indigo-500'
+    },
+    {
+      id: 'rapport',
+      title: 'Rapport Gaz',
+      description: 'Rapport journalier gaz',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+      color: 'bg-teal-500'
     }
   ];
 
@@ -181,7 +193,8 @@ const AppPage = ({ children, appId, onBack, appTitle }) => {
     depots: { title: 'Dépôts', color: 'bg-orange-500' },
     stock: { title: 'Stock Restant', color: 'bg-red-500' },
     usd: { title: 'Ventes USD', color: 'bg-yellow-500' },
-    report: { title: 'Rapports', color: 'bg-indigo-500' }
+    report: { title: 'Rapports', color: 'bg-indigo-500' },
+    rapport: { title: 'Rapport Gaz', color: 'bg-teal-500' }
   };
 
   const app = apps[appId] || { title: appTitle || 'Application', color: 'bg-gray-500' };
@@ -431,6 +444,17 @@ const SystemeStationService = () => {
               prix={prix}
               prixPropane={prixPropane}
               pompes={pompes}
+            />
+          </AppPage>
+        );
+      case 'rapport':
+        return (
+          <AppPage appId="rapport" onBack={handleBackToDashboard}>
+            <Rapport
+              date={date}
+              shift={shift}
+              toutesDonnees={toutesDonnees}
+              // Pass any additional props needed
             />
           </AppPage>
         );
