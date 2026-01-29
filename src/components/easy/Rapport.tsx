@@ -1,33 +1,52 @@
 import { useState, useMemo } from "react";
 
+// Define types for props
+interface RapportProps {
+  date: string;
+  shift: string;
+  toutesDonnees?: any; // Replace 'any' with your actual data type if known
+}
+
+// Define types for credit and deferred sale items
+interface CreditItem {
+  id: number;
+  description: string;
+  montant: number;
+}
+
+interface VenteDiffereeItem {
+  id: number;
+  description: string;
+  montant: number;
+}
+
 export default function Rapport({ 
   date, 
   shift, 
-  toutesDonnees,
-  // Add other props as needed from your system
-}) {
+  toutesDonnees 
+}: RapportProps) {
   // You can use the props from your system
   console.log('Rapport props:', { date, shift, toutesDonnees });
 
-  const [venteBrute, setVenteBrute] = useState(500000);
-  const [prixOfficiel, setPrixOfficiel] = useState(650);
-  const [prixSpecial, setPrixSpecial] = useState(625);
-  const [gallons, setGallons] = useState(80);
-  const [payeAvantCloture, setPayeAvantCloture] = useState(true);
-  const [credits, setCredits] = useState([]);
-  const [ventesDifferees, setVentesDifferees] = useState([]);
+  const [venteBrute, setVenteBrute] = useState<number>(500000);
+  const [prixOfficiel, setPrixOfficiel] = useState<number>(650);
+  const [prixSpecial, setPrixSpecial] = useState<number>(625);
+  const [gallons, setGallons] = useState<number>(80);
+  const [payeAvantCloture, setPayeAvantCloture] = useState<boolean>(true);
+  const [credits, setCredits] = useState<CreditItem[]>([]);
+  const [ventesDifferees, setVentesDifferees] = useState<VenteDiffereeItem[]>([]);
 
   const addCredit = () => {
     setCredits([...credits, { id: Date.now(), description: '', montant: 0 }]);
   };
 
-  const updateCredit = (id, field, value) => {
+  const updateCredit = (id: number, field: keyof CreditItem, value: string | number) => {
     setCredits(credits.map(credit => 
       credit.id === id ? { ...credit, [field]: value } : credit
     ));
   };
 
-  const removeCredit = (id) => {
+  const removeCredit = (id: number) => {
     setCredits(credits.filter(credit => credit.id !== id));
   };
 
@@ -35,13 +54,13 @@ export default function Rapport({
     setVentesDifferees([...ventesDifferees, { id: Date.now(), description: '', montant: 0 }]);
   };
 
-  const updateVenteDifferee = (id, field, value) => {
+  const updateVenteDifferee = (id: number, field: keyof VenteDiffereeItem, value: string | number) => {
     setVentesDifferees(ventesDifferees.map(vente => 
       vente.id === id ? { ...vente, [field]: value } : vente
     ));
   };
 
-  const removeVenteDifferee = (id) => {
+  const removeVenteDifferee = (id: number) => {
     setVentesDifferees(ventesDifferees.filter(vente => vente.id !== id));
   };
 
