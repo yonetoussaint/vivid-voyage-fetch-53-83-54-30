@@ -32,6 +32,16 @@ const Header = ({
     }
   };
 
+  const formatFullDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
   const handleTodayClick = () => {
     const today = new Date().toISOString().split('T')[0];
     onDateChange(today);
@@ -56,14 +66,16 @@ const Header = ({
     }
   };
 
+  const isToday = date === new Date().toISOString().split('T')[0];
+
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
       <div className="py-3 px-3">
         <div className="flex items-center justify-between">
-          {/* Left: Menu button */}
+          {/* Left: Menu button with gray background */}
           <button
             onClick={onMenuToggle}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
             aria-label="Ouvrir le menu"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -71,10 +83,10 @@ const Header = ({
             </svg>
           </button>
 
-          {/* Center: Date with chevron */}
+          {/* Center: Date with chevron and gray background */}
           <button
             onClick={openDatePicker}
-            className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-900 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
           >
             <span>{formatDateForDisplay(date)}</span>
             <svg 
@@ -98,34 +110,48 @@ const Header = ({
             max={new Date().toISOString().split('T')[0]}
           />
 
-          {/* Right: AM/PM switch */}
-          <div className="flex bg-gray-100 rounded-lg overflow-hidden">
+          {/* Right: AM/PM switch - now with gray background for inactive state */}
+          <div className="flex bg-gray-200 rounded-lg overflow-hidden">
             <button
               onClick={() => onShiftChange('AM')}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${shift === 'AM' ? 'bg-green-500 text-white' : 'text-gray-700 hover:bg-gray-200'}`}
+              className={`px-3 py-1.5 text-sm font-medium transition-colors ${shift === 'AM' ? 'bg-green-500 text-white' : 'text-gray-700 hover:bg-gray-300'}`}
             >
               AM
             </button>
             <button
               onClick={() => onShiftChange('PM')}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${shift === 'PM' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-200'}`}
+              className={`px-3 py-1.5 text-sm font-medium transition-colors ${shift === 'PM' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-300'}`}
             >
               PM
             </button>
           </div>
         </div>
 
-        {/* Today indicator - only visible when not today */}
-        {date !== new Date().toISOString().split('T')[0] && (
-          <div className="flex items-center justify-center mt-2">
-            <button
-              onClick={handleTodayClick}
-              className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1 rounded-lg transition-colors font-medium"
-            >
-              ← Retour à aujourd'hui
-            </button>
-          </div>
-        )}
+        {/* Date info section - always visible */}
+        <div className="mt-2">
+          {isToday ? (
+            // Today's full date display
+            <div className="text-center">
+              <div className="text-xs text-gray-500 mb-1">Aujourd'hui</div>
+              <div className="text-sm font-medium text-gray-900">
+                {formatFullDate(date)}
+              </div>
+            </div>
+          ) : (
+            // Past date with "Return to today" button
+            <div className="flex flex-col items-center">
+              <button
+                onClick={handleTodayClick}
+                className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1 rounded-lg transition-colors font-medium mb-1"
+              >
+                ← Retour à aujourd'hui
+              </button>
+              <div className="text-sm font-medium text-gray-900">
+                {formatFullDate(date)}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
