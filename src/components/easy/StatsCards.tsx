@@ -18,9 +18,8 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
   // Determine if rounded up or down
   const isRoundedUp = adjustment > 0;
 
-  // Calculate total gallons (essence + diesel)
-// Calculate total gallons (essence + diesel) as a NUMBER
-const totalGallons = parseFloat(totaux.totalGallonsEssence || 0) + parseFloat(totaux.totalGallonsDiesel || 0);
+  // Calculate total gallons (essence + diesel) as a NUMBER
+  const totalGallons = parseFloat(totaux.totalGallonsEssence || 0) + parseFloat(totaux.totalGallonsDiesel || 0);
 
   return (
     <>
@@ -159,17 +158,7 @@ const totalGallons = parseFloat(totaux.totalGallonsEssence || 0) + parseFloat(to
         </div>
       </div>
 
-      {/* Quick Summary Row - Mobile Optimized */}
-      <div className="grid grid-cols-2 gap-2 mb-2">
-        <div className="bg-slate-800 text-white rounded-lg p-2">
-          <p className="text-[10px] opacity-90 mb-0.5">USD Sales</p>
-          <p className="text-sm font-bold">${formaterArgent(totaux.totalUSD)}</p>
-        </div>
-        <div className="bg-slate-800 text-white rounded-lg p-2">
-          <p className="text-[10px] opacity-90 mb-0.5">HTG (USD)</p>
-          <p className="text-sm font-bold">{formaterArgent(totaux.totalHTGenUSD)}</p>
-        </div>
-      </div>
+      {/* Quick Summary Row - REMOVED */}
     </>
   );
 };
