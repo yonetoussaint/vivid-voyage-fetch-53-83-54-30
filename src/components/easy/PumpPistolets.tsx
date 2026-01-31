@@ -113,18 +113,18 @@ const PhaseSummary = ({
   );
 };
 
-// Collapsible Pistolets Section
+// Collapsible Pistolets Section (No border, no padding)
 const CollapsiblePistoletsSection = ({ 
   isExpanded, 
   onToggle, 
   children 
 }) => {
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
-      {/* Collapsible Header Band */}
+    <div>
+      {/* Collapsible Header Band - No border */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors"
+        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors rounded-lg"
       >
         <div className="flex items-center space-x-2">
           <div className="w-2 h-2 rounded-full bg-blue-500" />
@@ -142,9 +142,9 @@ const CollapsiblePistoletsSection = ({
         </div>
       </button>
 
-      {/* Pistolets Content */}
+      {/* Pistolets Content - No padding wrapper */}
       {isExpanded && (
-        <div className="p-3 bg-white border-t border-gray-100">
+        <div className="mt-3">
           {children}
         </div>
       )}
