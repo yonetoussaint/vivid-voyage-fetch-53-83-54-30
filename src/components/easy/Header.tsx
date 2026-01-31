@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Sun, Moon, ChevronDown, Menu } from 'lucide-react';
 
 const Header = ({ 
   date, 
@@ -63,9 +64,7 @@ const Header = ({
               className="p-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
               aria-label="Ouvrir le menu"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <Menu className="h-5 w-5 text-gray-700" />
             </button>
 
             {/* Date picker button */}
@@ -74,15 +73,9 @@ const Header = ({
               className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-900 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
             >
               <span>{formatDateForDisplay(date)}</span>
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
+              <ChevronDown 
                 className={`h-4 w-4 transition-transform ${isDatePickerOpen ? 'rotate-180' : ''}`} 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              />
             </button>
 
             {/* Hidden date input */}
@@ -96,19 +89,24 @@ const Header = ({
             />
           </div>
 
-          {/* Right side: AM/PM switch */}
+          {/* Right side: AM/PM switch with icons */}
           <div className="flex bg-gray-200 rounded-lg overflow-hidden">
+            {/* AM Button with Sun icon */}
             <button
               onClick={() => onShiftChange('AM')}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${shift === 'AM' ? 'bg-green-500 text-white' : 'text-gray-700 hover:bg-gray-300'}`}
+              className={`flex items-center justify-center space-x-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${shift === 'AM' ? 'bg-yellow-500 text-white' : 'text-gray-700 hover:bg-gray-300'}`}
             >
-              AM
+              <Sun className="h-4 w-4" />
+              <span>AM</span>
             </button>
+            
+            {/* PM Button with Moon icon */}
             <button
               onClick={() => onShiftChange('PM')}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${shift === 'PM' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-300'}`}
+              className={`flex items-center justify-center space-x-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${shift === 'PM' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-300'}`}
             >
-              PM
+              <Moon className="h-4 w-4" />
+              <span>PM</span>
             </button>
           </div>
         </div>
