@@ -3,6 +3,135 @@ import { formaterArgent, formaterGallons } from '@/utils/formatters';
 import { getCouleurCarburant, getCouleurBadge, calculerGallons } from '@/utils/helpers';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
+// Separate Header Component
+const PhaseHeader = ({ 
+  phase, 
+  title, 
+  pistoletsCount, 
+  totals, 
+  isExpanded, 
+  onToggle 
+}) => {
+  const hasData = totals.totalGallons > 0;
+
+  return (
+    <button
+      onClick={onToggle}
+      className="w-full bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg active:bg-gray-200 touch-manipulation transition-colors border border-gray-200 p-3"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
+          {/* Phase Indicator */}
+          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`}>
+            <span className="font-bold text-white text-sm">
+              {phase === 'phaseA' ? 'A' : 'B'}
+            </span>
+          </div>
+          
+          {/* Title and Basic Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-2">
+              <h3 className="font-bold text-gray-900 truncate">{title}</h3>
+              {hasData && (
+                <span className="flex-shrink-0 px-2 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-full">
+                  ✓
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-600 truncate">
+              {pistoletsCount} pistolet{pistoletsCount > 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+        
+        {/* Collapse Icon */}
+        <div className="flex-shrink-0 ml-2 p-1.5 rounded-full bg-gray-200">
+          {isExpanded ? (
+            <ChevronUp className="text-gray-600" size={20} strokeWidth={2.5} />
+          ) : (
+            <ChevronDown className="text-gray-600" size={20} strokeWidth={2.5} />
+          )}
+        </div>
+      </div>
+
+      {/* Left-Aligned Stats in Compact Layout */}
+      <div className="mt-3 space-y-2">
+        {/* First Row: Total Gallons and Total Sales */}
+        <div className="flex space-x-2">
+          <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+            <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
+            <p className="text-sm font-bold text-blue-900">
+              {formaterGallons(totals.totalGallons)}
+            </p>
+          </div>
+          <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+            <p className="text-xs text-gray-500 mb-0.5">Ventes Total</p>
+            <p className="text-sm font-bold text-green-900">
+              {formaterArgent(totals.totalSales)}
+            </p>
+          </div>
+        </div>
+
+        {/* Second Row: Gasoline and Diesel Breakdown */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-orange-50 rounded p-2 border border-orange-100">
+            <p className="text-xs font-medium text-orange-700 mb-0.5">Gasoline</p>
+            <div className="space-y-0.5">
+              <p className="text-xs text-orange-900 font-medium">
+                {formaterGallons(totals.totalGasoline)} gallons
+              </p>
+              <p className="text-xs text-orange-700">
+                {formaterArgent(totals.salesGasoline)}
+              </p>
+            </div>
+          </div>
+          
+          <div className="bg-purple-50 rounded p-2 border border-purple-100">
+            <p className="text-xs font-medium text-purple-700 mb-0.5">Diesel</p>
+            <div className="space-y-0.5">
+              <p className="text-xs text-purple-900 font-medium">
+                {formaterGallons(totals.totalDiesel)} gallons
+              </p>
+              <p className="text-xs text-purple-700">
+                {formaterArgent(totals.salesDiesel)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+};
+
+// Original InputField component
+const InputField = ({ label, value, onChange }) => (
+  <div>
+    <label className="block text-xs font-medium text-gray-600 mb-1">
+      {label}
+    </label>
+    <input
+      type="number"
+      step="0.001"
+      value={value}
+      onChange={onChange}
+      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      placeholder="0.000"
+      inputMode="decimal"
+    />
+  </div>
+);
+
+// Original SummaryRow component
+const SummaryRow = ({ label, value, valueClassName = "text-gray-900" }) => (
+  <div className="flex justify-between items-center">
+    <span className="text-sm text-gray-600">{label}</span>
+    <span className={`font-semibold ${valueClassName}`}>
+      {value}
+    </span>
+  </div>
+);
+
+// Main PumpPistolets Component
 const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   const [expandedPhases, setExpandedPhases] = useState({
     phaseA: true,
@@ -82,96 +211,17 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
       return null;
     }
 
-    const hasData = totals.totalGallons > 0;
-
     return (
       <div className="space-y-3">
-        {/* Compact Header Card with Left-Aligned Text */}
-        <button
-          onClick={() => togglePhase(phase)}
-          className="w-full bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg active:bg-gray-200 touch-manipulation transition-colors border border-gray-200 p-3"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 flex-1 min-w-0">
-              {/* Phase Indicator */}
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`}>
-                <span className="font-bold text-white text-sm">
-                  {phase === 'phaseA' ? 'A' : 'B'}
-                </span>
-              </div>
-              
-              {/* Title and Basic Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2">
-                  <h3 className="font-bold text-gray-900 truncate">{title}</h3>
-                  {hasData && (
-                    <span className="flex-shrink-0 px-2 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-full">
-                      ✓
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-600 truncate">
-                  {pistoletsArray.length} pistolet{pistoletsArray.length > 1 ? 's' : ''}
-                </p>
-              </div>
-            </div>
-            
-            {/* Collapse Icon */}
-            <div className="flex-shrink-0 ml-2 p-1.5 rounded-full bg-gray-200">
-              {expandedPhases[phase] ? (
-                <ChevronUp className="text-gray-600" size={20} strokeWidth={2.5} />
-              ) : (
-                <ChevronDown className="text-gray-600" size={20} strokeWidth={2.5} />
-              )}
-            </div>
-          </div>
-
-          {/* Left-Aligned Stats in Compact Layout */}
-          <div className="mt-3 space-y-2">
-            {/* First Row: Total Gallons and Total Sales */}
-            <div className="flex space-x-2">
-              <div className="flex-1 bg-white rounded p-2 border border-gray-200">
-                <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
-                <p className="text-sm font-bold text-blue-900">
-                  {formaterGallons(totals.totalGallons)}
-                </p>
-              </div>
-              <div className="flex-1 bg-white rounded p-2 border border-gray-200">
-                <p className="text-xs text-gray-500 mb-0.5">Ventes Total</p>
-                <p className="text-sm font-bold text-green-900">
-                  {formaterArgent(totals.totalSales)}
-                </p>
-              </div>
-            </div>
-
-            {/* Second Row: Gasoline and Diesel Breakdown */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-orange-50 rounded p-2 border border-orange-100">
-                <p className="text-xs font-medium text-orange-700 mb-0.5">Gasoline</p>
-                <div className="space-y-0.5">
-                  <p className="text-xs text-orange-900 font-medium">
-                    {formaterGallons(totals.totalGasoline)} gallons
-                  </p>
-                  <p className="text-xs text-orange-700">
-                    {formaterArgent(totals.salesGasoline)}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="bg-purple-50 rounded p-2 border border-purple-100">
-                <p className="text-xs font-medium text-purple-700 mb-0.5">Diesel</p>
-                <div className="space-y-0.5">
-                  <p className="text-xs text-purple-900 font-medium">
-                    {formaterGallons(totals.totalDiesel)} gallons
-                  </p>
-                  <p className="text-xs text-purple-700">
-                    {formaterArgent(totals.salesDiesel)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </button>
+        {/* Use the separate PhaseHeader component */}
+        <PhaseHeader
+          phase={phase}
+          title={title}
+          pistoletsCount={pistoletsArray.length}
+          totals={totals}
+          isExpanded={expandedPhases[phase]}
+          onToggle={() => togglePhase(phase)}
+        />
 
         {/* Original Pistolets Cards */}
         {expandedPhases[phase] && (
@@ -266,33 +316,5 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
     </div>
   );
 };
-
-// ORIGINAL InputField component
-const InputField = ({ label, value, onChange }) => (
-  <div>
-    <label className="block text-xs font-medium text-gray-600 mb-1">
-      {label}
-    </label>
-    <input
-      type="number"
-      step="0.001"
-      value={value}
-      onChange={onChange}
-      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-      placeholder="0.000"
-      inputMode="decimal"
-    />
-  </div>
-);
-
-// ORIGINAL SummaryRow component
-const SummaryRow = ({ label, value, valueClassName = "text-gray-900" }) => (
-  <div className="flex justify-between items-center">
-    <span className="text-sm text-gray-600">{label}</span>
-    <span className={`font-semibold ${valueClassName}`}>
-      {value}
-    </span>
-  </div>
-);
 
 export default PumpPistolets;
