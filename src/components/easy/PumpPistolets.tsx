@@ -18,7 +18,7 @@ const PhaseSummary = ({
       <div className="space-y-2">
         {/* First Row: Total Gallons and Total Sales */}
         <div className="flex space-x-2">
-          <div className="flex-1 bg-gray-50 rounded p-2 border border-gray-200">
+          <div className="flex-1 rounded p-2 border border-gray-200">
             <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-1">
