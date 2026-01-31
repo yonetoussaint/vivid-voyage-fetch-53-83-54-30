@@ -185,7 +185,7 @@ const MainLayout = ({
     <div className="min-h-screen bg-gray-50">
       {/* Header - Fixed */}
       <header className="sticky top-0 z-30 bg-white shadow-sm border-b">
-        <div className="px-4 py-3">
+        <div className=" py-3">
           <div className="flex items-center justify-between">
             {/* Left: Menu button and current app */}
             <div className="flex items-center space-x-3">
