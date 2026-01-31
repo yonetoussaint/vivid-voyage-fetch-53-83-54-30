@@ -115,7 +115,7 @@ const PhaseSummary = ({
 
 // Simple Thick Edge-to-Edge Separator
 const PhaseSeparator = () => (
-  <div className="my-6 -mx-3 border-t-4 border-gray-100"></div>
+  <div className="my-6 -mx-3 border-t-4 border-gray-200"></div>
 );
 
 // Collapsible Pistolets Section (Clean header)
@@ -142,7 +142,7 @@ const CollapsiblePhaseSection = ({
       {/* Clean Collapsible Header */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors rounded-lg"
+        className="w-full flex items-center justify-between px-2 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors rounded-lg"
       >
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 rounded-full ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`} />
