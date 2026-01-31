@@ -40,7 +40,7 @@ const MainLayout = ({
 
         {/* Main Content - This will scroll */}
         <main className="flex-1 overflow-auto">
-          <div className="p-2 sm:p-4">
+          <div className="p-2">
             {children}
           </div>
         </main>
