@@ -113,45 +113,6 @@ const PhaseSummary = ({
   );
 };
 
-// Collapsible Pistolets Section (No border, no padding)
-const CollapsiblePistoletsSection = ({ 
-  isExpanded, 
-  onToggle, 
-  children 
-}) => {
-  return (
-    <div>
-      {/* Collapsible Header Band - No border */}
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors rounded-lg"
-      >
-        <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 rounded-full bg-blue-500" />
-          <span className="font-medium text-gray-900">Voir les pistolets</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-xs text-gray-500">
-            {isExpanded ? 'Masquer' : 'Afficher'}
-          </span>
-          {isExpanded ? (
-            <ChevronUp className="text-gray-600" size={18} />
-          ) : (
-            <ChevronDown className="text-gray-600" size={18} />
-          )}
-        </div>
-      </button>
-
-      {/* Pistolets Content - No padding wrapper */}
-      {isExpanded && (
-        <div className="mt-3">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
-
 // Phase Separator Component
 const PhaseSeparator = () => (
   <div className="relative my-6">
@@ -165,6 +126,138 @@ const PhaseSeparator = () => (
     </div>
   </div>
 );
+
+// Collapsible Pistolets Section with Summary inside
+const CollapsiblePhaseSection = ({ 
+  phase, 
+  title, 
+  pistolets, 
+  totals, 
+  pompe, 
+  mettreAJourLecture, 
+  prix,
+  isExpanded, 
+  onToggle 
+}) => {
+  const pistoletsArray = Object.entries(pistolets);
+  const hasData = totals.totalGallons > 0;
+  
+  if (pistoletsArray.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
+      {/* Collapsible Header Band */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors"
+      >
+        <div className="flex items-center space-x-2">
+          <div className={`w-2 h-2 rounded-full ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`} />
+          <span className="font-medium text-gray-900">{title}</span>
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+            {pistoletsArray.length} pistolet{pistoletsArray.length > 1 ? 's' : ''}
+          </span>
+          {hasData && (
+            <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+              Données saisies
+            </span>
+          )}
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-xs text-gray-500">
+            {isExpanded ? 'Masquer' : 'Afficher'}
+          </span>
+          {isExpanded ? (
+            <ChevronUp className="text-gray-600" size={18} />
+          ) : (
+            <ChevronDown className="text-gray-600" size={18} />
+          )}
+        </div>
+      </button>
+
+      {/* Expanded Content with Summary and Pistolets */}
+      {isExpanded && (
+        <div className="p-3 bg-white space-y-3">
+          {/* Phase Summary Card (Now inside collapsible section) */}
+          <PhaseSummary
+            phase={phase}
+            title={title}
+            pistoletsCount={pistoletsArray.length}
+            totals={totals}
+          />
+
+          {/* Pistolets Cards */}
+          <div className="space-y-3">
+            {pistoletsArray.map(([pistolet, donnees]) => {
+              const gallons = calculerGallons(donnees.debut, donnees.fin);
+              const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
+              const ventesTotal = gallons * prixUnitaire;
+              const hasPistoletData = donnees.debut || donnees.fin;
+
+              return (
+                <div
+                  key={pistolet}
+                  className={`rounded-lg overflow-hidden border-2 ${getCouleurCarburant(donnees.typeCarburant)}`}
+                >
+                  {/* Header - ORIGINAL */}
+                  <div className={`${getCouleurBadge(donnees.typeCarburant)} px-3 py-2 text-white`}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm truncate">
+                          {pistolet.replace('pistolet', 'Pistolet ')}
+                        </h3>
+                        <p className="text-xs opacity-90">{donnees.typeCarburant}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0 ml-2">
+                        <p className="text-xs opacity-75">Prix</p>
+                        <p className="font-bold text-sm whitespace-nowrap">
+                          {prixUnitaire} HTG
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Body - ORIGINAL */}
+                  <div className="p-3 bg-white space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <InputField
+                        label="Meter Ouverture"
+                        value={donnees.debut}
+                        onChange={(e) => mettreAJourLecture(pompe, pistolet, 'debut', e.target.value)}
+                      />
+
+                      <InputField
+                        label="Meter Fermeture"
+                        value={donnees.fin}
+                        onChange={(e) => mettreAJourLecture(pompe, pistolet, 'fin', e.target.value)}
+                      />
+                    </div>
+
+                    {hasPistoletData && (
+                      <div className="pt-3 border-t space-y-2">
+                        <SummaryRow 
+                          label="Gallons" 
+                          value={formaterGallons(gallons)}
+                        />
+                        <SummaryRow 
+                          label="Ventes Total" 
+                          value={`${formaterArgent(ventesTotal)} HTG`}
+                          valueClassName="text-green-600 font-bold"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Original InputField component
 const InputField = ({ label, value, onChange }) => (
@@ -267,118 +360,37 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
     }));
   };
 
-  const PhaseSection = ({ phase, title, pistolets, totals, showSeparator = false }) => {
-    const pistoletsArray = Object.entries(pistolets);
-    
-    if (pistoletsArray.length === 0) {
-      return null;
-    }
-
-    return (
-      <>
-        {showSeparator && <PhaseSeparator />}
-        <div className="space-y-3">
-          {/* Phase Summary Card (Non-collapsible) */}
-          <PhaseSummary
-            phase={phase}
-            title={title}
-            pistoletsCount={pistoletsArray.length}
-            totals={totals}
-          />
-
-          {/* Collapsible Pistolets Section */}
-          <CollapsiblePistoletsSection
-            isExpanded={expandedPhases[phase]}
-            onToggle={() => togglePhase(phase)}
-          >
-            <div className="space-y-3">
-              {pistoletsArray.map(([pistolet, donnees]) => {
-                const gallons = calculerGallons(donnees.debut, donnees.fin);
-                const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
-                const ventesTotal = gallons * prixUnitaire;
-                const hasData = donnees.debut || donnees.fin;
-
-                return (
-                  <div
-                    key={pistolet}
-                    className={`rounded-lg overflow-hidden border-2 ${getCouleurCarburant(donnees.typeCarburant)}`}
-                  >
-                    {/* Header - ORIGINAL */}
-                    <div className={`${getCouleurBadge(donnees.typeCarburant)} px-3 py-2 text-white`}>
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm truncate">
-                            {pistolet.replace('pistolet', 'Pistolet ')}
-                          </h3>
-                          <p className="text-xs opacity-90">{donnees.typeCarburant}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0 ml-2">
-                          <p className="text-xs opacity-75">Prix</p>
-                          <p className="font-bold text-sm whitespace-nowrap">
-                            {prixUnitaire} HTG
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Body - ORIGINAL */}
-                    <div className="p-3 bg-white space-y-3">
-                      <div className="grid grid-cols-2 gap-2">
-                        <InputField
-                          label="Meter Ouverture"
-                          value={donnees.debut}
-                          onChange={(e) => mettreAJourLecture(pompe, pistolet, 'debut', e.target.value)}
-                        />
-
-                        <InputField
-                          label="Meter Fermeture"
-                          value={donnees.fin}
-                          onChange={(e) => mettreAJourLecture(pompe, pistolet, 'fin', e.target.value)}
-                        />
-                      </div>
-
-                      {hasData && (
-                        <div className="pt-3 border-t space-y-2">
-                          <SummaryRow 
-                            label="Gallons" 
-                            value={formaterGallons(gallons)}
-                          />
-                          <SummaryRow 
-                            label="Ventes Total" 
-                            value={`${formaterArgent(ventesTotal)} HTG`}
-                            valueClassName="text-green-600 font-bold"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CollapsiblePistoletsSection>
-        </div>
-      </>
-    );
-  };
-
   return (
     <div>
       {Object.keys(groupedPistolets.phaseA).length > 0 && (
-        <PhaseSection 
-          phase="phaseA"
-          title="Phase A"
-          pistolets={groupedPistolets.phaseA}
-          totals={phaseATotals}
-        />
+        <>
+          <CollapsiblePhaseSection
+            phase="phaseA"
+            title="Phase A"
+            pistolets={groupedPistolets.phaseA}
+            totals={phaseATotals}
+            pompe={pompe}
+            mettreAJourLecture={mettreAJourLecture}
+            prix={prix}
+            isExpanded={expandedPhases.phaseA}
+            onToggle={() => togglePhase('phaseA')}
+          />
+          
+          {Object.keys(groupedPistolets.phaseB).length > 0 && <PhaseSeparator />}
+        </>
       )}
       
       {Object.keys(groupedPistolets.phaseB).length > 0 && (
-        <PhaseSection 
+        <CollapsiblePhaseSection
           phase="phaseB"
           title="Phase B"
           pistolets={groupedPistolets.phaseB}
           totals={phaseBTotals}
-          showSeparator={Object.keys(groupedPistolets.phaseA).length > 0}
+          pompe={pompe}
+          mettreAJourLecture={mettreAJourLecture}
+          prix={prix}
+          isExpanded={expandedPhases.phaseB}
+          onToggle={() => togglePhase('phaseB')}
         />
       )}
     </div>
