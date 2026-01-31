@@ -115,7 +115,7 @@ const PhaseSummary = ({
 
 // Simple Thick Edge-to-Edge Separator
 const PhaseSeparator = () => (
-  <div className="my-6 -mx-3 border-t-4 border-gray-400"></div>
+  <div className="my-6 -mx-3 border-t-4 border-gray-100"></div>
 );
 
 // Collapsible Pistolets Section (Clean header)
