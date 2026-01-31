@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import PumpHeader from '@/components/easy/PumpHeader';
-import PumpSelector from '@/components/easy/PumpSelector';
 import PumpPistolets from '@/components/easy/PumpPistolets';
 import StatsCards from '@/components/easy/StatsCards';
 import PropaneManager from '@/components/easy/PropaneManager';
@@ -8,9 +7,8 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const PumpInputView = ({ 
   shift, 
-  pompeEtendue, 
-  setPompeEtendue, 
-  pompes, 
+  pompeEtendue, // Keep this to know which pump is selected
+  pompes, // You might not need this anymore in this component
   toutesDonnees, 
   vendeurs, 
   totaux, 
@@ -31,7 +29,7 @@ const PumpInputView = ({
   const depotsActuels = tousDepots[shift] || {};
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-4"> {/* Added mt-4 for spacing */}
       {/* Stats Cards Section - Collapsible */}
       <div className="border border-gray-200 rounded-lg">
         <button
@@ -62,18 +60,7 @@ const PumpInputView = ({
         )}
       </div>
 
-      {/* Pump Selector */}
-      <div className="border border-gray-200 rounded-lg p-4 bg-white">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Sélection de Pompe</h3>
-        <PumpSelector 
-          pompes={pompes}
-          pompeEtendue={pompeEtendue}
-          setPompeEtendue={setPompeEtendue}
-          showPropane={showPropane}
-        />
-      </div>
-
-      {/* Render content based on selected tab */}
+      {/* Render content based on selected pump */}
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         {pompeEtendue === 'propane' ? (
           <>
@@ -117,14 +104,12 @@ const PumpInputView = ({
                   tauxUSD={tauxUSD}
                 />
 
-               
-                  <PumpPistolets
-                    pompe={pompe}
-                    donneesPompe={donneesPompe}
-                    mettreAJourLecture={mettreAJourLecture}
-                    prix={prix}
-                  />
-                
+                <PumpPistolets
+                  pompe={pompe}
+                  donneesPompe={donneesPompe}
+                  mettreAJourLecture={mettreAJourLecture}
+                  prix={prix}
+                />
               </div>
             );
           })
