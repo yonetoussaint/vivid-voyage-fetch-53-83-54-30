@@ -336,7 +336,7 @@ const SystemeStationService = () => {
     switch (activeTab) {
       case 'pumps':
         return (
-          <div className="p-4 sm:p-6">
+          <div className="p-2 sm:p-4">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Pompes & Propane</h2>
@@ -368,7 +368,7 @@ const SystemeStationService = () => {
         );
       case 'vendeurs':
         return (
-          <div className="p-4 sm:p-6">
+          <div className="p-2 sm:p-4">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Vendeurs</h2>
@@ -388,7 +388,7 @@ const SystemeStationService = () => {
         );
       case 'conditionnement':
         return (
-          <div className="p-4 sm:p-6">
+          <div className="p-2 sm:p-6">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Conditionnement</h2>
@@ -407,7 +407,7 @@ const SystemeStationService = () => {
         );
       case 'depots':
         return (
-          <div className="p-4 sm:p-6">
+          <div className="p-2 sm:p-6">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Dépôts</h2>
@@ -428,7 +428,7 @@ const SystemeStationService = () => {
         );
       case 'stock':
         return (
-          <div className="p-4 sm:p-6">
+          <div className="p-2 sm:p-6">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Stock Restant</h2>
@@ -448,7 +448,7 @@ const SystemeStationService = () => {
         );
       case 'usd':
         return (
-          <div className="p-4 sm:p-6">
+          <div className="p-2 sm:p-6">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Ventes USD</h2>
@@ -468,7 +468,7 @@ const SystemeStationService = () => {
         );
       case 'report':
         return (
-          <div className="p-4 sm:p-6">
+          <div className="p-2 sm:p-6">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Rapports</h2>
@@ -495,7 +495,7 @@ const SystemeStationService = () => {
         );
       case 'rapport':
         return (
-          <div className="p-4 sm:p-6">
+          <div className="p-2 sm:p-6">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Rapport Gaz</h2>
@@ -512,7 +512,7 @@ const SystemeStationService = () => {
         );
       default:
         return (
-          <div className="p-4 sm:p-6">
+          <div className="p-2 sm:p-6">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Tableau de bord</h2>
