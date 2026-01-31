@@ -13,12 +13,12 @@ const PhaseSummary = ({
   const hasData = totals.totalGallons > 0;
 
   return (
-    <div className="w-full bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 p-3">
+    <div className="w-full bg-white rounded-lg border border-gray-200 p-3">
       {/* LEFT-ALIGNED Stats in Compact Layout */}
       <div className="space-y-2">
         {/* First Row: Total Gallons and Total Sales */}
         <div className="flex space-x-2">
-          <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+          <div className="flex-1 bg-gray-50 rounded p-2 border border-gray-200">
             <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-1">
@@ -30,7 +30,7 @@ const PhaseSummary = ({
               <span className="text-xs font-medium text-blue-700">gallons</span>
             </div>
           </div>
-          <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+          <div className="flex-1 bg-gray-50 rounded p-2 border border-gray-200">
             <p className="text-xs text-gray-500 mb-0.5">Ventes Total</p>
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-1">
