@@ -24,101 +24,11 @@ const PumpInputView = ({
   mettreAJourPropane,
   prixPropane
 }) => {
-  const [showDataContext, setShowDataContext] = useState(false);
   const [showStatsCards, setShowStatsCards] = useState(false);
-  const [quickAnalytics, setQuickAnalytics] = useState(null);
 
   const lecturesCourantes = toutesDonnees[shift];
   const propaneDonneesCourantes = propaneDonnees?.[shift] || { debut: '', fin: '' };
   const depotsActuels = tousDepots[shift] || {};
-
-  // Calculate totals for current shift
-  const calculateShiftTotals = () => {
-    let totalVolume = 0;
-    let totalSales = 0;
-    let fuelTypes = {};
-
-    if (lecturesCourantes) {
-      Object.entries(lecturesCourantes).forEach(([pump, pumpData]) => {
-        Object.entries(pumpData || {}).forEach(([gun, gunData]) => {
-          if (gunData && gunData.lectureDebut !== undefined && gunData.lectureFin !== undefined) {
-            const volume = gunData.lectureFin - gunData.lectureDebut;
-            totalVolume += volume;
-
-            const fuelPrice = prix?.[gunData.carburant] || 0;
-            const sales = volume * fuelPrice;
-            totalSales += sales;
-
-            // Track fuel types
-            if (gunData.carburant) {
-              fuelTypes[gunData.carburant] = (fuelTypes[gunData.carburant] || 0) + volume;
-            }
-          }
-        });
-      });
-    }
-
-    // Add propane if available
-    if (propaneDonneesCourantes && propaneDonneesCourantes.debut && propaneDonneesCourantes.fin) {
-      const propaneVolume = propaneDonneesCourantes.fin - propaneDonneesCourantes.debut;
-      totalVolume += propaneVolume;
-      totalSales += propaneVolume * (prixPropane || 0);
-      fuelTypes['propane'] = propaneVolume;
-    }
-
-    return { totalVolume, totalSales, fuelTypes };
-  };
-
-  // Generate quick analytics on data change
-  useEffect(() => {
-    const generateQuickAnalytics = () => {
-      const { totalVolume, totalSales, fuelTypes } = calculateShiftTotals();
-
-      // Find most active pump
-      let mostActivePump = null;
-      let maxVolume = 0;
-
-      if (lecturesCourantes) {
-        Object.entries(lecturesCourantes).forEach(([pump, pumpData]) => {
-          let pumpVolume = 0;
-          Object.entries(pumpData || {}).forEach(([gun, gunData]) => {
-            if (gunData && gunData.lectureDebut !== undefined && gunData.lectureFin !== undefined) {
-              pumpVolume += gunData.lectureFin - gunData.lectureDebut;
-            }
-          });
-
-          if (pumpVolume > maxVolume) {
-            maxVolume = pumpVolume;
-            mostActivePump = pump;
-          }
-        });
-      }
-
-      // Find most sold fuel type
-      let mostSoldFuel = null;
-      let maxFuelVolume = 0;
-      Object.entries(fuelTypes).forEach(([fuel, volume]) => {
-        if (volume > maxFuelVolume) {
-          maxFuelVolume = volume;
-          mostSoldFuel = fuel;
-        }
-      });
-
-      setQuickAnalytics({
-        totalVolume: totalVolume.toFixed(2),
-        totalSales: totalSales.toFixed(2),
-        mostActivePump,
-        mostSoldFuel,
-        fuelTypes,
-        pumpCount: Object.keys(lecturesCourantes || {}).length,
-        activeGuns: Object.values(lecturesCourantes || {}).reduce((acc, pump) => 
-          acc + Object.keys(pump || {}).length, 0
-        )
-      });
-    };
-
-    generateQuickAnalytics();
-  }, [lecturesCourantes, propaneDonneesCourantes, shift]);
 
   return (
     <div className="space-y-4">
@@ -151,92 +61,6 @@ const PumpInputView = ({
           </div>
         )}
       </div>
-
-      {/* Quick Analytics Summary - Collapsible */}
-      {quickAnalytics && (
-        <div className="border border-gray-200 rounded-lg">
-          <button
-            onClick={() => setShowDataContext(!showDataContext)}
-            className="flex items-center justify-between w-full p-4 hover:bg-gray-50 transition-colors"
-          >
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Résumé Rapide</h3>
-              <p className="text-sm text-gray-500">Aperçu des performances du shift</p>
-            </div>
-            {showDataContext ? (
-              <ChevronUp className="text-gray-500" size={20} />
-            ) : (
-              <ChevronDown className="text-gray-500" size={20} />
-            )}
-          </button>
-
-          {showDataContext && (
-            <div className="px-4 pb-4">
-              <div className="border-t border-gray-200 pt-4 space-y-4">
-                {/* Key Metrics Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-gray-600 mb-1">Volume Total</div>
-                    <div className="text-xl font-bold text-gray-900">{quickAnalytics.totalVolume} L</div>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-gray-600 mb-1">Ventes Total</div>
-                    <div className="text-xl font-bold text-gray-900">{quickAnalytics.totalSales} USD</div>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-gray-600 mb-1">Pompe Active</div>
-                    <div className="text-xl font-bold text-gray-900">
-                      {quickAnalytics.mostActivePump || 'N/A'}
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-gray-600 mb-1">Carburant Principal</div>
-                    <div className="text-xl font-bold text-gray-900">
-                      {quickAnalytics.mostSoldFuel || 'N/A'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Detailed Data */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Détails du Shift</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Pompes</span>
-                        <span className="font-medium text-gray-900">{quickAnalytics.pumpCount}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Pistolets Actifs</span>
-                        <span className="font-medium text-gray-900">{quickAnalytics.activeGuns}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Vendeurs</span>
-                        <span className="font-medium text-gray-900">{vendeurs?.length || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Répartition par Carburant</h4>
-                    <div className="space-y-2">
-                      {Object.entries(quickAnalytics.fuelTypes).map(([fuel, volume]) => (
-                        <div key={fuel} className="flex justify-between py-2 border-b border-gray-100">
-                          <span className="text-gray-600">{fuel}</span>
-                          <span className="font-medium text-gray-900">{parseFloat(volume).toFixed(2)} L</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Pump Selector */}
       <div className="border border-gray-200 rounded-lg p-4 bg-white">
@@ -293,14 +117,14 @@ const PumpInputView = ({
                   tauxUSD={tauxUSD}
                 />
 
-              
+                <div className="p-4">
                   <PumpPistolets
                     pompe={pompe}
                     donneesPompe={donneesPompe}
                     mettreAJourLecture={mettreAJourLecture}
                     prix={prix}
                   />
-                
+                </div>
               </div>
             );
           })
