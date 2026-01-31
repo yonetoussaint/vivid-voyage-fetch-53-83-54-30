@@ -67,9 +67,9 @@ const MainLayout = ({
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto">
-          <div className="p-2 sm:p-4">
+          
             {children}
-          </div>
+          
         </main>
       </div>
     </div>
