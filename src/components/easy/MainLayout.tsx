@@ -38,7 +38,7 @@ const MainLayout = ({
       {/* Fixed Header Container - Let it size naturally */}
       <div 
         ref={headerRef}
-        className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200"
+        className="fixed top-0 left-0 right-0 z-50 bg-white "
       >
         <Header
           date={date}
@@ -51,7 +51,7 @@ const MainLayout = ({
         
         {/* Pump Selector - Part of the header flow */}
         {activeTab === 'pumps' && (
-          <div className="border-t border-gray-200 bg-white">
+          <div className="bg-white">
             
               <PumpSelector 
                 pompes={pompes}
