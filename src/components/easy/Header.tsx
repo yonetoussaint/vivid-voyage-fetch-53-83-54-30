@@ -32,21 +32,6 @@ const Header = ({
     }
   };
 
-  const formatFullDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  const handleTodayClick = () => {
-    const today = new Date().toISOString().split('T')[0];
-    onDateChange(today);
-  };
-
   const openDatePicker = () => {
     const dateInput = document.getElementById('datePicker');
     if (dateInput) {
@@ -66,51 +51,52 @@ const Header = ({
     }
   };
 
-  const isToday = date === new Date().toISOString().split('T')[0];
-
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
       <div className="py-3 px-3">
         <div className="flex items-center justify-between">
-          {/* Left: Menu button with gray background */}
-          <button
-            onClick={onMenuToggle}
-            className="p-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
-            aria-label="Ouvrir le menu"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-
-          {/* Center: Date with chevron and gray background */}
-          <button
-            onClick={openDatePicker}
-            className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-900 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
-          >
-            <span>{formatDateForDisplay(date)}</span>
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className={`h-4 w-4 transition-transform ${isDatePickerOpen ? 'rotate-180' : ''}`} 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
+          {/* Left side: Menu icon and date picker */}
+          <div className="flex items-center space-x-2">
+            {/* Menu button */}
+            <button
+              onClick={onMenuToggle}
+              className="p-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+              aria-label="Ouvrir le menu"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
 
-          {/* Hidden date input */}
-          <input
-            type="date"
-            id="datePicker"
-            value={date}
-            onChange={(e) => onDateChange(e.target.value)}
-            className="hidden"
-            max={new Date().toISOString().split('T')[0]}
-          />
+            {/* Date picker button */}
+            <button
+              onClick={openDatePicker}
+              className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-900 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+            >
+              <span>{formatDateForDisplay(date)}</span>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`h-4 w-4 transition-transform ${isDatePickerOpen ? 'rotate-180' : ''}`} 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-          {/* Right: AM/PM switch - now with gray background for inactive state */}
+            {/* Hidden date input */}
+            <input
+              type="date"
+              id="datePicker"
+              value={date}
+              onChange={(e) => onDateChange(e.target.value)}
+              className="hidden"
+              max={new Date().toISOString().split('T')[0]}
+            />
+          </div>
+
+          {/* Right side: AM/PM switch */}
           <div className="flex bg-gray-200 rounded-lg overflow-hidden">
             <button
               onClick={() => onShiftChange('AM')}
@@ -125,32 +111,6 @@ const Header = ({
               PM
             </button>
           </div>
-        </div>
-
-        {/* Date info section - always visible */}
-        <div className="mt-2">
-          {isToday ? (
-            // Today's full date display
-            <div className="text-center">
-              <div className="text-xs text-gray-500 mb-1">Aujourd'hui</div>
-              <div className="text-sm font-medium text-gray-900">
-                {formatFullDate(date)}
-              </div>
-            </div>
-          ) : (
-            // Past date with "Return to today" button
-            <div className="flex flex-col items-center">
-              <button
-                onClick={handleTodayClick}
-                className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1 rounded-lg transition-colors font-medium mb-1"
-              >
-                ← Retour à aujourd'hui
-              </button>
-              <div className="text-sm font-medium text-gray-900">
-                {formatFullDate(date)}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </header>
