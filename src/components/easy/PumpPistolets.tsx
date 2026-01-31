@@ -9,7 +9,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
         .filter(([key]) => key !== '_vendeur')
         .map(([pistolet, donnees]) => {
           const gallons = calculerGallons(donnees.debut, donnees.fin);
-          const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.essence;
+          const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
           const ventesTotal = gallons * prixUnitaire;
           const hasData = donnees.debut || donnees.fin;
 
