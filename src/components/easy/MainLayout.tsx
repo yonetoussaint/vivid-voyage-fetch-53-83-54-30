@@ -12,21 +12,26 @@ const MainLayout = ({
   handleReinitialiserJour,
   children,
   onMenuToggle,
-  activeTab 
+  activeTab,
+  onDateChange,
+  onShiftChange 
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header
-        date={date}
-        shift={shift}
-        activeTab={activeTab}
-        onMenuToggle={onMenuToggle}
-        handleReinitialiserShift={handleReinitialiserShift}
-        handleReinitialiserJour={handleReinitialiserJour}
-      />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header - Already sticky in Header component */}
+      <div className="sticky top-0 z-40">
+        <Header
+          date={date}
+          shift={shift}
+          activeTab={activeTab}
+          onMenuToggle={onMenuToggle}
+          onDateChange={onDateChange}
+          onShiftChange={onShiftChange}
+        />
+      </div>
 
       {/* Main Content Area */}
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         {/* Side Panel for desktop - always visible */}
         <div className="hidden lg:block flex-shrink-0">
           <SidePanel isOpen={true} onClose={() => {}} isMobile={false}>
@@ -34,10 +39,10 @@ const MainLayout = ({
           </SidePanel>
         </div>
 
-        {/* Main Content */}
-        <main className="flex-1 min-h-[calc(100vh-80px)] overflow-auto">
-          <div className="">
-              {children}         
+        {/* Main Content - Scrollable area */}
+        <main className="flex-1 overflow-auto">
+          <div className="p-4">
+            {children}
           </div>
         </main>
       </div>
