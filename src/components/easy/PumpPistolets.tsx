@@ -14,34 +14,8 @@ const PhaseSummary = ({
 
   return (
     <div className="w-full bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 p-3">
-      <div className="flex items-center">
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          {/* Phase Indicator */}
-          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`}>
-            <span className="font-bold text-white text-sm">
-              {phase === 'phaseA' ? 'A' : 'B'}
-            </span>
-          </div>
-          
-          {/* Title and Basic Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2">
-              <h3 className="font-bold text-gray-900 truncate">{title}</h3>
-              {hasData && (
-                <span className="flex-shrink-0 px-2 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-full">
-                  ✓
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-gray-600 truncate">
-              {pistoletsCount} pistolet{pistoletsCount > 1 ? 's' : ''}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* LEFT-ALIGNED Stats in Compact Layout */}
-      <div className="mt-3 space-y-2">
+      <div className="space-y-2">
         {/* First Row: Total Gallons and Total Sales */}
         <div className="flex space-x-2">
           <div className="flex-1 bg-white rounded p-2 border border-gray-200">
@@ -89,7 +63,7 @@ const PhaseSummary = ({
               </div>
             </div>
           </div>
-          
+
           <div className="bg-purple-50 rounded p-2 border border-purple-100">
             <p className="text-xs font-medium text-purple-700 mb-1">Diesel</p>
             <div className="space-y-1.5">
