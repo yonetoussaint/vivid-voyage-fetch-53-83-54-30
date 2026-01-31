@@ -9,41 +9,53 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
     phaseB: true
   });
 
-  // Group pistolets by phase
+  // Debug: log what we're receiving
+  console.log('PumpPistolets received:', { 
+    pompe, 
+    donneesPompeKeys: Object.keys(donneesPompe),
+    donneesPompe 
+  });
+
+  // First, get all pistolets (excluding _vendeur)
+  const allPistolets = Object.entries(donneesPompe)
+    .filter(([key]) => key !== '_vendeur');
+  
+  console.log('All pistolets:', allPistolets);
+
+  // Simple grouping logic for now - adjust based on your actual data
   const groupedPistolets = {
     phaseA: {},
     phaseB: {}
   };
 
-  // Group pistolets based on their names
-  Object.entries(donneesPompe)
-    .filter(([key]) => key !== '_vendeur')
-    .forEach(([pistolet, donnees]) => {
-      const pistoletNum = parseInt(pistolet.match(/\d+/)?.[0] || '0');
-      
-      if (pistolet.includes('gasoline')) {
-        if (pistoletNum <= 2) {
-          groupedPistolets.phaseA[pistolet] = donnees;
-        } else {
-          groupedPistolets.phaseB[pistolet] = donnees;
-        }
-      } else if (pistolet.includes('Diesel')) {
-        // Assuming there are 2 Diesel pistolets: Diesel1 and Diesel2
-        if (pistolet.includes('Diesel1')) {
-          groupedPistolets.phaseA[pistolet] = donnees;
-        } else if (pistolet.includes('Diesel2')) {
-          groupedPistolets.phaseB[pistolet] = donnees;
-        } else {
-          // Fallback: put first Diesel in Phase A, second in Phase B
-          const dieselCount = Object.keys(groupedPistolets.phaseA).filter(k => k.includes('Diesel')).length;
-          if (dieselCount === 0) {
-            groupedPistolets.phaseA[pistolet] = donnees;
-          } else {
-            groupedPistolets.phaseB[pistolet] = donnees;
-          }
-        }
+  // Group based on simple rules
+  allPistolets.forEach(([pistolet, donnees]) => {
+    const lowerKey = pistolet.toLowerCase();
+    
+    if (lowerKey.includes('diesel')) {
+      // Put first diesel in phaseA, second in phaseB
+      if (Object.keys(groupedPistolets.phaseA).filter(k => k.toLowerCase().includes('diesel')).length === 0) {
+        groupedPistolets.phaseA[pistolet] = donnees;
+      } else {
+        groupedPistolets.phaseB[pistolet] = donnees;
       }
-    });
+    } else if (lowerKey.includes('gasoline') || lowerKey.includes('gas')) {
+      // Check if it's gasoline1 or gasoline2
+      const numMatch = pistolet.match(/\d+/);
+      const num = numMatch ? parseInt(numMatch[0]) : 0;
+      
+      if (num <= 2) {
+        groupedPistolets.phaseA[pistolet] = donnees;
+      } else {
+        groupedPistolets.phaseB[pistolet] = donnees;
+      }
+    } else {
+      // Default to phaseA
+      groupedPistolets.phaseA[pistolet] = donnees;
+    }
+  });
+
+  console.log('Grouped pistolets:', groupedPistolets);
 
   const togglePhase = (phase) => {
     setExpandedPhases(prev => ({
@@ -53,9 +65,17 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   };
 
   const PhaseSection = ({ phase, title, pistolets }) => {
-    if (Object.keys(pistolets).length === 0) return null;
+    const pistoletsArray = Object.entries(pistolets);
+    
+    if (pistoletsArray.length === 0) {
+      return (
+        <div className="border border-gray-200 rounded-lg p-4 text-gray-500 text-center">
+          Aucun pistolet dans {title}
+        </div>
+      );
+    }
 
-    const hasDataInPhase = Object.values(pistolets).some(donnees => 
+    const hasDataInPhase = pistoletsArray.some(([_, donnees]) => 
       donnees.debut || donnees.fin
     );
 
@@ -70,7 +90,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
               <p className="text-sm text-gray-500">
-                {Object.keys(pistolets).length} pistolet(s)
+                {pistoletsArray.length} pistolet(s)
               </p>
             </div>
           </div>
@@ -90,7 +110,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
 
         {expandedPhases[phase] && (
           <div className="p-4 space-y-3">
-            {Object.entries(pistolets).map(([pistolet, donnees]) => {
+            {pistoletsArray.map(([pistolet, donnees]) => {
               const gallons = calculerGallons(donnees.debut, donnees.fin);
               const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
               const ventesTotal = gallons * prixUnitaire;
@@ -106,7 +126,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
                     <div className="flex justify-between items-start">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm truncate">
-                          {pistolet.replace('pistolet', 'Pistolet ')}
+                          {pistolet.replace('pistolet', 'Pistolet ').replace(/([A-Z])/g, ' $1')}
                         </h3>
                         <p className="text-xs opacity-90">{donnees.typeCarburant}</p>
                       </div>
