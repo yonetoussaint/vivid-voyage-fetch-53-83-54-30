@@ -2,7 +2,7 @@ import React from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
-import PumpSelector from './PumpSelector'; // Make sure this import exists
+import PumpSelector from './PumpSelector';
 
 const MainLayout = ({ 
   date, 
@@ -18,6 +18,10 @@ const MainLayout = ({
   setPompeEtendue,
   showPropane
 }) => {
+  // Calculate header heights dynamically
+  const headerHeight = 64; // h-16 = 4rem = 64px
+  const pumpSelectorHeight = 56; // py-3 (12px) + component (~44px)
+  
   return (
     <div className="h-screen flex flex-col">
       {/* Fixed Header Container */}
@@ -34,15 +38,17 @@ const MainLayout = ({
 
       {/* Pump Selector - Fixed below header, only for pumps tab */}
       {activeTab === 'pumps' && (
-        <div className="fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-          <div className="px-3 py-3">
+        <div 
+          className="fixed left-0 right-0 z-40 bg-white border-b border-gray-200"
+          style={{ top: `${headerHeight}px` }}
+        >
+          <div className="px-4 py-3">
             <div className="max-w-6xl mx-auto">
               <PumpSelector 
                 pompes={pompes}
                 pompeEtendue={pompeEtendue}
                 setPompeEtendue={setPompeEtendue}
                 showPropane={showPropane}
-                compact={true}
               />
             </div>
           </div>
@@ -50,7 +56,14 @@ const MainLayout = ({
       )}
 
       {/* Spacer - Adjust height based on whether PumpSelector is visible */}
-      <div className={`flex-shrink-0 ${activeTab === 'pumps' ? 'h-28' : 'h-16'}`}></div>
+      <div 
+        className="flex-shrink-0"
+        style={{ 
+          height: activeTab === 'pumps' 
+            ? `${headerHeight + pumpSelectorHeight}px` 
+            : `${headerHeight}px` 
+        }}
+      ></div>
 
       {/* Main Content Area */}
       <div className="flex flex-1 min-h-0">
@@ -62,7 +75,7 @@ const MainLayout = ({
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-gray-50">
           {children}
         </main>
       </div>
