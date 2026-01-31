@@ -9,53 +9,34 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
     phaseB: true
   });
 
-  // Debug: log what we're receiving
-  console.log('PumpPistolets received:', { 
-    pompe, 
-    donneesPompeKeys: Object.keys(donneesPompe),
-    donneesPompe 
-  });
-
-  // First, get all pistolets (excluding _vendeur)
+  // Get all pistolets (excluding _vendeur)
   const allPistolets = Object.entries(donneesPompe)
-    .filter(([key]) => key !== '_vendeur');
-  
-  console.log('All pistolets:', allPistolets);
+    .filter(([key]) => key !== '_vendeur')
+    .sort(([keyA], [keyB]) => {
+      // Sort by type then by number
+      const getSortValue = (key) => {
+        const lower = key.toLowerCase();
+        if (lower.includes('gasoline') || lower.includes('gas')) return 1;
+        if (lower.includes('diesel')) return 2;
+        return 3;
+      };
+      return getSortValue(keyA) - getSortValue(keyB);
+    });
 
-  // Simple grouping logic for now - adjust based on your actual data
+  // Group into 2 phases with 3 pistolets each
   const groupedPistolets = {
     phaseA: {},
     phaseB: {}
   };
 
-  // Group based on simple rules
-  allPistolets.forEach(([pistolet, donnees]) => {
-    const lowerKey = pistolet.toLowerCase();
-    
-    if (lowerKey.includes('diesel')) {
-      // Put first diesel in phaseA, second in phaseB
-      if (Object.keys(groupedPistolets.phaseA).filter(k => k.toLowerCase().includes('diesel')).length === 0) {
-        groupedPistolets.phaseA[pistolet] = donnees;
-      } else {
-        groupedPistolets.phaseB[pistolet] = donnees;
-      }
-    } else if (lowerKey.includes('gasoline') || lowerKey.includes('gas')) {
-      // Check if it's gasoline1 or gasoline2
-      const numMatch = pistolet.match(/\d+/);
-      const num = numMatch ? parseInt(numMatch[0]) : 0;
-      
-      if (num <= 2) {
-        groupedPistolets.phaseA[pistolet] = donnees;
-      } else {
-        groupedPistolets.phaseB[pistolet] = donnees;
-      }
-    } else {
-      // Default to phaseA
+  // Distribute pistolets: first 3 to Phase A, next 3 to Phase B
+  allPistolets.forEach(([pistolet, donnees], index) => {
+    if (index < 3) {
       groupedPistolets.phaseA[pistolet] = donnees;
+    } else {
+      groupedPistolets.phaseB[pistolet] = donnees;
     }
   });
-
-  console.log('Grouped pistolets:', groupedPistolets);
 
   const togglePhase = (phase) => {
     setExpandedPhases(prev => ({
@@ -68,11 +49,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
     const pistoletsArray = Object.entries(pistolets);
     
     if (pistoletsArray.length === 0) {
-      return (
-        <div className="border border-gray-200 rounded-lg p-4 text-gray-500 text-center">
-          Aucun pistolet dans {title}
-        </div>
-      );
+      return null; // Don't show empty phases
     }
 
     const hasDataInPhase = pistoletsArray.some(([_, donnees]) => 
@@ -83,33 +60,33 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <button
           onClick={() => togglePhase(phase)}
-          className={`flex items-center justify-between w-full p-4 ${hasDataInPhase ? 'bg-blue-50' : 'bg-gray-50'} hover:bg-gray-100 transition-colors`}
+          className={`flex items-center justify-between w-full p-3 ${hasDataInPhase ? 'bg-blue-50' : 'bg-gray-50'} hover:bg-gray-100 transition-colors`}
         >
-          <div className="flex items-center space-x-3">
-            <div className={`w-3 h-3 rounded-full ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`} />
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`} />
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className="font-semibold text-gray-900">{title}</h3>
+              <p className="text-xs text-gray-500">
                 {pistoletsArray.length} pistolet(s)
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
             {hasDataInPhase && (
-              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                Données saisies
+              <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                Données
               </span>
             )}
             {expandedPhases[phase] ? (
-              <ChevronUp className="text-gray-500" size={20} />
+              <ChevronUp className="text-gray-500" size={18} />
             ) : (
-              <ChevronDown className="text-gray-500" size={20} />
+              <ChevronDown className="text-gray-500" size={18} />
             )}
           </div>
         </button>
 
         {expandedPhases[phase] && (
-          <div className="p-4 space-y-3">
+          <div className="space-y-2">
             {pistoletsArray.map(([pistolet, donnees]) => {
               const gallons = calculerGallons(donnees.debut, donnees.fin);
               const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
@@ -119,14 +96,14 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
               return (
                 <div
                   key={pistolet}
-                  className={`rounded-lg overflow-hidden border-2 ${getCouleurCarburant(donnees.typeCarburant)}`}
+                  className={`border-t border-gray-100 ${getCouleurCarburant(donnees.typeCarburant)}`}
                 >
                   {/* Header */}
                   <div className={`${getCouleurBadge(donnees.typeCarburant)} px-3 py-2 text-white`}>
                     <div className="flex justify-between items-start">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm truncate">
-                          {pistolet.replace('pistolet', 'Pistolet ').replace(/([A-Z])/g, ' $1')}
+                          {pistolet.replace('pistolet', 'Pistolet ').replace(/([A-Z])/g, ' $1').trim()}
                         </h3>
                         <p className="text-xs opacity-90">{donnees.typeCarburant}</p>
                       </div>
@@ -140,8 +117,8 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
                   </div>
 
                   {/* Body */}
-                  <div className="p-3 bg-white space-y-3">
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-white space-y-2">
+                    <div className="grid grid-cols-2 gap-1 p-2">
                       <InputField
                         label="Meter Ouverture"
                         value={donnees.debut}
@@ -156,7 +133,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
                     </div>
 
                     {hasData && (
-                      <div className="pt-3 border-t space-y-2">
+                      <div className="px-2 pb-2 space-y-1 border-t border-gray-100 pt-2">
                         <SummaryRow 
                           label="Gallons" 
                           value={formaterGallons(gallons)}
@@ -179,25 +156,27 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <PhaseSection 
         phase="phaseA"
         title="Phase A"
         pistolets={groupedPistolets.phaseA}
       />
       
-      <PhaseSection 
-        phase="phaseB"
-        title="Phase B"
-        pistolets={groupedPistolets.phaseB}
-      />
+      {Object.keys(groupedPistolets.phaseB).length > 0 && (
+        <PhaseSection 
+          phase="phaseB"
+          title="Phase B"
+          pistolets={groupedPistolets.phaseB}
+        />
+      )}
     </div>
   );
 };
 
 const InputField = ({ label, value, onChange }) => (
   <div>
-    <label className="block text-xs font-medium text-gray-600 mb-1">
+    <label className="block text-xs font-medium text-gray-600 mb-0.5">
       {label}
     </label>
     <input
@@ -205,7 +184,7 @@ const InputField = ({ label, value, onChange }) => (
       step="0.001"
       value={value}
       onChange={onChange}
-      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
       placeholder="0.000"
       inputMode="decimal"
     />
@@ -214,8 +193,8 @@ const InputField = ({ label, value, onChange }) => (
 
 const SummaryRow = ({ label, value, valueClassName = "text-gray-900" }) => (
   <div className="flex justify-between items-center">
-    <span className="text-sm text-gray-600">{label}</span>
-    <span className={`font-semibold ${valueClassName}`}>
+    <span className="text-xs text-gray-600">{label}</span>
+    <span className={`font-medium text-sm ${valueClassName}`}>
       {value}
     </span>
   </div>
