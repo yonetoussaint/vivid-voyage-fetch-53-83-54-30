@@ -86,7 +86,7 @@ const PhaseHeader = ({
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-xs font-medium text-green-700">gourdes</span>
+                <span className="text-xs font-medium text-green-700">HTG</span>
               </div>
             </div>
           </div>
@@ -98,7 +98,7 @@ const PhaseHeader = ({
             <div className="flex justify-between items-start mb-1">
               <p className="text-xs font-medium text-orange-700">Gasoline</p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <div className="text-left">
                   <p className="text-xs text-orange-900 font-medium">
@@ -116,7 +116,7 @@ const PhaseHeader = ({
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-orange-500">gourdes</span>
+                  <span className="text-xs text-orange-500">HTG</span>
                 </div>
               </div>
             </div>
@@ -126,7 +126,7 @@ const PhaseHeader = ({
             <div className="flex justify-between items-start mb-1">
               <p className="text-xs font-medium text-purple-700">Diesel</p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <div className="text-left">
                   <p className="text-xs text-purple-900 font-medium">
@@ -144,7 +144,7 @@ const PhaseHeader = ({
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-purple-500">gourdes</span>
+                  <span className="text-xs text-purple-500">HTG</span>
                 </div>
               </div>
             </div>
