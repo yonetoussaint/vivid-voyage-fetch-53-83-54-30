@@ -4,9 +4,9 @@ import { calculerGallons } from './helpers';
 export const calculerTotaux = (donneesShift, propaneShift, usdShift, prix, tauxUSD, prixPropane) => {
   if (!donneesShift) return getEmptyTotals();
 
-  let totalGallonsEssence = 0;
+  let totalGallonsGasoline = 0;
   let totalGallonsDiesel = 0;
-  let totalVentesEssence = 0;
+  let totalVentesGasoline = 0;
   let totalVentesDiesel = 0;
 
   Object.entries(donneesShift).forEach(([pompe, donneesPompe]) => {
@@ -15,9 +15,9 @@ export const calculerTotaux = (donneesShift, propaneShift, usdShift, prix, tauxU
 
       const gallons = calculerGallons(donnees.debut, donnees.fin);
 
-      if (donnees.typeCarburant.includes('Essence')) {
-        totalGallonsEssence += gallons;
-        totalVentesEssence += gallons * prix.essence;
+      if (donnees.typeCarburant.includes('Gasoline')) {
+        totalGallonsGasoline += gallons;
+        totalVentesGasoline += gallons * prix.gasoline;
       } else if (donnees.typeCarburant === 'Diesel') {
         totalGallonsDiesel += gallons;
         totalVentesDiesel += gallons * prix.diesel;
@@ -34,19 +34,19 @@ export const calculerTotaux = (donneesShift, propaneShift, usdShift, prix, tauxU
   const totalHTGenUSD = totalUSD * tauxUSD;
 
   // Totaux - DO NOT include propane in main totals
-  const totalBrut = totalVentesEssence + totalVentesDiesel; // REMOVED propaneVentes
+  const totalBrut = totalVentesGasoline + totalVentesDiesel; // REMOVED propaneVentes
   const totalAjuste = totalBrut - totalHTGenUSD;
 
   return {
-    totalGallonsEssence: parseFloat(totalGallonsEssence.toFixed(3)),
+    totalGallonsGasoline: parseFloat(totalGallonsGasoline.toFixed(3)),
     totalGallonsDiesel: parseFloat(totalGallonsDiesel.toFixed(3)),
     propaneGallons: parseFloat(propaneGallons.toFixed(3)),
-    totalVentesEssence: parseFloat(totalVentesEssence.toFixed(2)),
+    totalVentesGasoline: parseFloat(totalVentesGasoline.toFixed(2)),
     totalVentesDiesel: parseFloat(totalVentesDiesel.toFixed(2)),
     propaneVentes: parseFloat(propaneVentes.toFixed(2)), // Still calculated but separate
     totalUSD: parseFloat(totalUSD.toFixed(2)),
     totalHTGenUSD: parseFloat(totalHTGenUSD.toFixed(2)),
-    totalBrut: parseFloat(totalBrut.toFixed(2)), // Now only essence + diesel
+    totalBrut: parseFloat(totalBrut.toFixed(2)), // Now only gasoline + diesel
     totalAjuste: parseFloat(totalAjuste.toFixed(2))
   };
 };
@@ -72,9 +72,9 @@ export const calculerTotauxVendeurs = (vendeurs, toutesDonnees, tousDepots, prix
 
           const gallons = calculerGallons(donnees.debut, donnees.fin);
 
-          if (donnees.typeCarburant.includes('Essence')) {
-            totauxVendeurs[shiftKey][vendeur].gallonsEssence += gallons;
-            totauxVendeurs[shiftKey][vendeur].ventesEssence += gallons * prix.essence;
+          if (donnees.typeCarburant.includes('Gasoline')) {
+            totauxVendeurs[shiftKey][vendeur].gallonsGasoline += gallons;
+            totauxVendeurs[shiftKey][vendeur].ventesGasoline += gallons * prix.gasoline;
           } else if (donnees.typeCarburant === 'Diesel') {
             totauxVendeurs[shiftKey][vendeur].gallonsDiesel += gallons;
             totauxVendeurs[shiftKey][vendeur].ventesDiesel += gallons * prix.diesel;
@@ -95,11 +95,11 @@ export const calculerTotauxVendeurs = (vendeurs, toutesDonnees, tousDepots, prix
 
 // Mettre à jour les totaux du vendeur
 const updateVendeurTotals = (donneesVendeur) => {
-  donneesVendeur.gallonsEssence = parseFloat(donneesVendeur.gallonsEssence.toFixed(3));
+  donneesVendeur.gallonsGasoline = parseFloat(donneesVendeur.gallonsGasoline.toFixed(3));
   donneesVendeur.gallonsDiesel = parseFloat(donneesVendeur.gallonsDiesel.toFixed(3));
-  donneesVendeur.ventesEssence = parseFloat(donneesVendeur.ventesEssence.toFixed(2));
+  donneesVendeur.ventesGasoline = parseFloat(donneesVendeur.ventesGasoline.toFixed(2));
   donneesVendeur.ventesDiesel = parseFloat(donneesVendeur.ventesDiesel.toFixed(2));
-  donneesVendeur.ventesTotales = parseFloat((donneesVendeur.ventesEssence + donneesVendeur.ventesDiesel).toFixed(2));
+  donneesVendeur.ventesTotales = parseFloat((donneesVendeur.ventesGasoline + donneesVendeur.ventesDiesel).toFixed(2));
 };
 
 // FIXED: Mettre à jour les dépôts du vendeur
@@ -172,10 +172,10 @@ const updateDepotsForVendeur = (totauxVendeurs, shiftKey, vendeur, tousDepots, t
 
 // Helper functions
 const getEmptyTotals = () => ({
-  totalGallonsEssence: 0,
+  totalGallonsGasoline: 0,
   totalGallonsDiesel: 0,
   propaneGallons: 0,
-  totalVentesEssence: 0,
+  totalVentesGasoline: 0,
   totalVentesDiesel: 0,
   propaneVentes: 0,
   totalUSD: 0,
@@ -185,9 +185,9 @@ const getEmptyTotals = () => ({
 });
 
 const getEmptyVendeurData = () => ({
-  gallonsEssence: 0,
+  gallonsGasoline: 0,
   gallonsDiesel: 0,
-  ventesEssence: 0,
+  ventesGasoline: 0,
   ventesDiesel: 0,
   ventesTotales: 0,
   depot: 0,
