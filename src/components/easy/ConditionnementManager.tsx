@@ -214,7 +214,7 @@ export default function LiasseCounter() {
   const buttonConfig = getButtonConfig();
 
   return (
-    <div className="min-h-screen bg-black p-2 sm:p-6">
+   
       <div className="max-w-4xl mx-auto">
         {/* Header with Reset Button */}
         <div className="mb-4 sm:mb-6 px-2 sm:px-0 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
@@ -414,6 +414,6 @@ export default function LiasseCounter() {
           )}
         </div>
       </div>
-    </div>
+    
   );
 }
