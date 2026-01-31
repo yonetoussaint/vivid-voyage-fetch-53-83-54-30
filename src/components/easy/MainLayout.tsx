@@ -13,19 +13,21 @@ const MainLayout = ({
   onShiftChange 
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header is already sticky with top-0 z-30 */}
-      <Header
-        date={date}
-        shift={shift}
-        activeTab={activeTab}
-        onMenuToggle={onMenuToggle}
-        onDateChange={onDateChange}
-        onShiftChange={onShiftChange}
-      />
+    <>
+      {/* Header outside of any flex container - fixed at top */}
+      <div className="sticky top-0 z-50">
+        <Header
+          date={date}
+          shift={shift}
+          activeTab={activeTab}
+          onMenuToggle={onMenuToggle}
+          onDateChange={onDateChange}
+          onShiftChange={onShiftChange}
+        />
+      </div>
 
-      {/* Main Content Area - fills remaining space */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex min-h-screen bg-gray-50 pt-16"> {/* Add padding-top equal to header height */}
         {/* Side Panel for desktop - always visible */}
         <div className="hidden lg:block flex-shrink-0">
           <SidePanel isOpen={true} onClose={() => {}} isMobile={false}>
@@ -40,7 +42,7 @@ const MainLayout = ({
           </div>
         </main>
       </div>
-    </div>
+    </>
   );
 };
 
