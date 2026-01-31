@@ -9,9 +9,9 @@ export const calculerGallons = (debut, fin) => {
 export const getCouleurCarburant = (typeCarburant) => {
   const couleurs = {
     'Diesel': 'bg-amber-100 border-amber-400',
-    'Essence 1': 'bg-emerald-100 border-emerald-400',
-    'Essence 2': 'bg-sky-100 border-sky-400',
-    'Essence': 'bg-purple-100 border-purple-400'
+    'Gasoline 1': 'bg-emerald-100 border-emerald-400',
+    'Gasoline 2': 'bg-sky-100 border-sky-400',
+    'Gasoline': 'bg-purple-100 border-purple-400'
   };
   return couleurs[typeCarburant] || 'bg-gray-100 border-gray-400';
 };
@@ -20,9 +20,9 @@ export const getCouleurCarburant = (typeCarburant) => {
 export const getCouleurBadge = (typeCarburant) => {
   const couleurs = {
     'Diesel': 'bg-amber-500',
-    'Essence 1': 'bg-emerald-500',
-    'Essence 2': 'bg-sky-500',
-    'Essence': 'bg-purple-500'
+    'Gasoline 1': 'bg-emerald-500',
+    'Gasoline 2': 'bg-sky-500',
+    'Gasoline': 'bg-purple-500'
   };
   return couleurs[typeCarburant] || 'bg-gray-500';
 };
@@ -43,9 +43,9 @@ export const getCouleurPompe = (numeroPompe) => {
 export const calculerTotalPompe = (donneesPompe, prix) => {
   if (!donneesPompe) return null;
 
-  let gallonsEssence = 0;
+  let gallonsGasoline = 0;
   let gallonsDiesel = 0;
-  let ventesEssence = 0;
+  let ventesGasoline = 0;
   let ventesDiesel = 0;
 
   Object.entries(donneesPompe).forEach(([key, donnees]) => {
@@ -53,9 +53,9 @@ export const calculerTotalPompe = (donneesPompe, prix) => {
 
     const gallons = calculerGallons(donnees.debut, donnees.fin);
 
-    if (donnees.typeCarburant.includes('Essence')) {
-      gallonsEssence += gallons;
-      ventesEssence += gallons * prix.essence;
+    if (donnees.typeCarburant.includes('Gasoline')) {
+      gallonsGasoline += gallons;
+      ventesGasoline += gallons * prix.gasoline;
     } else if (donnees.typeCarburant === 'Diesel') {
       gallonsDiesel += gallons;
       ventesDiesel += gallons * prix.diesel;
@@ -63,11 +63,11 @@ export const calculerTotalPompe = (donneesPompe, prix) => {
   });
 
   return {
-    gallonsEssence: parseFloat(gallonsEssence.toFixed(3)),
+    gallonsGasoline: parseFloat(gallonsGasoline.toFixed(3)),
     gallonsDiesel: parseFloat(gallonsDiesel.toFixed(3)),
-    ventesEssence: parseFloat(ventesEssence.toFixed(2)),
+    ventesGasoline: parseFloat(ventesGasoline.toFixed(2)),
     ventesDiesel: parseFloat(ventesDiesel.toFixed(2)),
-    totalGallons: parseFloat((gallonsEssence + gallonsDiesel).toFixed(3)),
-    ventesTotales: parseFloat((ventesEssence + ventesDiesel).toFixed(2))
+    totalGallons: parseFloat((gallonsGasoline + gallonsDiesel).toFixed(3)),
+    ventesTotales: parseFloat((ventesGasoline + ventesDiesel).toFixed(2))
   };
 };
