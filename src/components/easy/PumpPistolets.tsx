@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { formaterArgent, formaterGallons } from '@/utils/formatters';
 import { getCouleurCarburant, getCouleurBadge, calculerGallons } from '@/utils/helpers';
-import { ChevronDown, ChevronUp, DollarSign, Fuel, Droplets } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   const [expandedPhases, setExpandedPhases] = useState({
@@ -86,16 +86,15 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
 
     return (
       <div className="space-y-3">
-        {/* ENHANCED HEADER ONLY - with all the stats */}
+        {/* Compact Header Card with Left-Aligned Text */}
         <button
           onClick={() => togglePhase(phase)}
-          className="w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden active:bg-gray-50 touch-manipulation transition-all"
+          className="w-full bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg active:bg-gray-200 touch-manipulation transition-colors border border-gray-200 p-3"
         >
-          {/* Header Top Section */}
-          <div className="p-3 flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               {/* Phase Indicator */}
-              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`}>
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`}>
                 <span className="font-bold text-white text-sm">
                   {phase === 'phaseA' ? 'A' : 'B'}
                 </span>
@@ -106,104 +105,75 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
                 <div className="flex items-center space-x-2">
                   <h3 className="font-bold text-gray-900 truncate">{title}</h3>
                   {hasData && (
-                    <span className="flex-shrink-0 px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
-                      ✓ Actif
+                    <span className="flex-shrink-0 px-2 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-full">
+                      ✓
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-600 truncate">
                   {pistoletsArray.length} pistolet{pistoletsArray.length > 1 ? 's' : ''}
                 </p>
               </div>
             </div>
             
             {/* Collapse Icon */}
-            <div className="flex-shrink-0 ml-2">
+            <div className="flex-shrink-0 ml-2 p-1.5 rounded-full bg-gray-200">
               {expandedPhases[phase] ? (
-                <ChevronUp className="text-gray-500" size={22} strokeWidth={2.5} />
+                <ChevronUp className="text-gray-600" size={20} strokeWidth={2.5} />
               ) : (
-                <ChevronDown className="text-gray-500" size={22} strokeWidth={2.5} />
+                <ChevronDown className="text-gray-600" size={20} strokeWidth={2.5} />
               )}
             </div>
           </div>
 
-          {/* Stats Grid - Always visible in header */}
-          <div className="px-3 pb-3 border-t border-gray-100 pt-2">
-            {/* Main Stats Row */}
-            <div className="space-y-3">
-              {/* Total Gallons */}
-              <div className="bg-blue-50 rounded-lg p-3">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Droplets size={16} className="text-blue-600" />
-                  <span className="text-sm font-semibold text-blue-700">Total Gallons</span>
-                </div>
-                <p className="text-xl font-bold text-blue-900">
+          {/* Left-Aligned Stats in Compact Layout */}
+          <div className="mt-3 space-y-2">
+            {/* First Row: Total Gallons and Total Sales */}
+            <div className="flex space-x-2">
+              <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+                <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
+                <p className="text-sm font-bold text-blue-900">
                   {formaterGallons(totals.totalGallons)}
                 </p>
               </div>
-
-              {/* Total Sales */}
-              <div className="bg-green-50 rounded-lg p-3">
-                <div className="flex items-center space-x-2 mb-2">
-                  <DollarSign size={16} className="text-green-600" />
-                  <span className="text-sm font-semibold text-green-700">Ventes Total</span>
-                </div>
-                <p className="text-xl font-bold text-green-900">
+              <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+                <p className="text-xs text-gray-500 mb-0.5">Ventes Total</p>
+                <p className="text-sm font-bold text-green-900">
                   {formaterArgent(totals.totalSales)}
                 </p>
               </div>
+            </div>
 
-              {/* Breakdown Section */}
-              <div className="space-y-2">
-                {/* Gasoline */}
-                <div className="bg-orange-50 rounded-lg p-3">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Fuel size={14} className="text-orange-600" />
-                    <span className="text-sm font-semibold text-orange-700">Gasoline</span>
-                  </div>
-                  <div className="space-y-1">
-                    <div>
-                      <p className="text-xs text-orange-600 mb-0.5">Gallons</p>
-                      <p className="text-base font-bold text-orange-900">
-                        {formaterGallons(totals.totalGasoline)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-orange-600 mb-0.5">Ventes</p>
-                      <p className="text-sm font-semibold text-orange-800">
-                        {formaterArgent(totals.salesGasoline)}
-                      </p>
-                    </div>
-                  </div>
+            {/* Second Row: Gasoline and Diesel Breakdown */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-orange-50 rounded p-2 border border-orange-100">
+                <p className="text-xs font-medium text-orange-700 mb-0.5">Gasoline</p>
+                <div className="space-y-0.5">
+                  <p className="text-xs text-orange-900 font-medium">
+                    {formaterGallons(totals.totalGasoline)} gallons
+                  </p>
+                  <p className="text-xs text-orange-700">
+                    {formaterArgent(totals.salesGasoline)}
+                  </p>
                 </div>
-
-                {/* Diesel */}
-                <div className="bg-purple-50 rounded-lg p-3">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Fuel size={14} className="text-purple-600" />
-                    <span className="text-sm font-semibold text-purple-700">Diesel</span>
-                  </div>
-                  <div className="space-y-1">
-                    <div>
-                      <p className="text-xs text-purple-600 mb-0.5">Gallons</p>
-                      <p className="text-base font-bold text-purple-900">
-                        {formaterGallons(totals.totalDiesel)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-purple-600 mb-0.5">Ventes</p>
-                      <p className="text-sm font-semibold text-purple-800">
-                        {formaterArgent(totals.salesDiesel)}
-                      </p>
-                    </div>
-                  </div>
+              </div>
+              
+              <div className="bg-purple-50 rounded p-2 border border-purple-100">
+                <p className="text-xs font-medium text-purple-700 mb-0.5">Diesel</p>
+                <div className="space-y-0.5">
+                  <p className="text-xs text-purple-900 font-medium">
+                    {formaterGallons(totals.totalDiesel)} gallons
+                  </p>
+                  <p className="text-xs text-purple-700">
+                    {formaterArgent(totals.salesDiesel)}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </button>
 
-        {/* ORIGINAL PISTOLETS CARDS - unchanged */}
+        {/* Original Pistolets Cards */}
         {expandedPhases[phase] && (
           <div className="space-y-3">
             {pistoletsArray.map(([pistolet, donnees]) => {
@@ -275,7 +245,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {Object.keys(groupedPistolets.phaseA).length > 0 && (
         <PhaseSection 
           phase="phaseA"
