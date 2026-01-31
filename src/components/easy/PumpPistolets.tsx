@@ -3,23 +3,18 @@ import { formaterArgent, formaterGallons } from '@/utils/formatters';
 import { getCouleurCarburant, getCouleurBadge, calculerGallons } from '@/utils/helpers';
 import { ChevronDown, ChevronUp, Droplets, DollarSign } from 'lucide-react';
 
-// Separate Header Component with LEFT-ALIGNED stats
-const PhaseHeader = ({ 
+// Phase Summary Card Component (Non-collapsible)
+const PhaseSummary = ({ 
   phase, 
   title, 
   pistoletsCount, 
-  totals, 
-  isExpanded, 
-  onToggle 
+  totals 
 }) => {
   const hasData = totals.totalGallons > 0;
 
   return (
-    <button
-      onClick={onToggle}
-      className="w-full bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg active:bg-gray-200 touch-manipulation transition-colors border border-gray-200 p-3 text-left"
-    >
-      <div className="flex items-center justify-between">
+    <div className="w-full bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 p-3">
+      <div className="flex items-center">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
           {/* Phase Indicator */}
           <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`}>
@@ -42,15 +37,6 @@ const PhaseHeader = ({
               {pistoletsCount} pistolet{pistoletsCount > 1 ? 's' : ''}
             </p>
           </div>
-        </div>
-        
-        {/* Collapse Icon */}
-        <div className="flex-shrink-0 ml-2 p-1.5 rounded-full bg-gray-200">
-          {isExpanded ? (
-            <ChevronUp className="text-gray-600" size={20} strokeWidth={2.5} />
-          ) : (
-            <ChevronDown className="text-gray-600" size={20} strokeWidth={2.5} />
-          )}
         </div>
       </div>
 
@@ -123,7 +109,46 @@ const PhaseHeader = ({
           </div>
         </div>
       </div>
-    </button>
+    </div>
+  );
+};
+
+// Collapsible Pistolets Section
+const CollapsiblePistoletsSection = ({ 
+  isExpanded, 
+  onToggle, 
+  children 
+}) => {
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
+      {/* Collapsible Header Band */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors"
+      >
+        <div className="flex items-center space-x-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500" />
+          <span className="font-medium text-gray-900">Voir les pistolets</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-xs text-gray-500">
+            {isExpanded ? 'Masquer' : 'Afficher'}
+          </span>
+          {isExpanded ? (
+            <ChevronUp className="text-gray-600" size={18} />
+          ) : (
+            <ChevronDown className="text-gray-600" size={18} />
+          )}
+        </div>
+      </button>
+
+      {/* Pistolets Content */}
+      {isExpanded && (
+        <div className="p-3 bg-white border-t border-gray-100">
+          {children}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -237,18 +262,19 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
 
     return (
       <div className="space-y-3">
-        {/* Use the separate PhaseHeader component */}
-        <PhaseHeader
+        {/* Phase Summary Card (Non-collapsible) */}
+        <PhaseSummary
           phase={phase}
           title={title}
           pistoletsCount={pistoletsArray.length}
           totals={totals}
-          isExpanded={expandedPhases[phase]}
-          onToggle={() => togglePhase(phase)}
         />
 
-        {/* Original Pistolets Cards */}
-        {expandedPhases[phase] && (
+        {/* Collapsible Pistolets Section */}
+        <CollapsiblePistoletsSection
+          isExpanded={expandedPhases[phase]}
+          onToggle={() => togglePhase(phase)}
+        >
           <div className="space-y-3">
             {pistoletsArray.map(([pistolet, donnees]) => {
               const gallons = calculerGallons(donnees.debut, donnees.fin);
@@ -313,7 +339,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
               );
             })}
           </div>
-        )}
+        </CollapsiblePistoletsSection>
       </div>
     );
   };
