@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { formaterArgent, formaterGallons } from '@/utils/formatters';
 import { getCouleurCarburant, getCouleurBadge, calculerGallons } from '@/utils/helpers';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Droplets, DollarSign } from 'lucide-react';
 
 // Separate Header Component with LEFT-ALIGNED stats
 const PhaseHeader = ({ 
@@ -58,50 +58,94 @@ const PhaseHeader = ({
       <div className="mt-3 space-y-2">
         {/* First Row: Total Gallons and Total Sales */}
         <div className="flex space-x-2">
-          <div className="flex-1 bg-white rounded p-2 border border-gray-200 text-left">
-            <p className="text-xs text-gray-500 mb-0.5 text-left">Total Gallons</p>
-            <p className="text-sm font-bold text-blue-900 text-left">
-              {formaterGallons(totals.totalGallons)}
-            </p>
+          <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+            <div className="flex justify-between items-center">
+              <div className="text-left">
+                <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
+                <div className="flex items-center space-x-1">
+                  <Droplets size={12} className="text-blue-500" />
+                  <p className="text-sm font-bold text-blue-900">
+                    {formaterGallons(totals.totalGallons)}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-medium text-blue-700">gallons</span>
+              </div>
+            </div>
           </div>
-          <div className="flex-1 bg-white rounded p-2 border border-gray-200 text-left">
-            <p className="text-xs text-gray-500 mb-0.5 text-left">Ventes Total</p>
-            <p className="text-sm font-bold text-green-900 text-left">
-              {formaterArgent(totals.totalSales)}
-            </p>
+          <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+            <div className="flex justify-between items-center">
+              <div className="text-left">
+                <p className="text-xs text-gray-500 mb-0.5">Ventes Total</p>
+                <div className="flex items-center space-x-1">
+                  <DollarSign size={12} className="text-green-500" />
+                  <p className="text-sm font-bold text-green-900">
+                    {formaterArgent(totals.totalSales)}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-medium text-green-700">gourdes</span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Second Row: Gasoline and Diesel Breakdown */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-orange-50 rounded p-2 border border-orange-100 text-left">
-            <p className="text-xs font-medium text-orange-700 mb-1 text-left">Gasoline</p>
+          <div className="bg-orange-50 rounded p-2 border border-orange-100">
+            <div className="flex justify-between items-start mb-1">
+              <p className="text-xs font-medium text-orange-700">Gasoline</p>
+            </div>
             <div className="space-y-1">
-              <div className="text-left">
-                <p className="text-xs text-orange-900 font-medium">
-                  {formaterGallons(totals.totalGasoline)} gallons
-                </p>
+              <div className="flex justify-between items-center">
+                <div className="text-left">
+                  <p className="text-xs text-orange-900 font-medium">
+                    {formaterGallons(totals.totalGasoline)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-orange-600">gallons</span>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="text-xs text-orange-700">
-                  {formaterArgent(totals.salesGasoline)}
-                </p>
+              <div className="flex justify-between items-center">
+                <div className="text-left">
+                  <p className="text-xs text-orange-700">
+                    {formaterArgent(totals.salesGasoline)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-orange-500">gourdes</span>
+                </div>
               </div>
             </div>
           </div>
           
-          <div className="bg-purple-50 rounded p-2 border border-purple-100 text-left">
-            <p className="text-xs font-medium text-purple-700 mb-1 text-left">Diesel</p>
+          <div className="bg-purple-50 rounded p-2 border border-purple-100">
+            <div className="flex justify-between items-start mb-1">
+              <p className="text-xs font-medium text-purple-700">Diesel</p>
+            </div>
             <div className="space-y-1">
-              <div className="text-left">
-                <p className="text-xs text-purple-900 font-medium">
-                  {formaterGallons(totals.totalDiesel)} gallons
-                </p>
+              <div className="flex justify-between items-center">
+                <div className="text-left">
+                  <p className="text-xs text-purple-900 font-medium">
+                    {formaterGallons(totals.totalDiesel)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-purple-600">gallons</span>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="text-xs text-purple-700">
-                  {formaterArgent(totals.salesDiesel)}
-                </p>
+              <div className="flex justify-between items-center">
+                <div className="text-left">
+                  <p className="text-xs text-purple-700">
+                    {formaterArgent(totals.salesDiesel)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-purple-500">gourdes</span>
+                </div>
               </div>
             </div>
           </div>
