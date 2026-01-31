@@ -129,6 +129,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
 
           {/* Stats Grid - Always visible in header */}
           <div className="px-3 pb-3 border-t border-gray-100 pt-2">
+            {/* Main Stats Row */}
             <div className="grid grid-cols-2 gap-2">
               {/* Total Gallons */}
               <div className="bg-blue-50 rounded-lg p-2">
@@ -150,7 +151,6 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
                 <p className="text-lg font-bold text-green-900">
                   {formaterArgent(totals.totalSales)}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">HTG</p>
               </div>
             </div>
 
@@ -158,16 +158,16 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
             <div className="mt-2 grid grid-cols-2 gap-2">
               {/* Gasoline */}
               <div className="bg-orange-50 rounded-lg p-2">
-                <div className="flex items-center justify-between">
+                <div className="space-y-1">
                   <div className="flex items-center space-x-1">
                     <Fuel size={12} className="text-orange-600" />
                     <span className="text-xs font-medium text-orange-700">Gasoline</span>
                   </div>
-                  <div className="text-right">
+                  <div className="space-y-0.5">
                     <p className="text-sm font-semibold text-orange-900">
-                      {formaterGallons(totals.totalGasoline)}
+                      {formaterGallons(totals.totalGasoline)} gallons
                     </p>
-                    <p className="text-xs text-orange-700 font-medium">
+                    <p className="text-xs font-medium text-orange-700">
                       {formaterArgent(totals.salesGasoline)}
                     </p>
                   </div>
@@ -176,34 +176,22 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
 
               {/* Diesel */}
               <div className="bg-purple-50 rounded-lg p-2">
-                <div className="flex items-center justify-between">
+                <div className="space-y-1">
                   <div className="flex items-center space-x-1">
                     <Fuel size={12} className="text-purple-600" />
                     <span className="text-xs font-medium text-purple-700">Diesel</span>
                   </div>
-                  <div className="text-right">
+                  <div className="space-y-0.5">
                     <p className="text-sm font-semibold text-purple-900">
-                      {formaterGallons(totals.totalDiesel)}
+                      {formaterGallons(totals.totalDiesel)} gallons
                     </p>
-                    <p className="text-xs text-purple-700 font-medium">
+                    <p className="text-xs font-medium text-purple-700">
                       {formaterArgent(totals.salesDiesel)}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* Quick Summary */}
-            {hasData && (
-              <div className="mt-2 pt-2 border-t border-gray-100">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">Gallons par pistolet:</span>
-                  <span className="font-medium text-gray-700">
-                    {formaterGallons(totals.totalGallons / pistoletsArray.length)}
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
         </button>
 
@@ -233,13 +221,13 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
                       <div className="text-right flex-shrink-0 ml-2">
                         <p className="text-xs opacity-75">Prix</p>
                         <p className="font-bold text-sm whitespace-nowrap">
-                          {prixUnitaire} HTG
+                          {prixUnitaire}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Body - EXACTLY as original */}
+                  {/* Body - Updated with vertical alignment */}
                   <div className="p-3 bg-white space-y-3">
                     <div className="grid grid-cols-2 gap-2">
                       <InputField
@@ -256,16 +244,31 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
                     </div>
 
                     {hasData && (
-                      <div className="pt-3 border-t space-y-2">
-                        <SummaryRow 
-                          label="Gallons" 
-                          value={formaterGallons(gallons)}
-                        />
-                        <SummaryRow 
-                          label="Ventes Total" 
-                          value={`${formaterArgent(ventesTotal)} HTG`}
-                          valueClassName="text-green-600 font-bold"
-                        />
+                      <div className="pt-3 border-t">
+                        {/* Vertically aligned summary */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <p className="text-xs text-gray-500">Type</p>
+                              <p className="font-medium text-gray-900">{donnees.typeCarburant}</p>
+                            </div>
+                            <div className="text-right space-y-0.5">
+                              <p className="text-xs text-gray-500">Gallons</p>
+                              <p className="font-semibold text-gray-900">
+                                {formaterGallons(gallons)}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="pt-2 border-t border-gray-100">
+                            <div className="text-right space-y-0.5">
+                              <p className="text-xs text-gray-500">Ventes Total</p>
+                              <p className="text-lg font-bold text-green-600">
+                                {formaterArgent(ventesTotal)} HTG
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -316,16 +319,6 @@ const InputField = ({ label, value, onChange }) => (
       placeholder="0.000"
       inputMode="decimal"
     />
-  </div>
-);
-
-// Keep the exact same SummaryRow component
-const SummaryRow = ({ label, value, valueClassName = "text-gray-900" }) => (
-  <div className="flex justify-between items-center">
-    <span className="text-sm text-gray-600">{label}</span>
-    <span className={`font-semibold ${valueClassName}`}>
-      {value}
-    </span>
   </div>
 );
 
