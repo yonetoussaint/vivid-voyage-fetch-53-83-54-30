@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
@@ -12,20 +12,34 @@ const MainLayout = ({
   activeTab,
   onDateChange,
   onShiftChange,
-  // Add these new props for PumpSelector
   pompes,
   pompeEtendue,
   setPompeEtendue,
   showPropane
 }) => {
-  // Calculate header heights dynamically
-  const headerHeight = 64; // h-16 = 4rem = 64px
-  const pumpSelectorHeight = 56; // py-3 (12px) + component (~44px)
-  
+  const headerRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(64); // Default fallback
+
+  useEffect(() => {
+    if (headerRef.current) {
+      const updateHeight = () => {
+        setHeaderHeight(headerRef.current.offsetHeight);
+      };
+      
+      updateHeight();
+      window.addEventListener('resize', updateHeight);
+      
+      return () => window.removeEventListener('resize', updateHeight);
+    }
+  }, [activeTab]); // Recalculate when tab changes
+
   return (
     <div className="h-screen flex flex-col">
-      {/* Fixed Header Container */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white ">
+      {/* Fixed Header Container - Let it size naturally */}
+      <div 
+        ref={headerRef}
+        className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200"
+      >
         <Header
           date={date}
           shift={shift}
@@ -34,16 +48,11 @@ const MainLayout = ({
           onDateChange={onDateChange}
           onShiftChange={onShiftChange}
         />
-      </div>
-
-      {/* Pump Selector - Fixed below header, only for pumps tab */}
-      {activeTab === 'pumps' && (
-        <div 
-          className="fixed left-0 right-0 z-40 bg-white "
-          style={{ top: `${headerHeight}px` }}
-        >
-          <div className="">
-            <div className="max-w-6xl mx-auto">
+        
+        {/* Pump Selector - Part of the header flow */}
+        {activeTab === 'pumps' && (
+          <div className="border-t border-gray-200 bg-white">
+            <div className="max-w-6xl mx-auto px-4 py-2">
               <PumpSelector 
                 pompes={pompes}
                 pompeEtendue={pompeEtendue}
@@ -52,18 +61,11 @@ const MainLayout = ({
               />
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Spacer - Adjust height based on whether PumpSelector is visible */}
-      <div 
-        className="flex-shrink-0"
-        style={{ 
-          height: activeTab === 'pumps' 
-            ? `${headerHeight + pumpSelectorHeight}px` 
-            : `${headerHeight}px` 
-        }}
-      ></div>
+      {/* Spacer - Dynamic height based on actual header height */}
+      <div style={{ height: `${headerHeight}px` }}></div>
 
       {/* Main Content Area */}
       <div className="flex flex-1 min-h-0">
