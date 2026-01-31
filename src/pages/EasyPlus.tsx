@@ -301,42 +301,7 @@ const SystemeStationService = () => {
   {renderActiveTabContent()}
 </MainLayout>
 
-      {/* Mobile Footer */}
-      <footer className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-gray-600">
-              <div className="font-medium">Station Service</div>
-              <div>v1.0 • {activeTab === 'pumps' ? '⛽' : activeTab === 'vendeurs' ? '👥' : '📱'}</div>
-            </div>
-            <button
-              onClick={() => setShowContact(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              Support
-            </button>
-          </div>
-        </div>
-      </footer>
-
-      {/* Desktop Footer */}
-      <footer className="hidden lg:block border-t border-gray-200 bg-white py-4">
-        <div className="px-6">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              <span className="font-medium">Système Station Service v1.0</span>
-              <span className="mx-2">•</span>
-              <span>© {new Date().getFullYear()}</span>
-            </div>
-            <button
-              onClick={() => setShowContact(true)}
-              className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors"
-            >
-              Support Technique
-            </button>
-          </div>
-        </div>
-      </footer>
+     
 
       {/* Floating App Switcher for mobile */}
       {!isMenuOpen && (
