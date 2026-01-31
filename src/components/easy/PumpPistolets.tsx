@@ -86,7 +86,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
 
     return (
       <div className="space-y-3">
-        {/* Enhanced Mobile-Friendly Collapsible Header with Stats */}
+        {/* ENHANCED HEADER ONLY - with all the stats */}
         <button
           onClick={() => togglePhase(phase)}
           className="w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden active:bg-gray-50 touch-manipulation transition-all"
@@ -130,64 +130,72 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
           {/* Stats Grid - Always visible in header */}
           <div className="px-3 pb-3 border-t border-gray-100 pt-2">
             {/* Main Stats Row */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-3">
               {/* Total Gallons */}
-              <div className="bg-blue-50 rounded-lg p-2">
-                <div className="flex items-center space-x-1 mb-1">
-                  <Droplets size={14} className="text-blue-600" />
-                  <span className="text-xs font-medium text-blue-700">Total Gallons</span>
+              <div className="bg-blue-50 rounded-lg p-3">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Droplets size={16} className="text-blue-600" />
+                  <span className="text-sm font-semibold text-blue-700">Total Gallons</span>
                 </div>
-                <p className="text-lg font-bold text-blue-900">
+                <p className="text-xl font-bold text-blue-900">
                   {formaterGallons(totals.totalGallons)}
                 </p>
               </div>
 
               {/* Total Sales */}
-              <div className="bg-green-50 rounded-lg p-2">
-                <div className="flex items-center space-x-1 mb-1">
-                  <DollarSign size={14} className="text-green-600" />
-                  <span className="text-xs font-medium text-green-700">Ventes Total</span>
+              <div className="bg-green-50 rounded-lg p-3">
+                <div className="flex items-center space-x-2 mb-2">
+                  <DollarSign size={16} className="text-green-600" />
+                  <span className="text-sm font-semibold text-green-700">Ventes Total</span>
                 </div>
-                <p className="text-lg font-bold text-green-900">
+                <p className="text-xl font-bold text-green-900">
                   {formaterArgent(totals.totalSales)}
                 </p>
               </div>
-            </div>
 
-            {/* Breakdown Row */}
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {/* Gasoline */}
-              <div className="bg-orange-50 rounded-lg p-2">
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-1">
-                    <Fuel size={12} className="text-orange-600" />
-                    <span className="text-xs font-medium text-orange-700">Gasoline</span>
+              {/* Breakdown Section */}
+              <div className="space-y-2">
+                {/* Gasoline */}
+                <div className="bg-orange-50 rounded-lg p-3">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Fuel size={14} className="text-orange-600" />
+                    <span className="text-sm font-semibold text-orange-700">Gasoline</span>
                   </div>
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-semibold text-orange-900">
-                      {formaterGallons(totals.totalGasoline)} gallons
-                    </p>
-                    <p className="text-xs font-medium text-orange-700">
-                      {formaterArgent(totals.salesGasoline)}
-                    </p>
+                  <div className="space-y-1">
+                    <div>
+                      <p className="text-xs text-orange-600 mb-0.5">Gallons</p>
+                      <p className="text-base font-bold text-orange-900">
+                        {formaterGallons(totals.totalGasoline)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-orange-600 mb-0.5">Ventes</p>
+                      <p className="text-sm font-semibold text-orange-800">
+                        {formaterArgent(totals.salesGasoline)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Diesel */}
-              <div className="bg-purple-50 rounded-lg p-2">
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-1">
-                    <Fuel size={12} className="text-purple-600" />
-                    <span className="text-xs font-medium text-purple-700">Diesel</span>
+                {/* Diesel */}
+                <div className="bg-purple-50 rounded-lg p-3">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Fuel size={14} className="text-purple-600" />
+                    <span className="text-sm font-semibold text-purple-700">Diesel</span>
                   </div>
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-semibold text-purple-900">
-                      {formaterGallons(totals.totalDiesel)} gallons
-                    </p>
-                    <p className="text-xs font-medium text-purple-700">
-                      {formaterArgent(totals.salesDiesel)}
-                    </p>
+                  <div className="space-y-1">
+                    <div>
+                      <p className="text-xs text-purple-600 mb-0.5">Gallons</p>
+                      <p className="text-base font-bold text-purple-900">
+                        {formaterGallons(totals.totalDiesel)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-purple-600 mb-0.5">Ventes</p>
+                      <p className="text-sm font-semibold text-purple-800">
+                        {formaterArgent(totals.salesDiesel)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -195,7 +203,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
           </div>
         </button>
 
-        {/* Pistolets Cards - Only show if expanded */}
+        {/* ORIGINAL PISTOLETS CARDS - unchanged */}
         {expandedPhases[phase] && (
           <div className="space-y-3">
             {pistoletsArray.map(([pistolet, donnees]) => {
@@ -209,7 +217,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
                   key={pistolet}
                   className={`rounded-lg overflow-hidden border-2 ${getCouleurCarburant(donnees.typeCarburant)}`}
                 >
-                  {/* Header - EXACTLY as original */}
+                  {/* Header - ORIGINAL */}
                   <div className={`${getCouleurBadge(donnees.typeCarburant)} px-3 py-2 text-white`}>
                     <div className="flex justify-between items-start">
                       <div className="flex-1 min-w-0">
@@ -221,13 +229,13 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
                       <div className="text-right flex-shrink-0 ml-2">
                         <p className="text-xs opacity-75">Prix</p>
                         <p className="font-bold text-sm whitespace-nowrap">
-                          {prixUnitaire}
+                          {prixUnitaire} HTG
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Body - Updated with vertical alignment */}
+                  {/* Body - ORIGINAL */}
                   <div className="p-3 bg-white space-y-3">
                     <div className="grid grid-cols-2 gap-2">
                       <InputField
@@ -244,31 +252,16 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
                     </div>
 
                     {hasData && (
-                      <div className="pt-3 border-t">
-                        {/* Vertically aligned summary */}
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <p className="text-xs text-gray-500">Type</p>
-                              <p className="font-medium text-gray-900">{donnees.typeCarburant}</p>
-                            </div>
-                            <div className="text-right space-y-0.5">
-                              <p className="text-xs text-gray-500">Gallons</p>
-                              <p className="font-semibold text-gray-900">
-                                {formaterGallons(gallons)}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="pt-2 border-t border-gray-100">
-                            <div className="text-right space-y-0.5">
-                              <p className="text-xs text-gray-500">Ventes Total</p>
-                              <p className="text-lg font-bold text-green-600">
-                                {formaterArgent(ventesTotal)} HTG
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                      <div className="pt-3 border-t space-y-2">
+                        <SummaryRow 
+                          label="Gallons" 
+                          value={formaterGallons(gallons)}
+                        />
+                        <SummaryRow 
+                          label="Ventes Total" 
+                          value={`${formaterArgent(ventesTotal)} HTG`}
+                          valueClassName="text-green-600 font-bold"
+                        />
                       </div>
                     )}
                   </div>
@@ -282,7 +275,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {Object.keys(groupedPistolets.phaseA).length > 0 && (
         <PhaseSection 
           phase="phaseA"
@@ -304,7 +297,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   );
 };
 
-// Keep the exact same InputField component
+// ORIGINAL InputField component
 const InputField = ({ label, value, onChange }) => (
   <div>
     <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -319,6 +312,16 @@ const InputField = ({ label, value, onChange }) => (
       placeholder="0.000"
       inputMode="decimal"
     />
+  </div>
+);
+
+// ORIGINAL SummaryRow component
+const SummaryRow = ({ label, value, valueClassName = "text-gray-900" }) => (
+  <div className="flex justify-between items-center">
+    <span className="text-sm text-gray-600">{label}</span>
+    <span className={`font-semibold ${valueClassName}`}>
+      {value}
+    </span>
   </div>
 );
 
