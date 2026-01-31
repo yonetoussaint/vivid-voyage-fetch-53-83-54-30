@@ -25,7 +25,7 @@ const MainLayout = ({
   return (
     <div className="h-screen flex flex-col">
       {/* Fixed Header Container */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white ">
         <Header
           date={date}
           shift={shift}
@@ -39,7 +39,7 @@ const MainLayout = ({
       {/* Pump Selector - Fixed below header, only for pumps tab */}
       {activeTab === 'pumps' && (
         <div 
-          className="fixed left-0 right-0 z-40 bg-white border-b border-gray-200"
+          className="fixed left-0 right-0 z-40 bg-white "
           style={{ top: `${headerHeight}px` }}
         >
           <div className="">
