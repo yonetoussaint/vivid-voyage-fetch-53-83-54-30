@@ -256,7 +256,7 @@ const MainLayout = ({
 
         {/* Main Content */}
         <main className="flex-1 min-h-[calc(100vh-80px)] overflow-auto">
-          <div className="p-3 sm:p-4 md:p-6">
+          <div className="">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               {children}
             </div>
