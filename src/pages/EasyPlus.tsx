@@ -292,9 +292,6 @@ const SystemeStationService = () => {
   onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
   onDateChange={(newDate) => setDate(newDate)}
   onShiftChange={(newShift) => setShift(newShift)}
-  // Remove these props since they're no longer needed in header:
-  // handleReinitialiserShift={handleReinitialiserShift}
-  // handleReinitialiserJour={handleReinitialiserJour}
 >
   {renderActiveTabContent()}
 </MainLayout>
