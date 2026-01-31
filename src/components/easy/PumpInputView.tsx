@@ -117,14 +117,14 @@ const PumpInputView = ({
                   tauxUSD={tauxUSD}
                 />
 
-                <div className="p-4">
+               
                   <PumpPistolets
                     pompe={pompe}
                     donneesPompe={donneesPompe}
                     mettreAJourLecture={mettreAJourLecture}
                     prix={prix}
                   />
-                </div>
+                
               </div>
             );
           })
