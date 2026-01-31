@@ -12,18 +12,20 @@ const PumpSelector = ({ pompes, pompeEtendue, setPompeEtendue, showPropane = fal
     <div className="flex gap-1.5 overflow-x-auto pb-1 px-2 no-scrollbar">
       {pompes.map((pompe, index) => (
         <button
-          key={pompe}
-          onClick={() => setPompeEtendue(pompe)}
-          className={`px-3 py-1 font-medium text-sm whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5 ${
-            pompeEtendue === pompe
-              ? 'bg-slate-900 text-white border-slate-900'
-              : 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
-          }`}
-          style={{ borderRadius: '16px' }}
-        >
-          {getPumpIcon(index)}
-          Pompe {index + 1}
-        </button>
+  key={pompe}
+  onClick={() => setPompeEtendue(pompe)}
+  className={`px-3 py-1 font-medium text-sm whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5 ${
+    pompeEtendue === pompe
+      ? 'bg-slate-900 text-white border-slate-900'
+      : 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
+  }`}
+  style={{
+    clipPath: 'polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%)'
+  }}
+>
+  {getPumpIcon(index)}
+  Pompe {index + 1}
+</button>
       ))}
 
       {showPropane && (
