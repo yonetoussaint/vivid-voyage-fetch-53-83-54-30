@@ -6,10 +6,6 @@ import VerticalTabs from './VerticalTabs';
 const MainLayout = ({ 
   date, 
   shift, 
-  setDate, 
-  setShift, 
-  handleReinitialiserShift, 
-  handleReinitialiserJour,
   children,
   onMenuToggle,
   activeTab,
@@ -18,19 +14,17 @@ const MainLayout = ({
 }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header - Already sticky in Header component */}
-      <div className="sticky top-0 z-40">
-        <Header
-          date={date}
-          shift={shift}
-          activeTab={activeTab}
-          onMenuToggle={onMenuToggle}
-          onDateChange={onDateChange}
-          onShiftChange={onShiftChange}
-        />
-      </div>
+      {/* Header is already sticky with top-0 z-30 */}
+      <Header
+        date={date}
+        shift={shift}
+        activeTab={activeTab}
+        onMenuToggle={onMenuToggle}
+        onDateChange={onDateChange}
+        onShiftChange={onShiftChange}
+      />
 
-      {/* Main Content Area */}
+      {/* Main Content Area - fills remaining space */}
       <div className="flex flex-1 overflow-hidden">
         {/* Side Panel for desktop - always visible */}
         <div className="hidden lg:block flex-shrink-0">
@@ -39,10 +33,10 @@ const MainLayout = ({
           </SidePanel>
         </div>
 
-        {/* Main Content - Scrollable area */}
+        {/* Main Content - scrolls independently */}
         <main className="flex-1 overflow-auto">
-          <div className="p-4">
-            {children}
+          <div className="p-2 sm:p-4">
+            {children}         
           </div>
         </main>
       </div>
