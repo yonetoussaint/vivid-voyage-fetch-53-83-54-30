@@ -19,9 +19,7 @@ const PumpSelector = ({ pompes, pompeEtendue, setPompeEtendue, showPropane = fal
       ? 'bg-slate-900 text-white border-slate-900'
       : 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
   }`}
-  style={{
-    clipPath: 'polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%)'
-  }}
+  style={{ borderRadius: '20px' }} // Increased from 16px
 >
   {getPumpIcon(index)}
   Pompe {index + 1}
