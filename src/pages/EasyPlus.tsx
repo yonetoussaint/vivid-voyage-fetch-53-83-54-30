@@ -292,6 +292,11 @@ const SystemeStationService = () => {
   onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
   onDateChange={(newDate) => setDate(newDate)}
   onShiftChange={(newShift) => setShift(newShift)}
+  // Add these new props for PumpSelector:
+  pompes={pompes}
+  pompeEtendue={pompeEtendue}
+  setPompeEtendue={setPompeEtendue}
+  showPropane={true}
 >
   {renderActiveTabContent()}
 </MainLayout>
