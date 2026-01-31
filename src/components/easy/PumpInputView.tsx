@@ -7,8 +7,8 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const PumpInputView = ({ 
   shift, 
-  pompeEtendue, // Keep this to know which pump is selected
-  pompes, // You might not need this anymore in this component
+  pompeEtendue,
+  pompes,
   toutesDonnees, 
   vendeurs, 
   totaux, 
@@ -29,7 +29,7 @@ const PumpInputView = ({
   const depotsActuels = tousDepots[shift] || {};
 
   return (
-    <div className="space-y-4 mt-4"> {/* Added mt-4 for spacing */}
+    <div className="space-y-4 mt-4">
       {/* Stats Cards Section - Collapsible */}
       <div className="border border-gray-200 rounded-lg">
         <button
@@ -48,7 +48,7 @@ const PumpInputView = ({
         </button>
 
         {showStatsCards && (
-          <div className=" pb-4">
+          <div className="pb-4">
             <div className="border-t border-gray-200 pt-4">
               <StatsCards 
                 shift={shift}
@@ -103,18 +103,27 @@ const PumpInputView = ({
                   vendeurDepots={depotsActuels}
                   tauxUSD={tauxUSD}
                 />
-
-                <PumpPistolets
-                  pompe={pompe}
-                  donneesPompe={donneesPompe}
-                  mettreAJourLecture={mettreAJourLecture}
-                  prix={prix}
-                />
               </div>
             );
           })
         )}
       </div>
+
+      {/* PumpPistolets rendered outside the main wrapper */}
+      {pompeEtendue !== 'propane' && Object.entries(lecturesCourantes).map(([pompe, donneesPompe]) => {
+        if (pompe !== pompeEtendue) return null;
+
+        return (
+          <div key={pompe} className="mt-4">
+            <PumpPistolets
+              pompe={pompe}
+              donneesPompe={donneesPompe}
+              mettreAJourLecture={mettreAJourLecture}
+              prix={prix}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };
