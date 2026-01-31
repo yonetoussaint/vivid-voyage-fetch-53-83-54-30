@@ -5,7 +5,7 @@ import { formaterArgent } from '@/utils/formatters';
 const VendeursManager = ({ vendeurs, nouveauVendeur, setNouveauVendeur, ajouterVendeur, supprimerVendeur, getNombreAffectations }) => {
   return (
     <div className="space-y-4">
-      <div className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl p-4 shadow-xl">
+     
         <div className="flex items-center gap-2 mb-4">
           <Users size={22} />
           <h2 className="text-lg font-bold">Gérer les Vendeurs</h2>
@@ -82,7 +82,7 @@ const VendeursManager = ({ vendeurs, nouveauVendeur, setNouveauVendeur, ajouterV
           )}
         </div>
       </div>
-    </div>
+    
   );
 };
 
