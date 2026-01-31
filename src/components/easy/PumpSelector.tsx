@@ -9,7 +9,7 @@ const getPumpIcon = (index) => {
 
 const PumpSelector = ({ pompes, pompeEtendue, setPompeEtendue, showPropane = false }) => {
   return (
-    <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+    <div className="flex gap-1.5 overflow-x-auto pb-1 px-2 no-scrollbar">
       {pompes.map((pompe, index) => (
         <button
           key={pompe}
