@@ -311,7 +311,7 @@ const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
   }, [date]);
 
   // Constantes pour calculs
-  const prix = { essence: 600, diesel: 650 };
+  const prix = { gasoline: 600, diesel: 650 };
   const tauxUSD = 132;
   const prixPropane = 450;
 
@@ -355,10 +355,10 @@ const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
 
   // Calculer totaux quotidiens
   const totauxQuotidiens = {
-    gallonsEssence: parseFloat((totauxAM.totalGallonsEssence + totauxPM.totalGallonsEssence).toFixed(3)),
+    gallonsGasoline: parseFloat((totauxAM.totalGallonsGasoline + totauxPM.totalGallonsGasoline).toFixed(3)),
     gallonsDiesel: parseFloat((totauxAM.totalGallonsDiesel + totauxPM.totalGallonsDiesel).toFixed(3)),
     propaneGallons: parseFloat((totauxAM.propaneGallons + totauxPM.propaneGallons).toFixed(3)),
-    ventesEssence: parseFloat((totauxAM.totalVentesEssence + totauxPM.totalVentesEssence).toFixed(2)),
+    ventesGasoline: parseFloat((totauxAM.totalVentesGasoline + totauxPM.totalVentesGasoline).toFixed(2)),
     ventesDiesel: parseFloat((totauxAM.totalVentesDiesel + totauxPM.totalVentesDiesel).toFixed(2)),
     propaneVentes: parseFloat((totauxAM.propaneVentes + totauxPM.propaneVentes).toFixed(2)),
     totalUSD: parseFloat((totauxAM.totalUSD + totauxPM.totalUSD).toFixed(2)),
@@ -367,7 +367,7 @@ const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
 
   // Total brut WITHOUT propane
   totauxQuotidiens.totalBrut = parseFloat((
-    totauxQuotidiens.ventesEssence + 
+    totauxQuotidiens.ventesGasoline + 
     totauxQuotidiens.ventesDiesel 
   ).toFixed(2));
 
