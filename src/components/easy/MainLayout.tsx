@@ -2,6 +2,7 @@ import React from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
+import PumpSelector from './PumpSelector'; // Make sure this import exists
 
 const MainLayout = ({ 
   date, 
@@ -10,11 +11,16 @@ const MainLayout = ({
   onMenuToggle,
   activeTab,
   onDateChange,
-  onShiftChange 
+  onShiftChange,
+  // Add these new props for PumpSelector
+  pompes,
+  pompeEtendue,
+  setPompeEtendue,
+  showPropane
 }) => {
   return (
     <div className="h-screen flex flex-col">
-      {/* Fixed Header Container - This is what makes it sticky */}
+      {/* Fixed Header Container */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
         <Header
           date={date}
@@ -26,8 +32,29 @@ const MainLayout = ({
         />
       </div>
 
-      {/* Spacer to prevent content from hiding behind fixed header */}
-      <div className="h-16 flex-shrink-0"></div>
+      {/* Pump Selector - Fixed below header, only for pumps tab */}
+      {activeTab === 'pumps' && (
+        <div className="fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+          <div className="px-3 py-3">
+            <div className="max-w-6xl mx-auto">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-gray-900">Sélection de Pompe</h3>
+                <span className="text-xs text-gray-500">Shift {shift}</span>
+              </div>
+              <PumpSelector 
+                pompes={pompes}
+                pompeEtendue={pompeEtendue}
+                setPompeEtendue={setPompeEtendue}
+                showPropane={showPropane}
+                compact={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Spacer - Adjust height based on whether PumpSelector is visible */}
+      <div className={`flex-shrink-0 ${activeTab === 'pumps' ? 'h-28' : 'h-16'}`}></div>
 
       {/* Main Content Area */}
       <div className="flex flex-1 min-h-0">
@@ -38,9 +65,11 @@ const MainLayout = ({
           </SidePanel>
         </div>
 
-        {/* Main Content - This will scroll */}
+        {/* Main Content */}
         <main className="flex-1 overflow-auto">
+          <div className="p-2 sm:p-4">
             {children}
+          </div>
         </main>
       </div>
     </div>
