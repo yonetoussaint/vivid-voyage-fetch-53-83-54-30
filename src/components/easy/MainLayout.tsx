@@ -52,14 +52,14 @@ const MainLayout = ({
         {/* Pump Selector - Part of the header flow */}
         {activeTab === 'pumps' && (
           <div className="border-t border-gray-200 bg-white">
-            <div className="max-w-6xl mx-auto px-4 py-2">
+            
               <PumpSelector 
                 pompes={pompes}
                 pompeEtendue={pompeEtendue}
                 setPompeEtendue={setPompeEtendue}
                 showPropane={showPropane}
               />
-            </div>
+            
           </div>
         )}
       </div>
