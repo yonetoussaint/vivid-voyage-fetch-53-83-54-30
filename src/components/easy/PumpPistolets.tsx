@@ -3,7 +3,7 @@ import { formaterArgent, formaterGallons } from '@/utils/formatters';
 import { getCouleurCarburant, getCouleurBadge, calculerGallons } from '@/utils/helpers';
 import { ChevronDown, ChevronUp, Droplets, DollarSign } from 'lucide-react';
 
-// Phase Summary Card Component (Non-collapsible)
+// Phase Summary Card Component
 const PhaseSummary = ({ 
   phase, 
   title, 
@@ -113,21 +113,12 @@ const PhaseSummary = ({
   );
 };
 
-// Phase Separator Component
+// Simple Edge-to-Edge Separator
 const PhaseSeparator = () => (
-  <div className="relative my-6">
-    <div className="absolute inset-0 flex items-center">
-      <div className="w-full border-t-4 border-gray-300"></div>
-    </div>
-    <div className="relative flex justify-center">
-      <span className="px-4 bg-white text-sm font-medium text-gray-500">
-        ● ● ●
-      </span>
-    </div>
-  </div>
+  <div className="my-6 -mx-3 border-t-2 border-gray-300"></div>
 );
 
-// Collapsible Pistolets Section with Summary inside
+// Collapsible Pistolets Section (No border, no padding)
 const CollapsiblePhaseSection = ({ 
   phase, 
   title, 
@@ -147,11 +138,11 @@ const CollapsiblePhaseSection = ({
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
-      {/* Collapsible Header Band */}
+    <div>
+      {/* Collapsible Header Band - No border container */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors"
+        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors rounded-lg"
       >
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 rounded-full ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`} />
@@ -177,10 +168,10 @@ const CollapsiblePhaseSection = ({
         </div>
       </button>
 
-      {/* Expanded Content with Summary and Pistolets */}
+      {/* Expanded Content - No padding wrapper */}
       {isExpanded && (
-        <div className="p-3 bg-white space-y-3">
-          {/* Phase Summary Card (Now inside collapsible section) */}
+        <div className="mt-3 space-y-3">
+          {/* Phase Summary Card */}
           <PhaseSummary
             phase={phase}
             title={title}
@@ -189,70 +180,68 @@ const CollapsiblePhaseSection = ({
           />
 
           {/* Pistolets Cards */}
-          <div className="space-y-3">
-            {pistoletsArray.map(([pistolet, donnees]) => {
-              const gallons = calculerGallons(donnees.debut, donnees.fin);
-              const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
-              const ventesTotal = gallons * prixUnitaire;
-              const hasPistoletData = donnees.debut || donnees.fin;
+          {pistoletsArray.map(([pistolet, donnees]) => {
+            const gallons = calculerGallons(donnees.debut, donnees.fin);
+            const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
+            const ventesTotal = gallons * prixUnitaire;
+            const hasPistoletData = donnees.debut || donnees.fin;
 
-              return (
-                <div
-                  key={pistolet}
-                  className={`rounded-lg overflow-hidden border-2 ${getCouleurCarburant(donnees.typeCarburant)}`}
-                >
-                  {/* Header - ORIGINAL */}
-                  <div className={`${getCouleurBadge(donnees.typeCarburant)} px-3 py-2 text-white`}>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm truncate">
-                          {pistolet.replace('pistolet', 'Pistolet ')}
-                        </h3>
-                        <p className="text-xs opacity-90">{donnees.typeCarburant}</p>
-                      </div>
-                      <div className="text-right flex-shrink-0 ml-2">
-                        <p className="text-xs opacity-75">Prix</p>
-                        <p className="font-bold text-sm whitespace-nowrap">
-                          {prixUnitaire} HTG
-                        </p>
-                      </div>
+            return (
+              <div
+                key={pistolet}
+                className={`rounded-lg overflow-hidden border-2 ${getCouleurCarburant(donnees.typeCarburant)}`}
+              >
+                {/* Header - ORIGINAL */}
+                <div className={`${getCouleurBadge(donnees.typeCarburant)} px-3 py-2 text-white`}>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm truncate">
+                        {pistolet.replace('pistolet', 'Pistolet ')}
+                      </h3>
+                      <p className="text-xs opacity-90">{donnees.typeCarburant}</p>
                     </div>
-                  </div>
-
-                  {/* Body - ORIGINAL */}
-                  <div className="p-3 bg-white space-y-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      <InputField
-                        label="Meter Ouverture"
-                        value={donnees.debut}
-                        onChange={(e) => mettreAJourLecture(pompe, pistolet, 'debut', e.target.value)}
-                      />
-
-                      <InputField
-                        label="Meter Fermeture"
-                        value={donnees.fin}
-                        onChange={(e) => mettreAJourLecture(pompe, pistolet, 'fin', e.target.value)}
-                      />
+                    <div className="text-right flex-shrink-0 ml-2">
+                      <p className="text-xs opacity-75">Prix</p>
+                      <p className="font-bold text-sm whitespace-nowrap">
+                        {prixUnitaire} HTG
+                      </p>
                     </div>
-
-                    {hasPistoletData && (
-                      <div className="pt-3 border-t space-y-2">
-                        <SummaryRow 
-                          label="Gallons" 
-                          value={formaterGallons(gallons)}
-                        />
-                        <SummaryRow 
-                          label="Ventes Total" 
-                          value={`${formaterArgent(ventesTotal)} HTG`}
-                          valueClassName="text-green-600 font-bold"
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Body - ORIGINAL */}
+                <div className="p-3 bg-white space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <InputField
+                      label="Meter Ouverture"
+                      value={donnees.debut}
+                      onChange={(e) => mettreAJourLecture(pompe, pistolet, 'debut', e.target.value)}
+                    />
+
+                    <InputField
+                      label="Meter Fermeture"
+                      value={donnees.fin}
+                      onChange={(e) => mettreAJourLecture(pompe, pistolet, 'fin', e.target.value)}
+                    />
+                  </div>
+
+                  {hasPistoletData && (
+                    <div className="pt-3 border-t space-y-2">
+                      <SummaryRow 
+                        label="Gallons" 
+                        value={formaterGallons(gallons)}
+                      />
+                      <SummaryRow 
+                        label="Ventes Total" 
+                        value={`${formaterArgent(ventesTotal)} HTG`}
+                        valueClassName="text-green-600 font-bold"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -361,7 +350,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   };
 
   return (
-    <div>
+    <div className="px-3"> {/* Add padding to main container */}
       {Object.keys(groupedPistolets.phaseA).length > 0 && (
         <>
           <CollapsiblePhaseSection
