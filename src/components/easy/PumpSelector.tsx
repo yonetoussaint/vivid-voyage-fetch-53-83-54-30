@@ -2,23 +2,15 @@ import React from 'react';
 import { Flame, Droplets, Zap, Fuel, Gauge, Circle } from 'lucide-react';
 
 // Icon mapping for pump types
-const getPumpIcon = (pompe) => {
-  const pumpIcons = {
-    'Pompe 1': <Droplets size={14} />,
-    'Pompe 2': <Fuel size={14} />,
-    'Pompe 3': <Gauge size={14} />,
-    'Pompe 4': <Zap size={14} />,
-    'propane': <Flame size={14} />,
-  };
-  
-  // Default icon if specific not found
-  return pumpIcons[pompe] || <Circle size={14} />;
+const getPumpIcon = (index) => {
+  const icons = [<Droplets size={14} />, <Fuel size={14} />, <Gauge size={14} />, <Zap size={14} />];
+  return icons[index] || <Circle size={14} />;
 };
 
 const PumpSelector = ({ pompes, pompeEtendue, setPompeEtendue, showPropane = false }) => {
   return (
     <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-      {pompes.map((pompe) => (
+      {pompes.map((pompe, index) => (
         <button
           key={pompe}
           onClick={() => setPompeEtendue(pompe)}
@@ -28,8 +20,8 @@ const PumpSelector = ({ pompes, pompeEtendue, setPompeEtendue, showPropane = fal
               : 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
           }`}
         >
-          {getPumpIcon(pompe)}
-          {pompe}
+          {getPumpIcon(index)}
+          Pompe {index + 1}
         </button>
       ))}
 
