@@ -37,10 +37,6 @@ const MainLayout = ({
         <div className="fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm">
           <div className="px-3 py-3">
             <div className="max-w-6xl mx-auto">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-gray-900">Sélection de Pompe</h3>
-                <span className="text-xs text-gray-500">Shift {shift}</span>
-              </div>
               <PumpSelector 
                 pompes={pompes}
                 pompeEtendue={pompeEtendue}
@@ -67,9 +63,7 @@ const MainLayout = ({
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto">
-          
-            {children}
-          
+          {children}
         </main>
       </div>
     </div>
