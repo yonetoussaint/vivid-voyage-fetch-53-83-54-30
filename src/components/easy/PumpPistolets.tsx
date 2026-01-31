@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { formaterArgent, formaterGallons } from '@/utils/formatters';
 import { getCouleurCarburant, getCouleurBadge, calculerGallons } from '@/utils/helpers';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, DollarSign, Fuel, Droplets } from 'lucide-react';
 
 const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   const [expandedPhases, setExpandedPhases] = useState({
@@ -13,7 +13,6 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   const allPistolets = Object.entries(donneesPompe)
     .filter(([key]) => key !== '_vendeur')
     .sort(([keyA], [keyB]) => {
-      // Sort by type then by number
       const getSortValue = (key) => {
         const lower = key.toLowerCase();
         if (lower.includes('gasoline') || lower.includes('gas')) return 1;
@@ -29,7 +28,6 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
     phaseB: {}
   };
 
-  // Distribute pistolets: first 3 to Phase A, next 3 to Phase B
   allPistolets.forEach(([pistolet, donnees], index) => {
     if (index < 3) {
       groupedPistolets.phaseA[pistolet] = donnees;
@@ -38,6 +36,38 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
     }
   });
 
+  // Helper function to calculate phase totals
+  const calculatePhaseTotals = (pistolets) => {
+    return Object.entries(pistolets).reduce((totals, [_, donnees]) => {
+      const gallons = calculerGallons(donnees.debut, donnees.fin);
+      const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
+      const ventesTotal = gallons * prixUnitaire;
+      
+      if (donnees.typeCarburant === 'Diesel') {
+        totals.totalDiesel += gallons;
+        totals.salesDiesel += ventesTotal;
+      } else {
+        totals.totalGasoline += gallons;
+        totals.salesGasoline += ventesTotal;
+      }
+      
+      totals.totalGallons += gallons;
+      totals.totalSales += ventesTotal;
+      
+      return totals;
+    }, {
+      totalGallons: 0,
+      totalGasoline: 0,
+      totalDiesel: 0,
+      totalSales: 0,
+      salesGasoline: 0,
+      salesDiesel: 0
+    });
+  };
+
+  const phaseATotals = useMemo(() => calculatePhaseTotals(groupedPistolets.phaseA), [groupedPistolets.phaseA, prix]);
+  const phaseBTotals = useMemo(() => calculatePhaseTotals(groupedPistolets.phaseB), [groupedPistolets.phaseB, prix]);
+
   const togglePhase = (phase) => {
     setExpandedPhases(prev => ({
       ...prev,
@@ -45,67 +75,137 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
     }));
   };
 
-  const PhaseSection = ({ phase, title, pistolets }) => {
+  const PhaseSection = ({ phase, title, pistolets, totals }) => {
     const pistoletsArray = Object.entries(pistolets);
     
     if (pistoletsArray.length === 0) {
       return null;
     }
 
-    const hasDataInPhase = pistoletsArray.some(([_, donnees]) => 
-      donnees.debut || donnees.fin
-    );
+    const hasData = totals.totalGallons > 0;
 
     return (
       <div className="space-y-3">
-        {/* Ultra Mobile-Friendly Collapsible Header */}
+        {/* Enhanced Mobile-Friendly Collapsible Header with Stats */}
         <button
           onClick={() => togglePhase(phase)}
-          className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg active:bg-gray-200 touch-manipulation transition-colors border border-gray-200"
+          className="w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden active:bg-gray-50 touch-manipulation transition-all"
         >
-          <div className="flex items-center space-x-3 flex-1 min-w-0">
-            {/* Phase Indicator */}
-            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${phase === 'phaseA' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>
-              <span className="font-bold text-sm">
-                {phase === 'phaseA' ? 'A' : 'B'}
-              </span>
+          {/* Header Top Section */}
+          <div className="p-3 flex items-center justify-between">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              {/* Phase Indicator */}
+              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`}>
+                <span className="font-bold text-white text-sm">
+                  {phase === 'phaseA' ? 'A' : 'B'}
+                </span>
+              </div>
+              
+              {/* Title and Basic Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center space-x-2">
+                  <h3 className="font-bold text-gray-900 truncate">{title}</h3>
+                  {hasData && (
+                    <span className="flex-shrink-0 px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
+                      ✓ Actif
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  {pistoletsArray.length} pistolet{pistoletsArray.length > 1 ? 's' : ''}
+                </p>
+              </div>
             </div>
             
-            {/* Title and Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-gray-900 truncate">{title}</h3>
-                {hasDataInPhase && (
-                  <span className="flex-shrink-0 px-2 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-full">
-                    ✓
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-600 truncate">
-                {pistoletsArray.length} pistolet{pistoletsArray.length > 1 ? 's' : ''}
-              </p>
+            {/* Collapse Icon */}
+            <div className="flex-shrink-0 ml-2">
+              {expandedPhases[phase] ? (
+                <ChevronUp className="text-gray-500" size={22} strokeWidth={2.5} />
+              ) : (
+                <ChevronDown className="text-gray-500" size={22} strokeWidth={2.5} />
+              )}
             </div>
           </div>
-          
-          {/* Collapse Icon with Touch Feedback */}
-          <div className={`flex-shrink-0 ml-2 p-1.5 rounded-full ${expandedPhases[phase] ? 'bg-gray-200' : 'bg-gray-100'}`}>
-            {expandedPhases[phase] ? (
-              <ChevronUp className="text-gray-600" size={20} strokeWidth={2.5} />
-            ) : (
-              <ChevronDown className="text-gray-600" size={20} strokeWidth={2.5} />
+
+          {/* Stats Grid - Always visible in header */}
+          <div className="px-3 pb-3 border-t border-gray-100 pt-2">
+            <div className="grid grid-cols-2 gap-2">
+              {/* Total Gallons */}
+              <div className="bg-blue-50 rounded-lg p-2">
+                <div className="flex items-center space-x-1 mb-1">
+                  <Droplets size={14} className="text-blue-600" />
+                  <span className="text-xs font-medium text-blue-700">Total Gallons</span>
+                </div>
+                <p className="text-lg font-bold text-blue-900">
+                  {formaterGallons(totals.totalGallons)}
+                </p>
+              </div>
+
+              {/* Total Sales */}
+              <div className="bg-green-50 rounded-lg p-2">
+                <div className="flex items-center space-x-1 mb-1">
+                  <DollarSign size={14} className="text-green-600" />
+                  <span className="text-xs font-medium text-green-700">Ventes Total</span>
+                </div>
+                <p className="text-lg font-bold text-green-900">
+                  {formaterArgent(totals.totalSales)}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">HTG</p>
+              </div>
+            </div>
+
+            {/* Breakdown Row */}
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {/* Gasoline */}
+              <div className="bg-orange-50 rounded-lg p-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-1">
+                    <Fuel size={12} className="text-orange-600" />
+                    <span className="text-xs font-medium text-orange-700">Gasoline</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-orange-900">
+                      {formaterGallons(totals.totalGasoline)}
+                    </p>
+                    <p className="text-xs text-orange-700 font-medium">
+                      {formaterArgent(totals.salesGasoline)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Diesel */}
+              <div className="bg-purple-50 rounded-lg p-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-1">
+                    <Fuel size={12} className="text-purple-600" />
+                    <span className="text-xs font-medium text-purple-700">Diesel</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-purple-900">
+                      {formaterGallons(totals.totalDiesel)}
+                    </p>
+                    <p className="text-xs text-purple-700 font-medium">
+                      {formaterArgent(totals.salesDiesel)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Summary */}
+            {hasData && (
+              <div className="mt-2 pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-500">Gallons par pistolet:</span>
+                  <span className="font-medium text-gray-700">
+                    {formaterGallons(totals.totalGallons / pistoletsArray.length)}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
         </button>
-
-        {/* Status Bar (only shows when collapsed and has data) */}
-        {!expandedPhases[phase] && hasDataInPhase && (
-          <div className="px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-blue-700 font-medium">Données saisies</span>
-              <span className="text-blue-600">↓ Cliquez pour voir</span>
-            </div>
-          </div>
-        )}
 
         {/* Pistolets Cards - Only show if expanded */}
         {expandedPhases[phase] && (
@@ -179,12 +279,13 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   };
 
   return (
-    <div className="space-y-4"> {/* Mobile-friendly spacing */}
+    <div className="space-y-4">
       {Object.keys(groupedPistolets.phaseA).length > 0 && (
         <PhaseSection 
           phase="phaseA"
           title="Phase A"
           pistolets={groupedPistolets.phaseA}
+          totals={phaseATotals}
         />
       )}
       
@@ -193,6 +294,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
           phase="phaseB"
           title="Phase B"
           pistolets={groupedPistolets.phaseB}
+          totals={phaseBTotals}
         />
       )}
     </div>
