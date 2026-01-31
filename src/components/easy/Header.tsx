@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const Header = ({ 
   date, 
@@ -8,6 +8,8 @@ const Header = ({
   onDateChange,
   onShiftChange 
 }) => {
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
   const formatDateForDisplay = (dateStr) => {
     const date = new Date(dateStr);
     const today = new Date();
@@ -30,16 +32,28 @@ const Header = ({
     }
   };
 
-  const navigateDate = (direction) => {
-    const currentDate = new Date(date);
-    currentDate.setDate(currentDate.getDate() + direction);
-    const newDate = currentDate.toISOString().split('T')[0];
-    onDateChange(newDate);
-  };
-
   const handleTodayClick = () => {
     const today = new Date().toISOString().split('T')[0];
     onDateChange(today);
+  };
+
+  const openDatePicker = () => {
+    const dateInput = document.getElementById('datePicker');
+    if (dateInput) {
+      dateInput.showPicker();
+      setIsDatePickerOpen(true);
+      // Listen for when the picker closes
+      setTimeout(() => {
+        const checkPickerClosed = () => {
+          if (document.activeElement !== dateInput) {
+            setIsDatePickerOpen(false);
+          } else {
+            setTimeout(checkPickerClosed, 100);
+          }
+        };
+        checkPickerClosed();
+      }, 100);
+    }
   };
 
   return (
@@ -57,52 +71,32 @@ const Header = ({
             </svg>
           </button>
 
-          {/* Center: Date selector */}
-          <div className="flex items-center space-x-2">
-            {/* Previous day */}
-            <button
-              onClick={() => navigateDate(-1)}
-              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label="Jour précédent"
+          {/* Center: Date with chevron */}
+          <button
+            onClick={openDatePicker}
+            className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <span>{formatDateForDisplay(date)}</span>
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className={`h-4 w-4 transition-transform ${isDatePickerOpen ? 'rotate-180' : ''}`} 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
 
-            {/* Date display and picker */}
-            <div className="flex flex-col items-center min-w-[140px]">
-              <button
-                onClick={() => document.getElementById('datePicker')?.showPicker()}
-                className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors px-2 py-1 rounded hover:bg-gray-50"
-              >
-                {formatDateForDisplay(date)}
-              </button>
-              <input
-                type="date"
-                id="datePicker"
-                value={date}
-                onChange={(e) => onDateChange(e.target.value)}
-                className="hidden"
-                max={new Date().toISOString().split('T')[0]}
-              />
-              <div className="text-xs text-gray-500">
-                {date === new Date().toISOString().split('T')[0] ? 'Aujourd\'hui' : ''}
-              </div>
-            </div>
-
-            {/* Next day */}
-            <button
-              onClick={() => navigateDate(1)}
-              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label="Jour suivant"
-              disabled={date === new Date().toISOString().split('T')[0]}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${date === new Date().toISOString().split('T')[0] ? 'text-gray-300' : 'text-gray-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+          {/* Hidden date input */}
+          <input
+            type="date"
+            id="datePicker"
+            value={date}
+            onChange={(e) => onDateChange(e.target.value)}
+            className="hidden"
+            max={new Date().toISOString().split('T')[0]}
+          />
 
           {/* Right: AM/PM switch */}
           <div className="flex bg-gray-100 rounded-lg overflow-hidden">
@@ -121,12 +115,12 @@ const Header = ({
           </div>
         </div>
 
-        {/* Quick today button - only visible on desktop */}
+        {/* Today indicator - only visible when not today */}
         {date !== new Date().toISOString().split('T')[0] && (
-          <div className="hidden sm:flex justify-center mt-2">
+          <div className="flex items-center justify-center mt-2">
             <button
               onClick={handleTodayClick}
-              className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+              className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1 rounded-lg transition-colors font-medium"
             >
               ← Retour à aujourd'hui
             </button>
