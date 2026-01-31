@@ -284,18 +284,20 @@ const SystemeStationService = () => {
       </SidePanel>
 
       {/* Main Layout */}
-      <MainLayout
-        date={date}
-        shift={shift}
-        setDate={setDate}
-        setShift={setShift}
-        handleReinitialiserShift={handleReinitialiserShift}
-        handleReinitialiserJour={handleReinitialiserJour}
-        onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
-        activeTab={activeTab}
-      >
-        {renderActiveTabContent()}
-      </MainLayout>
+      
+<MainLayout
+  date={date}
+  shift={shift}
+  activeTab={activeTab}
+  onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
+  onDateChange={(newDate) => setDate(newDate)}
+  onShiftChange={(newShift) => setShift(newShift)}
+  // Remove these props since they're no longer needed in header:
+  // handleReinitialiserShift={handleReinitialiserShift}
+  // handleReinitialiserJour={handleReinitialiserJour}
+>
+  {renderActiveTabContent()}
+</MainLayout>
 
       {/* Mobile Footer */}
       <footer className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
