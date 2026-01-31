@@ -34,7 +34,7 @@ const PumpSelector = ({ pompes, pompeEtendue, setPompeEtendue, showPropane = fal
               ? 'bg-red-500 text-white border-red-500'
               : 'bg-transparent text-slate-600 border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
           }`}
-          style={{ borderRadius: '16px' }}
+            style={{ borderRadius: '20px !important' }}
         >
           <Flame size={14} />
           Propane
