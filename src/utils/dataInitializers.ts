@@ -6,11 +6,11 @@ export const initialiserLecturesPompes = () => {
   for (let p = 1; p <= 4; p++) {
     pompes[`P${p}`] = {
       _vendeur: '',
-      pistolet1: { typeCarburant: 'Essence 1', debut: '', fin: '' },
-      pistolet2: { typeCarburant: 'Essence 2', debut: '', fin: '' },
+      pistolet1: { typeCarburant: 'Gasoline 1', debut: '', fin: '' },
+      pistolet2: { typeCarburant: 'Gasoline 2', debut: '', fin: '' },
       pistolet3: { typeCarburant: 'Diesel', debut: '', fin: '' },
-      pistolet4: { typeCarburant: 'Essence 1', debut: '', fin: '' },
-      pistolet5: { typeCarburant: 'Essence 2', debut: '', fin: '' },
+      pistolet4: { typeCarburant: 'Gasoline 1', debut: '', fin: '' },
+      pistolet5: { typeCarburant: 'Gasoline 2', debut: '', fin: '' },
       pistolet6: { typeCarburant: 'Diesel', debut: '', fin: '' }
     };
   }
@@ -18,7 +18,7 @@ export const initialiserLecturesPompes = () => {
   // Pompe 5: Seulement 1 pistolet
   pompes['P5'] = {
     _vendeur: '',
-    pistolet1: { typeCarburant: 'Essence', debut: '', fin: '' }
+    pistolet1: { typeCarburant: 'Gasoline', debut: '', fin: '' }
   };
 
   return pompes;
@@ -27,7 +27,8 @@ export const initialiserLecturesPompes = () => {
 // Initialiser les données propane
 export const initialiserDonneesPropane = () => ({
   debut: '',
-  fin: ''
+  fin: '',
+  _vendeur: ''
 });
 
 // Fonction générale d'initialisation
