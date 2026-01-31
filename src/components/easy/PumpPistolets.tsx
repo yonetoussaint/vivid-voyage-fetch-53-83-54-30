@@ -113,12 +113,12 @@ const PhaseSummary = ({
   );
 };
 
-// Simple Edge-to-Edge Separator
+// Simple Thick Edge-to-Edge Separator
 const PhaseSeparator = () => (
-  <div className="my-6 -mx-3 border-t-2 border-gray-300"></div>
+  <div className="my-6 -mx-3 border-t-4 border-gray-400"></div>
 );
 
-// Collapsible Pistolets Section (No border, no padding)
+// Collapsible Pistolets Section (Clean header)
 const CollapsiblePhaseSection = ({ 
   phase, 
   title, 
@@ -139,7 +139,7 @@ const CollapsiblePhaseSection = ({
 
   return (
     <div>
-      {/* Collapsible Header Band - No border container */}
+      {/* Clean Collapsible Header */}
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors rounded-lg"
@@ -147,14 +147,6 @@ const CollapsiblePhaseSection = ({
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 rounded-full ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`} />
           <span className="font-medium text-gray-900">{title}</span>
-          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-            {pistoletsArray.length} pistolet{pistoletsArray.length > 1 ? 's' : ''}
-          </span>
-          {hasData && (
-            <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-              Données saisies
-            </span>
-          )}
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-xs text-gray-500">
@@ -168,7 +160,7 @@ const CollapsiblePhaseSection = ({
         </div>
       </button>
 
-      {/* Expanded Content - No padding wrapper */}
+      {/* Expanded Content */}
       {isExpanded && (
         <div className="mt-3 space-y-3">
           {/* Phase Summary Card */}
@@ -350,7 +342,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   };
 
   return (
-    <div className="px-3"> {/* Add padding to main container */}
+    <div> {/* Removed px-3 padding */}
       {Object.keys(groupedPistolets.phaseA).length > 0 && (
         <>
           <CollapsiblePhaseSection
