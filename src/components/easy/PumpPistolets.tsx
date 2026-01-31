@@ -58,31 +58,54 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
 
     return (
       <div className="space-y-3">
-        {/* Phase Header - Collapsible */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className={`w-2 h-2 rounded-full ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`} />
-            <h3 className="font-semibold text-gray-900">{title}</h3>
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-              {pistoletsArray.length} pistolet(s)
-            </span>
-            {hasDataInPhase && (
-              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                Données saisies
+        {/* Ultra Mobile-Friendly Collapsible Header */}
+        <button
+          onClick={() => togglePhase(phase)}
+          className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg active:bg-gray-200 touch-manipulation transition-colors border border-gray-200"
+        >
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
+            {/* Phase Indicator */}
+            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${phase === 'phaseA' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>
+              <span className="font-bold text-sm">
+                {phase === 'phaseA' ? 'A' : 'B'}
               </span>
+            </div>
+            
+            {/* Title and Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-2">
+                <h3 className="font-bold text-gray-900 truncate">{title}</h3>
+                {hasDataInPhase && (
+                  <span className="flex-shrink-0 px-2 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-full">
+                    ✓
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-600 truncate">
+                {pistoletsArray.length} pistolet{pistoletsArray.length > 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+          
+          {/* Collapse Icon with Touch Feedback */}
+          <div className={`flex-shrink-0 ml-2 p-1.5 rounded-full ${expandedPhases[phase] ? 'bg-gray-200' : 'bg-gray-100'}`}>
+            {expandedPhases[phase] ? (
+              <ChevronUp className="text-gray-600" size={20} strokeWidth={2.5} />
+            ) : (
+              <ChevronDown className="text-gray-600" size={20} strokeWidth={2.5} />
             )}
           </div>
-          <button
-            onClick={() => togglePhase(phase)}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            {expandedPhases[phase] ? (
-              <ChevronUp className="text-gray-500" size={18} />
-            ) : (
-              <ChevronDown className="text-gray-500" size={18} />
-            )}
-          </button>
-        </div>
+        </button>
+
+        {/* Status Bar (only shows when collapsed and has data) */}
+        {!expandedPhases[phase] && hasDataInPhase && (
+          <div className="px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-blue-700 font-medium">Données saisies</span>
+              <span className="text-blue-600">↓ Cliquez pour voir</span>
+            </div>
+          </div>
+        )}
 
         {/* Pistolets Cards - Only show if expanded */}
         {expandedPhases[phase] && (
@@ -156,7 +179,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   };
 
   return (
-    <div className="space-y-6"> {/* Increased spacing between phases */}
+    <div className="space-y-4"> {/* Mobile-friendly spacing */}
       {Object.keys(groupedPistolets.phaseA).length > 0 && (
         <PhaseSection 
           phase="phaseA"
