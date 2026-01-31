@@ -3,7 +3,7 @@ import { formaterArgent, formaterGallons } from '@/utils/formatters';
 import { getCouleurCarburant, getCouleurBadge, calculerGallons } from '@/utils/helpers';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-// Separate Header Component
+// Separate Header Component with LEFT-ALIGNED stats
 const PhaseHeader = ({ 
   phase, 
   title, 
@@ -17,7 +17,7 @@ const PhaseHeader = ({
   return (
     <button
       onClick={onToggle}
-      className="w-full bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg active:bg-gray-200 touch-manipulation transition-colors border border-gray-200 p-3"
+      className="w-full bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg active:bg-gray-200 touch-manipulation transition-colors border border-gray-200 p-3 text-left"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -54,19 +54,19 @@ const PhaseHeader = ({
         </div>
       </div>
 
-      {/* Left-Aligned Stats in Compact Layout */}
+      {/* LEFT-ALIGNED Stats in Compact Layout */}
       <div className="mt-3 space-y-2">
         {/* First Row: Total Gallons and Total Sales */}
         <div className="flex space-x-2">
-          <div className="flex-1 bg-white rounded p-2 border border-gray-200">
-            <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
-            <p className="text-sm font-bold text-blue-900">
+          <div className="flex-1 bg-white rounded p-2 border border-gray-200 text-left">
+            <p className="text-xs text-gray-500 mb-0.5 text-left">Total Gallons</p>
+            <p className="text-sm font-bold text-blue-900 text-left">
               {formaterGallons(totals.totalGallons)}
             </p>
           </div>
-          <div className="flex-1 bg-white rounded p-2 border border-gray-200">
-            <p className="text-xs text-gray-500 mb-0.5">Ventes Total</p>
-            <p className="text-sm font-bold text-green-900">
+          <div className="flex-1 bg-white rounded p-2 border border-gray-200 text-left">
+            <p className="text-xs text-gray-500 mb-0.5 text-left">Ventes Total</p>
+            <p className="text-sm font-bold text-green-900 text-left">
               {formaterArgent(totals.totalSales)}
             </p>
           </div>
@@ -74,27 +74,35 @@ const PhaseHeader = ({
 
         {/* Second Row: Gasoline and Diesel Breakdown */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-orange-50 rounded p-2 border border-orange-100">
-            <p className="text-xs font-medium text-orange-700 mb-0.5">Gasoline</p>
-            <div className="space-y-0.5">
-              <p className="text-xs text-orange-900 font-medium">
-                {formaterGallons(totals.totalGasoline)} gallons
-              </p>
-              <p className="text-xs text-orange-700">
-                {formaterArgent(totals.salesGasoline)}
-              </p>
+          <div className="bg-orange-50 rounded p-2 border border-orange-100 text-left">
+            <p className="text-xs font-medium text-orange-700 mb-1 text-left">Gasoline</p>
+            <div className="space-y-1">
+              <div className="text-left">
+                <p className="text-xs text-orange-900 font-medium">
+                  {formaterGallons(totals.totalGasoline)} gallons
+                </p>
+              </div>
+              <div className="text-left">
+                <p className="text-xs text-orange-700">
+                  {formaterArgent(totals.salesGasoline)}
+                </p>
+              </div>
             </div>
           </div>
           
-          <div className="bg-purple-50 rounded p-2 border border-purple-100">
-            <p className="text-xs font-medium text-purple-700 mb-0.5">Diesel</p>
-            <div className="space-y-0.5">
-              <p className="text-xs text-purple-900 font-medium">
-                {formaterGallons(totals.totalDiesel)} gallons
-              </p>
-              <p className="text-xs text-purple-700">
-                {formaterArgent(totals.salesDiesel)}
-              </p>
+          <div className="bg-purple-50 rounded p-2 border border-purple-100 text-left">
+            <p className="text-xs font-medium text-purple-700 mb-1 text-left">Diesel</p>
+            <div className="space-y-1">
+              <div className="text-left">
+                <p className="text-xs text-purple-900 font-medium">
+                  {formaterGallons(totals.totalDiesel)} gallons
+                </p>
+              </div>
+              <div className="text-left">
+                <p className="text-xs text-purple-700">
+                  {formaterArgent(totals.salesDiesel)}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -105,7 +113,7 @@ const PhaseHeader = ({
 
 // Original InputField component
 const InputField = ({ label, value, onChange }) => (
-  <div>
+  <div className="text-left">
     <label className="block text-xs font-medium text-gray-600 mb-1">
       {label}
     </label>
