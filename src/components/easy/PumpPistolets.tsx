@@ -59,35 +59,27 @@ const PhaseHeader = ({
         {/* First Row: Total Gallons and Total Sales */}
         <div className="flex space-x-2">
           <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+            <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
             <div className="flex justify-between items-center">
-              <div className="text-left">
-                <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
-                <div className="flex items-center space-x-1">
-                  <Droplets size={12} className="text-blue-500" />
-                  <p className="text-sm font-bold text-blue-900">
-                    {formaterGallons(totals.totalGallons)}
-                  </p>
-                </div>
+              <div className="flex items-center space-x-1">
+                <Droplets size={12} className="text-blue-500" />
+                <p className="text-sm font-bold text-blue-900">
+                  {formaterGallons(totals.totalGallons)}
+                </p>
               </div>
-              <div className="text-right">
-                <span className="text-xs font-medium text-blue-700">gallons</span>
-              </div>
+              <span className="text-xs font-medium text-blue-700">gallons</span>
             </div>
           </div>
           <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+            <p className="text-xs text-gray-500 mb-0.5">Ventes Total</p>
             <div className="flex justify-between items-center">
-              <div className="text-left">
-                <p className="text-xs text-gray-500 mb-0.5">Ventes Total</p>
-                <div className="flex items-center space-x-1">
-                  <DollarSign size={12} className="text-green-500" />
-                  <p className="text-sm font-bold text-green-900">
-                    {formaterArgent(totals.totalSales)}
-                  </p>
-                </div>
+              <div className="flex items-center space-x-1">
+                <DollarSign size={12} className="text-green-500" />
+                <p className="text-sm font-bold text-green-900">
+                  {formaterArgent(totals.totalSales)}
+                </p>
               </div>
-              <div className="text-right">
-                <span className="text-xs font-medium text-green-700">HTG</span>
-              </div>
+              <span className="text-xs font-medium text-green-700">HTG</span>
             </div>
           </div>
         </div>
@@ -95,57 +87,37 @@ const PhaseHeader = ({
         {/* Second Row: Gasoline and Diesel Breakdown */}
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-orange-50 rounded p-2 border border-orange-100">
-            <div className="flex justify-between items-start mb-1">
-              <p className="text-xs font-medium text-orange-700">Gasoline</p>
-            </div>
+            <p className="text-xs font-medium text-orange-700 mb-1">Gasoline</p>
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <div className="text-left">
-                  <p className="text-xs text-orange-900 font-medium">
-                    {formaterGallons(totals.totalGasoline)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs text-orange-600">gallons</span>
-                </div>
+                <p className="text-xs text-orange-900 font-medium">
+                  {formaterGallons(totals.totalGasoline)}
+                </p>
+                <span className="text-xs text-orange-600">gallons</span>
               </div>
               <div className="flex justify-between items-center">
-                <div className="text-left">
-                  <p className="text-xs text-orange-700">
-                    {formaterArgent(totals.salesGasoline)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs text-orange-500">HTG</span>
-                </div>
+                <p className="text-xs text-orange-700">
+                  {formaterArgent(totals.salesGasoline)}
+                </p>
+                <span className="text-xs text-orange-500">HTG</span>
               </div>
             </div>
           </div>
           
           <div className="bg-purple-50 rounded p-2 border border-purple-100">
-            <div className="flex justify-between items-start mb-1">
-              <p className="text-xs font-medium text-purple-700">Diesel</p>
-            </div>
+            <p className="text-xs font-medium text-purple-700 mb-1">Diesel</p>
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <div className="text-left">
-                  <p className="text-xs text-purple-900 font-medium">
-                    {formaterGallons(totals.totalDiesel)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs text-purple-600">gallons</span>
-                </div>
+                <p className="text-xs text-purple-900 font-medium">
+                  {formaterGallons(totals.totalDiesel)}
+                </p>
+                <span className="text-xs text-purple-600">gallons</span>
               </div>
               <div className="flex justify-between items-center">
-                <div className="text-left">
-                  <p className="text-xs text-purple-700">
-                    {formaterArgent(totals.salesDiesel)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs text-purple-500">HTG</span>
-                </div>
+                <p className="text-xs text-purple-700">
+                  {formaterArgent(totals.salesDiesel)}
+                </p>
+                <span className="text-xs text-purple-500">HTG</span>
               </div>
             </div>
           </div>
