@@ -38,17 +38,19 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
 
               {/* Body */}
               <div className="p-3 bg-white space-y-3">
-                <InputField
-                  label="Index Début"
-                  value={donnees.debut}
-                  onChange={(e) => mettreAJourLecture(pompe, pistolet, 'debut', e.target.value)}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <InputField
+                    label="Index Début"
+                    value={donnees.debut}
+                    onChange={(e) => mettreAJourLecture(pompe, pistolet, 'debut', e.target.value)}
+                  />
 
-                <InputField
-                  label="Index Fin"
-                  value={donnees.fin}
-                  onChange={(e) => mettreAJourLecture(pompe, pistolet, 'fin', e.target.value)}
-                />
+                  <InputField
+                    label="Index Fin"
+                    value={donnees.fin}
+                    onChange={(e) => mettreAJourLecture(pompe, pistolet, 'fin', e.target.value)}
+                  />
+                </div>
 
                 {hasData && (
                   <div className="pt-3 border-t space-y-2">
