@@ -54,7 +54,7 @@ const Header = ({
 
   return (
     // REMOVED: sticky top-0 z-30 from here!
-    <div className="py-3 px-3">
+    <div className="p-2">
       <div className="flex items-center justify-between">
         {/* Left side: Menu icon and date picker */}
         <div className="flex items-center space-x-2">
