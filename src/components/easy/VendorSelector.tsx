@@ -1,28 +1,36 @@
 // components/easy/VendorSelector.jsx
 import React from 'react';
+import { User, Users } from 'lucide-react';
 
 const VendorSelector = ({ vendeurs, vendeurActif, setVendeurActif }) => {
   if (!vendeurs || vendeurs.length === 0) {
-    return null;
+    return (
+      <div className="flex gap-1.5 overflow-x-auto pb-1 px-2 no-scrollbar">
+        <div className="px-3 py-1 font-medium text-sm whitespace-nowrap border flex items-center gap-1.5 bg-transparent text-slate-400 border-slate-200">
+          <Users size={14} />
+          Aucun vendeur
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="px-4 py-2 bg-white border-b border-gray-100">
-      <div className="flex space-x-1 overflow-x-auto pb-2">
-        {vendeurs.map((vendeur) => (
-          <button
-            key={vendeur}
-            onClick={() => setVendeurActif(vendeur)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
-              vendeurActif === vendeur
-                ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                : 'text-gray-600 hover:bg-gray-100 border border-transparent'
-            }`}
-          >
-            {vendeur}
-          </button>
-        ))}
-      </div>
+    <div className="flex gap-1.5 overflow-x-auto pb-1 px-2 no-scrollbar">
+      {vendeurs.map((vendeur, index) => (
+        <button
+          key={vendeur}
+          onClick={() => setVendeurActif(vendeur)}
+          className={`px-3 py-1 font-medium text-sm whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5 ${
+            vendeurActif === vendeur
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
+          }`}
+          style={{ borderRadius: '20px !important' }}
+        >
+          <User size={14} />
+          {vendeur}
+        </button>
+      ))}
     </div>
   );
 };
