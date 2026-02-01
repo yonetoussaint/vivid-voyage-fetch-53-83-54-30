@@ -173,35 +173,28 @@ const PumpHeader = ({
     </span>
   </div>
   
-  {/* Right side - Selection */}
-  <div className="flex-1 min-w-0">
-    {vendeurActuel ? (
-      <div className="flex items-center justify-between px-3 py-2 pr-4"> {/* Added pr-4 for right padding */}
-        <span className="text-sm text-gray-900 truncate">{vendeurActuel}</span>
-        <button 
-          onClick={() => handleVendeurChange('')}
-          className="text-gray-400 hover:text-gray-600 ml-2 shrink-0 flex items-center"
-        >
-          <Pencil size={14} /> {/* Edit icon instead of text */}
-        </button>
-      </div>
-    ) : (
-      <div className="relative flex items-center pr-4"> {/* Wrapper div with right padding */}
-        <select
-          value={vendeurActuel}
-          onChange={(e) => handleVendeurChange(e.target.value)}
-          className="w-full h-full px-3 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 text-gray-500 appearance-none pr-6" /* Added appearance-none and pr-6 */
-        >
-          <option value="">Vendeur assigné</option>
-          {vendeurs.map(vendeur => (
-            <option key={vendeur} value={vendeur}>{vendeur}</option>
-          ))}
-        </select>
-        <div className="absolute right-4 pointer-events-none"> {/* Chevron positioning */}
+  {/* Right side - Selection - Always show dropdown when vendor is assigned */}
+  <div className="flex-1 min-w-0 relative">
+    <div className="relative flex items-center">
+      <select
+        value={vendeurActuel}
+        onChange={(e) => handleVendeurChange(e.target.value)}
+        className="w-full h-full px-3 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 text-gray-500 appearance-none pr-8"
+      >
+        <option value="">Vendeur assigné</option>
+        {vendeurs.map(vendeur => (
+          <option key={vendeur} value={vendeur}>{vendeur}</option>
+        ))}
+      </select>
+      {/* Show pencil icon when vendor is selected, chevron when empty */}
+      <div className="absolute right-3 pointer-events-none">
+        {vendeurActuel ? (
+          <Pencil size={14} className="text-gray-400" />
+        ) : (
           <ChevronDown size={14} className="text-gray-400" />
-        </div>
+        )}
       </div>
-    )}
+    </div>
   </div>
 </div>
 
