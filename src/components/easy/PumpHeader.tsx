@@ -1,4 +1,4 @@
-// PumpHeader.jsx (refactored version)
+// PumpHeader.jsx (updated version)
 import React from 'react';
 import { calculerTotalPompe } from '@/utils/helpers';
 import CaisseRecuCard from './CaisseRecuCard';
@@ -25,29 +25,29 @@ const PumpHeader = ({
   prixPropane = null
 }) => {
   // Calculate totals based on mode
-  let totalPompe, gallonsEssence, gallonsDiesel, ventesEssence, ventesDiesel, ventesTotales;
+  let totalPompe, gallonsGasoline, gallonsDiesel, ventesGasoline, ventesDiesel, ventesTotales;
 
   if (isPropane) {
     const gallonsPropane = (parseFloat(propaneData?.fin) || 0) - (parseFloat(propaneData?.debut) || 0);
     ventesTotales = gallonsPropane * prixPropane;
 
     totalPompe = {
-      gallonsEssence: 0,
+      gallonsGasoline: 0,
       gallonsDiesel: 0,
-      ventesEssence: 0,
+      ventesGasoline: 0,
       ventesDiesel: 0,
       ventesTotales: ventesTotales
     };
 
-    gallonsEssence = 0;
+    gallonsGasoline = 0;
     gallonsDiesel = gallonsPropane;
-    ventesEssence = 0;
+    ventesGasoline = 0;
     ventesDiesel = ventesTotales;
   } else {
     totalPompe = calculerTotalPompe(donneesPompe, prix);
-    gallonsEssence = totalPompe?.gallonsEssence || 0;
+    gallonsGasoline = totalPompe?.gallonsGasoline || 0;
     gallonsDiesel = totalPompe?.gallonsDiesel || 0;
-    ventesEssence = totalPompe?.ventesEssence || 0;
+    ventesGasoline = totalPompe?.ventesGasoline || 0;
     ventesDiesel = totalPompe?.ventesDiesel || 0;
     ventesTotales = totalPompe?.ventesTotales || 0;
   }
@@ -100,8 +100,8 @@ const PumpHeader = ({
       {/* Quick Statistics */}
       <div className="grid grid-cols-2 gap-2 mb-3">
         <StatisticCard
-          title={isPropane ? 'Prix Propane' : `Essence (${pompe})`}
-          value={isPropane ? `${prixPropane} HTG` : gallonsEssence}
+          title={isPropane ? 'Prix Propane' : `Gasoline (${pompe})`}
+          value={isPropane ? `${prixPropane} HTG` : gallonsGasoline}
           subtitle={isPropane ? 'par gallon' : 'gallons'}
           color={isPropane ? 'red' : 'emerald'}
           isPropane={isPropane}
@@ -117,7 +117,7 @@ const PumpHeader = ({
 
       {/* Total Gallons Card */}
       <TotalGallonsCard
-        gallonsEssence={gallonsEssence}
+        gallonsGasoline={gallonsGasoline}
         gallonsDiesel={gallonsDiesel}
         isPropane={isPropane}
         pompe={pompe}
@@ -127,13 +127,13 @@ const PumpHeader = ({
       {!isPropane ? (
         <div className="grid grid-cols-2 gap-2 mb-3">
           <StatisticCard
-            title="Ventes Essence"
-            value={ventesEssence}
+            title="Gasoline Sales"
+            value={ventesGasoline}
             subtitle="HTG"
             color="emerald"
           />
           <StatisticCard
-            title="Ventes Diesel"
+            title="Diesel Sales"
             value={ventesDiesel}
             subtitle="HTG"
             color="amber"
@@ -167,7 +167,7 @@ const PumpHeader = ({
 
       {/* Quick Summary Row */}
       <QuickSummaryRow
-        gallonsEssence={gallonsEssence}
+        gallonsGasoline={gallonsGasoline}
         gallonsDiesel={gallonsDiesel}
         isPropane={isPropane}
         prixPropane={prixPropane}
