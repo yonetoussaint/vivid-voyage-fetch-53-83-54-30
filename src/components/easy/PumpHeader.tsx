@@ -163,38 +163,42 @@ const PumpHeader = ({
 
   return (
     <div className="w-full space-y-3">
-      {/* Vendor Assignment Card - Now shows for BOTH pumps and propane */}
-      <div className={`rounded-xl p-4 shadow-sm ${getVendorCardColor()}`}>
-  <div className="flex items-center gap-2 mb-3">
-    <div className={`p-2 rounded-lg ${isPropane ? 'bg-red-100' : 'bg-indigo-100'}`}>
-      <User size={20} className={getVendorIconColor()} />
+     {/* Vendor Assignment - Compact Masonry Design */}
+<div className={`rounded-lg p-3 shadow-xs ${getVendorCardColor()}`}>
+  {/* Header Row */}
+  <div className="flex items-center justify-between mb-2">
+    <div className="flex items-center gap-2 min-w-0">
+      <div className={`p-1.5 rounded-md ${isPropane ? 'bg-red-100' : 'bg-indigo-100'}`}>
+        <User size={16} className={getVendorIconColor()} />
+      </div>
+      <span className="text-sm font-semibold text-gray-800 truncate">Vendeur</span>
     </div>
-    <h4 className="text-base font-bold text-gray-800 flex-1">
-      Vendeur assigné
-    </h4>
-    <div className={`text-xs px-2 py-1 rounded-full font-medium ${getVendorBadgeColor()}`}>
+    <span className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${getVendorBadgeColor()}`}>
       {isPropane ? 'Propane' : pompe}
-    </div>
+    </span>
   </div>
 
-  <select
-    value={vendeurActuel}
-    onChange={(e) => handleVendeurChange(e.target.value)}
-    className={`w-full px-4 py-3.5 text-base font-semibold border-2 rounded-xl focus:ring-2 focus:border-indigo-500 bg-white shadow-sm transition-all mb-2 ${
-      isPropane ? 'border-red-300 focus:ring-red-500' : 'border-indigo-300 focus:ring-indigo-500'
-    }`}
-  >
-    <option value="">Sélectionner un vendeur</option>
-    {vendeurs.map(vendeur => (
-      <option key={vendeur} value={vendeur}>{vendeur}</option>
-    ))}
-  </select>
+  {/* Content Area */}
+  <div className="space-y-2">
+    <select
+      value={vendeurActuel}
+      onChange={(e) => handleVendeurChange(e.target.value)}
+      className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-1 focus:border-indigo-400 bg-white shadow-xs transition-colors ${
+        isPropane ? 'border-red-200 focus:ring-red-400' : 'border-indigo-200 focus:ring-indigo-400'
+      }`}
+    >
+      <option value="">Sélectionner...</option>
+      {vendeurs.map(vendeur => (
+        <option key={vendeur} value={vendeur}>{vendeur}</option>
+      ))}
+    </select>
 
-  {vendeurActuel && (
-    <div className={`text-white px-4 py-3 rounded-xl font-bold text-sm text-center shadow-md ${getVendorConfirmationColor()}`}>
-      ✓ {vendeurActuel}
-    </div>
-  )}
+    {vendeurActuel && (
+      <div className={`text-white px-3 py-2 rounded-lg font-medium text-xs text-center truncate shadow-xs ${getVendorConfirmationColor()}`}>
+        ✓ {vendeurActuel}
+      </div>
+    )}
+  </div>
 </div>
 
       {/* Statistiques Rapides - Adjust for propane */}
