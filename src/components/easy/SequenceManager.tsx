@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, X, Plus, Edit2, Save, RotateCcw, DollarSign, Coins } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
+import { htgPresets, usdPresets } from './depositPresets'; // Import directly
 
 const SequenceManager = ({
   vendeur,
@@ -26,17 +27,15 @@ const SequenceManager = ({
   calculatePresetAmount,
 
   // Configuration
-  htgPresets,
-  usdPresets,
   TAUX_DE_CHANGE = 132,
-  
+
   // New props for editing mode
   editingMode = false,
   onCancelEdit
 }) => {
   // Local state
   const [editingSequenceId, setEditingSequenceId] = useState(null);
-  
+
   // Define bill denominations for each currency
   const htgDenominations = [
     { label: '1000 HTG', value: 1000, color: 'bg-purple-500' },
@@ -87,7 +86,7 @@ const SequenceManager = ({
         initialInputs[denom.value] = '';
       }
     });
-    
+
     if (Object.keys(initialInputs).length > 0) {
       setGridInputs(prev => ({ ...prev, ...initialInputs }));
       setLockedInputs({});
@@ -97,7 +96,7 @@ const SequenceManager = ({
   // Handle grid input change
   const handleGridInputChange = (denominationValue, value) => {
     if (lockedInputs[denominationValue]) return;
-    
+
     // Only allow numbers
     if (value === '' || /^\d*$/.test(value)) {
       setGridInputs(prev => ({
@@ -112,7 +111,7 @@ const SequenceManager = ({
     if (lockedInputs[denominationValue]) {
       return false;
     }
-    
+
     // Lock previous field if it has a value
     if (currentFocusedField && currentFocusedField !== denominationValue) {
       const prevValue = gridInputs[currentFocusedField];
@@ -123,7 +122,7 @@ const SequenceManager = ({
         }));
       }
     }
-    
+
     setCurrentFocusedField(denominationValue);
     return true;
   };
@@ -152,12 +151,12 @@ const SequenceManager = ({
     const denominations = getDenominations();
     const resetInputs = {};
     const resetLocks = {};
-    
+
     denominations.forEach(denom => {
       resetInputs[denom.value] = '';
       resetLocks[denom.value] = false;
     });
-    
+
     setGridInputs(resetInputs);
     setLockedInputs(resetLocks);
     setCurrentFocusedField(null);
@@ -168,14 +167,14 @@ const SequenceManager = ({
     const currency = getCurrency();
     const denominations = getDenominations();
     let total = 0;
-    
+
     denominations.forEach(denom => {
       const multiplier = gridInputs[denom.value];
       if (multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
         total += denom.value * parseFloat(multiplier);
       }
     });
-    
+
     return total;
   };
 
@@ -184,12 +183,12 @@ const SequenceManager = ({
     if (e.key === 'Enter' && multiplier && multiplier !== '' && parseFloat(multiplier) > 0) {
       // Add the sequence directly with custom preset
       handleAddSequence(vendeur, denominationValue, multiplier);
-      
+
       // Clear and unlock the field
       const newInputs = { ...gridInputs };
       delete newInputs[denominationValue];
       setGridInputs(newInputs);
-      
+
       const newLocks = { ...lockedInputs };
       delete newLocks[denominationValue];
       setLockedInputs(newLocks);
@@ -199,7 +198,7 @@ const SequenceManager = ({
   // Add all grid inputs as sequences
   const handleAddAllGridSequences = () => {
     const denominations = getDenominations();
-    
+
     // Get all entries with values
     const entries = denominations
       .map(denom => ({
@@ -207,15 +206,15 @@ const SequenceManager = ({
         multiplier: gridInputs[denom.value]
       }))
       .filter(entry => entry.multiplier && entry.multiplier !== '' && parseFloat(entry.multiplier) > 0);
-    
+
     if (entries.length === 0) return;
-    
+
     // Process each entry one by one with delays
     entries.forEach(({ denom, multiplier }, index) => {
       setTimeout(() => {
         // Call handleAddSequence with custom preset and multiplier
         handleAddSequence(vendeur, denom.value, multiplier);
-        
+
         // If last entry, reset grid
         if (index === entries.length - 1) {
           setTimeout(() => {
@@ -238,11 +237,11 @@ const SequenceManager = ({
       const [, multiplier, presetValue, currency] = multiplierMatch;
 
       const presetValueNum = parseFloat(presetValue);
-      
+
       // Try to find matching denomination
       const denominations = currency.toUpperCase() === 'HTG' ? htgDenominations : usdDenominations;
       const matchingDenom = denominations.find(d => d.value === presetValueNum);
-      
+
       if (matchingDenom) {
         setVendorPresets(prev => ({
           ...prev,
@@ -365,8 +364,6 @@ const SequenceManager = ({
   const sortedDenominations = [...denominations].sort((a, b) => b.value - a.value);
 
   // Create zig-zag pattern across two columns
-  // First column: 1000, 250, 100, 25, 5 (even indices: 0, 2, 4, 6, 8)
-  // Second column: 500, 200, 50, 10 (odd indices: 1, 3, 5, 7)
   const firstColumnDenoms = [];
   const secondColumnDenoms = [];
 
@@ -477,7 +474,7 @@ const SequenceManager = ({
             </button>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-2">
           {/* First Column (even indices: 0, 2, 4, 6, 8) */}
           <div className="space-y-2">
@@ -485,7 +482,7 @@ const SequenceManager = ({
               const value = gridInputs[denom.value] || '';
               const isLocked = lockedInputs[denom.value];
               const totalForDenom = value && parseFloat(value) > 0 ? denom.value * parseFloat(value) : 0;
-              
+
               return (
                 <div 
                   key={`grid-${denom.value}`} 
@@ -510,7 +507,7 @@ const SequenceManager = ({
                       )}
                     </div>
                   </div>
-                  
+
                   <input
                     type="text"
                     inputMode="numeric"
@@ -529,7 +526,7 @@ const SequenceManager = ({
                     placeholder="0"
                     disabled={isLocked}
                   />
-                  
+
                   <div className="text-xs font-bold text-white text-opacity-70 text-center mt-1">
                     {totalForDenom > 0 ? formaterArgent(totalForDenom) : '—'}
                   </div>
@@ -537,14 +534,14 @@ const SequenceManager = ({
               );
             })}
           </div>
-          
+
           {/* Second Column (odd indices: 1, 3, 5, 7) */}
           <div className="space-y-2">
             {secondColumnDenoms.map((denom) => {
               const value = gridInputs[denom.value] || '';
               const isLocked = lockedInputs[denom.value];
               const totalForDenom = value && parseFloat(value) > 0 ? denom.value * parseFloat(value) : 0;
-              
+
               return (
                 <div 
                   key={`grid-${denom.value}`} 
@@ -569,7 +566,7 @@ const SequenceManager = ({
                       )}
                     </div>
                   </div>
-                  
+
                   <input
                     type="text"
                     inputMode="numeric"
@@ -588,7 +585,7 @@ const SequenceManager = ({
                     placeholder="0"
                     disabled={isLocked}
                   />
-                  
+
                   <div className="text-xs font-bold text-white text-opacity-70 text-center mt-1">
                     {totalForDenom > 0 ? formaterArgent(totalForDenom) : '—'}
                   </div>
