@@ -4,7 +4,7 @@ import VendorDepositCard from './VendorDepositCard';
 import SequenceManager from './SequenceManager';
 import DepositsSummary from './DepositsSummary';
 import ExchangeRateBanner from './ExchangeRateBanner';
-import { useDepositLogic } from './hooks/useDepositLogic';
+import { useDepositLogic } from './useDepositLogic';
 import VendorCardHeader from './components/VendorCardHeader';
 
 const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJourDepot, ajouterDepot, supprimerDepot }) => {
