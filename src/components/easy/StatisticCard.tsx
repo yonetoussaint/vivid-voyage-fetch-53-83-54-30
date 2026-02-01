@@ -13,27 +13,32 @@ const StatisticCard = ({
       emerald: {
         bg: 'bg-emerald-50',
         dot: 'bg-emerald-500',
-        text: 'text-emerald-900'
+        text: 'text-emerald-900',
+        badgeBg: 'bg-emerald-100'
       },
       amber: {
         bg: 'bg-amber-50',
         dot: 'bg-amber-500',
-        text: 'text-amber-900'
+        text: 'text-amber-900',
+        badgeBg: 'bg-amber-100'
       },
       red: {
         bg: 'bg-red-50',
         dot: 'bg-red-500',
-        text: 'text-red-900'
+        text: 'text-red-900',
+        badgeBg: 'bg-red-100'
       },
       orange: {
         bg: 'bg-orange-50',
         dot: 'bg-orange-500',
-        text: 'text-orange-900'
+        text: 'text-orange-900',
+        badgeBg: 'bg-orange-100'
       },
       blue: {
         bg: 'bg-blue-50',
         dot: 'bg-blue-500',
-        text: 'text-blue-900'
+        text: 'text-blue-900',
+        badgeBg: 'bg-blue-100'
       }
     };
 
@@ -50,9 +55,11 @@ const StatisticCard = ({
       </div>
       <div className="flex items-baseline justify-between">
         <p className="text-lg sm:text-xl font-bold">{value}</p>
-        <p className="text-[10px] opacity-90">gallons</p>
+        <div className={`rounded-2xl px-2 py-0.5 ${colors.badgeBg} ${colors.text}`}>
+          <p className="text-[10px] font-medium">gallons</p>
+        </div>
       </div>
-      <p className="text-[10px] opacity-90">
+      <p className="text-[10px] opacity-90 mt-0.5">
         {subtitle && subtitle.replace(/\s*gallons\s*/gi, '').trim()}
       </p>
     </div>
