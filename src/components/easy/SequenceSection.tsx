@@ -21,7 +21,11 @@ const SequenceSection = ({
   handleAddCompleteDeposit,
   calculatePresetAmount,
   onCancelEdit,
-  TAUX_DE_CHANGE
+  TAUX_DE_CHANGE,
+  // Add these missing props
+  htgPresets,
+  usdPresets,
+  setVendorPresets
 }) => {
   return (
     <div className="space-y-2">
