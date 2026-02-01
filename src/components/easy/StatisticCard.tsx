@@ -6,7 +6,7 @@ const StatisticCard = ({
   value, 
   subtitle, 
   color = 'emerald',
-  isPropane = false 
+  unit = 'gallons' // New prop for dynamic unit text
 }) => {
   const getColorClasses = () => {
     const colorMap = {
@@ -55,12 +55,15 @@ const StatisticCard = ({
       </div>
       <div className="flex items-baseline justify-between">
         <p className="text-lg sm:text-xl font-bold">{value}</p>
-        <div className={`rounded-2xl px-2 py-0.5 ${colors.badgeBg} ${colors.text}`}>
-          <p className="text-[10px] font-medium">gallons</p>
+        <div 
+          className={`!rounded-[20px] !px-2 !py-0.5 ${colors.badgeBg} ${colors.text}`}
+          style={{ borderRadius: '20px !important' }}
+        >
+          <p className="text-[10px] font-medium !important">{unit}</p>
         </div>
       </div>
       <p className="text-[10px] opacity-90 mt-0.5">
-        {subtitle && subtitle.replace(/\s*gallons\s*/gi, '').trim()}
+        {subtitle && subtitle.replace(new RegExp(`\\s*${unit}\\s*`, 'gi'), '').trim()}
       </p>
     </div>
   );
