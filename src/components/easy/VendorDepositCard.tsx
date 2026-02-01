@@ -12,48 +12,48 @@ const VendorDepositCard = ({
   onToggle = () => {}
 }) => {
   return (
-    <div className="bg-white bg-opacity-15 rounded-lg p-2 space-y-0">
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
       {/* Collapsible Header */}
       <div 
-        className="cursor-pointer hover:bg-white/10 active:scale-[0.98] transition-all rounded-lg p-2"
+        className="cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-all p-3"
         onClick={onToggle}
       >
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-1">
-            <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-              <User size={16} />
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <User size={18} className="text-blue-600" />
             </div>
-            <div className="flex flex-col flex-1">
-              <span className="font-bold">{vendeur}</span>
-              <span className="text-xs opacity-80">
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="font-semibold text-gray-900 truncate">{vendeur}</span>
+              <span className="text-sm text-gray-500">
                 Ventes: {formaterArgent(donneesVendeur?.ventesTotales || 0)} HTG
               </span>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-3 flex-shrink-0">
             {/* Espèces Attendues indicator */}
-            <div className={`px-3 py-1 rounded-full text-sm font-bold text-center min-w-[120px] ${
+            <div className={`px-3 py-1.5 rounded-full text-sm font-semibold text-center min-w-[130px] ${
               especesAttendues > 100 
-                ? 'bg-green-500' 
+                ? 'bg-green-100 text-green-800 border border-green-200' 
                 : especesAttendues > 0 
-                ? 'bg-yellow-500' 
+                ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
                 : especesAttendues < -100 
-                ? 'bg-red-500' 
-                : 'bg-orange-500'
+                ? 'bg-red-100 text-red-800 border border-red-200' 
+                : 'bg-orange-100 text-orange-800 border border-orange-200'
             }`}>
               <div className="flex flex-col items-center">
-                <span className="text-[10px] opacity-90">Espèces Attendues</span>
+                <span className="text-xs font-medium">Espèces Attendues</span>
                 <span>{formaterArgent(especesAttendues)} HTG</span>
               </div>
             </div>
-            
+
             {/* Chevron icon */}
-            <div className="ml-2">
+            <div className="ml-1">
               {isExpanded ? (
-                <ChevronDown size={20} className="opacity-70" />
+                <ChevronDown size={20} className="text-gray-400" />
               ) : (
-                <ChevronRight size={20} className="opacity-70" />
+                <ChevronRight size={20} className="text-gray-400" />
               )}
             </div>
           </div>
@@ -61,28 +61,30 @@ const VendorDepositCard = ({
       </div>
 
       {/* Collapsible Content with animation */}
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out border-t border-gray-100 ${
         isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
       }`}>
-        <div className={`pt-3 ${isExpanded ? 'block' : 'hidden'}`}>
+        <div className={`p-3 bg-gray-50 ${isExpanded ? 'block' : 'hidden'}`}>
           {/* Info Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-            <div className="bg-white/10 rounded-lg p-2">
-              <div className="text-xs opacity-80 mb-1">Ventes Total</div>
-              <div className="font-bold text-sm">{formaterArgent(donneesVendeur?.ventesTotales || 0)} HTG</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-xs">
+              <div className="text-xs text-gray-500 font-medium mb-1">Ventes Total</div>
+              <div className="font-bold text-gray-900">{formaterArgent(donneesVendeur?.ventesTotales || 0)} HTG</div>
             </div>
-            <div className="bg-white/10 rounded-lg p-2">
-              <div className="text-xs opacity-80 mb-1">Total Dépôts</div>
-              <div className="font-bold text-sm">{formaterArgent(totalDepotHTG)} HTG</div>
+            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-xs">
+              <div className="text-xs text-gray-500 font-medium mb-1">Total Dépôts</div>
+              <div className="font-bold text-gray-900">{formaterArgent(totalDepotHTG)} HTG</div>
             </div>
-            <div className="bg-white/10 rounded-lg p-2">
-              <div className="text-xs opacity-80 mb-1">Espèces Attendues</div>
-              <div className="font-bold text-sm">{formaterArgent(especesAttendues)} HTG</div>
+            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-xs">
+              <div className="text-xs text-gray-500 font-medium mb-1">Espèces Attendues</div>
+              <div className="font-bold text-gray-900">{formaterArgent(especesAttendues)} HTG</div>
             </div>
           </div>
 
           {/* Children content (deposit inputs, sequences, etc.) */}
-          {children}
+          <div className="mt-2">
+            {children}
+          </div>
         </div>
       </div>
     </div>
