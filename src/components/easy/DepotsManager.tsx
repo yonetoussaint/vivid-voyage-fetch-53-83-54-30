@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign } from 'lucide-react';
 import VendorDepositCard from './VendorDepositCard';
-import SequenceManager from './SequenceManager';
 import DepositsSummary from './DepositsSummary';
 import SequenceSection from './SequenceSection';
-import ExchangeRateBanner from './ExchangeRateBanner';
 import { useDepositLogic } from './useDepositLogic';
 import VendorCardHeader from './VendorCardHeader';
 
@@ -28,7 +25,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
     cancelEdit,
     saveEditedDeposit,
     handleUpdateSequence,
-    handleCurrencyButtonClick,
     handlePresetSelect,
     calculatePresetAmount,
     getCurrentPresets,
@@ -68,15 +64,13 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
   }, [editingDeposit]);
 
   return (
-    <div className="space-y-4">
-      <ExchangeRateBanner tauxDeChange={TAUX_DE_CHANGE} />
-
-      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl p-2 shadow-xl">
+    <div className="space-y-6">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
         <VendorCardHeader shift={shift} vendeurs={vendeurs} />
 
-        <div className="space-y-4">
+        <div className="space-y-3 p-1">
           {vendeurs.length === 0 ? (
-            <div className="text-center py-6 text-white text-opacity-70">
+            <div className="text-center py-8 text-gray-500">
               Aucun vendeur ajouté
             </div>
           ) : (
@@ -93,7 +87,6 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
               const vendorState = vendorPresets[vendeur];
               const currentPresets = getCurrentPresets(vendeur);
-              const isDirectMode = isDirectAmount(vendeur);
               const sequences = depositSequences[vendeur] || [];
               const sequencesTotal = calculateSequencesTotal(vendeur);
               const sequencesTotalByCurrency = calculateSequencesTotalByCurrency(vendeur);
@@ -113,7 +106,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                 >
                   {/* Only render children if expanded or editing */}
                   {(isExpanded || isEditingMode) && (
-                    <>
+                    <div className="space-y-4 pt-3">
                       <SequenceSection
                         vendeur={vendeur}
                         isEditingMode={isEditingMode}
@@ -153,7 +146,7 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
                         isEditingThisDeposit={isEditingThisDeposit}
                         exchangeRate={TAUX_DE_CHANGE}
                       />
-                    </>
+                    </div>
                   )}
                 </VendorDepositCard>
               );
