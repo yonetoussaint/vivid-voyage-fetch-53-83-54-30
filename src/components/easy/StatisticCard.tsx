@@ -11,40 +11,57 @@ const StatisticCard = ({
   const getColorClasses = () => {
     const colorMap = {
       emerald: {
-        bg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-        dot: 'bg-emerald-300'
+        border: 'border-emerald-200',
+        accent: 'text-emerald-600',
+        bg: 'bg-emerald-50'
       },
       amber: {
-        bg: 'bg-gradient-to-br from-amber-500 to-amber-600',
-        dot: 'bg-amber-300'
+        border: 'border-amber-200',
+        accent: 'text-amber-600',
+        bg: 'bg-amber-50'
       },
       red: {
-        bg: 'bg-gradient-to-br from-red-500 to-orange-500',
-        dot: 'bg-red-300'
+        border: 'border-red-200',
+        accent: 'text-red-600',
+        bg: 'bg-red-50'
       },
       orange: {
-        bg: 'bg-gradient-to-br from-orange-500 to-red-500',
-        dot: 'bg-orange-300'
+        border: 'border-orange-200',
+        accent: 'text-orange-600',
+        bg: 'bg-orange-50'
       },
       blue: {
-        bg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-        dot: 'bg-blue-300'
+        border: 'border-blue-200',
+        accent: 'text-blue-600',
+        bg: 'bg-blue-50'
       }
     };
-    
+
     return colorMap[color] || colorMap.emerald;
   };
 
   const colors = getColorClasses();
 
   return (
-    <div className={`rounded-xl p-3 shadow-lg ${colors.bg} text-white`}>
-      <div className="flex items-center gap-1 mb-1">
-        <div className={`w-2 h-2 rounded-full ${colors.dot}`}></div>
-        <p className="text-xs font-medium opacity-90">{title}</p>
+    <div className={`
+      rounded-lg p-4 
+      border ${colors.border} 
+      ${colors.bg}
+      hover:shadow-md transition-shadow duration-200
+    `}>
+      <div className="mb-2">
+        <p className={`text-xs font-medium uppercase tracking-wide ${colors.accent} opacity-80`}>
+          {title}
+        </p>
       </div>
-      <p className="text-lg sm:text-xl font-bold mb-0.5">{value}</p>
-      <p className="text-[10px] opacity-90">{subtitle}</p>
+      
+      <p className={`text-2xl sm:text-3xl font-bold mb-1 ${colors.accent}`}>
+        {value}
+      </p>
+      
+      <p className="text-sm text-gray-600">
+        {subtitle}
+      </p>
     </div>
   );
 };
