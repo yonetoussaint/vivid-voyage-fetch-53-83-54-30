@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { formaterArgent } from '@/utils/formatters';
-import { htgPresets, usdPresets } from '../utils/depositPresets';
+import { htgPresets, usdPresets } from './depositPresets';
 
 export const useDepositLogic = ({ 
   TAUX_DE_CHANGE, 
