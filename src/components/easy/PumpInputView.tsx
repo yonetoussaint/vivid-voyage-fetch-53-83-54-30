@@ -38,6 +38,11 @@ const PumpInputView = ({
   return (
     <div className="mt-4"> {/* Added px-3 to match PumpPistolets container */}
       {/* Stats Cards Section - Collapsible */}
+
+
+ <Separator topMargin="mt-6 mb-6" />
+
+
       <div className="">
         <button
           onClick={() => setShowStatsCards(!showStatsCards)}
@@ -56,7 +61,7 @@ const PumpInputView = ({
 
         {showStatsCards && (
           <div className="pb-4">
-            <div className="border-t border-gray-200 pt-4">
+            <div className=" pt-4">
               <StatsCards 
                 shift={shift}
                 totaux={totaux}
