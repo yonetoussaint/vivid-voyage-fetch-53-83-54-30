@@ -163,39 +163,44 @@ const PumpHeader = ({
 
   return (
     <div className="w-full space-y-3">
-     {/* Vendor Assignment - Compact Masonry Design */}
-<div className={`rounded-lg p-3 shadow-xs ${getVendorCardColor()}`}>
-  {/* Header Row */}
-  <div className="flex items-center justify-between mb-2">
-    <div className="flex items-center gap-2 min-w-0">
-      <div className={`p-1.5 rounded-md ${isPropane ? 'bg-red-100' : 'bg-indigo-100'}`}>
-        <User size={16} className={getVendorIconColor()} />
-      </div>
-      <span className="text-sm font-semibold text-gray-800 truncate">Vendeur</span>
+    {/* Vendor Assignment - Minimalist Design */}
+<div className="rounded-xl border bg-white p-3.5 shadow-sm">
+  <div className="mb-3 flex items-center gap-2">
+    <div className={`p-2 rounded-lg ${isPropane ? 'bg-red-50' : 'bg-indigo-50'}`}>
+      <User size={18} className={isPropane ? 'text-red-600' : 'text-indigo-600'} />
     </div>
-    <span className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${getVendorBadgeColor()}`}>
-      {isPropane ? 'Propane' : pompe}
-    </span>
+    <div className="flex-1 min-w-0">
+      <h4 className="text-sm font-semibold text-gray-900 truncate">
+        Vendeur assigné
+      </h4>
+      <span className={`text-xs font-medium ${isPropane ? 'text-red-600' : 'text-indigo-600'}`}>
+        {isPropane ? 'Propane' : pompe}
+      </span>
+    </div>
   </div>
 
-  {/* Content Area */}
   <div className="space-y-2">
     <select
       value={vendeurActuel}
       onChange={(e) => handleVendeurChange(e.target.value)}
-      className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-1 focus:border-indigo-400 bg-white shadow-xs transition-colors ${
-        isPropane ? 'border-red-200 focus:ring-red-400' : 'border-indigo-200 focus:ring-indigo-400'
-      }`}
+      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
     >
-      <option value="">Sélectionner...</option>
+      <option value="" className="text-gray-400">Sélectionner un vendeur</option>
       {vendeurs.map(vendeur => (
-        <option key={vendeur} value={vendeur}>{vendeur}</option>
+        <option key={vendeur} value={vendeur} className="text-gray-900">{vendeur}</option>
       ))}
     </select>
 
     {vendeurActuel && (
-      <div className={`text-white px-3 py-2 rounded-lg font-medium text-xs text-center truncate shadow-xs ${getVendorConfirmationColor()}`}>
-        ✓ {vendeurActuel}
+      <div className={`rounded-lg px-3 py-2 text-sm font-medium text-center transition-all ${
+        isPropane 
+          ? 'bg-red-50 text-red-700 border border-red-100' 
+          : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
+      }`}>
+        <div className="flex items-center justify-center gap-1.5">
+          <div className="size-2 rounded-full bg-current opacity-70"></div>
+          <span className="truncate">{vendeurActuel}</span>
+        </div>
       </div>
     )}
   </div>
