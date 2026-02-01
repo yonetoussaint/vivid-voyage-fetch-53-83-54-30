@@ -34,7 +34,7 @@ const PumpInputView = ({
   const depotsActuels = tousDepots[shift] || {};
 
   return (
-    <div className="mt-4 px-2"> {/* Added px-3 to match PumpPistolets container */}
+    <div className="mt-4"> {/* Added px-3 to match PumpPistolets container */}
       {/* Stats Cards Section - Collapsible */}
       <div className="border border-gray-200 rounded-lg">
         <button
