@@ -4,12 +4,12 @@ import { calculerTotalPompe } from '@/utils/helpers';
 import CaisseRecuCard from './CaisseRecuCard';
 
 // Import new components from easy folder
-import VendorAssignment from './easy/VendorAssignment';
-import StatisticCard from './easy/StatisticCard';
-import TotalGallonsCard from './easy/TotalGallonsCard';
-import PropaneSalesCard from './easy/PropaneSalesCard';
-import TotalSalesCard from './easy/TotalSalesCard';
-import QuickSummaryRow from './easy/QuickSummaryRow';
+import VendorAssignment from './VendorAssignment';
+import StatisticCard from './StatisticCard';
+import TotalGallonsCard from './TotalGallonsCard';
+import PropaneSalesCard from './PropaneSalesCard';
+import TotalSalesCard from './TotalSalesCard';
+import QuickSummaryRow from './QuickSummaryRow';
 
 const PumpHeader = ({ 
   pompe, 
