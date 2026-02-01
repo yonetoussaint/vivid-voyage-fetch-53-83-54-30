@@ -7,7 +7,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // Reusable separator component
 const Separator = () => (
-  <div className="my-4 border-t border-gray-200"></div>
+  <div className="my-4 border-t border-gray-150"></div>
 );
 
 const PumpInputView = ({ 
