@@ -65,10 +65,10 @@ const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJou
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+      <div className="bg-white">
         <VendorCardHeader shift={shift} vendeurs={vendeurs} />
 
-        <div className="space-y-3 p-1">
+        <div className="space-y-3">
           {vendeurs.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               Aucun vendeur ajouté
