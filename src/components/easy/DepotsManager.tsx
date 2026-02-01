@@ -5,7 +5,7 @@ import SequenceManager from './SequenceManager';
 import DepositsSummary from './DepositsSummary';
 import ExchangeRateBanner from './ExchangeRateBanner';
 import { useDepositLogic } from './useDepositLogic';
-import VendorCardHeader from './components/VendorCardHeader';
+import VendorCardHeader from './VendorCardHeader';
 
 const DepotsManager = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJourDepot, ajouterDepot, supprimerDepot }) => {
   const TAUX_DE_CHANGE = 132;
