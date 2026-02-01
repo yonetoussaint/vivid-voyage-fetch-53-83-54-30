@@ -97,8 +97,6 @@ const PumpHeader = ({
     <div className="w-full space-y-3">
       {/* Vendor Assignment */}
 
- <Separator topMargin="mt-2 mb-2" />
-
       <VendorAssignment
         pompe={pompe}
         isPropane={isPropane}
@@ -106,8 +104,6 @@ const PumpHeader = ({
         vendeurs={vendeurs}
         handleVendeurChange={handleVendeurChange}
       />
-
- <Separator topMargin="mt-2 mb-2" />
 
       {/* Quick Statistics */}
       <div className="grid grid-cols-2 gap-2 mb-3">
