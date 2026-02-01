@@ -163,37 +163,35 @@ const PumpHeader = ({
 
   return (
     <div className="w-full space-y-3">
-    {/* Vendor Assignment - Horizontal Compact */}
-<div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-  <div className={`p-2 rounded-lg shrink-0 ${isPropane ? 'bg-red-50' : 'bg-indigo-50'}`}>
-    <User size={18} className={isPropane ? 'text-red-600' : 'text-indigo-600'} />
+    {/* Vendor Assignment - Split Panel */}
+<div className="flex border border-gray-200 rounded-lg overflow-hidden bg-white">
+  {/* Left side - Type */}
+  <div className={`px-3 py-2 flex items-center gap-2 ${isPropane ? 'bg-red-50' : 'bg-indigo-50'}`}>
+    <User size={16} className={isPropane ? 'text-red-600' : 'text-indigo-600'} />
+    <span className="text-sm font-medium whitespace-nowrap">
+      {isPropane ? 'Propane' : pompe}
+    </span>
   </div>
   
+  {/* Right side - Selection */}
   <div className="flex-1 min-w-0">
-    <div className="flex items-center gap-2 mb-1">
-      <span className="text-sm font-medium text-gray-900 truncate">Vendeur</span>
-      <span className={`text-xs px-2 py-0.5 rounded-full ${isPropane ? 'bg-red-100 text-red-700' : 'bg-indigo-100 text-indigo-700'}`}>
-        {isPropane ? 'Propane' : pompe}
-      </span>
-    </div>
-    
     {vendeurActuel ? (
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-700 truncate">{vendeurActuel}</span>
+      <div className="flex items-center justify-between px-3 py-2">
+        <span className="text-sm text-gray-900 truncate">{vendeurActuel}</span>
         <button 
           onClick={() => handleVendeurChange('')}
-          className="text-xs text-gray-400 hover:text-gray-600 ml-2 shrink-0"
+          className="text-xs text-gray-500 hover:text-gray-700 ml-2 shrink-0"
         >
-          Changer
+          Modifier
         </button>
       </div>
     ) : (
       <select
         value={vendeurActuel}
         onChange={(e) => handleVendeurChange(e.target.value)}
-        className="w-full text-sm text-gray-500 border-0 p-0 focus:ring-0 focus:outline-none bg-transparent"
+        className="w-full h-full px-3 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 text-gray-500"
       >
-        <option value="">Assigner un vendeur...</option>
+        <option value="">Vendeur assigné</option>
         {vendeurs.map(vendeur => (
           <option key={vendeur} value={vendeur}>{vendeur}</option>
         ))}
