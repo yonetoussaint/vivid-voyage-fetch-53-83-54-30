@@ -4,7 +4,6 @@ import VendorDepositCard from './VendorDepositCard';
 import DepositsSummary from './DepositsSummary';
 import SequenceSection from './SequenceSection';
 import { useDepositLogic } from './useDepositLogic';
-import VendorCardHeader from './VendorCardHeader';
 
 const DepotsManager = ({ 
   shift, 
@@ -88,9 +87,7 @@ const DepotsManager = ({
 
   return (
     <div className="space-y-6">
-      {/* Stats Summary */}
-      <VendorCardHeader shift={shift} vendeurs={vendeurs} />
-
+      {/* Vendor cards section */}
       <div className="space-y-3">
         {displayVendeurs.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
