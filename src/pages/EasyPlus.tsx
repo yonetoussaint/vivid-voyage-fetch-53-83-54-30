@@ -303,25 +303,7 @@ const SystemeStationService = () => {
 
      
 
-      {/* Floating App Switcher for mobile */}
-      {!isMenuOpen && (
-        <button
-          onClick={() => setIsMenuOpen(true)}
-          className="lg:hidden fixed bottom-20 right-4 bg-white border border-gray-300 shadow-lg w-12 h-12 rounded-full flex items-center justify-center z-10"
-          aria-label="Changer d'application"
-        >
-          <span className="text-xl">
-            {activeTab === 'pumps' ? '⛽' : 
-             activeTab === 'vendeurs' ? '👥' : 
-             activeTab === 'conditionnement' ? '📦' :
-             activeTab === 'depots' ? '🏪' :
-             activeTab === 'stock' ? '📊' :
-             activeTab === 'usd' ? '💵' :
-             activeTab === 'report' ? '📋' : '🔥'}
-          </span>
-        </button>
-      )}
-
+      
       <ContactModal showContact={showContact} setShowContact={setShowContact} />
     </>
   );
