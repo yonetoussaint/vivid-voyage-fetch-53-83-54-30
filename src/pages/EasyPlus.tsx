@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// SystemeStationService.jsx
+import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
 import VendeursManager from '@/components/easy/VendeursManager';
@@ -24,6 +25,7 @@ const SystemeStationService = () => {
   const [pompeEtendue, setPompeEtendue] = useState('P1');
   const [showContact, setShowContact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [vendeurActif, setVendeurActif] = useState(null); // New state for active vendor
 
   const {
     toutesDonnees,
@@ -61,6 +63,15 @@ const SystemeStationService = () => {
   } = useStationData(date, shift);
 
   const pompes = ['P1', 'P2', 'P3', 'P4', 'P5'];
+
+  // Reset active vendor when vendeurs change
+  useEffect(() => {
+    if (vendeurs.length > 0 && (!vendeurActif || !vendeurs.includes(vendeurActif))) {
+      setVendeurActif(vendeurs[0]);
+    } else if (vendeurs.length === 0) {
+      setVendeurActif(null);
+    }
+  }, [vendeurs]);
 
   const handlePompeSelection = (selection) => {
     setPompeEtendue(selection);
@@ -174,6 +185,8 @@ const SystemeStationService = () => {
               mettreAJourDepot={mettreAJourDepot}
               ajouterDepot={ajouterDepot}
               supprimerDepot={supprimerDepot}
+              vendeurActif={vendeurActif}
+              setVendeurActif={setVendeurActif}
             />
           </div>
         );
@@ -284,26 +297,26 @@ const SystemeStationService = () => {
       </SidePanel>
 
       {/* Main Layout */}
-      
-<MainLayout
-  date={date}
-  shift={shift}
-  activeTab={activeTab}
-  onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
-  onDateChange={(newDate) => setDate(newDate)}
-  onShiftChange={(newShift) => setShift(newShift)}
-  // Add these new props for PumpSelector:
-  pompes={pompes}
-  pompeEtendue={pompeEtendue}
-  setPompeEtendue={setPompeEtendue}
-  showPropane={true}
->
-  {renderActiveTabContent()}
-</MainLayout>
+      <MainLayout
+        date={date}
+        shift={shift}
+        activeTab={activeTab}
+        onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
+        onDateChange={(newDate) => setDate(newDate)}
+        onShiftChange={(newShift) => setShift(newShift)}
+        // Pump props
+        pompes={pompes}
+        pompeEtendue={pompeEtendue}
+        setPompeEtendue={setPompeEtendue}
+        showPropane={true}
+        // Vendor props for depots tab
+        vendeurs={vendeurs}
+        vendeurActif={vendeurActif}
+        setVendeurActif={setVendeurActif}
+      >
+        {renderActiveTabContent()}
+      </MainLayout>
 
-     
-
-      
       <ContactModal showContact={showContact} setShowContact={setShowContact} />
     </>
   );
