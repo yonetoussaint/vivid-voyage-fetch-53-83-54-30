@@ -8,7 +8,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 // Enhanced separator with more control
 const Separator = ({ className = "", topMargin = "my-8", bottomMargin = "" }) => (
   <div className={`${topMargin} ${bottomMargin}`}>
-    <div className={`-mx-3 border-t-4 border-gray-200 ${className}`}></div>
+    <div className={`-mx-3 border-t-4 border-gray-150 ${className}`}></div>
   </div>
 );
 
