@@ -1,66 +1,127 @@
 import { useState, useCallback } from 'react';
 import { formaterArgent } from '@/utils/formatters';
-import { htgPresets, usdPresets } from './depositPresets';
+
+// Define the preset types
+interface Preset {
+  value: string;
+  label: string;
+}
+
+// Define the constants directly in the file
+const htgPresets: Preset[] = [
+  { value: '1', label: '1' },
+  { value: '5', label: '5' },
+  { value: '10', label: '10' },
+  { value: '25', label: '25' },
+  { value: '50', label: '50' },
+  { value: '100', label: '100' },
+  { value: '250', label: '250' },
+  { value: '500', label: '500' },
+  { value: '1000', label: '1,000' }
+];
+
+const usdPresets: Preset[] = [
+  { value: '1', label: '1' },
+  { value: '5', label: '5' },
+  { value: '10', label: '10' },
+  { value: '20', label: '20' },
+  { value: '50', label: '50' },
+  { value: '100', label: '100' }
+];
+
+// Define types for the hook
+interface VendorPreset {
+  currency: 'HTG' | 'USD';
+  preset: string;
+}
+
+interface Sequence {
+  id: number;
+  amount: number;
+  currency: 'HTG' | 'USD';
+  note: string;
+  timestamp: string;
+}
+
+interface Depot {
+  devise?: 'USD';
+  montant?: string;
+  value?: string;
+  breakdown?: string;
+  sequences?: Sequence[];
+}
+
+interface EditingDeposit {
+  vendeur: string;
+  index: number;
+}
+
+interface UseDepositLogicProps {
+  TAUX_DE_CHANGE: number;
+  depotsActuels: Record<string, Depot[]>;
+  mettreAJourDepot: (vendeur: string, index: number, depot: Depot) => void;
+  supprimerDepot: (vendeur: string, index: number) => void;
+}
 
 export const useDepositLogic = ({ 
   TAUX_DE_CHANGE, 
   depotsActuels, 
   mettreAJourDepot, 
   supprimerDepot 
-}) => {
-  const [vendorInputs, setVendorInputs] = useState({});
-  const [vendorPresets, setVendorPresets] = useState({});
-  const [depositSequences, setDepositSequences] = useState({});
-  const [recentlyAdded, setRecentlyAdded] = useState({});
-  const [editingDeposit, setEditingDeposit] = useState(null);
-  const [expandedVendor, setExpandedVendor] = useState(null);
+}: UseDepositLogicProps) => {
+  const [vendorInputs, setVendorInputs] = useState<Record<string, string>>({});
+  const [vendorPresets, setVendorPresets] = useState<Record<string, VendorPreset>>({});
+  const [depositSequences, setDepositSequences] = useState<Record<string, Sequence[]>>({});
+  const [recentlyAdded, setRecentlyAdded] = useState<Record<string, boolean>>({});
+  const [editingDeposit, setEditingDeposit] = useState<EditingDeposit | null>(null);
+  const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
 
   // Helper Functions
-  const convertirUSDversHTG = useCallback((montantUSD) => {
-    return (parseFloat(montantUSD) || 0) * TAUX_DE_CHANGE;
+  const convertirUSDversHTG = useCallback((montantUSD: number | string) => {
+    return (parseFloat(montantUSD.toString()) || 0) * TAUX_DE_CHANGE;
   }, [TAUX_DE_CHANGE]);
 
-  const getMontantHTG = useCallback((depot) => {
+  const getMontantHTG = useCallback((depot: Depot | number | string) => {
     if (!depot) return 0;
     if (typeof depot === 'object' && depot.devise === 'USD') {
-      return convertirUSDversHTG(depot.montant);
+      return convertirUSDversHTG(depot.montant || 0);
     }
     if (typeof depot === 'object' && depot.value) {
       return parseFloat(depot.value) || 0;
     }
-    return parseFloat(depot) || 0;
+    return parseFloat(depot.toString()) || 0;
   }, [convertirUSDversHTG]);
 
-  const calculateTotalDepotsHTG = useCallback((vendeur) => {
+  const calculateTotalDepotsHTG = useCallback((vendeur: string) => {
     const depots = depotsActuels[vendeur] || [];
     return depots.reduce((total, depot) => total + getMontantHTG(depot), 0);
   }, [depotsActuels, getMontantHTG]);
 
-  const isUSDDepot = useCallback((depot) => {
+  const isUSDDepot = useCallback((depot: Depot | number | string) => {
     return typeof depot === 'object' && depot.devise === 'USD';
   }, []);
 
-  const hasBreakdown = useCallback((depot) => {
+  const hasBreakdown = useCallback((depot: Depot) => {
     return typeof depot === 'object' && (depot.breakdown || depot.sequences);
   }, []);
 
-  const getOriginalDepotAmount = useCallback((depot) => {
+  const getOriginalDepotAmount = useCallback((depot: Depot | number | string) => {
     if (!depot) return 0;
     if (typeof depot === 'object') {
       if (depot.devise === 'USD') {
-        return parseFloat(depot.montant) || 0;
+        return parseFloat(depot.montant || '0') || 0;
       } else if (depot.value) {
         return parseFloat(depot.value) || 0;
       }
     }
-    return parseFloat(depot) || 0;
+    return parseFloat(depot.toString()) || 0;
   }, []);
 
-  const getDepositDisplay = useCallback((depot) => {
+  const getDepositDisplay = useCallback((depot: Depot | number | string) => {
     if (!depot) return '';
     if (typeof depot === 'object') {
       if (depot.devise === 'USD') {
-        const amount = parseFloat(depot.montant) || 0;
+        const amount = parseFloat(depot.montant || '0') || 0;
         const breakdown = depot.breakdown ? ` (${depot.breakdown})` : '';
         return `${amount} USD${breakdown}`;
       } else if (depot.value) {
@@ -69,12 +130,12 @@ export const useDepositLogic = ({
         return `${formaterArgent(amount)} HTG${breakdown}`;
       }
     }
-    const amount = parseFloat(depot) || 0;
+    const amount = parseFloat(depot.toString()) || 0;
     return `${formaterArgent(amount)} HTG`;
   }, []);
 
   // Calculate sequences total by currency
-  const calculateSequencesTotalByCurrency = useCallback((vendeur) => {
+  const calculateSequencesTotalByCurrency = useCallback((vendeur: string) => {
     const sequences = depositSequences[vendeur] || [];
     const totals = {
       HTG: 0,
@@ -94,7 +155,7 @@ export const useDepositLogic = ({
   }, [depositSequences]);
 
   // Calculate total HTG value of all sequences
-  const calculateTotalSequencesHTG = useCallback((vendeur) => {
+  const calculateTotalSequencesHTG = useCallback((vendeur: string) => {
     const sequences = depositSequences[vendeur] || [];
     return sequences.reduce((total, seq) => {
       if (seq.currency === 'USD') {
@@ -105,11 +166,11 @@ export const useDepositLogic = ({
   }, [depositSequences, TAUX_DE_CHANGE]);
 
   // State Management Functions
-  const handleToggleVendor = useCallback((vendeur) => {
+  const handleToggleVendor = useCallback((vendeur: string) => {
     setExpandedVendor(prev => prev === vendeur ? null : vendeur);
   }, []);
 
-  const initializeVendorState = useCallback((vendeur, currency = 'HTG') => {
+  const initializeVendorState = useCallback((vendeur: string, currency: 'HTG' | 'USD' = 'HTG') => {
     if (!vendorInputs[vendeur]) {
       setVendorInputs(prev => ({ ...prev, [vendeur]: '' }));
     }
@@ -124,13 +185,13 @@ export const useDepositLogic = ({
     }
   }, [vendorInputs, vendorPresets]);
 
-  const initializeSequences = useCallback((vendeur) => {
+  const initializeSequences = useCallback((vendeur: string) => {
     if (!depositSequences[vendeur]) {
       setDepositSequences(prev => ({ ...prev, [vendeur]: [] }));
     }
   }, [depositSequences]);
 
-  const markAsRecentlyAdded = useCallback((vendeur, index) => {
+  const markAsRecentlyAdded = useCallback((vendeur: string, index: number) => {
     const key = `${vendeur}-${index}`;
     setRecentlyAdded(prev => ({ ...prev, [key]: true }));
     setTimeout(() => {
@@ -143,7 +204,7 @@ export const useDepositLogic = ({
   }, []);
 
   // Edit deposit functionality
-  const handleEditDeposit = useCallback((vendeur, index) => {
+  const handleEditDeposit = useCallback((vendeur: string, index: number) => {
     const depot = depotsActuels[vendeur]?.[index];
 
     if (!depot) return;
@@ -155,7 +216,7 @@ export const useDepositLogic = ({
     if (depot.sequences && Array.isArray(depot.sequences)) {
       setDepositSequences(prev => ({
         ...prev,
-        [vendeur]: depot.sequences.map(seq => ({
+        [vendeur]: depot.sequences!.map(seq => ({
           id: Date.now() + Math.random(), // New IDs for editing
           amount: seq.amount,
           currency: seq.currency || (isUSDDepot(depot) ? 'USD' : 'HTG'),
@@ -217,7 +278,7 @@ export const useDepositLogic = ({
     }
   }, [depotsActuels, getOriginalDepotAmount, isUSDDepot]);
 
-  const cancelEdit = useCallback((vendeur) => {
+  const cancelEdit = useCallback((vendeur: string) => {
     setEditingDeposit(null);
     setDepositSequences(prev => ({ ...prev, [vendeur]: [] }));
     // Reset to smallest preset
@@ -237,9 +298,9 @@ export const useDepositLogic = ({
   }, [vendorPresets]);
 
   // Save edited deposit with mixed currencies
-  const saveEditedDeposit = useCallback((vendeur) => {
+  const saveEditedDeposit = useCallback((vendeur: string) => {
     const sequences = depositSequences[vendeur] || [];
-    const { index } = editingDeposit;
+    const { index } = editingDeposit!;
 
     if (sequences.length === 0) {
       // If no sequences, delete the deposit
@@ -264,7 +325,7 @@ export const useDepositLogic = ({
       }, 0);
 
       const breakdown = sequences.map(seq => seq.note).join(', ');
-      const deposit = {
+      const deposit: Depot = {
         montant: totalAmountUSD.toFixed(2),
         devise: 'USD',
         breakdown: breakdown,
@@ -282,7 +343,7 @@ export const useDepositLogic = ({
       }, 0);
 
       const breakdown = sequences.map(seq => seq.note).join(', ');
-      const deposit = {
+      const deposit: Depot = {
         value: totalAmountHTG.toString(),
         breakdown: breakdown,
         sequences: sequences
@@ -295,17 +356,17 @@ export const useDepositLogic = ({
   }, [depositSequences, editingDeposit, supprimerDepot, depotsActuels, isUSDDepot, TAUX_DE_CHANGE, mettreAJourDepot, cancelEdit, markAsRecentlyAdded]);
 
   // Sequence editing functionality
-  const handleUpdateSequence = useCallback((vendeur, sequenceId, updatedSequence) => {
+  const handleUpdateSequence = useCallback((vendeur: string, sequenceId: number, updatedSequence: Partial<Sequence>) => {
     setDepositSequences(prev => ({
       ...prev,
       [vendeur]: (prev[vendeur] || []).map(seq => 
-        seq.id === sequenceId ? { ...updatedSequence, id: sequenceId } : seq
+        seq.id === sequenceId ? { ...seq, ...updatedSequence } as Sequence : seq
       )
     }));
   }, []);
 
   // Event Handlers
-  const handleCurrencyButtonClick = useCallback((vendeur, currency) => {
+  const handleCurrencyButtonClick = useCallback((vendeur: string, currency: 'HTG' | 'USD') => {
     if (!vendorPresets[vendeur]) {
       initializeVendorState(vendeur, currency);
     } else {
@@ -324,7 +385,7 @@ export const useDepositLogic = ({
     handleInputChange(vendeur, ''); // Clear input when switching currency
   }, [vendorPresets, initializeVendorState]);
 
-  const handlePresetSelect = useCallback((vendeur, presetValue) => {
+  const handlePresetSelect = useCallback((vendeur: string, presetValue: string) => {
     setVendorPresets(prev => ({
       ...prev,
       [vendeur]: { ...prev[vendeur], preset: presetValue }
@@ -338,16 +399,16 @@ export const useDepositLogic = ({
     }, 100);
   }, []);
 
-  const calculatePresetAmount = useCallback((vendeur) => {
+  const calculatePresetAmount = useCallback((vendeur: string) => {
     const vendorState = vendorPresets[vendeur];
     if (!vendorState) return 0;
 
-    const multiplier = parseFloat(vendorInputs[vendeur] || 1);
+    const multiplier = parseFloat(vendorInputs[vendeur] || '1');
     const presetValue = parseFloat(vendorState.preset);
     return presetValue * multiplier;
   }, [vendorPresets, vendorInputs]);
 
-  const getCurrentPresets = useCallback((vendeur) => {
+  const getCurrentPresets = useCallback((vendeur: string) => {
     const vendorState = vendorPresets[vendeur];
     if (!vendorState) return htgPresets;
     return vendorState.currency === 'HTG' ? htgPresets : usdPresets;
@@ -358,18 +419,18 @@ export const useDepositLogic = ({
     return false;
   }, []);
 
-  const handleInputChange = useCallback((vendeur, value) => {
+  const handleInputChange = useCallback((vendeur: string, value: string) => {
     setVendorInputs(prev => ({ ...prev, [vendeur]: value }));
   }, []);
 
   // UPDATED: handleAddSequence now accepts custom preset and multiplier
-  const handleAddSequence = useCallback((vendeur, customPreset = null, customMultiplier = null) => {
+  const handleAddSequence = useCallback((vendeur: string, customPreset: string | null = null, customMultiplier: number | null = null) => {
     let vendorState = vendorPresets[vendeur];
     let inputValue = vendorInputs[vendeur];
 
     // Use custom values if provided (from grid)
     if (customPreset !== null) {
-      vendorState = { ...vendorState, preset: customPreset.toString() };
+      vendorState = { ...vendorState!, preset: customPreset.toString() };
     }
     if (customMultiplier !== null) {
       inputValue = customMultiplier.toString();
@@ -385,7 +446,7 @@ export const useDepositLogic = ({
     let currency = vendorState.currency;
     let note = '';
 
-    const multiplier = parseFloat(inputValue || 1);
+    const multiplier = parseFloat(inputValue || '1');
     const presetValue = parseFloat(vendorState.preset);
     amount = presetValue * multiplier;
     note = multiplier === 1 
@@ -398,7 +459,7 @@ export const useDepositLogic = ({
 
     if (amount > 0) {
       initializeSequences(vendeur);
-      const newSequence = {
+      const newSequence: Sequence = {
         id: Date.now() + Math.random(),
         amount,
         currency,
@@ -419,24 +480,24 @@ export const useDepositLogic = ({
     }
   }, [vendorPresets, vendorInputs, initializeVendorState, initializeSequences]);
 
-  const handleRemoveSequence = useCallback((vendeur, sequenceId) => {
+  const handleRemoveSequence = useCallback((vendeur: string, sequenceId: number) => {
     setDepositSequences(prev => ({
       ...prev,
       [vendeur]: (prev[vendeur] || []).filter(seq => seq.id !== sequenceId)
     }));
   }, []);
 
-  const handleClearSequences = useCallback((vendeur) => {
+  const handleClearSequences = useCallback((vendeur: string) => {
     setDepositSequences(prev => ({ ...prev, [vendeur]: [] }));
   }, []);
 
-  const calculateSequencesTotal = useCallback((vendeur) => {
+  const calculateSequencesTotal = useCallback((vendeur: string) => {
     const sequences = depositSequences[vendeur] || [];
     return sequences.reduce((total, seq) => total + seq.amount, 0);
   }, [depositSequences]);
 
   // Handle mixed currencies by creating separate deposits
-  const handleAddCompleteDeposit = useCallback((vendeur) => {
+  const handleAddCompleteDeposit = useCallback((vendeur: string) => {
     const sequences = depositSequences[vendeur] || [];
 
     if (sequences.length === 0) {
@@ -445,7 +506,7 @@ export const useDepositLogic = ({
     }
 
     // Group sequences by currency
-    const sequencesByCurrency = sequences.reduce((acc, seq) => {
+    const sequencesByCurrency = sequences.reduce((acc: Record<string, Sequence[]>, seq) => {
       const currency = seq.currency || 'HTG';
       if (!acc[currency]) {
         acc[currency] = [];
@@ -466,7 +527,7 @@ export const useDepositLogic = ({
       // Use setTimeout to ensure state updates sequentially
       setTimeout(() => {
         if (currency === 'USD') {
-          const deposit = {
+          const deposit: Depot = {
             montant: totalAmount.toFixed(2),
             devise: 'USD',
             breakdown: breakdown,
@@ -474,7 +535,7 @@ export const useDepositLogic = ({
           };
           mettreAJourDepot(vendeur, nextIndex + i, deposit);
         } else {
-          const deposit = {
+          const deposit: Depot = {
             value: totalAmount.toString(),
             breakdown: breakdown,
             sequences: currencySequences
@@ -492,11 +553,11 @@ export const useDepositLogic = ({
     }, Object.keys(sequencesByCurrency).length * 50 + 50);
   }, [depositSequences, depotsActuels, mettreAJourDepot, markAsRecentlyAdded, handleClearSequences]);
 
-  const isRecentlyAdded = useCallback((vendeur, index) => {
+  const isRecentlyAdded = useCallback((vendeur: string, index: number) => {
     return recentlyAdded[`${vendeur}-${index}`] || false;
   }, [recentlyAdded]);
 
-  const isEditingThisDeposit = useCallback((vendeur, index) => {
+  const isEditingThisDeposit = useCallback((vendeur: string, index: number) => {
     return editingDeposit?.vendeur === vendeur && editingDeposit?.index === index;
   }, [editingDeposit]);
 
