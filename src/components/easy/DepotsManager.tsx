@@ -3,6 +3,7 @@ import { DollarSign } from 'lucide-react';
 import VendorDepositCard from './VendorDepositCard';
 import SequenceManager from './SequenceManager';
 import DepositsSummary from './DepositsSummary';
+import SequenceSection from './SequenceSection';
 import ExchangeRateBanner from './ExchangeRateBanner';
 import { useDepositLogic } from './useDepositLogic';
 import VendorCardHeader from './VendorCardHeader';
