@@ -50,7 +50,7 @@ const StatisticCard = ({
       </div>
       <div className="flex items-baseline justify-between">
         <p className="text-lg sm:text-xl font-bold">{value}</p>
-        <p className="text-sm opacity-90">gallons</p>
+        <p className="text-[10px] opacity-90">gallons</p>
       </div>
       <p className="text-[10px] opacity-90">
         {subtitle && subtitle.replace(/\s*gallons\s*/gi, '').trim()}
