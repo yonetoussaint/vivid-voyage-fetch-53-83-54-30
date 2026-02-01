@@ -56,8 +56,8 @@ const StatisticCard = ({
       <div className="flex items-baseline justify-between">
         <p className="text-lg sm:text-xl font-bold">{value}</p>
         <div 
-          className={`!rounded-[20px] !px-2 !py-0.5 ${colors.badgeBg} ${colors.text}`}
-          style={{ borderRadius: '20px !important' }}
+          className={`!rounded-[10px] !px-2 !py-0.5 ${colors.badgeBg} ${colors.text}`}
+          style={{ borderRadius: '10px !important' }}
         >
           <p className="text-[10px] font-medium !important">{unit}</p>
         </div>
