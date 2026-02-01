@@ -61,7 +61,7 @@ const PumpInputView = ({
       </div>
 
       {/* Render content based on selected pump */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="overflow-hidden">
         {pompeEtendue === 'propane' ? (
           <>
             <PumpHeader
