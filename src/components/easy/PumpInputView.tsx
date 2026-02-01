@@ -38,10 +38,10 @@ const PumpInputView = ({
   return (
     <div className="mt-4"> {/* Added px-3 to match PumpPistolets container */}
       {/* Stats Cards Section - Collapsible */}
-      <div className="border border-gray-200 rounded-lg">
+      <div className="">
         <button
           onClick={() => setShowStatsCards(!showStatsCards)}
-          className="flex items-center justify-between w-full p-4 hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-between w-full p-2 transition-colors"
         >
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Statistiques du Shift {shift}</h3>
