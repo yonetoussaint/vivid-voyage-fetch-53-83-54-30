@@ -1,72 +1,177 @@
-// easy/StatisticCard.jsx
+// PumpHeader.jsx (updated version)
 import React from 'react';
+import { calculerTotalPompe } from '@/utils/helpers';
+import CaisseRecuCard from './CaisseRecuCard';
 
-const StatisticCard = ({ 
-  title, 
-  value, 
-  subtitle, 
-  color = 'emerald',
-  unit = 'gallons' // New prop for dynamic unit text
+// Import new components from easy folder
+import VendorAssignment from './VendorAssignment';
+import StatisticCard from './StatisticCard';
+import TotalGallonsCard from './TotalGallonsCard';
+import PropaneSalesCard from './PropaneSalesCard';
+import TotalSalesCard from './TotalSalesCard';
+import QuickSummaryRow from './QuickSummaryRow';
+
+const PumpHeader = ({ 
+  pompe, 
+  shift, 
+  donneesPompe, 
+  vendeurs, 
+  mettreAJourAffectationVendeur, 
+  prix,
+  vendeurDepots = {},
+  tauxUSD = 132,
+  isPropane = false,
+  propaneData = null,
+  prixPropane = null
 }) => {
-  const getColorClasses = () => {
-    const colorMap = {
-      emerald: {
-        bg: 'bg-emerald-50',
-        dot: 'bg-emerald-500',
-        text: 'text-emerald-900',
-        badgeBg: 'bg-emerald-100'
-      },
-      amber: {
-        bg: 'bg-amber-50',
-        dot: 'bg-amber-500',
-        text: 'text-amber-900',
-        badgeBg: 'bg-amber-100'
-      },
-      red: {
-        bg: 'bg-red-50',
-        dot: 'bg-red-500',
-        text: 'text-red-900',
-        badgeBg: 'bg-red-100'
-      },
-      orange: {
-        bg: 'bg-orange-50',
-        dot: 'bg-orange-500',
-        text: 'text-orange-900',
-        badgeBg: 'bg-orange-100'
-      },
-      blue: {
-        bg: 'bg-blue-50',
-        dot: 'bg-blue-500',
-        text: 'text-blue-900',
-        badgeBg: 'bg-blue-100'
-      }
+  // Calculate totals based on mode
+  let totalPompe, gallonsGasoline, gallonsDiesel, ventesGasoline, ventesDiesel, ventesTotales;
+
+  if (isPropane) {
+    const gallonsPropane = (parseFloat(propaneData?.fin) || 0) - (parseFloat(propaneData?.debut) || 0);
+    ventesTotales = gallonsPropane * prixPropane;
+
+    totalPompe = {
+      gallonsGasoline: 0,
+      gallonsDiesel: 0,
+      ventesGasoline: 0,
+      ventesDiesel: 0,
+      ventesTotales: ventesTotales
     };
 
-    return colorMap[color] || colorMap.emerald;
+    gallonsGasoline = 0;
+    gallonsDiesel = gallonsPropane;
+    ventesGasoline = 0;
+    ventesDiesel = ventesTotales;
+  } else {
+    totalPompe = calculerTotalPompe(donneesPompe, prix);
+    gallonsGasoline = totalPompe?.gallonsGasoline || 0;
+    gallonsDiesel = totalPompe?.gallonsDiesel || 0;
+    ventesGasoline = totalPompe?.ventesGasoline || 0;
+    ventesDiesel = totalPompe?.ventesDiesel || 0;
+    ventesTotales = totalPompe?.ventesTotales || 0;
+  }
+
+  // Calculate rounded adjusted total
+  const exactValue = parseFloat(ventesTotales || 0);
+  const totalAjustePourCaisse = Math.round(exactValue / 5) * 5;
+
+  // Get current vendeur
+  const vendeurActuel = isPropane 
+    ? (propaneData?._vendeur || donneesPompe?._vendeur || '') 
+    : (donneesPompe?._vendeur || '');
+
+  // Calculate deposits
+  const sellerDeposits = vendeurActuel ? vendeurDepots[vendeurActuel] || [] : [];
+  const totalDeposits = sellerDeposits.reduce((sum, depot) => {
+    if (!depot) return sum;
+
+    if (typeof depot === 'object' && depot.devise === 'USD') {
+      const montantUSD = parseFloat(depot.montant) || 0;
+      return sum + (montantUSD * tauxUSD);
+    } else {
+      return sum + (parseFloat(depot) || 0);
+    }
+  }, 0);
+
+  // Calculate expected cash
+  const especesAttendues = totalAjustePourCaisse - totalDeposits;
+
+  // Handle vendeur change
+  const handleVendeurChange = (newVendeurId) => {
+    if (isPropane) {
+      mettreAJourAffectationVendeur('propane', newVendeurId);
+    } else {
+      mettreAJourAffectationVendeur(pompe, newVendeurId);
+    }
   };
 
-  const colors = getColorClasses();
-
   return (
-    <div className={`rounded-xl p-3 border ${colors.bg} ${colors.text}`}>
-      <div className="flex items-center gap-1 mb-1">
-        <div className={`w-2 h-2 rounded-full ${colors.dot}`}></div>
-        <p className="text-xs font-medium opacity-90">{title}</p>
+    <div className="w-full space-y-3">
+      {/* Vendor Assignment */}
+      <VendorAssignment
+        pompe={pompe}
+        isPropane={isPropane}
+        vendeurActuel={vendeurActuel}
+        vendeurs={vendeurs}
+        handleVendeurChange={handleVendeurChange}
+      />
+
+      {/* Quick Statistics */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <StatisticCard
+          title={isPropane ? 'Prix Propane' : `Gasoline (${pompe})`}
+          value={isPropane ? `${prixPropane}` : gallonsGasoline}
+          color={isPropane ? 'red' : 'emerald'}
+          unit={isPropane ? 'HTG' : 'gallons'}
+        />
+        <StatisticCard
+          title={isPropane ? 'Gallons Propane' : `Diesel (${pompe})`}
+          value={isPropane ? gallonsDiesel.toFixed(3) : gallonsDiesel}
+          color={isPropane ? 'orange' : 'amber'}
+          unit={isPropane ? 'gallons' : 'gallons'}
+        />
       </div>
-      <div className="flex items-baseline justify-between">
-        <p className="text-lg sm:text-xl font-bold">{value}</p>
-        <div 
-          className={`!rounded-xl !px-2 !py-0.5 ${colors.badgeBg} ${colors.text}`}
-          style={{ borderRadius: '12px !important' }}
-        >
-          <p className="text-[10px] font-medium !important">{unit}</p>
+
+      {/* Total Gallons Card */}
+      <TotalGallonsCard
+        gallonsGasoline={gallonsGasoline}
+        gallonsDiesel={gallonsDiesel}
+        isPropane={isPropane}
+        pompe={pompe}
+      />
+
+      {/* Gas/Diesel Sales Cards or Propane Sales Card */}
+      {!isPropane ? (
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <StatisticCard
+            title="Gasoline Sales"
+            value={ventesGasoline}
+            color="emerald"
+            unit="HTG"
+          />
+          <StatisticCard
+            title="Diesel Sales"
+            value={ventesDiesel}
+            color="amber"
+            unit="HTG"
+          />
         </div>
-      </div>
-      <p className="text-[10px] opacity-90 mt-0.5">
-        {subtitle && subtitle.replace(new RegExp(`\\s*${unit}\\s*`, 'gi'), '').trim()}
-      </p>
+      ) : (
+        <PropaneSalesCard
+          gallonsPropane={gallonsDiesel}
+          ventesTotales={ventesTotales}
+          prixPropane={prixPropane}
+        />
+      )}
+
+      {/* Total Sales Card */}
+      <TotalSalesCard
+        ventesTotales={ventesTotales}
+        isPropane={isPropane}
+        pompe={pompe}
+      />
+
+      {/* Cash Received Card */}
+      <CaisseRecuCard
+        vendeurActuel={vendeurActuel}
+        sellerDeposits={sellerDeposits}
+        totalDeposits={totalDeposits}
+        totalAjustePourCaisse={totalAjustePourCaisse}
+        especesAttendues={especesAttendues}
+        isPropane={isPropane}
+        tauxUSD={tauxUSD}
+      />
+
+      {/* Quick Summary Row */}
+      <QuickSummaryRow
+        gallonsGasoline={gallonsGasoline}
+        gallonsDiesel={gallonsDiesel}
+        isPropane={isPropane}
+        prixPropane={prixPropane}
+      />
     </div>
   );
 };
 
-export default StatisticCard;
+export default PumpHeader;
