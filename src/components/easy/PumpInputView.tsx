@@ -5,9 +5,9 @@ import StatsCards from '@/components/easy/StatsCards';
 import PropaneManager from '@/components/easy/PropaneManager';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-// Reusable separator component
-const Separator = () => (
-  <div className="my-6 -mx-3 border-t border-gray-200"></div>
+// Enhanced separator with more control
+const Separator = ({ className = "", topMargin = "my-8", bottomMargin = "" }) => (
+  <div className={`${topMargin} ${bottomMargin} w-full border-t-4 border-gray-200 ${className}`}></div>
 );
 
 const PumpInputView = ({ 
@@ -34,7 +34,7 @@ const PumpInputView = ({
   const depotsActuels = tousDepots[shift] || {};
 
   return (
-    <div className="space-y-0 mt-4">
+    <div className="mt-4 px-3"> {/* Added px-3 to match PumpPistolets container */}
       {/* Stats Cards Section - Collapsible */}
       <div className="border border-gray-200 rounded-lg">
         <button
@@ -65,7 +65,7 @@ const PumpInputView = ({
         )}
       </div>
 
-      <Separator />
+      <Separator topMargin="mt-6 mb-6" />
 
       {/* Render content based on selected pump */}
       <div className="overflow-hidden">
@@ -85,9 +85,9 @@ const PumpInputView = ({
               prix={prix}
             />
 
-            <Separator />
+            <Separator topMargin="mt-6 mb-6" />
 
-            <div className="p-4">
+            <div className="pt-2"> {/* Added padding top */}
               <PropaneManager
                 shift={shift}
                 propaneDonnees={propaneDonneesCourantes}
@@ -118,7 +118,7 @@ const PumpInputView = ({
         )}
       </div>
 
-      <Separator />
+      <Separator topMargin="mt-6 mb-6" />
 
       {/* PumpPistolets rendered outside the main wrapper */}
       {pompeEtendue !== 'propane' && Object.entries(lecturesCourantes).map(([pompe, donneesPompe]) => {
