@@ -14,7 +14,7 @@ import QuickSummaryRow from './QuickSummaryRow';
 // Enhanced separator with more control
 const Separator = ({ className = "", topMargin = "my-8", bottomMargin = "" }) => (
   <div className={`${topMargin} ${bottomMargin}`}>
-    <div className={`-mx-3 border-t-4 border-gray-100 ${className}`}></div>
+    <div className={`-mx-6 border-t-4 border-gray-100 ${className}`}></div>
   </div>
 );
 
