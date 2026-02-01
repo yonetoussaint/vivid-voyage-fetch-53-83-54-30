@@ -163,45 +163,41 @@ const PumpHeader = ({
 
   return (
     <div className="w-full space-y-3">
-    {/* Vendor Assignment - Minimalist Design */}
-<div className="rounded-xl border bg-white p-3.5 shadow-sm">
-  <div className="mb-3 flex items-center gap-2">
-    <div className={`p-2 rounded-lg ${isPropane ? 'bg-red-50' : 'bg-indigo-50'}`}>
-      <User size={18} className={isPropane ? 'text-red-600' : 'text-indigo-600'} />
-    </div>
-    <div className="flex-1 min-w-0">
-      <h4 className="text-sm font-semibold text-gray-900 truncate">
-        Vendeur assigné
-      </h4>
-      <span className={`text-xs font-medium ${isPropane ? 'text-red-600' : 'text-indigo-600'}`}>
+    {/* Vendor Assignment - Horizontal Compact */}
+<div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
+  <div className={`p-2 rounded-lg shrink-0 ${isPropane ? 'bg-red-50' : 'bg-indigo-50'}`}>
+    <User size={18} className={isPropane ? 'text-red-600' : 'text-indigo-600'} />
+  </div>
+  
+  <div className="flex-1 min-w-0">
+    <div className="flex items-center gap-2 mb-1">
+      <span className="text-sm font-medium text-gray-900 truncate">Vendeur</span>
+      <span className={`text-xs px-2 py-0.5 rounded-full ${isPropane ? 'bg-red-100 text-red-700' : 'bg-indigo-100 text-indigo-700'}`}>
         {isPropane ? 'Propane' : pompe}
       </span>
     </div>
-  </div>
-
-  <div className="space-y-2">
-    <select
-      value={vendeurActuel}
-      onChange={(e) => handleVendeurChange(e.target.value)}
-      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
-    >
-      <option value="" className="text-gray-400">Sélectionner un vendeur</option>
-      {vendeurs.map(vendeur => (
-        <option key={vendeur} value={vendeur} className="text-gray-900">{vendeur}</option>
-      ))}
-    </select>
-
-    {vendeurActuel && (
-      <div className={`rounded-lg px-3 py-2 text-sm font-medium text-center transition-all ${
-        isPropane 
-          ? 'bg-red-50 text-red-700 border border-red-100' 
-          : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
-      }`}>
-        <div className="flex items-center justify-center gap-1.5">
-          <div className="size-2 rounded-full bg-current opacity-70"></div>
-          <span className="truncate">{vendeurActuel}</span>
-        </div>
+    
+    {vendeurActuel ? (
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-700 truncate">{vendeurActuel}</span>
+        <button 
+          onClick={() => handleVendeurChange('')}
+          className="text-xs text-gray-400 hover:text-gray-600 ml-2 shrink-0"
+        >
+          Changer
+        </button>
       </div>
+    ) : (
+      <select
+        value={vendeurActuel}
+        onChange={(e) => handleVendeurChange(e.target.value)}
+        className="w-full text-sm text-gray-500 border-0 p-0 focus:ring-0 focus:outline-none bg-transparent"
+      >
+        <option value="">Assigner un vendeur...</option>
+        {vendeurs.map(vendeur => (
+          <option key={vendeur} value={vendeur}>{vendeur}</option>
+        ))}
+      </select>
     )}
   </div>
 </div>
