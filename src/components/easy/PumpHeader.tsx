@@ -11,6 +11,13 @@ import PropaneSalesCard from './PropaneSalesCard';
 import TotalSalesCard from './TotalSalesCard';
 import QuickSummaryRow from './QuickSummaryRow';
 
+// Enhanced separator with more control
+const Separator = ({ className = "", topMargin = "my-8", bottomMargin = "" }) => (
+  <div className={`${topMargin} ${bottomMargin}`}>
+    <div className={`-mx-3 border-t-4 border-gray-100 ${className}`}></div>
+  </div>
+);
+
 const PumpHeader = ({ 
   pompe, 
   shift, 
@@ -89,6 +96,9 @@ const PumpHeader = ({
   return (
     <div className="w-full space-y-3">
       {/* Vendor Assignment */}
+
+ <Separator topMargin="mt-2 mb-2" />
+
       <VendorAssignment
         pompe={pompe}
         isPropane={isPropane}
@@ -96,6 +106,8 @@ const PumpHeader = ({
         vendeurs={vendeurs}
         handleVendeurChange={handleVendeurChange}
       />
+
+ <Separator topMargin="mt-2 mb-2" />
 
       {/* Quick Statistics */}
       <div className="grid grid-cols-2 gap-2 mb-3">
