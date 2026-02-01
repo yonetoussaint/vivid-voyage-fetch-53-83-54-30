@@ -43,7 +43,7 @@ const StatisticCard = ({
   const colors = getColorClasses();
 
   return (
-    <div className={`rounded-xl p-3 shadow-sm border ${colors.bg} ${colors.text}`}>
+    <div className={`rounded-xl p-3 border ${colors.bg} ${colors.text}`}>
       <div className="flex items-center gap-1 mb-1">
         <div className={`w-2 h-2 rounded-full ${colors.dot}`}></div>
         <p className="text-xs font-medium opacity-90">{title}</p>
