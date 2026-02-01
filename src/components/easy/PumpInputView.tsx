@@ -7,7 +7,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // Enhanced separator with more control
 const Separator = ({ className = "", topMargin = "my-8", bottomMargin = "" }) => (
-  <div className={`${topMargin} ${bottomMargin} w-full border-t-4 border-gray-200 ${className}`}></div>
+  <div className={`${topMargin} ${bottomMargin} w-full -mx-3 border-t-4 border-gray-200 ${className}`}></div>
 );
 
 const PumpInputView = ({ 
@@ -34,7 +34,7 @@ const PumpInputView = ({
   const depotsActuels = tousDepots[shift] || {};
 
   return (
-    <div className="mt-4 px-3"> {/* Added px-3 to match PumpPistolets container */}
+    <div className="mt-4 px-2"> {/* Added px-3 to match PumpPistolets container */}
       {/* Stats Cards Section - Collapsible */}
       <div className="border border-gray-200 rounded-lg">
         <button
