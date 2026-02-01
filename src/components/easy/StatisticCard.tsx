@@ -48,15 +48,11 @@ const StatisticCard = ({
         <div className={`w-2 h-2 rounded-full ${colors.dot}`}></div>
         <p className="text-xs font-medium opacity-90">{title}</p>
       </div>
-      
       <div className="flex items-baseline justify-between">
         <p className="text-lg sm:text-xl font-bold">{value}</p>
-        {isPropane && (
-          <span className="text-xs opacity-90 ml-2">gallons</span>
-        )}
+        <p className="text-sm opacity-90">gallons</p>
       </div>
-      
-      <p className="text-[10px] opacity-90 mt-0.5">{subtitle}</p>
+      <p className="text-[10px] opacity-90">{subtitle}</p>
     </div>
   );
 };
