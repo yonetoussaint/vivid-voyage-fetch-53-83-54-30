@@ -60,12 +60,14 @@ const PumpInputView = ({
         </button>
 
         {showStatsCards && (
-          
+
+          <div className="pt-2">
               <StatsCards 
                 shift={shift}
                 totaux={totaux}
                 tauxUSD={tauxUSD}
               />
+</div>
            
         )}
       </div>
