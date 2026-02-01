@@ -40,7 +40,7 @@ const PumpInputView = ({
       {/* Stats Cards Section - Collapsible */}
 
 
- <Separator topMargin="mt-6 mb-6" />
+ <Separator topMargin="mt-2 mb-2" />
 
 
       <div className="">
@@ -72,7 +72,7 @@ const PumpInputView = ({
         )}
       </div>
 
-      <Separator topMargin="mt-6 mb-6" />
+      <Separator topMargin="mt-2 mb-2" />
 
       {/* Render content based on selected pump */}
       <div className="overflow-hidden">
