@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, DollarSign,Pencil, Fuel, Calculator, TrendingUp, TrendingDown, Flame } from 'lucide-react';
+import { User, DollarSign,Pencil, Fuel, Calculator, TrendingUp, ChevronDown, TrendingDown, Flame } from 'lucide-react';
 import { formaterArgent, formaterGallons, formaterCaisse } from '@/utils/formatters';
 import { getCouleurPompe, calculerTotalPompe } from '@/utils/helpers';
 import CaisseRecuCard from './CaisseRecuCard'; // Import the new component
