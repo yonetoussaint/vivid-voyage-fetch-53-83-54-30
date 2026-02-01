@@ -1,8 +1,10 @@
+// components/easy/MainLayout.jsx
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
 import PumpSelector from './PumpSelector';
+import VendorSelector from './VendorSelector';
 
 const MainLayout = ({ 
   date, 
@@ -12,33 +14,38 @@ const MainLayout = ({
   activeTab,
   onDateChange,
   onShiftChange,
+  // Pump props
   pompes,
   pompeEtendue,
   setPompeEtendue,
-  showPropane
+  showPropane,
+  // Vendor props for depots tab
+  vendeurs,
+  vendeurActif,
+  setVendeurActif
 }) => {
   const headerRef = useRef(null);
-  const [headerHeight, setHeaderHeight] = useState(64); // Default fallback
+  const [headerHeight, setHeaderHeight] = useState(64);
 
   useEffect(() => {
     if (headerRef.current) {
       const updateHeight = () => {
         setHeaderHeight(headerRef.current.offsetHeight);
       };
-      
+
       updateHeight();
       window.addEventListener('resize', updateHeight);
-      
+
       return () => window.removeEventListener('resize', updateHeight);
     }
-  }, [activeTab]); // Recalculate when tab changes
+  }, [activeTab, vendeurs]); // Include vendeurs dependency
 
   return (
     <div className="h-screen flex flex-col">
-      {/* Fixed Header Container - Let it size naturally */}
+      {/* Fixed Header Container */}
       <div 
         ref={headerRef}
-        className="fixed top-0 left-0 right-0 z-50 bg-white "
+        className="fixed top-0 left-0 right-0 z-50 bg-white"
       >
         <Header
           date={date}
@@ -48,18 +55,27 @@ const MainLayout = ({
           onDateChange={onDateChange}
           onShiftChange={onShiftChange}
         />
-        
-        {/* Pump Selector - Part of the header flow */}
+
+        {/* Pump Selector - Only for pumps tab */}
         {activeTab === 'pumps' && (
           <div className="bg-white">
-            
-              <PumpSelector 
-                pompes={pompes}
-                pompeEtendue={pompeEtendue}
-                setPompeEtendue={setPompeEtendue}
-                showPropane={showPropane}
-              />
-            
+            <PumpSelector 
+              pompes={pompes}
+              pompeEtendue={pompeEtendue}
+              setPompeEtendue={setPompeEtendue}
+              showPropane={showPropane}
+            />
+          </div>
+        )}
+
+        {/* Vendor Selector - Only for depots tab */}
+        {activeTab === 'depots' && vendeurs && vendeurs.length > 0 && (
+          <div className="bg-white border-t border-gray-100">
+            <VendorSelector
+              vendeurs={vendeurs}
+              vendeurActif={vendeurActif}
+              setVendeurActif={setVendeurActif}
+            />
           </div>
         )}
       </div>
