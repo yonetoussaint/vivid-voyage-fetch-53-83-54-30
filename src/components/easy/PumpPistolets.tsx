@@ -116,7 +116,7 @@ const CollapsiblePhaseSection = ({
       {/* Clean Collapsible Header */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-2 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 touch-manipulation transition-colors rounded-lg"
+        className="w-full flex items-center justify-between px-2 touch-manipulation transition-colors"
       >
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 rounded-full ${phase === 'phaseA' ? 'bg-blue-500' : 'bg-green-500'}`} />
