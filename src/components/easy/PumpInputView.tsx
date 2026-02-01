@@ -7,7 +7,9 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // Enhanced separator with more control
 const Separator = ({ className = "", topMargin = "my-8", bottomMargin = "" }) => (
-  <div className={`${topMargin} ${bottomMargin} w-full -mx-3 border-t-4 border-gray-200 ${className}`}></div>
+  <div className={`${topMargin} ${bottomMargin} relative`}>
+    <div className={`absolute left-0 right-0 border-t-4 border-gray-200 ${className}`}></div>
+  </div>
 );
 
 const PumpInputView = ({ 
