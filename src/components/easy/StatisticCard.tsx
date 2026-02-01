@@ -11,29 +11,29 @@ const StatisticCard = ({
   const getColorClasses = () => {
     const colorMap = {
       emerald: {
-        border: 'border-emerald-200',
-        accent: 'text-emerald-600',
-        bg: 'bg-emerald-50'
+        bg: 'bg-emerald-50',
+        dot: 'bg-emerald-500',
+        text: 'text-emerald-900'
       },
       amber: {
-        border: 'border-amber-200',
-        accent: 'text-amber-600',
-        bg: 'bg-amber-50'
+        bg: 'bg-amber-50',
+        dot: 'bg-amber-500',
+        text: 'text-amber-900'
       },
       red: {
-        border: 'border-red-200',
-        accent: 'text-red-600',
-        bg: 'bg-red-50'
+        bg: 'bg-red-50',
+        dot: 'bg-red-500',
+        text: 'text-red-900'
       },
       orange: {
-        border: 'border-orange-200',
-        accent: 'text-orange-600',
-        bg: 'bg-orange-50'
+        bg: 'bg-orange-50',
+        dot: 'bg-orange-500',
+        text: 'text-orange-900'
       },
       blue: {
-        border: 'border-blue-200',
-        accent: 'text-blue-600',
-        bg: 'bg-blue-50'
+        bg: 'bg-blue-50',
+        dot: 'bg-blue-500',
+        text: 'text-blue-900'
       }
     };
 
@@ -43,25 +43,13 @@ const StatisticCard = ({
   const colors = getColorClasses();
 
   return (
-    <div className={`
-      rounded-lg p-4 
-      border ${colors.border} 
-      ${colors.bg}
-      hover:shadow-md transition-shadow duration-200
-    `}>
-      <div className="mb-2">
-        <p className={`text-xs font-medium uppercase tracking-wide ${colors.accent} opacity-80`}>
-          {title}
-        </p>
+    <div className={`rounded-xl p-3 shadow-sm border ${colors.bg} ${colors.text}`}>
+      <div className="flex items-center gap-1 mb-1">
+        <div className={`w-2 h-2 rounded-full ${colors.dot}`}></div>
+        <p className="text-xs font-medium opacity-90">{title}</p>
       </div>
-      
-      <p className={`text-2xl sm:text-3xl font-bold mb-1 ${colors.accent}`}>
-        {value}
-      </p>
-      
-      <p className="text-sm text-gray-600">
-        {subtitle}
-      </p>
+      <p className="text-lg sm:text-xl font-bold mb-0.5">{value}</p>
+      <p className="text-[10px] opacity-90">{subtitle}</p>
     </div>
   );
 };
