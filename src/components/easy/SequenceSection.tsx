@@ -44,7 +44,7 @@ const SequenceSection = ({
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg shadow-xs p-3">
+      
         <SequenceManager
           vendeur={vendeur}
           vendorState={vendorState}
@@ -71,7 +71,7 @@ const SequenceSection = ({
           editingMode={isEditingMode}
           onCancelEdit={onCancelEdit}
         />
-      </div>
+   
     </div>
   );
 };
