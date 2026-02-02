@@ -24,96 +24,88 @@ const PresetInput = ({
     <div 
       className={`bg-white rounded-lg p-3 border ${isLocked ? 'border-green-500 shadow-sm' : 'border-gray-300'}`}
     >
-      {/* Combined Dropdown and Input Row - ALWAYS IN SAME ROW */}
-      <div className="flex items-stretch gap-2 mb-2">
-        {/* Preset Dropdown - Left Side */}
-        <div className="relative flex-1 min-w-[120px] max-w-[180px]">
-          <button
-            type="button"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="w-full h-full flex items-center justify-between gap-2 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50"
-            disabled={isLocked}
-          >
-            <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 w-full">
+          {/* Preset Dropdown - ORIGINAL SIZE */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100"
+              disabled={isLocked}
+            >
               {selectedDenom && (
-                <div className={`${selectedDenom.color} px-2 py-1 rounded-md flex-shrink-0`}>
+                <div className={`${selectedDenom.color} px-2 py-1 rounded-md flex items-center justify-center`}>
                   <span className="text-white font-bold text-xs">{selectedDenom.value}</span>
                 </div>
               )}
-              <span className="text-sm text-gray-600 font-medium truncate">{currency}</span>
-            </div>
-            <ChevronDown size={16} className="text-gray-500 flex-shrink-0" />
-          </button>
+              <span className="text-xs text-gray-600 font-medium">{currency}</span>
+              <ChevronDown size={14} className="text-gray-500" />
+            </button>
 
-          {isDropdownOpen && (
-            <>
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setIsDropdownOpen(false)}
-              />
-              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                {presets.map((preset) => (
-                  <button
-                    key={preset.value}
-                    onClick={() => {
-                      onPresetChange(preset.value);
-                      setIsDropdownOpen(false);
-                    }}
-                    className="w-full px-3 py-2.5 text-left hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <div className={`${preset.color} px-2 py-1 rounded-md`}>
-                      <span className="text-white font-bold text-xs">{preset.value}</span>
-                    </div>
-                    <span className="text-sm text-gray-700">{currency} {preset.value}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Input Field - Right Side */}
-        <div className="relative flex-1 min-w-0">
-          <input
-            type="text"
-            inputMode="numeric"
-            value={value}
-            onChange={(e) => onInputChange(selectedPreset, e.target.value)}
-            onFocus={() => onFocus(selectedPreset)}
-            onBlur={() => onBlur(selectedPreset)}
-            onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
-            className={`w-full h-full text-sm font-bold rounded px-3 py-2 border focus:outline-none focus:ring-2 text-center ${
-              isLocked 
-                ? 'text-green-700 bg-green-50 border-green-200' 
-                : 'text-gray-900 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-            }`}
-            placeholder="0"
-            disabled={isLocked || !selectedPreset}
-          />
+            {isDropdownOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setIsDropdownOpen(false)}
+                />
+                <div className="absolute z-20 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {presets.map((preset) => (
+                    <button
+                      key={preset.value}
+                      onClick={() => {
+                        onPresetChange(preset.value);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <div className={`${preset.color} px-2 py-1 rounded-md flex items-center justify-center`}>
+                        <span className="text-white font-bold text-xs">{preset.value}</span>
+                      </div>
+                      <span className="text-sm text-gray-700">{currency} {preset.value}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           
-          {/* Unlock button positioned inside input */}
+          {/* Input Field - SAME ROW, ORIGINAL SIZE */}
+          <div className="flex-1">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={value}
+              onChange={(e) => onInputChange(selectedPreset, e.target.value)}
+              onFocus={() => onFocus(selectedPreset)}
+              onBlur={() => onBlur(selectedPreset)}
+              onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
+              className={`w-full text-sm font-bold rounded px-3 py-2 border focus:outline-none focus:ring-2 text-center ${
+                isLocked 
+                  ? 'text-green-700 bg-green-50 border-green-200' 
+                  : 'text-gray-900 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+              }`}
+              placeholder="0"
+              disabled={isLocked || !selectedPreset}
+            />
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-1 ml-2">
           {isLocked && (
             <button
               onClick={onUnlock}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-green-600"
+              className="text-gray-500 hover:text-green-600"
               title="Déverrouiller"
             >
-              <Unlock size={16} />
+              <Unlock size={14} />
             </button>
           )}
         </div>
       </div>
 
-      {/* Total Display */}
-      <div className="flex items-center justify-between mt-2">
-        <div className="text-sm font-bold text-gray-700">
-          {totalForDenom > 0 ? formaterArgent(totalForDenom) : '—'}
-        </div>
-        
-        {/* Display selected preset value */}
-        <div className="text-xs text-gray-500 font-medium">
-          {selectedPreset} {currency}
-        </div>
+      <div className="text-sm font-bold text-gray-700 text-center mt-2">
+        {totalForDenom > 0 ? formaterArgent(totalForDenom) : '—'}
       </div>
     </div>
   );
@@ -178,7 +170,7 @@ const MoneyCounterGrid = ({
         </div>
       </div>
 
-      {/* Single Input with Dropdown - ALWAYS IN SAME ROW */}
+      {/* Single Input with Dropdown */}
       <div className="w-full max-w-md mx-auto">
         <PresetInput
           currency={currency}
