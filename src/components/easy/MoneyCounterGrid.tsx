@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, Unlock, ChevronDown } from 'lucide-react';
+import { RotateCcw, Unlock, ChevronDown, Plus } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const PresetInput = ({ 
@@ -14,7 +14,8 @@ const PresetInput = ({
   onFocus,
   onBlur,
   onKeyPress,
-  onUnlock
+  onUnlock,
+  onAdd // New prop for add button
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -100,6 +101,19 @@ const PresetInput = ({
               </button>
             )}
           </div>
+
+          {/* Add Button - Third Element */}
+          <button
+            onClick={() => onAdd(selectedPreset, value)}
+            disabled={!value || parseFloat(value) <= 0 || isLocked}
+            className={`px-3 py-1.5 text-sm text-white rounded-md font-medium flex items-center gap-1 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed ${
+              currency === 'HTG' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-green-600 to-green-700'
+            }`}
+            title="Ajouter au total"
+          >
+            <Plus size={14} />
+            <span className="hidden sm:inline">Add</span>
+          </button>
         </div>
       </div>
 
@@ -122,7 +136,8 @@ const MoneyCounterGrid = ({
   onGridInputKeyPress,
   onUnlockField,
   onResetGrid,
-  onAddAllGridSequences 
+  onAddAllGridSequences,
+  onAddSingleValue // New prop for adding single value
 }) => {
   const [selectedPreset, setSelectedPreset] = useState(denominations[0]?.value);
 
@@ -131,6 +146,12 @@ const MoneyCounterGrid = ({
 
   const handlePresetChange = (presetValue) => {
     setSelectedPreset(presetValue);
+  };
+
+  const handleAdd = (preset, value) => {
+    if (onAddSingleValue && preset && value && parseFloat(value) > 0) {
+      onAddSingleValue(preset, value);
+    }
   };
 
   const currentValue = selectedPreset ? gridInputs[selectedPreset] || '' : '';
@@ -169,8 +190,8 @@ const MoneyCounterGrid = ({
         </div>
       </div>
 
-      {/* Single Input with Dropdown */}
-      <div className="w-full max-w-md mx-auto">
+      {/* Single Input with Dropdown and Add Button */}
+      <div className="w-full max-w-lg mx-auto">
         <PresetInput
           currency={currency}
           presets={presets}
@@ -184,6 +205,7 @@ const MoneyCounterGrid = ({
           onBlur={onGridInputBlur}
           onKeyPress={onGridInputKeyPress}
           onUnlock={() => selectedPreset && onUnlockField(selectedPreset)}
+          onAdd={handleAdd}
         />
 
         {/* Display all entered values */}
