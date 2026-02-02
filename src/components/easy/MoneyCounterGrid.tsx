@@ -24,14 +24,14 @@ const PresetInput = ({
     <div 
       className={`bg-white rounded-lg p-3 border ${isLocked ? 'border-green-500 shadow-sm' : 'border-gray-300'}`}
     >
-      {/* Combined Dropdown and Input Row */}
-      <div className="flex flex-col sm:flex-row items-stretch gap-3 mb-2">
+      {/* Combined Dropdown and Input Row - ALWAYS IN SAME ROW */}
+      <div className="flex items-stretch gap-2 mb-2">
         {/* Preset Dropdown - Left Side */}
-        <div className="relative flex-1 min-w-0">
+        <div className="relative flex-1 min-w-[120px] max-w-[180px]">
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="w-full flex items-center justify-between gap-2 px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50"
+            className="w-full h-full flex items-center justify-between gap-2 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50"
             disabled={isLocked}
           >
             <div className="flex items-center gap-2 min-w-0">
@@ -40,7 +40,7 @@ const PresetInput = ({
                   <span className="text-white font-bold text-xs">{selectedDenom.value}</span>
                 </div>
               )}
-              <span className="text-sm text-gray-600 font-medium truncate">{currency} {selectedPreset}</span>
+              <span className="text-sm text-gray-600 font-medium truncate">{currency}</span>
             </div>
             <ChevronDown size={16} className="text-gray-500 flex-shrink-0" />
           </button>
@@ -82,7 +82,7 @@ const PresetInput = ({
             onFocus={() => onFocus(selectedPreset)}
             onBlur={() => onBlur(selectedPreset)}
             onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
-            className={`w-full h-full text-sm font-bold rounded px-3 py-2.5 border focus:outline-none focus:ring-2 text-center ${
+            className={`w-full h-full text-sm font-bold rounded px-3 py-2 border focus:outline-none focus:ring-2 text-center ${
               isLocked 
                 ? 'text-green-700 bg-green-50 border-green-200' 
                 : 'text-gray-900 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200'
@@ -91,11 +91,11 @@ const PresetInput = ({
             disabled={isLocked || !selectedPreset}
           />
           
-          {/* Unlock button positioned inside input on mobile */}
+          {/* Unlock button positioned inside input */}
           {isLocked && (
             <button
               onClick={onUnlock}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-green-600 sm:hidden"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-green-600"
               title="Déverrouiller"
             >
               <Unlock size={16} />
@@ -104,23 +104,16 @@ const PresetInput = ({
         </div>
       </div>
 
-      {/* Total Display and Desktop Unlock Button */}
+      {/* Total Display */}
       <div className="flex items-center justify-between mt-2">
         <div className="text-sm font-bold text-gray-700">
           {totalForDenom > 0 ? formaterArgent(totalForDenom) : '—'}
         </div>
         
-        {/* Desktop unlock button */}
-        {isLocked && (
-          <button
-            onClick={onUnlock}
-            className="hidden sm:flex text-gray-500 hover:text-green-600 items-center gap-1"
-            title="Déverrouiller"
-          >
-            <Unlock size={14} />
-            <span className="text-xs">Déverrouiller</span>
-          </button>
-        )}
+        {/* Display selected preset value */}
+        <div className="text-xs text-gray-500 font-medium">
+          {selectedPreset} {currency}
+        </div>
       </div>
     </div>
   );
@@ -185,8 +178,8 @@ const MoneyCounterGrid = ({
         </div>
       </div>
 
-      {/* Single Input with Dropdown */}
-      <div className="w-full max-w-2xl mx-auto">
+      {/* Single Input with Dropdown - ALWAYS IN SAME ROW */}
+      <div className="w-full max-w-md mx-auto">
         <PresetInput
           currency={currency}
           presets={presets}
@@ -213,16 +206,16 @@ const MoneyCounterGrid = ({
                 if (!denom) return null;
 
                 return (
-                  <div key={denomValue} className="flex flex-col xs:flex-row xs:items-center justify-between text-sm py-1.5">
-                    <div className="flex items-center gap-2 mb-1 xs:mb-0">
+                  <div key={denomValue} className="flex items-center justify-between text-sm py-1.5">
+                    <div className="flex items-center gap-2">
                       <div className={`${denom.color} px-2 py-1 rounded-md flex-shrink-0`}>
                         <span className="text-white font-bold text-xs">{denom.value}</span>
                       </div>
-                      <div className="text-gray-600 truncate">
+                      <div className="text-gray-600">
                         {currency} × {value}
                       </div>
                     </div>
-                    <span className="font-bold text-gray-700 text-right xs:text-left">
+                    <span className="font-bold text-gray-700">
                       = {formaterArgent(denom.value * parseFloat(value))}
                     </span>
                   </div>
