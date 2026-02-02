@@ -15,7 +15,7 @@ const PresetInput = ({
   onBlur,
   onKeyPress,
   onUnlock,
-  onAdd // New prop for add button
+  onAdd
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -32,7 +32,7 @@ const PresetInput = ({
             <button
               type="button"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100"
+              className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100"
               disabled={isLocked}
             >
               {selectedDenom && (
@@ -102,17 +102,17 @@ const PresetInput = ({
             )}
           </div>
 
-          {/* Add Button - Third Element */}
+          {/* Add Button - Same height as other elements */}
           <button
             onClick={() => onAdd(selectedPreset, value)}
             disabled={!value || parseFloat(value) <= 0 || isLocked}
-            className={`px-3 py-1.5 text-sm text-white rounded-md font-medium flex items-center gap-1 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`px-4 py-2 text-sm text-white rounded-md font-medium flex items-center justify-center gap-1 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px] ${
               currency === 'HTG' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-green-600 to-green-700'
             }`}
-            title="Ajouter au total"
+            title="Ajouter cette séquence au total"
           >
-            <Plus size={14} />
-            <span className="hidden sm:inline">Add</span>
+            <Plus size={16} />
+            <span>Add</span>
           </button>
         </div>
       </div>
@@ -137,7 +137,7 @@ const MoneyCounterGrid = ({
   onUnlockField,
   onResetGrid,
   onAddAllGridSequences,
-  onAddSingleValue // New prop for adding single value
+  onAddSingleSequence // Changed prop name to be more descriptive
 }) => {
   const [selectedPreset, setSelectedPreset] = useState(denominations[0]?.value);
 
@@ -149,8 +149,8 @@ const MoneyCounterGrid = ({
   };
 
   const handleAdd = (preset, value) => {
-    if (onAddSingleValue && preset && value && parseFloat(value) > 0) {
-      onAddSingleValue(preset, value);
+    if (onAddSingleSequence && preset && value && parseFloat(value) > 0) {
+      onAddSingleSequence(preset, value);
     }
   };
 
@@ -191,7 +191,7 @@ const MoneyCounterGrid = ({
       </div>
 
       {/* Single Input with Dropdown and Add Button */}
-      <div className="w-full max-w-lg mx-auto">
+      <div className="w-full max-w-2xl mx-auto">
         <PresetInput
           currency={currency}
           presets={presets}
@@ -210,7 +210,7 @@ const MoneyCounterGrid = ({
 
         {/* Display all entered values */}
         <div className="mt-4 bg-gray-50 p-3 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Valeurs saisies:</h3>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Séquences ajoutées:</h3>
           <div className="space-y-1">
             {Object.entries(gridInputs)
               .filter(([_, value]) => value && parseFloat(value) > 0)
@@ -225,7 +225,7 @@ const MoneyCounterGrid = ({
                         <span className="text-white font-bold text-xs">{denom.value}</span>
                       </div>
                       <div className="text-gray-600">
-                        {currency} × {value}
+                        {currency} {denom.value} × {value}
                       </div>
                     </div>
                     <span className="font-bold text-gray-700">
@@ -237,7 +237,7 @@ const MoneyCounterGrid = ({
 
             {Object.keys(gridInputs).filter(k => gridInputs[k] && parseFloat(gridInputs[k]) > 0).length === 0 && (
               <div className="text-center text-gray-500 text-sm py-3">
-                Aucune valeur saisie
+                Aucune séquence ajoutée
               </div>
             )}
           </div>
