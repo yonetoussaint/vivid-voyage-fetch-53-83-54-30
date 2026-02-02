@@ -99,13 +99,6 @@ const SystemeStationService = () => {
       case 'pumps':
         return (
           <div className="p-2 sm:p-4">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Pompes & Propane</h2>
-                <span className="text-lg">⛽</span>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Gestion des pompes et du propane</p>
-            </div>
             <PumpInputView
               shift={shift}
               pompeEtendue={pompeEtendue}
@@ -131,13 +124,6 @@ const SystemeStationService = () => {
       case 'vendeurs':
         return (
           <div className="p-2 sm:p-4">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Vendeurs</h2>
-                <span className="text-lg">👥</span>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Gérer les vendeurs</p>
-            </div>
             <VendeursManager
               vendeurs={vendeurs}
               nouveauVendeur={nouveauVendeur}
@@ -151,13 +137,6 @@ const SystemeStationService = () => {
       case 'conditionnement':
         return (
           <div className="p-2 sm:p-6">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Conditionnement</h2>
-                <span className="text-lg">📦</span>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Gestion conditionnement</p>
-            </div>
             <ConditionnementManager
               shift={shift}
               date={date}
@@ -170,13 +149,6 @@ const SystemeStationService = () => {
       case 'depots':
         return (
           <div className="p-2 sm:p-6">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Dépôts</h2>
-                <span className="text-lg">🏪</span>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Gestion des dépôts</p>
-            </div>
             <DepotsManager
               shift={shift}
               vendeurs={vendeurs}
@@ -193,13 +165,6 @@ const SystemeStationService = () => {
       case 'stock':
         return (
           <div className="p-2 sm:p-6">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Stock Restant</h2>
-                <span className="text-lg">📊</span>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Voir le stock disponible</p>
-            </div>
             <StockRestant
               date={date}
               shift={shift}
@@ -213,13 +178,6 @@ const SystemeStationService = () => {
       case 'usd':
         return (
           <div className="p-2 sm:p-6">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Ventes USD</h2>
-                <span className="text-lg">💵</span>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Gestion ventes en dollars</p>
-            </div>
             <USDManager
               shift={shift}
               usdVentes={ventesUSD}
@@ -233,13 +191,6 @@ const SystemeStationService = () => {
       case 'report':
         return (
           <div className="p-2 sm:p-6">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Rapports</h2>
-                <span className="text-lg">📋</span>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Voir les rapports</p>
-            </div>
             <ReportView
               date={date}
               totauxAM={totauxAM}
@@ -260,13 +211,6 @@ const SystemeStationService = () => {
       case 'rapport':
         return (
           <div className="p-2 sm:p-6">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Rapport Gaz</h2>
-                <span className="text-lg">🔥</span>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Rapport journalier gaz</p>
-            </div>
             <Rapport
               date={date}
               shift={shift}
@@ -277,13 +221,7 @@ const SystemeStationService = () => {
       default:
         return (
           <div className="p-2 sm:p-6">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Tableau de bord</h2>
-                <span className="text-lg">📱</span>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base">Sélectionnez une application</p>
-            </div>
+            <p className="text-gray-600 text-sm sm:text-base">Sélectionnez une application</p>
           </div>
         );
     }
