@@ -371,34 +371,35 @@ const SequenceManager = ({
       </div>
 
       {/* Money Counter Grid */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="text-sm font-medium text-gray-600">Total compteur</div>
-            <div className={`text-xl font-bold ${currency === 'HTG' ? 'text-blue-700' : 'text-green-700'}`}>
-              {formaterArgent(gridTotal)} {currency}
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={resetGridInputs}
-              className="px-3 py-1.5 text-sm bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 rounded-lg flex items-center gap-2"
-              title="Réinitialiser"
-            >
-              <RotateCcw size={14} />
-              Reset
-            </button>
-            <button
-              onClick={handleAddAllGridSequences}
-              disabled={gridTotal === 0}
-              className={`px-3 py-1.5 text-sm text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed ${
-                currency === 'HTG' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-green-600 to-green-700'
-              }`}
-            >
-              Tout ajouter
-            </button>
-          </div>
-        </div>
+<div>
+  <div className="flex items-center justify-between mb-4">
+    <div>
+      <div className="text-sm font-medium text-gray-600">Total compteur</div>
+      <div className={`text-xl font-bold ${currency === 'HTG' ? 'text-blue-700' : 'text-green-700'}`}>
+        {formaterArgent(gridTotal)} {currency}
+      </div>
+    </div>
+    <div className="flex gap-2">
+      <button
+        onClick={resetGridInputs}
+        className="px-3 py-1.5 text-sm bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 rounded-lg flex items-center gap-2"
+        title="Réinitialiser"
+      >
+        <RotateCcw size={14} />
+        Reset
+      </button>
+      <button
+        onClick={handleAddAllGridSequences}
+        disabled={gridTotal === 0}
+        className={`px-3 py-1.5 text-sm text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed ${
+          currency === 'HTG' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-green-600 to-green-700'
+        }`}
+      >
+        Tout ajouter
+      </button>
+    </div>
+  </div>
+</div>
 
         <div className="grid grid-cols-2 gap-3">
           {/* First Column */}
