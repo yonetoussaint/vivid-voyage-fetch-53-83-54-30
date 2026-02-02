@@ -26,7 +26,7 @@ const PresetInput = ({
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 w-full">
-          {/* Preset Dropdown - ORIGINAL SIZE */}
+          {/* Preset Dropdown */}
           <div className="relative">
             <button
               type="button"
@@ -70,8 +70,8 @@ const PresetInput = ({
             )}
           </div>
           
-          {/* Input Field - SAME ROW, ORIGINAL SIZE */}
-          <div className="flex-1">
+          {/* Input Field with Lock Icon Inside */}
+          <div className="flex-1 relative">
             <input
               type="text"
               inputMode="numeric"
@@ -82,25 +82,24 @@ const PresetInput = ({
               onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
               className={`w-full text-sm font-bold rounded px-3 py-2 border focus:outline-none focus:ring-2 text-center ${
                 isLocked 
-                  ? 'text-green-700 bg-green-50 border-green-200' 
+                  ? 'text-green-700 bg-green-50 border-green-200 pr-8' 
                   : 'text-gray-900 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200'
               }`}
               placeholder="0"
               disabled={isLocked || !selectedPreset}
             />
+            
+            {/* Lock Icon Inside Input Field */}
+            {isLocked && (
+              <button
+                onClick={onUnlock}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-green-600"
+                title="Déverrouiller"
+              >
+                <Unlock size={14} />
+              </button>
+            )}
           </div>
-        </div>
-        
-        <div className="flex items-center gap-1 ml-2">
-          {isLocked && (
-            <button
-              onClick={onUnlock}
-              className="text-gray-500 hover:text-green-600"
-              title="Déverrouiller"
-            >
-              <Unlock size={14} />
-            </button>
-          )}
         </div>
       </div>
 
