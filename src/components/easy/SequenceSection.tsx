@@ -30,16 +30,7 @@ const SequenceSection = ({
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
         <div>
-          <h3 className="text-sm font-bold text-gray-900">
-            {isEditingMode ? 
-              `Éditer Dépôt #${editingDeposit.index + 1}` : 
-              'Ajouter Nouveau Dépôt (Séquentiel)'}
-          </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {isEditingMode ? 
-              'Modifiez les détails du dépôt existant' : 
-              'Ajoutez des séquences pour créer un nouveau dépôt'}
-          </p>
+          {/* Title and subtitle removed as requested */}
         </div>
         <div className="flex flex-wrap gap-2">
           {isEditingMode && (
