@@ -370,149 +370,149 @@ const SequenceManager = ({
         </button>
       </div>
 
-     {/* Money Counter Grid */}
-<div className="flex items-center justify-between mb-4">
-  <div>
-    <div className="text-sm font-medium text-gray-600">Total compteur</div>
-    <div className={`text-xl font-bold ${currency === 'HTG' ? 'text-blue-700' : 'text-green-700'}`}>
-      {formaterArgent(gridTotal)} {currency}
-    </div>
-  </div>
-  <div className="flex gap-2">
-    <button
-      onClick={resetGridInputs}
-      className="px-3 py-1.5 text-sm bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 rounded-lg flex items-center gap-2"
-      title="Réinitialiser"
-    >
-      <RotateCcw size={14} />
-      Reset
-    </button>
-    <button
-      onClick={handleAddAllGridSequences}
-      disabled={gridTotal === 0}
-      className={`px-3 py-1.5 text-sm text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed ${
-        currency === 'HTG' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-green-600 to-green-700'
-      }`}
-    >
-      Tout ajouter
-    </button>
-  </div>
-</div>
+      {/* Money Counter Grid */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <div className="text-sm font-medium text-gray-600">Total compteur</div>
+          <div className={`text-xl font-bold ${currency === 'HTG' ? 'text-blue-700' : 'text-green-700'}`}>
+            {formaterArgent(gridTotal)} {currency}
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={resetGridInputs}
+            className="px-3 py-1.5 text-sm bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 rounded-lg flex items-center gap-2"
+            title="Réinitialiser"
+          >
+            <RotateCcw size={14} />
+            Reset
+          </button>
+          <button
+            onClick={handleAddAllGridSequences}
+            disabled={gridTotal === 0}
+            className={`px-3 py-1.5 text-sm text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed ${
+              currency === 'HTG' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-green-600 to-green-700'
+            }`}
+          >
+            Tout ajouter
+          </button>
+        </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {/* First Column */}
-          <div className="space-y-3">
-            {firstColumnDenoms.map((denom) => {
-              const value = gridInputs[denom.value] || '';
-              const isLocked = lockedInputs[denom.value];
-              const totalForDenom = value && parseFloat(value) > 0 ? denom.value * parseFloat(value) : 0;
+      {/* Grid Inputs */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* First Column */}
+        <div className="space-y-3">
+          {firstColumnDenoms.map((denom) => {
+            const value = gridInputs[denom.value] || '';
+            const isLocked = lockedInputs[denom.value];
+            const totalForDenom = value && parseFloat(value) > 0 ? denom.value * parseFloat(value) : 0;
 
-              return (
-                <div 
-                  key={`grid-${denom.value}`} 
-                  className={`bg-white rounded-lg p-3 border ${isLocked ? 'border-green-500 shadow-sm' : 'border-gray-300'}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`${denom.color} px-2 py-1 rounded-md flex items-center justify-center`}>
-                        <span className="text-white font-bold text-xs">{denom.value}</span>
-                      </div>
-                      <span className="text-xs text-gray-600 font-medium">{currency}</span>
+            return (
+              <div 
+                key={`grid-${denom.value}`} 
+                className={`bg-white rounded-lg p-3 border ${isLocked ? 'border-green-500 shadow-sm' : 'border-gray-300'}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className={`${denom.color} px-2 py-1 rounded-md flex items-center justify-center`}>
+                      <span className="text-white font-bold text-xs">{denom.value}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      {isLocked && (
-                        <button
-                          onClick={() => unlockField(denom.value)}
-                          className="text-gray-500 hover:text-green-600"
-                          title="Déverrouiller"
-                        >
-                          <Unlock size={14} />
-                        </button>
-                      )}
-                    </div>
+                    <span className="text-xs text-gray-600 font-medium">{currency}</span>
                   </div>
-
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={value}
-                    onChange={(e) => handleGridInputChange(denom.value, e.target.value)}
-                    onFocus={() => handleGridInputFocus(denom.value)}
-                    onBlur={() => handleGridInputBlur(denom.value)}
-                    onKeyPress={(e) => handleGridInputKeyPress(denom.value, value, e)}
-                    className={`w-full text-sm font-bold rounded px-3 py-2 border focus:outline-none focus:ring-2 text-center ${
-                      isLocked 
-                        ? 'text-green-700 bg-green-50 border-green-200' 
-                        : 'text-gray-900 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                    }`}
-                    placeholder="0"
-                    disabled={isLocked}
-                  />
-
-                  <div className="text-sm font-bold text-gray-700 text-center mt-2">
-                    {totalForDenom > 0 ? formaterArgent(totalForDenom) : '—'}
+                  <div className="flex items-center gap-1">
+                    {isLocked && (
+                      <button
+                        onClick={() => unlockField(denom.value)}
+                        className="text-gray-500 hover:text-green-600"
+                        title="Déverrouiller"
+                      >
+                        <Unlock size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Second Column */}
-          <div className="space-y-3">
-            {secondColumnDenoms.map((denom) => {
-              const value = gridInputs[denom.value] || '';
-              const isLocked = lockedInputs[denom.value];
-              const totalForDenom = value && parseFloat(value) > 0 ? denom.value * parseFloat(value) : 0;
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={value}
+                  onChange={(e) => handleGridInputChange(denom.value, e.target.value)}
+                  onFocus={() => handleGridInputFocus(denom.value)}
+                  onBlur={() => handleGridInputBlur(denom.value)}
+                  onKeyPress={(e) => handleGridInputKeyPress(denom.value, value, e)}
+                  className={`w-full text-sm font-bold rounded px-3 py-2 border focus:outline-none focus:ring-2 text-center ${
+                    isLocked 
+                      ? 'text-green-700 bg-green-50 border-green-200' 
+                      : 'text-gray-900 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                  }`}
+                  placeholder="0"
+                  disabled={isLocked}
+                />
 
-              return (
-                <div 
-                  key={`grid-${denom.value}`} 
-                  className={`bg-white rounded-lg p-3 border ${isLocked ? 'border-green-500 shadow-sm' : 'border-gray-300'}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`${denom.color} px-2 py-1 rounded-md flex items-center justify-center`}>
-                        <span className="text-white font-bold text-xs">{denom.value}</span>
-                      </div>
-                      <span className="text-xs text-gray-600 font-medium">{currency}</span>
+                <div className="text-sm font-bold text-gray-700 text-center mt-2">
+                  {totalForDenom > 0 ? formaterArgent(totalForDenom) : '—'}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Second Column */}
+        <div className="space-y-3">
+          {secondColumnDenoms.map((denom) => {
+            const value = gridInputs[denom.value] || '';
+            const isLocked = lockedInputs[denom.value];
+            const totalForDenom = value && parseFloat(value) > 0 ? denom.value * parseFloat(value) : 0;
+
+            return (
+              <div 
+                key={`grid-${denom.value}`} 
+                className={`bg-white rounded-lg p-3 border ${isLocked ? 'border-green-500 shadow-sm' : 'border-gray-300'}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className={`${denom.color} px-2 py-1 rounded-md flex items-center justify-center`}>
+                      <span className="text-white font-bold text-xs">{denom.value}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      {isLocked && (
-                        <button
-                          onClick={() => unlockField(denom.value)}
-                          className="text-gray-500 hover:text-green-600"
-                          title="Déverrouiller"
-                        >
-                          <Unlock size={14} />
-                        </button>
-                      )}
-                    </div>
+                    <span className="text-xs text-gray-600 font-medium">{currency}</span>
                   </div>
-
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={value}
-                    onChange={(e) => handleGridInputChange(denom.value, e.target.value)}
-                    onFocus={() => handleGridInputFocus(denom.value)}
-                    onBlur={() => handleGridInputBlur(denom.value)}
-                    onKeyPress={(e) => handleGridInputKeyPress(denom.value, value, e)}
-                    className={`w-full text-sm font-bold rounded px-3 py-2 border focus:outline-none focus:ring-2 text-center ${
-                      isLocked 
-                        ? 'text-green-700 bg-green-50 border-green-200' 
-                        : 'text-gray-900 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                    }`}
-                    placeholder="0"
-                    disabled={isLocked}
-                  />
-
-                  <div className="text-sm font-bold text-gray-700 text-center mt-2">
-                    {totalForDenom > 0 ? formaterArgent(totalForDenom) : '—'}
+                  <div className="flex items-center gap-1">
+                    {isLocked && (
+                      <button
+                        onClick={() => unlockField(denom.value)}
+                        className="text-gray-500 hover:text-green-600"
+                        title="Déverrouiller"
+                      >
+                        <Unlock size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={value}
+                  onChange={(e) => handleGridInputChange(denom.value, e.target.value)}
+                  onFocus={() => handleGridInputFocus(denom.value)}
+                  onBlur={() => handleGridInputBlur(denom.value)}
+                  onKeyPress={(e) => handleGridInputKeyPress(denom.value, value, e)}
+                  className={`w-full text-sm font-bold rounded px-3 py-2 border focus:outline-none focus:ring-2 text-center ${
+                    isLocked 
+                      ? 'text-green-700 bg-green-50 border-green-200' 
+                      : 'text-gray-900 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                  }`}
+                  placeholder="0"
+                  disabled={isLocked}
+                />
+
+                <div className="text-sm font-bold text-gray-700 text-center mt-2">
+                  {totalForDenom > 0 ? formaterArgent(totalForDenom) : '—'}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
