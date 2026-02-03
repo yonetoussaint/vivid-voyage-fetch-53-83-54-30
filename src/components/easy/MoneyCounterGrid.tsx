@@ -70,7 +70,7 @@ const PresetInput = ({
               </>
             )}
           </div>
-          
+
           {/* Input Field with Lock Icon Inside */}
           <div className="flex-1 relative">
             <input
@@ -89,7 +89,7 @@ const PresetInput = ({
               placeholder="0"
               disabled={isLocked || !selectedPreset}
             />
-            
+
             {/* Lock Icon Inside Input Field */}
             {isLocked && (
               <button
@@ -207,41 +207,6 @@ const MoneyCounterGrid = ({
           onUnlock={() => selectedPreset && onUnlockField(selectedPreset)}
           onAdd={handleAdd}
         />
-
-        {/* Display all entered values */}
-        <div className="mt-4 bg-gray-50 p-3 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Séquences ajoutées:</h3>
-          <div className="space-y-1">
-            {Object.entries(gridInputs)
-              .filter(([_, value]) => value && parseFloat(value) > 0)
-              .map(([denomValue, value]) => {
-                const denom = denominations.find(d => d.value === parseFloat(denomValue));
-                if (!denom) return null;
-
-                return (
-                  <div key={denomValue} className="flex items-center justify-between text-sm py-1.5">
-                    <div className="flex items-center gap-2">
-                      <div className={`${denom.color} px-2 py-1 rounded-md flex-shrink-0`}>
-                        <span className="text-white font-bold text-xs">{denom.value}</span>
-                      </div>
-                      <div className="text-gray-600">
-                        {currency} {denom.value} × {value}
-                      </div>
-                    </div>
-                    <span className="font-bold text-gray-700">
-                      = {formaterArgent(denom.value * parseFloat(value))}
-                    </span>
-                  </div>
-                );
-              })}
-
-            {Object.keys(gridInputs).filter(k => gridInputs[k] && parseFloat(gridInputs[k]) > 0).length === 0 && (
-              <div className="text-center text-gray-500 text-sm py-3">
-                Aucune séquence ajoutée
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </>
   );
