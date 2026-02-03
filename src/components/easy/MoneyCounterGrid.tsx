@@ -4,12 +4,12 @@ import { Unlock, ChevronDown, Plus, Check, Undo2 } from 'lucide-react';
 /* =========================
    PresetInput
    ========================= */
-const PresetInput = ({ 
+const PresetInput = ({
   currency,
   presets,
   selectedPreset,
   value,
-  isLocked,
+  lockedInputs,
   onPresetChange,
   onInputChange,
   onFocus,
@@ -20,17 +20,18 @@ const PresetInput = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [added, setAdded] = useState(false);
-  const [lastValue, setLastValue] = useState(null); // store previous input value
+  const [lastValue, setLastValue] = useState(null); // store previous input for undo
   const resetTimer = useRef(null);
 
   const selectedDenomIndex = presets.findIndex(p => p.value === selectedPreset);
   const selectedDenom = presets[selectedDenomIndex];
+  const locked = selectedPreset ? lockedInputs[selectedPreset] : false;
 
   /* =========================
      Add button
      ========================= */
   const handleAddClick = () => {
-    if (!value || parseFloat(value) <= 0 || isLocked) return;
+    if (!value || parseFloat(value) <= 0 || locked) return;
 
     onAdd(selectedPreset, value);
     setAdded(true);
@@ -52,7 +53,7 @@ const PresetInput = ({
   };
 
   /* =========================
-     Undo button (reverts last typed input)
+     Undo button
      ========================= */
   const handleUndo = () => {
     if (lastValue === null) return;
@@ -77,12 +78,12 @@ const PresetInput = ({
         onBlur={() => onBlur(selectedPreset)}
         onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
         placeholder="0"
-        disabled={isLocked || !selectedPreset}
+        disabled={locked || !selectedPreset}
         className={`w-full h-12 rounded-xl border text-center text-sm font-bold
           focus:outline-none
           pl-28 pr-36 transition
           ${
-            isLocked
+            locked
               ? 'bg-green-50 border-green-300 text-green-700'
               : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
           }`}
@@ -91,12 +92,12 @@ const PresetInput = ({
       {/* LEFT: PRESET DROPDOWN */}
       <button
         type="button"
-        disabled={isLocked}
+        disabled={locked}
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className={`absolute left-2 top-1/2 -translate-y-1/2
           h-8 px-2 rounded-lg flex items-center gap-1 text-xs font-bold
           ${
-            isLocked
+            locked
               ? 'bg-green-200 text-green-800'
               : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
           }`}
@@ -145,7 +146,7 @@ const PresetInput = ({
       {/* RIGHT: ADD BUTTON */}
       <button
         onClick={handleAddClick}
-        disabled={!value || parseFloat(value) <= 0 || isLocked}
+        disabled={!value || parseFloat(value) <= 0 || locked}
         className={`absolute right-2 top-1/2 -translate-y-1/2
           h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1
           transition-all duration-200
@@ -163,7 +164,7 @@ const PresetInput = ({
       </button>
 
       {/* UNDO */}
-      {lastValue !== null && value !== lastValue && (
+      {lastValue !== null && value !== lastValue && !locked && (
         <button
           onClick={handleUndo}
           className="absolute right-24 top-1/2 -translate-y-1/2
@@ -176,9 +177,9 @@ const PresetInput = ({
       )}
 
       {/* UNLOCK */}
-      {isLocked && (
+      {locked && (
         <button
-          onClick={onUnlock}
+          onClick={() => onUnlock(selectedPreset)}
           className="absolute right-36 top-1/2 -translate-y-1/2 text-green-600"
         >
           <Unlock size={16} />
@@ -191,7 +192,7 @@ const PresetInput = ({
 /* =========================
    MoneyCounterGrid
    ========================= */
-const MoneyCounterGrid = ({ 
+const MoneyCounterGrid = ({
   currency,
   denominations,
   gridInputs,
@@ -220,13 +221,13 @@ const MoneyCounterGrid = ({
       presets={presets}
       selectedPreset={selectedPreset}
       value={currentValue}
-      isLocked={selectedPreset ? lockedInputs[selectedPreset] : false}
+      lockedInputs={lockedInputs}
       onPresetChange={setSelectedPreset}
       onInputChange={onGridInputChange}
       onFocus={onGridInputFocus}
       onBlur={onGridInputBlur}
       onKeyPress={onGridInputKeyPress}
-      onUnlock={() => selectedPreset && onUnlockField(selectedPreset)}
+      onUnlock={onUnlockField}
       onAdd={handleAdd}
     />
   );
