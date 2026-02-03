@@ -1,7 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Unlock, ChevronDown, Plus, Check, Undo2 } from 'lucide-react';
 
-const PresetInput = ({
+/* =========================
+   PresetInput
+   ========================= */
+const PresetInput = ({ 
   currency,
   presets,
   selectedPreset,
@@ -18,17 +21,16 @@ const PresetInput = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [added, setAdded] = useState(false);
   const [lastAdd, setLastAdd] = useState(null);
-  const [flashPreset, setFlashPreset] = useState(false);
 
-  const inputRef = useRef(null);
+  const resetTimer = useRef(null);
 
-  const currentIndex = presets.findIndex(p => p.value === selectedPreset);
-  const selectedDenom = presets[currentIndex];
+  const selectedDenomIndex = presets.findIndex(p => p.value === selectedPreset);
+  const selectedDenom = presets[selectedDenomIndex];
 
   const handleAddClick = () => {
     if (!value || parseFloat(value) <= 0 || isLocked) return;
 
-    // Save undo info
+    // Save for undo
     setLastAdd({
       preset: selectedPreset,
       value
@@ -36,20 +38,21 @@ const PresetInput = ({
 
     onAdd(selectedPreset, value);
     setAdded(true);
+
+    // Auto clear input
     onInputChange(selectedPreset, '');
 
-    // 🔁 AUTO-ADVANCE (VISIBLE)
-    const next = presets[currentIndex + 1];
-    if (next) {
-      onPresetChange(next.value);
-      setFlashPreset(true);
-      setTimeout(() => setFlashPreset(false), 400);
+    // Auto advance to next denomination
+    const nextPreset = presets[selectedDenomIndex + 1];
+    if (nextPreset) {
+      onPresetChange(nextPreset.value);
     }
 
-    // Refocus input
-    setTimeout(() => inputRef.current?.focus(), 50);
-
-    setTimeout(() => setAdded(false), 800);
+    clearTimeout(resetTimer.current);
+    resetTimer.current = setTimeout(() => {
+      setAdded(false);
+      setLastAdd(null);
+    }, 2500);
   };
 
   const handleUndo = () => {
@@ -58,86 +61,175 @@ const PresetInput = ({
     onPresetChange(lastAdd.preset);
     onInputChange(lastAdd.preset, lastAdd.value);
     setLastAdd(null);
-
-    setTimeout(() => inputRef.current?.focus(), 50);
+    setAdded(false);
   };
 
-  // Auto-hide undo after 5s
-  useEffect(() => {
-    if (!lastAdd) return;
-    const t = setTimeout(() => setLastAdd(null), 5000);
-    return () => clearTimeout(t);
-  }, [lastAdd]);
-
   return (
-    <div className="relative w-full space-y-2">
+    <div className="relative w-full">
 
-      {/* INPUT */}
-      <div className="relative">
-        <input
-          ref={inputRef}
-          type="text"
-          inputMode="numeric"
-          value={value}
-          onChange={(e) => onInputChange(selectedPreset, e.target.value)}
-          onFocus={() => onFocus(selectedPreset)}
-          onBlur={() => onBlur(selectedPreset)}
-          onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
-          placeholder="0"
-          disabled={isLocked || !selectedPreset}
-          className="w-full h-12 rounded-xl border text-center text-sm font-bold
-            pl-28 pr-32 focus:outline-none
-            border-gray-300 focus:border-blue-500"
-        />
+      {/* FULL WIDTH INPUT */}
+      <input
+        type="text"
+        inputMode="numeric"
+        value={value}
+        onChange={(e) => onInputChange(selectedPreset, e.target.value)}
+        onFocus={() => onFocus(selectedPreset)}
+        onBlur={() => onBlur(selectedPreset)}
+        onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
+        placeholder="0"
+        disabled={isLocked || !selectedPreset}
+        className={`w-full h-12 rounded-xl border text-center text-sm font-bold
+          focus:outline-none
+          pl-28 pr-36 transition
+          ${
+            isLocked
+              ? 'bg-green-50 border-green-300 text-green-700'
+              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+          }`}
+      />
 
-        {/* PRESET (FLASHES ON AUTO-ADVANCE) */}
-        <button
-          type="button"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className={`absolute left-2 top-1/2 -translate-y-1/2
-            h-8 px-2 rounded-lg flex items-center gap-1 text-xs font-bold
-            transition
-            ${flashPreset ? 'ring-2 ring-blue-400' : 'bg-gray-100'}
-          `}
-        >
+      {/* LEFT: PRESET DROPDOWN */}
+      <button
+        type="button"
+        disabled={isLocked}
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        className={`absolute left-2 top-1/2 -translate-y-1/2
+          h-8 px-2 rounded-lg flex items-center gap-1 text-xs font-bold
+          ${
+            isLocked
+              ? 'bg-green-200 text-green-800'
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+          }`}
+      >
+        {selectedDenom && (
           <div className={`${selectedDenom.color} px-2 py-0.5 rounded-md`}>
             <span className="text-white text-xs font-bold">
               {selectedDenom.value}
             </span>
           </div>
-          <ChevronDown size={12} />
-        </button>
+        )}
+        <ChevronDown size={12} />
+      </button>
 
-        {/* ADD */}
-        <button
-          onClick={handleAddClick}
-          disabled={!value || isLocked}
-          className={`absolute right-2 top-1/2 -translate-y-1/2
-            h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1
-            ${added ? 'bg-green-600' : 'bg-blue-600'}
-            text-white`}
-        >
-          {added ? <Check size={12} /> : <Plus size={12} />}
-          {added ? 'Added' : 'Add'}
-        </button>
-      </div>
+      {/* DROPDOWN LIST */}
+      {isDropdownOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setIsDropdownOpen(false)}
+          />
+          <div className="absolute z-20 mt-2 left-0 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+            {presets.map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() => {
+                  onPresetChange(preset.value);
+                  setIsDropdownOpen(false);
+                }}
+                className="w-full px-3 py-2 flex items-center gap-2 text-sm hover:bg-gray-50"
+              >
+                <div className={`${preset.color} px-2 py-1 rounded-md`}>
+                  <span className="text-white text-xs font-bold">
+                    {preset.value}
+                  </span>
+                </div>
+                <span className="text-gray-700">
+                  {currency} {preset.value}
+                </span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
-      {/* 🔙 UNDO — CLEAR & OBVIOUS */}
+      {/* RIGHT: ADD BUTTON */}
+      <button
+        onClick={handleAddClick}
+        disabled={!value || parseFloat(value) <= 0 || isLocked}
+        className={`absolute right-2 top-1/2 -translate-y-1/2
+          h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1
+          transition-all duration-200
+          disabled:opacity-50 disabled:cursor-not-allowed
+          ${
+            added
+              ? 'bg-green-600 text-white scale-105'
+              : currency === 'HTG'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-green-600 hover:bg-green-700 text-white'
+          }`}
+      >
+        {added ? <Check size={12} /> : <Plus size={12} />}
+        <span>{added ? 'Added' : 'Add'}</span>
+      </button>
+
+      {/* UNDO */}
       {lastAdd && (
-        <div className="flex justify-center">
-          <button
-            onClick={handleUndo}
-            className="flex items-center gap-2 px-3 py-1.5
-              rounded-full text-xs font-semibold
-              bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
-          >
-            <Undo2 size={12} />
-            Undo {lastAdd.value} × {lastAdd.preset}
-          </button>
-        </div>
+        <button
+          onClick={handleUndo}
+          className="absolute right-24 top-1/2 -translate-y-1/2
+            h-8 px-2 rounded-lg text-xs font-bold flex items-center gap-1
+            bg-yellow-100 hover:bg-yellow-200 text-yellow-800"
+        >
+          <Undo2 size={12} />
+          Undo
+        </button>
+      )}
+
+      {/* UNLOCK */}
+      {isLocked && (
+        <button
+          onClick={onUnlock}
+          className="absolute right-36 top-1/2 -translate-y-1/2 text-green-600"
+        >
+          <Unlock size={16} />
+        </button>
       )}
     </div>
   );
 };
 
-export default PresetInput;
+/* =========================
+   MoneyCounterGrid
+   ========================= */
+const MoneyCounterGrid = ({ 
+  currency,
+  denominations,
+  gridInputs,
+  lockedInputs,
+  onGridInputChange,
+  onGridInputFocus,
+  onGridInputBlur,
+  onGridInputKeyPress,
+  onUnlockField,
+  onAddSingleSequence
+}) => {
+  const [selectedPreset, setSelectedPreset] = useState(denominations[0]?.value);
+  const presets = [...denominations].sort((a, b) => b.value - a.value);
+
+  const handleAdd = (preset, value) => {
+    if (preset && value && parseFloat(value) > 0) {
+      onAddSingleSequence(preset, value);
+    }
+  };
+
+  const currentValue = selectedPreset ? gridInputs[selectedPreset] || '' : '';
+
+  return (
+    <PresetInput
+      currency={currency}
+      presets={presets}
+      selectedPreset={selectedPreset}
+      value={currentValue}
+      isLocked={selectedPreset ? lockedInputs[selectedPreset] : false}
+      onPresetChange={setSelectedPreset}
+      onInputChange={onGridInputChange}
+      onFocus={onGridInputFocus}
+      onBlur={onGridInputBlur}
+      onKeyPress={onGridInputKeyPress}
+      onUnlock={() => selectedPreset && onUnlockField(selectedPreset)}
+      onAdd={handleAdd}
+    />
+  );
+};
+
+export default MoneyCounterGrid;
