@@ -189,6 +189,23 @@ const MoneyCounterGrid = ({
           </button>
         </div>
       </div>
+
+      {/* Single Input with Dropdown and Add Button - WITHOUT wrapper */}
+      <PresetInput
+        currency={currency}
+        presets={presets}
+        selectedPreset={selectedPreset}
+        value={currentValue}
+        isLocked={selectedPreset ? lockedInputs[selectedPreset] : false}
+        totalForDenom={currentTotal}
+        onPresetChange={handlePresetChange}
+        onInputChange={onGridInputChange}
+        onFocus={onGridInputFocus}
+        onBlur={onGridInputBlur}
+        onKeyPress={onGridInputKeyPress}
+        onUnlock={() => selectedPreset && onUnlockField(selectedPreset)}
+        onAdd={handleAdd}
+      />
     </>
   );
 };
