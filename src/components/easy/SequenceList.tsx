@@ -212,14 +212,6 @@ const SequenceList = ({
             </div>
           )}
         </div>
-        <div className="mt-3 pt-3 border-t border-gray-200">
-          <div className="flex justify-between items-center p-3 rounded-lg bg-gray-50 border border-gray-100">
-            <div className="text-sm font-medium text-gray-700">Séquences</div>
-            <div className="text-lg font-bold text-gray-800">
-              {totals.totalCount} séquence{totals.totalCount !== 1 ? 's' : ''}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
