@@ -2,28 +2,29 @@ import React from 'react';
 import { DollarSign, Coins } from 'lucide-react';
 
 const CurrencySelector = ({ currency, onCurrencyChange }) => (
-  <div className="grid grid-cols-2 gap-3">
+  <div className="flex gap-2 w-full">
     <button
       onClick={() => onCurrencyChange('HTG')}
-      className={`flex items-center justify-center gap-2 p-3 rounded-lg border transition-all ${
+      className={`flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md text-sm border transition ${
         currency === 'HTG'
-          ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm'
-          : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+          ? 'bg-blue-50 border-blue-400 text-blue-600'
+          : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'
       }`}
     >
-      <Coins size={18} className={currency === 'HTG' ? 'text-blue-600' : 'text-gray-500'} />
-      <span className="font-bold">HTG</span>
+      <Coins size={16} className={currency === 'HTG' ? 'text-blue-500' : 'text-gray-500'} />
+      HTG
     </button>
+
     <button
       onClick={() => onCurrencyChange('USD')}
-      className={`flex items-center justify-center gap-2 p-3 rounded-lg border transition-all ${
+      className={`flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md text-sm border transition ${
         currency === 'USD'
-          ? 'bg-green-50 border-green-500 text-green-700 shadow-sm'
-          : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+          ? 'bg-green-50 border-green-400 text-green-600'
+          : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'
       }`}
     >
-      <DollarSign size={18} className={currency === 'USD' ? 'text-green-600' : 'text-gray-500'} />
-      <span className="font-bold">USD</span>
+      <DollarSign size={16} className={currency === 'USD' ? 'text-green-500' : 'text-gray-500'} />
+      USD
     </button>
   </div>
 );
