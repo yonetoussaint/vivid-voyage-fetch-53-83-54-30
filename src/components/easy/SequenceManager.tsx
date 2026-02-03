@@ -337,21 +337,17 @@ const SequenceManager = ({
         onCurrencyChange={handleCurrencyChange}
       />
 
-      <MoneyCounterGrid
-        gridTotal={gridTotal}
-        currency={currency}
-        denominations={getDenominations()}
-        gridInputs={gridInputs}
-        lockedInputs={lockedInputs}
-        onGridInputChange={handleGridInputChange}
-        onGridInputFocus={handleGridInputFocus}
-        onGridInputBlur={handleGridInputBlur}
-        onGridInputKeyPress={handleGridInputKeyPress}
-        onUnlockField={unlockField}
-        onResetGrid={resetGridInputs}
-        onAddAllGridSequences={handleAddAllGridSequences}
-        onAddSingleSequence={handleAddSingleSequence} // This is the new prop
-      />
+     // Replace this section in your SequenceManager:
+<MoneyCounterGrid
+  currency={currency}
+  denominations={getDenominations()}
+  gridInputs={gridInputs}
+  onGridInputChange={handleGridInputChange}
+  onGridInputFocus={handleGridInputFocus}
+  onGridInputBlur={handleGridInputBlur}
+  onGridInputKeyPress={handleGridInputKeyPress}
+  onAddSingleSequence={handleAddSingleSequence} // This is correct and required
+/>
 
    <SequenceList 
   sequences={sequences}
