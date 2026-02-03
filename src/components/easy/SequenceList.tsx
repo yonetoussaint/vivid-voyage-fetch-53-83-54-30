@@ -186,26 +186,26 @@ const SequenceList = ({
       {/* Summary Section */}
       <div className="pt-3 border-t border-gray-200">
         <div className="text-sm font-medium text-gray-700 mb-2">Résumé</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="space-y-3">
           {totals.USD > 0 && (
-            <div className={`p-3 rounded-lg border ${getCurrencyBgColor('USD')}`}>
-              <div className={`text-xs mb-1 ${getCurrencyTextColor('USD')}`}>Total USD</div>
+            <div className={`flex items-center justify-between p-3 rounded-lg border ${getCurrencyBgColor('USD')}`}>
+              <div className={`text-sm font-medium ${getCurrencyTextColor('USD')}`}>Total USD</div>
               <div className={`text-lg font-bold ${getCurrencyAmountColor('USD')}`}>
                 {formaterArgent(totals.USD)} USD
               </div>
             </div>
           )}
           {totals.CAD > 0 && (
-            <div className={`p-3 rounded-lg border ${getCurrencyBgColor('CAD')}`}>
-              <div className={`text-xs mb-1 ${getCurrencyTextColor('CAD')}`}>Total CAD</div>
+            <div className={`flex items-center justify-between p-3 rounded-lg border ${getCurrencyBgColor('CAD')}`}>
+              <div className={`text-sm font-medium ${getCurrencyTextColor('CAD')}`}>Total CAD</div>
               <div className={`text-lg font-bold ${getCurrencyAmountColor('CAD')}`}>
                 {formaterArgent(totals.CAD)} CAD
               </div>
             </div>
           )}
           {totals.HTG > 0 && (
-            <div className={`p-3 rounded-lg border ${getCurrencyBgColor('HTG')}`}>
-              <div className={`text-xs mb-1 ${getCurrencyTextColor('HTG')}`}>Total HTG</div>
+            <div className={`flex items-center justify-between p-3 rounded-lg border ${getCurrencyBgColor('HTG')}`}>
+              <div className={`text-sm font-medium ${getCurrencyTextColor('HTG')}`}>Total HTG</div>
               <div className={`text-lg font-bold ${getCurrencyAmountColor('HTG')}`}>
                 {formaterArgent(totals.HTG)} HTG
               </div>
@@ -213,9 +213,9 @@ const SequenceList = ({
           )}
         </div>
         <div className="mt-3 pt-3 border-t border-gray-200">
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-600">Séquences</div>
-            <div className="text-sm font-semibold text-gray-800">
+          <div className="flex justify-between items-center p-3 rounded-lg bg-gray-50 border border-gray-100">
+            <div className="text-sm font-medium text-gray-700">Séquences</div>
+            <div className="text-lg font-bold text-gray-800">
               {totals.totalCount} séquence{totals.totalCount !== 1 ? 's' : ''}
             </div>
           </div>
