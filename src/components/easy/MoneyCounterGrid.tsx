@@ -22,7 +22,7 @@ const PresetInput = ({
   const selectedDenom = presets.find(p => p.value === selectedPreset);
 
   return (
-    <div className="grid grid-cols-[1fr_1fr_auto] gap-3 w-full">
+    <div className="grid grid-cols-[1fr_1fr] gap-3 w-full">
 
       {/* Preset Dropdown */}
       <div className="relative">
@@ -79,56 +79,57 @@ const PresetInput = ({
         )}
       </div>
 
-      {/* Input */}
-     {/* Input */}
-<div className="relative">
-  <input
-    type="text"
-    inputMode="numeric"
-    value={value}
-    onChange={(e) => onInputChange(selectedPreset, e.target.value)}
-    onFocus={() => onFocus(selectedPreset)}
-    onBlur={() => onBlur(selectedPreset)}
-    onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
-    placeholder="0"
-    disabled={isLocked || !selectedPreset}
-    className={`w-full h-11 text-center text-sm font-bold rounded-lg border
-      focus:outline-none pr-12
-      ${
-        isLocked
-          ? 'bg-green-50 border-green-300 text-green-700'
-          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
-      }`}
-  />
+      {/* Input with Add button inside */}
+      <div className="relative">
+        <input
+          type="text"
+          inputMode="numeric"
+          value={value}
+          onChange={(e) => onInputChange(selectedPreset, e.target.value)}
+          onFocus={() => onFocus(selectedPreset)}
+          onBlur={() => onBlur(selectedPreset)}
+          onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
+          placeholder="0"
+          disabled={isLocked || !selectedPreset}
+          className={`w-full h-11 text-center text-sm font-bold rounded-lg border
+            focus:outline-none pr-12
+            ${
+              isLocked
+                ? 'bg-green-50 border-green-300 text-green-700'
+                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+            }`}
+        />
 
-  {/* Unlock */}
-  {isLocked && (
-    <button
-      onClick={onUnlock}
-      className="absolute right-10 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
-      title="Déverrouiller"
-    >
-      <Unlock size={16} />
-    </button>
-  )}
+        {/* Unlock button */}
+        {isLocked && (
+          <button
+            onClick={onUnlock}
+            className="absolute right-10 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
+            title="Déverrouiller"
+          >
+            <Unlock size={16} />
+          </button>
+        )}
 
-  {/* Add Button INSIDE input */}
-  <button
-    onClick={() => onAdd(selectedPreset, value)}
-    disabled={!value || parseFloat(value) <= 0 || isLocked}
-    className={`absolute right-2 top-1/2 -translate-y-1/2
-      h-7 w-7 rounded-md text-white flex items-center justify-center
-      disabled:opacity-50 disabled:cursor-not-allowed
-      ${
-        currency === 'HTG'
-          ? 'bg-blue-600 hover:bg-blue-700'
-          : 'bg-green-600 hover:bg-green-700'
-      }`}
-    title="Add"
-  >
-    <Plus size={14} />
-  </button>
-</div>
+        {/* Add button */}
+        <button
+          onClick={() => onAdd(selectedPreset, value)}
+          disabled={!value || parseFloat(value) <= 0 || isLocked}
+          className={`absolute right-2 top-1/2 -translate-y-1/2
+            h-7 w-7 rounded-md text-white flex items-center justify-center
+            disabled:opacity-50 disabled:cursor-not-allowed
+            ${
+              currency === 'HTG'
+                ? 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-green-600 hover:bg-green-700'
+            }`}
+          title="Add"
+        >
+          <Plus size={14} />
+        </button>
+      </div>
+
+    </div>
   );
 };
 
@@ -159,23 +160,20 @@ const MoneyCounterGrid = ({
   const currentValue = selectedPreset ? gridInputs[selectedPreset] || '' : '';
 
   return (
-    <>
-      {/* Only Input Row */}
-      <PresetInput
-        currency={currency}
-        presets={presets}
-        selectedPreset={selectedPreset}
-        value={currentValue}
-        isLocked={selectedPreset ? lockedInputs[selectedPreset] : false}
-        onPresetChange={setSelectedPreset}
-        onInputChange={onGridInputChange}
-        onFocus={onGridInputFocus}
-        onBlur={onGridInputBlur}
-        onKeyPress={onGridInputKeyPress}
-        onUnlock={() => selectedPreset && onUnlockField(selectedPreset)}
-        onAdd={handleAdd}
-      />
-    </>
+    <PresetInput
+      currency={currency}
+      presets={presets}
+      selectedPreset={selectedPreset}
+      value={currentValue}
+      isLocked={selectedPreset ? lockedInputs[selectedPreset] : false}
+      onPresetChange={setSelectedPreset}
+      onInputChange={onGridInputChange}
+      onFocus={onGridInputFocus}
+      onBlur={onGridInputBlur}
+      onKeyPress={onGridInputKeyPress}
+      onUnlock={() => selectedPreset && onUnlockField(selectedPreset)}
+      onAdd={handleAdd}
+    />
   );
 };
 
