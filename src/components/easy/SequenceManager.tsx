@@ -353,15 +353,15 @@ const SequenceManager = ({
         onAddSingleSequence={handleAddSingleSequence} // This is the new prop
       />
 
-    <SequenceList 
+   <SequenceList 
   sequences={sequences}
   editingSequenceId={editingSequenceId}
   vendorInputs={vendorInputs}
   vendeur={vendeur}
-  onEditSequence={onEditSequence}
-  onRemoveSequence={onRemoveSequence}
-  onSaveEditedSequence={onSaveEditedSequence}
-  onCancelSequenceEdit={onCancelSequenceEdit}
+  onEditSequence={handleEditSequence} // This should be handleEditSequence, not onEditSequence
+  onRemoveSequence={handleRemoveSequence}
+  onSaveEditedSequence={handleSaveEditedSequence}
+  onCancelSequenceEdit={handleCancelSequenceEdit}
   variant="card"
 />
 
