@@ -7,8 +7,8 @@ const CurrencySelector = ({ currency, onCurrencyChange }) => (
     <div
       onClick={() => onCurrencyChange('HTG')}
       className={`flex-1 flex items-center justify-center gap-2 cursor-pointer rounded-full transition-all duration-200 ${
-        currency === 'HTG' 
-          ? 'bg-blue-500 text-white px-4 py-2' // increased padding for active
+        currency === 'HTG'
+          ? 'bg-blue-500 text-white px-4 py-2' // extra padding for active pill
           : 'text-gray-700'
       }`}
     >
@@ -20,8 +20,8 @@ const CurrencySelector = ({ currency, onCurrencyChange }) => (
     <div
       onClick={() => onCurrencyChange('USD')}
       className={`flex-1 flex items-center justify-center gap-2 cursor-pointer rounded-full transition-all duration-200 ${
-        currency === 'USD' 
-          ? 'bg-green-500 text-white px-4 py-2' // increased padding for active
+        currency === 'USD'
+          ? 'bg-green-500 text-white px-4 py-2' // extra padding for active pill
           : 'text-gray-700'
       }`}
     >
