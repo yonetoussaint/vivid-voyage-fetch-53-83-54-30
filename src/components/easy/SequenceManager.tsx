@@ -164,6 +164,30 @@ const SequenceManager = ({
     }
   };
 
+  const handleAddSingleSequence = (presetValue, count) => {
+    const value = count;
+    const multiplier = parseFloat(value);
+    
+    if (!presetValue || !value || multiplier <= 0) return;
+    
+    // Add the sequence
+    handleAddSequence(vendeur, presetValue, value);
+    
+    // Lock and clear the input for this denomination
+    setLockedInputs(prev => ({
+      ...prev,
+      [presetValue]: true
+    }));
+    
+    setGridInputs(prev => ({
+      ...prev,
+      [presetValue]: ''
+    }));
+    
+    // Clear the focus
+    setCurrentFocusedField(null);
+  };
+
   const handleAddAllGridSequences = () => {
     const denominations = getDenominations();
     const entries = denominations
@@ -326,6 +350,7 @@ const SequenceManager = ({
         onUnlockField={unlockField}
         onResetGrid={resetGridInputs}
         onAddAllGridSequences={handleAddAllGridSequences}
+        onAddSingleSequence={handleAddSingleSequence} // This is the new prop
       />
 
       <SequenceList
