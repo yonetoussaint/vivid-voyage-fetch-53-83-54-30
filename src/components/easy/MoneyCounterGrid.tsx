@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Unlock, ChevronDown } from 'lucide-react';
+import { Unlock, ChevronDown, Plus } from 'lucide-react';
 
 /* =========================
    PresetInput
@@ -79,7 +79,7 @@ const PresetInput = ({
         )}
       </div>
 
-      {/* Input with ADD text button */}
+      {/* Input with ADD (icon + text) */}
       <div className="relative">
         <input
           type="text"
@@ -92,7 +92,7 @@ const PresetInput = ({
           placeholder="0"
           disabled={isLocked || !selectedPreset}
           className={`w-full h-11 text-center text-sm font-bold rounded-lg border
-            focus:outline-none pr-16
+            focus:outline-none pr-20
             ${
               isLocked
                 ? 'bg-green-50 border-green-300 text-green-700'
@@ -104,7 +104,7 @@ const PresetInput = ({
         {isLocked && (
           <button
             onClick={onUnlock}
-            className="absolute right-16 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
+            className="absolute right-20 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
             title="Déverrouiller"
           >
             <Unlock size={16} />
@@ -116,7 +116,7 @@ const PresetInput = ({
           onClick={() => onAdd(selectedPreset, value)}
           disabled={!value || parseFloat(value) <= 0 || isLocked}
           className={`absolute right-2 top-1/2 -translate-y-1/2
-            h-7 px-3 rounded-md text-xs font-bold
+            h-7 px-3 rounded-md text-xs font-bold flex items-center gap-1
             disabled:opacity-50 disabled:cursor-not-allowed
             ${
               currency === 'HTG'
@@ -124,7 +124,8 @@ const PresetInput = ({
                 : 'bg-green-600 hover:bg-green-700 text-white'
             }`}
         >
-          Add
+          <Plus size={12} />
+          <span>Add</span>
         </button>
       </div>
 
