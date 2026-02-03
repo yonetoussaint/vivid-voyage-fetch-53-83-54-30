@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Unlock, ChevronDown, Plus, Check } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Unlock, ChevronDown, Plus, Check, Undo2 } from 'lucide-react';
 
 /* =========================
    PresetInput
@@ -20,17 +20,48 @@ const PresetInput = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [added, setAdded] = useState(false);
+  const [lastAdd, setLastAdd] = useState(null);
 
-  const selectedDenom = presets.find(p => p.value === selectedPreset);
+  const resetTimer = useRef(null);
+
+  const selectedDenomIndex = presets.findIndex(p => p.value === selectedPreset);
+  const selectedDenom = presets[selectedDenomIndex];
 
   const handleAddClick = () => {
     if (!value || parseFloat(value) <= 0 || isLocked) return;
 
+    // Save for undo
+    setLastAdd({
+      preset: selectedPreset,
+      value
+    });
+
     onAdd(selectedPreset, value);
     setAdded(true);
+
+    // Auto clear input
     onInputChange(selectedPreset, '');
 
-    setTimeout(() => setAdded(false), 900);
+    // Auto advance to next denomination
+    const nextPreset = presets[selectedDenomIndex + 1];
+    if (nextPreset) {
+      onPresetChange(nextPreset.value);
+    }
+
+    clearTimeout(resetTimer.current);
+    resetTimer.current = setTimeout(() => {
+      setAdded(false);
+      setLastAdd(null);
+    }, 2500);
+  };
+
+  const handleUndo = () => {
+    if (!lastAdd) return;
+
+    onPresetChange(lastAdd.preset);
+    onInputChange(lastAdd.preset, lastAdd.value);
+    setLastAdd(null);
+    setAdded(false);
   };
 
   return (
@@ -49,7 +80,7 @@ const PresetInput = ({
         disabled={isLocked || !selectedPreset}
         className={`w-full h-12 rounded-xl border text-center text-sm font-bold
           focus:outline-none
-          pl-28 pr-28 transition
+          pl-28 pr-36 transition
           ${
             isLocked
               ? 'bg-green-50 border-green-300 text-green-700'
@@ -57,7 +88,7 @@ const PresetInput = ({
           }`}
       />
 
-      {/* LEFT: PRESET DROPDOWN (inside input) */}
+      {/* LEFT: PRESET DROPDOWN */}
       <button
         type="button"
         disabled={isLocked}
@@ -127,24 +158,28 @@ const PresetInput = ({
                 : 'bg-green-600 hover:bg-green-700 text-white'
           }`}
       >
-        {added ? (
-          <>
-            <Check size={12} />
-            <span>Added</span>
-          </>
-        ) : (
-          <>
-            <Plus size={12} />
-            <span>Add</span>
-          </>
-        )}
+        {added ? <Check size={12} /> : <Plus size={12} />}
+        <span>{added ? 'Added' : 'Add'}</span>
       </button>
+
+      {/* UNDO */}
+      {lastAdd && (
+        <button
+          onClick={handleUndo}
+          className="absolute right-24 top-1/2 -translate-y-1/2
+            h-8 px-2 rounded-lg text-xs font-bold flex items-center gap-1
+            bg-yellow-100 hover:bg-yellow-200 text-yellow-800"
+        >
+          <Undo2 size={12} />
+          Undo
+        </button>
+      )}
 
       {/* UNLOCK */}
       {isLocked && (
         <button
           onClick={onUnlock}
-          className="absolute right-28 top-1/2 -translate-y-1/2 text-green-600"
+          className="absolute right-36 top-1/2 -translate-y-1/2 text-green-600"
         >
           <Unlock size={16} />
         </button>
