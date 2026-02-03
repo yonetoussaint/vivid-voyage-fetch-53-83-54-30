@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Unlock, ChevronDown, Plus } from 'lucide-react';
+import { Unlock, ChevronDown } from 'lucide-react';
 
 /* =========================
    PresetInput
@@ -79,7 +79,7 @@ const PresetInput = ({
         )}
       </div>
 
-      {/* Input with Add button inside */}
+      {/* Input with ADD text button */}
       <div className="relative">
         <input
           type="text"
@@ -92,7 +92,7 @@ const PresetInput = ({
           placeholder="0"
           disabled={isLocked || !selectedPreset}
           className={`w-full h-11 text-center text-sm font-bold rounded-lg border
-            focus:outline-none pr-12
+            focus:outline-none pr-16
             ${
               isLocked
                 ? 'bg-green-50 border-green-300 text-green-700'
@@ -100,32 +100,31 @@ const PresetInput = ({
             }`}
         />
 
-        {/* Unlock button */}
+        {/* Unlock */}
         {isLocked && (
           <button
             onClick={onUnlock}
-            className="absolute right-10 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
+            className="absolute right-16 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
             title="Déverrouiller"
           >
             <Unlock size={16} />
           </button>
         )}
 
-        {/* Add button */}
+        {/* ADD button */}
         <button
           onClick={() => onAdd(selectedPreset, value)}
           disabled={!value || parseFloat(value) <= 0 || isLocked}
           className={`absolute right-2 top-1/2 -translate-y-1/2
-            h-7 w-7 rounded-md text-white flex items-center justify-center
+            h-7 px-3 rounded-md text-xs font-bold
             disabled:opacity-50 disabled:cursor-not-allowed
             ${
               currency === 'HTG'
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-green-600 hover:bg-green-700'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-green-600 hover:bg-green-700 text-white'
             }`}
-          title="Add"
         >
-          <Plus size={14} />
+          Add
         </button>
       </div>
 
