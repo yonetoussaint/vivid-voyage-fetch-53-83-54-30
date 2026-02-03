@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Unlock, ChevronDown, Plus, Check, Undo2 } from 'lucide-react';
+import { ChevronDown, Plus, Check, Undo2 } from 'lucide-react';
 
 /* =========================
    PresetInput
@@ -9,36 +9,38 @@ const PresetInput = ({
   presets,
   selectedPreset,
   value,
-  lockedInputs,
   onPresetChange,
   onInputChange,
   onFocus,
   onBlur,
   onKeyPress,
-  onUnlock,
   onAdd
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [added, setAdded] = useState(false);
-  const [lastValue, setLastValue] = useState(null); // store previous input for undo
+
+  // multi-step undo stack: { presetValue: [previousValues] }
+  const [undoStacks, setUndoStacks] = useState({});
+
   const resetTimer = useRef(null);
 
   const selectedDenomIndex = presets.findIndex(p => p.value === selectedPreset);
   const selectedDenom = presets[selectedDenomIndex];
-  const locked = selectedPreset ? lockedInputs[selectedPreset] : false;
 
   /* =========================
      Add button
      ========================= */
   const handleAddClick = () => {
-    if (!value || parseFloat(value) <= 0 || locked) return;
+    if (!value || parseFloat(value) <= 0) return;
 
     onAdd(selectedPreset, value);
     setAdded(true);
 
     // Auto clear input
     onInputChange(selectedPreset, '');
-    setLastValue(null); // reset undo after add
+
+    // Clear undo stack for this preset when added
+    setUndoStacks(prev => ({ ...prev, [selectedPreset]: [] }));
 
     // Auto advance to next denomination
     const nextPreset = presets[selectedDenomIndex + 1];
@@ -53,13 +55,37 @@ const PresetInput = ({
   };
 
   /* =========================
-     Undo button
+     Multi-step Undo
      ========================= */
   const handleUndo = () => {
-    if (lastValue === null) return;
+    if (!selectedPreset || !undoStacks[selectedPreset] || undoStacks[selectedPreset].length === 0) return;
+
+    const stack = [...undoStacks[selectedPreset]];
+    const lastValue = stack.pop();
+
+    setUndoStacks(prev => ({
+      ...prev,
+      [selectedPreset]: stack
+    }));
 
     onInputChange(selectedPreset, lastValue);
-    setLastValue(null);
+  };
+
+  /* =========================
+     On input change: push previous value to undo stack
+     ========================= */
+  const handleInputChange = (newValue) => {
+    if (!selectedPreset) return;
+
+    setUndoStacks(prev => {
+      const stack = prev[selectedPreset] || [];
+      return {
+        ...prev,
+        [selectedPreset]: [...stack, value] // push current value before changing
+      };
+    });
+
+    onInputChange(selectedPreset, newValue);
   };
 
   return (
@@ -70,37 +96,24 @@ const PresetInput = ({
         type="text"
         inputMode="numeric"
         value={value}
-        onChange={(e) => {
-          setLastValue(value); // store previous input for undo
-          onInputChange(selectedPreset, e.target.value);
-        }}
+        onChange={(e) => handleInputChange(e.target.value)}
         onFocus={() => onFocus(selectedPreset)}
         onBlur={() => onBlur(selectedPreset)}
         onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
         placeholder="0"
-        disabled={locked || !selectedPreset}
-        className={`w-full h-12 rounded-xl border text-center text-sm font-bold
+        className="w-full h-12 rounded-xl border text-center text-sm font-bold
           focus:outline-none
           pl-28 pr-36 transition
-          ${
-            locked
-              ? 'bg-green-50 border-green-300 text-green-700'
-              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
-          }`}
+          bg-white border-gray-300 text-gray-900 focus:border-blue-500"
       />
 
       {/* LEFT: PRESET DROPDOWN */}
       <button
         type="button"
-        disabled={locked}
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className={`absolute left-2 top-1/2 -translate-y-1/2
+        className="absolute left-2 top-1/2 -translate-y-1/2
           h-8 px-2 rounded-lg flex items-center gap-1 text-xs font-bold
-          ${
-            locked
-              ? 'bg-green-200 text-green-800'
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-          }`}
+          bg-gray-100 hover:bg-gray-200 text-gray-700"
       >
         {selectedDenom && (
           <div className={`${selectedDenom.color} px-2 py-0.5 rounded-md`}>
@@ -146,7 +159,7 @@ const PresetInput = ({
       {/* RIGHT: ADD BUTTON */}
       <button
         onClick={handleAddClick}
-        disabled={!value || parseFloat(value) <= 0 || locked}
+        disabled={!value || parseFloat(value) <= 0}
         className={`absolute right-2 top-1/2 -translate-y-1/2
           h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1
           transition-all duration-200
@@ -163,26 +176,16 @@ const PresetInput = ({
         <span>{added ? 'Added' : 'Add'}</span>
       </button>
 
-      {/* UNDO */}
-      {lastValue !== null && value !== lastValue && !locked && (
+      {/* UNDO: reduced gap to 4px */}
+      {selectedPreset && undoStacks[selectedPreset]?.length > 0 && (
         <button
           onClick={handleUndo}
-          className="absolute right-24 top-1/2 -translate-y-1/2
+          className="absolute right-20 top-1/2 -translate-y-1/2
             h-8 px-2 rounded-lg text-xs font-bold flex items-center gap-1
             bg-yellow-100 hover:bg-yellow-200 text-yellow-800"
         >
           <Undo2 size={12} />
           Undo
-        </button>
-      )}
-
-      {/* UNLOCK */}
-      {locked && (
-        <button
-          onClick={() => onUnlock(selectedPreset)}
-          className="absolute right-36 top-1/2 -translate-y-1/2 text-green-600"
-        >
-          <Unlock size={16} />
         </button>
       )}
     </div>
@@ -196,12 +199,10 @@ const MoneyCounterGrid = ({
   currency,
   denominations,
   gridInputs,
-  lockedInputs,
   onGridInputChange,
   onGridInputFocus,
   onGridInputBlur,
   onGridInputKeyPress,
-  onUnlockField,
   onAddSingleSequence
 }) => {
   const [selectedPreset, setSelectedPreset] = useState(denominations[0]?.value);
@@ -221,13 +222,11 @@ const MoneyCounterGrid = ({
       presets={presets}
       selectedPreset={selectedPreset}
       value={currentValue}
-      lockedInputs={lockedInputs}
       onPresetChange={setSelectedPreset}
       onInputChange={onGridInputChange}
       onFocus={onGridInputFocus}
       onBlur={onGridInputBlur}
       onKeyPress={onGridInputKeyPress}
-      onUnlock={onUnlockField}
       onAdd={handleAdd}
     />
   );
