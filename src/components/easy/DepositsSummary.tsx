@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Edit2, Trash2 } from 'lucide-react';
+import { Check, Edit2, Trash2, Clock, Currency } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const DepositsSummary = ({
@@ -36,45 +36,33 @@ const DepositsSummary = ({
     if (!timestamp) return '';
     
     try {
-      // If it's already a time string, try to parse it
       if (typeof timestamp === 'string') {
-        // Check if it's in format like "14:30"
         const timeMatch = timestamp.match(/(\d{1,2}):(\d{2})/);
         if (timeMatch) {
           const hours = parseInt(timeMatch[1]);
           const minutes = timeMatch[2];
-          
-          // Convert to 12-hour format with AM/PM
           const ampm = hours >= 12 ? 'PM' : 'AM';
-          const displayHours = hours % 12 || 12; // Convert 0 or 12 to 12
-          
+          const displayHours = hours % 12 || 12;
           return `${displayHours}:${minutes} ${ampm}`;
         }
         
-        // Check if it's in format like "14h30"
         const hMatch = timestamp.match(/(\d{1,2})h(\d{2})/);
         if (hMatch) {
           const hours = parseInt(hMatch[1]);
           const minutes = hMatch[2];
-          
-          // Convert to 12-hour format with AM/PM
           const ampm = hours >= 12 ? 'PM' : 'AM';
-          const displayHours = hours % 12 || 12; // Convert 0 or 12 to 12
-          
+          const displayHours = hours % 12 || 12;
           return `${displayHours}:${minutes} ${ampm}`;
         }
         
-        // Check if it's already in "12:34 AM" format
         const ampmMatch = timestamp.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
         if (ampmMatch) {
-          return timestamp; // Return as-is
+          return timestamp;
         }
       }
       
-      // If it's a Date object or ISO string
       const date = new Date(timestamp);
       if (!isNaN(date.getTime())) {
-        // Format as "12:34 AM"
         return date.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -82,56 +70,37 @@ const DepositsSummary = ({
         });
       }
       
-      return timestamp; // Return as-is if we can't parse it
+      return timestamp;
     } catch (error) {
       console.error('Error formatting timestamp:', error, timestamp);
       return '';
     }
   };
 
-  // Helper function to get display text for multiplier
+  // Helper function to get multiplier display
   const getMultiplierDisplay = (multiplier, singleValue, currency) => {
     if (multiplier > 1) {
-      // For HTG, use "billets" if value >= 250 (common bill denominations)
-      // For USD, use "billets" for any multiplier
       if (currency === 'HTG' && singleValue >= 250) {
         return `${multiplier} billets de ${safeFormatArgent(singleValue)} ${currency}`;
       } else if (currency === 'USD') {
         return `${multiplier} billets de ${singleValue} ${currency}`;
       }
-      // For smaller HTG amounts or coins
       return `${multiplier} pièces de ${safeFormatArgent(singleValue)} ${currency}`;
     }
     return null;
   };
 
-  // Helper function to get display text for sequence
-  const getSequenceDisplay = (text, multiplier, singleValue, currency, value) => {
-    const multiplierDisplay = getMultiplierDisplay(multiplier, singleValue, currency);
-
-    if (multiplierDisplay) {
-      return multiplierDisplay;
-    }
-
-    // For single items, return the original text
-    return text;
-  };
-
-  // Helper function to parse breakdown and create sorted list items with totals
+  // Parse breakdown and create sorted list items with totals
   const renderBreakdown = (depot) => {
     if (!depot || typeof depot !== 'object') return null;
 
     const breakdown = depot.breakdown;
     if (!breakdown || typeof breakdown !== 'string') return null;
 
-    // Parse sequences and extract numeric values for sorting
     const parsedSequences = breakdown.split(',').map(item => {
       const trimmed = item.trim();
-
-      // Skip empty items
       if (!trimmed) return null;
 
-      // Extract numeric value from different patterns
       let numericValue = 0;
       let displayTotal = '';
       let multiplier = 1;
@@ -140,27 +109,23 @@ const DepositsSummary = ({
       let displayText = trimmed;
 
       try {
-        // Pattern: "5 × 20 USD" or "5 × 20 HTG"
         const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
         if (multiplierMatch) {
           [, multiplier, value, currency] = multiplierMatch;
           const total = parseFloat(multiplier) * parseFloat(value);
           numericValue = total;
           displayTotal = `${safeFormatArgent(total)} ${currency}`;
-          displayText = getSequenceDisplay(trimmed, parseFloat(multiplier), parseFloat(value), currency.toUpperCase(), total);
+          const multiplierDisplay = getMultiplierDisplay(parseFloat(multiplier), parseFloat(value), currency.toUpperCase());
+          displayText = multiplierDisplay || trimmed;
         } 
-        // Pattern: "20 USD" or "100 HTG"
         else {
           const valueMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(USD|HTG)/i);
           if (valueMatch) {
             [, value, currency] = valueMatch;
-            multiplier = 1;
             numericValue = parseFloat(value) || 0;
             displayTotal = `${safeFormatArgent(numericValue)} ${currency}`;
-            // For single items, keep original text
             displayText = trimmed;
           } else {
-            // If no pattern matches, return the text as-is
             return {
               text: trimmed,
               displayText: trimmed,
@@ -185,7 +150,6 @@ const DepositsSummary = ({
           currency: currency.toUpperCase()
         };
       } catch (error) {
-        console.error('Error parsing sequence:', error, 'item:', trimmed);
         return {
           text: trimmed,
           displayText: trimmed,
@@ -197,144 +161,101 @@ const DepositsSummary = ({
           currency: ''
         };
       }
-    }).filter(item => item !== null); // Remove null items
+    }).filter(item => item !== null);
 
-    // Filter out invalid items
     const validSequences = parsedSequences.filter(seq => 
       seq && typeof seq === 'object' && seq.text
     );
 
     if (validSequences.length === 0) return null;
 
-    // Sort by value descending (largest first)
     const sortedSequences = [...validSequences].sort((a, b) => b.value - a.value);
-
-    // Calculate total of all sequences
     const sequencesTotal = sortedSequences.reduce((sum, seq) => sum + (seq.value || 0), 0);
 
-    // Function to convert USD to HTG
     const convertUSDToHTG = (usdAmount) => {
       const amount = parseFloat(usdAmount) || 0;
       return amount * exchangeRate;
     };
 
-    // Function to get HTG bill/coin description
-    const getHTGDescription = (value) => {
-      const numValue = parseFloat(value);
-      if (numValue >= 1000) return `${safeFormatArgent(numValue)} gourdes`;
-      if (numValue >= 250) return `${safeFormatArgent(numValue)} gourdes`;
-      return `${safeFormatArgent(numValue)} gourdes (pièces)`;
-    };
-
     return (
-      <div className="mt-3">
+      <div className="mt-4">
         {/* Breakdown Header */}
         <div className="flex items-center justify-between mb-3 px-1">
-          <div className="text-xs font-medium opacity-90 flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
-            <span>Composition</span>
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+            Composition
           </div>
-          <div className="text-xs opacity-80">
-            <span className="opacity-60 mr-1">Total:</span>
-            <span className="font-semibold">{safeFormatArgent(sequencesTotal)}</span>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Total: <span className="font-semibold text-gray-800 dark:text-gray-200">{safeFormatArgent(sequencesTotal)}</span>
           </div>
         </div>
 
-        {/* Separate Cards for each sequence */}
-        <div className="grid grid-cols-1 gap-2">
+        {/* Sequence Cards */}
+        <div className="space-y-2">
           {sortedSequences.map((seq, idx) => {
-            // Calculate HTG conversion for USD sequences
             const htgValue = seq.isUSD ? convertUSDToHTG(seq.value) : 0;
             const htgPerUnit = seq.isUSD ? convertUSDToHTG(seq.singleValue) : 0;
 
             return (
               <div 
                 key={idx} 
-                className={`
-                  rounded-xl p-2 border
-                  ${seq.isUSD 
-                    ? 'bg-gradient-to-br from-green-900/30 to-emerald-900/20 border-green-800/30' 
-                    : 'bg-white/10 border-white/15'
-                  }
-                  transition-all duration-200 hover:scale-[1.02] hover:shadow-lg
-                `}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3"
               >
-                {/* Main Sequence Card */}
-                <div className="flex flex-col gap-2">
-                  {/* Sequence Header */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="relative flex-shrink-0">
-                        <div className={`w-3 h-3 rounded-full flex items-center justify-center ${
-                          seq.isUSD 
-                            ? 'bg-green-500 text-green-100' 
-                            : 'bg-white/40 text-white'
-                        }`}>
-                          <span className="text-[8px] font-bold">
-                            {seq.currency === 'USD' ? '$' : 'G'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-medium opacity-90 truncate">
-                          {seq.displayText}
-                        </div>
-                        {/* Only show breakdown if it's different from displayText */}
-                        {seq.multiplier > 1 && seq.singleValue > 0 && (
-                          <div className="text-[10px] opacity-60 mt-0.5">
-                            {seq.multiplier} × {seq.currency === 'HTG' 
-                              ? getHTGDescription(seq.singleValue)
-                              : `${seq.singleValue} ${seq.currency}`}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Total Amount */}
+                {/* Sequence Content */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {/* Currency Icon */}
                     <div className={`
-                      px-3 py-1.5 rounded-lg text-xs font-bold min-w-[70px] text-center
+                      w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
                       ${seq.isUSD 
-                        ? 'bg-green-900/50 text-green-200' 
-                        : 'bg-white/20 text-white'
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' 
+                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                       }
                     `}>
-                      {seq.displayTotal}
+                      <Currency size={18} />
+                    </div>
+
+                    {/* Sequence Details */}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                        {seq.displayText}
+                      </div>
+                      {seq.multiplier > 1 && seq.singleValue > 0 && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {seq.multiplier} × {seq.singleValue} {seq.currency}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* HTG Conversion for USD sequences */}
-                  {seq.isUSD && htgValue > 0 && (
-                    <div className={`
-                      mt-2 pt-2 border-t border-dashed
-                      ${seq.isUSD ? 'border-green-800/40' : 'border-white/20'}
-                    `}>
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <div className="flex items-center gap-1.5 opacity-80">
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400/60"></div>
-                            <span>En Gourdes:</span>
-                          </div>
-                          <div className="font-semibold text-amber-300">
-                            {safeFormatArgent(htgValue)} HTG
-                          </div>
-                        </div>
+                  {/* Total Amount */}
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      {seq.displayTotal}
+                    </div>
+                  </div>
+                </div>
 
-                        {seq.multiplier > 1 && seq.singleValue > 0 && htgPerUnit > 0 && (
-                          <div className="flex items-center justify-between text-[10px] opacity-70 pl-2">
-                            <div className="flex items-center gap-1">
-                              <span className="opacity-60">{seq.multiplier} ×</span>
-                              <span>{safeFormatArgent(htgPerUnit)} gourdes</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="opacity-60">Taux:</span>
-                              <span>1 USD = {exchangeRate} HTG</span>
-                            </div>
-                          </div>
-                        )}
+                {/* HTG Conversion for USD */}
+                {seq.isUSD && htgValue > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">En Gourdes:</span>
+                      </div>
+                      <div className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                        {safeFormatArgent(htgValue)} HTG
                       </div>
                     </div>
-                  )}
-                </div>
+                    {seq.multiplier > 1 && seq.singleValue > 0 && htgPerUnit > 0 && (
+                      <div className="flex items-center justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <span>{seq.multiplier} × {safeFormatArgent(htgPerUnit)} gourdes</span>
+                        <span>Taux: 1 USD = {exchangeRate} HTG</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -359,7 +280,6 @@ const DepositsSummary = ({
       const amount = parseFloat(depot) || 0;
       return `${safeFormatArgent(amount)} HTG`;
     } catch (error) {
-      console.error('Error getting display text:', error);
       return '';
     }
   };
@@ -368,12 +288,9 @@ const DepositsSummary = ({
   const getDepositTimestamp = (depot) => {
     if (!depot || typeof depot !== 'object') return null;
     
-    // Try different possible timestamp properties
     const timestamp = depot.timestamp || depot.createdAt || depot.date || depot.time;
     
-    // If no timestamp found in deposit object, check sequences
     if (!timestamp && depot.sequences && Array.isArray(depot.sequences) && depot.sequences.length > 0) {
-      // Use the first sequence's timestamp (they all should have the same timestamp)
       return depot.sequences[0].timestamp;
     }
     
@@ -393,7 +310,6 @@ const DepositsSummary = ({
       }
       return parseFloat(depot) || 0;
     } catch (error) {
-      console.error('Error getting deposit value:', error);
       return 0;
     }
   };
@@ -424,12 +340,10 @@ const DepositsSummary = ({
     return valueB - valueA;
   });
 
-  // Check if formaterArgent is available
   if (typeof formaterArgent !== 'function') {
-    console.error('formaterArgent is not a function');
     return (
-      <div className="pt-3 border-t border-white border-opacity-30">
-        <div className="text-red-500 text-sm p-2">
+      <div className="p-4">
+        <div className="text-red-500 text-sm">
           Erreur: La fonction de formatage n'est pas disponible
         </div>
       </div>
@@ -437,157 +351,145 @@ const DepositsSummary = ({
   }
 
   return (
-    <div className="pt-3 border-t border-white border-opacity-30">
-      <div className="flex flex-col gap-1">
-        <div className="text-sm font-medium opacity-90 flex items-center justify-between mb-3 px-1">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-current opacity-60"></div>
-            <span>Dépôts individuels</span>
+    <div className="p-4">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Dépôts individuels
+            </h2>
           </div>
-          <span className="text-xs opacity-60 bg-white/10 px-2 py-1 rounded-full">
-            {(depots || []).length} dépôt{(depots || []).length !== 1 ? 's' : ''}
+          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full">
+            {depots.length} dépôt{depots.length !== 1 ? 's' : ''}
           </span>
         </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400 ml-6">
+          Gestion des dépôts individuels du vendeur
+        </p>
+      </div>
 
-        {/* Deposit Cards */}
-        <div className="flex flex-col gap-3">
-          {sortedDepots.map((depot, idx) => {
-            const originalIndex = depots.indexOf(depot);
-            const montantHTG = getMontantHTG?.(depot) || 0;
-            const isUSD = isUSDDepot?.(depot) || false;
-            const displayText = getDisplayTextWithoutBreakdown(depot);
-            const isRecent = isRecentlyAdded?.(vendeur, originalIndex) || false;
-            const hasBreakdown = depot && typeof depot === 'object' && depot.breakdown;
-            const isEditing = isEditingThisDeposit?.(vendeur, originalIndex) || false;
-            const timestamp = getDepositTimestamp(depot);
-            const formattedTime = formatTimestamp(timestamp);
+      {/* Deposit Cards */}
+      <div className="space-y-4">
+        {sortedDepots.map((depot, idx) => {
+          const originalIndex = depots.indexOf(depot);
+          const isUSD = isUSDDepot?.(depot) || false;
+          const displayText = getDisplayTextWithoutBreakdown(depot);
+          const isRecent = isRecentlyAdded?.(vendeur, originalIndex) || false;
+          const hasBreakdown = depot && typeof depot === 'object' && depot.breakdown;
+          const isEditing = isEditingThisDeposit?.(vendeur, originalIndex) || false;
+          const timestamp = getDepositTimestamp(depot);
+          const formattedTime = formatTimestamp(timestamp);
 
-            return (
-              <div 
-                key={originalIndex} 
-                className={`
-                  rounded-xl p-2
-                  transition-all duration-300
-                  ${isRecent ? 'animate-pulse-subtle' : ''}
-                  ${isEditing 
-                    ? 'ring-2 ring-amber-400 bg-amber-500 bg-opacity-10' 
-                    : isUSD 
-                    ? 'bg-gradient-to-br from-green-900/40 to-emerald-900/30 border border-green-800/30' 
-                    : 'bg-white/10 border border-white/15'
-                  }
-                  ${isRecent && !isEditing ? 'ring-2 ring-green-400/30 shadow-xl shadow-green-500/10' : ''}
-                  hover:shadow-lg hover:scale-[1.01]}
-                `}
-              >
-                {/* Deposit Card Content */}
-                <div className="flex flex-col gap-3">
-                  {/* Deposit Header with Timestamp */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`
-                        flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold
-                        ${isUSD 
-                          ? 'bg-gradient-to-br from-green-600 to-emerald-600 text-green-50' 
-                          : 'bg-gradient-to-br from-white/30 to-white/10 text-white'
-                        }
-                        ${isRecent ? 'animate-bounce-subtle' : ''}
-                        shadow-md
-                      `}>
-                        {originalIndex + 1}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex flex-col gap-0.5">
-                          {/* Amount */}
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-base truncate">{displayText}</span>
-                            {isRecent && !isEditing && (
-                              <Check size={12} className="text-green-300 flex-shrink-0 animate-pulse" />
-                            )}
-                          </div>
-                          
-                          {/* Timestamp - NO CLOCK ICON */}
-                          {formattedTime && (
-                            <span className="text-[11px] opacity-60">
-                              {formattedTime}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+          return (
+            <div 
+              key={originalIndex}
+              className={`
+                bg-white dark:bg-gray-800 rounded-xl shadow-sm border transition-all duration-200
+                ${isEditing 
+                  ? 'border-amber-400 shadow-md' 
+                  : isUSD 
+                  ? 'border-green-200 dark:border-green-800' 
+                  : 'border-gray-200 dark:border-gray-700'
+                }
+                ${isRecent && !isEditing ? 'ring-2 ring-green-500/20' : ''}
+                hover:shadow-md
+              `}
+            >
+              <div className="p-4">
+                {/* Deposit Header */}
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    {/* Deposit Number */}
+                    <div className={`
+                      w-12 h-12 rounded-xl flex items-center justify-center text-base font-bold flex-shrink-0
+                      ${isUSD 
+                        ? 'bg-gradient-to-br from-green-500 to-green-600 text-white' 
+                        : 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                      }
+                      ${isRecent ? 'animate-pulse' : ''}
+                    `}>
+                      #{originalIndex + 1}
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => onEditDeposit?.(vendeur, originalIndex)}
-                        className={`
-                          p-2 rounded-lg transition-all duration-200
-                          ${isEditing
-                            ? 'bg-amber-500 text-white shadow-lg'
-                            : 'bg-blue-500 bg-opacity-20 text-blue-300 hover:bg-opacity-30 hover:shadow-md'
-                          }
-                        `}
-                        title="Éditer ce dépôt"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        onClick={() => onDeleteDeposit?.(vendeur, originalIndex)}
-                        className="p-2 bg-red-500 bg-opacity-20 text-red-300 hover:bg-opacity-30 rounded-lg transition-all duration-200 hover:shadow-md"
-                        title="Supprimer ce dépôt"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                    {/* Deposit Info */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`
+                          text-xl font-bold truncate
+                          ${isUSD ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}
+                        `}>
+                          {displayText}
+                        </div>
+                        {isRecent && !isEditing && (
+                          <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                            <Check size={12} className="text-green-600 dark:text-green-400" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Timestamp */}
+                      {formattedTime && (
+                        <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                          <Clock size={14} />
+                          {formattedTime}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Render breakdown if exists */}
-                  {hasBreakdown && renderBreakdown(depot)}
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => onEditDeposit?.(vendeur, originalIndex)}
+                      className={`
+                        p-2 rounded-lg transition-colors
+                        ${isEditing
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }
+                      `}
+                      title="Éditer ce dépôt"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      onClick={() => onDeleteDeposit?.(vendeur, originalIndex)}
+                      className="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                      title="Supprimer ce dépôt"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
 
-                  {/* Compact Total Conversion Card - Only for first USD deposit */}
-                  {isUSD && hasUSDDeposits && idx === sortedDepots.findIndex(d => isUSDDepot?.(d)) && (
-                    <div className="mt-2 pt-3 border-t border-green-800/30">
-                      <div className={`
-                        rounded-lg p-2
-                        bg-gradient-to-br from-amber-900/30 to-yellow-900/20 
-                        border border-amber-800/20
-                      `}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400/60"></div>
-                            <span className="text-xs opacity-80">Total en Gourdes:</span>
-                          </div>
-                          <div className="font-semibold text-amber-300">
-                            {safeFormatArgent(totalHTG)} HTG
-                          </div>
+                {/* Breakdown */}
+                {hasBreakdown && renderBreakdown(depot)}
+
+                {/* Total Conversion for USD Deposits */}
+                {isUSD && hasUSDDeposits && idx === sortedDepots.findIndex(d => isUSDDepot?.(d)) && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Total en Gourdes:
+                          </span>
+                        </div>
+                        <div className="text-lg font-semibold text-amber-600 dark:text-amber-400">
+                          {safeFormatArgent(totalHTG)} HTG
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
-
-      {/* Add custom CSS for animations */}
-      <style jsx>{`
-        @keyframes pulse-subtle {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.9; }
-        }
-        .animate-pulse-subtle {
-          animation: pulse-subtle 2s ease-in-out infinite;
-        }
-        
-        @keyframes bounce-subtle {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-2px) scale(1.05); }
-        }
-        .animate-bounce-subtle {
-          animation: bounce-subtle 0.5s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 };
