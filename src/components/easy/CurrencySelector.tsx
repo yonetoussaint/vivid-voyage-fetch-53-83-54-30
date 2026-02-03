@@ -2,7 +2,7 @@ import React from 'react';
 import { DollarSign, Coins } from 'lucide-react';
 
 const CurrencySelector = ({ currency, onCurrencyChange }) => (
-  <div className="flex items-center w-full bg-gray-200 rounded-full p-1 text-sm">
+  <div className="flex items-center w-full bg-gray-200 rounded-full p-1.5 text-sm">
     {/* HTG */}
     <div
       onClick={() => onCurrencyChange('HTG')}
