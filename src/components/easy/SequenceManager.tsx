@@ -353,16 +353,17 @@ const SequenceManager = ({
         onAddSingleSequence={handleAddSingleSequence} // This is the new prop
       />
 
-      <SequenceList
-        sequences={sequences}
-        editingSequenceId={editingSequenceId}
-        vendorInputs={vendorInputs}
-        vendeur={vendeur}
-        onEditSequence={handleEditSequence}
-        onRemoveSequence={handleRemoveSequence}
-        onSaveEditedSequence={handleSaveEditedSequence}
-        onCancelSequenceEdit={handleCancelSequenceEdit}
-      />
+    <SequenceList 
+  sequences={sequences}
+  editingSequenceId={editingSequenceId}
+  vendorInputs={vendorInputs}
+  vendeur={vendeur}
+  onEditSequence={onEditSequence}
+  onRemoveSequence={onRemoveSequence}
+  onSaveEditedSequence={onSaveEditedSequence}
+  onCancelSequenceEdit={onCancelSequenceEdit}
+  variant="card"
+/>
 
       <MainInputSection
         vendeur={vendeur}
