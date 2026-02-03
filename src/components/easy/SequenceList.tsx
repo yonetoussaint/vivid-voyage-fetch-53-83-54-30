@@ -185,7 +185,6 @@ const SequenceList = ({
 
       {/* Summary Section */}
       <div className="pt-3 border-t border-gray-200">
-        <div className="text-sm font-medium text-gray-700 mb-2">Résumé</div>
         <div className="space-y-3">
           {totals.USD > 0 && (
             <div className={`flex items-center justify-between p-3 rounded-lg border ${getCurrencyBgColor('USD')}`}>
