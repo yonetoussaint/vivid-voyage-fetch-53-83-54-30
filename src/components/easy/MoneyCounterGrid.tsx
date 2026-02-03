@@ -3,7 +3,7 @@ import { RotateCcw, Unlock, ChevronDown, Plus } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 /* =========================
-   PresetInput (NO WRAPPER)
+   PresetInput (Improved UI)
    ========================= */
 const PresetInput = ({ 
   currency,
@@ -11,7 +11,6 @@ const PresetInput = ({
   selectedPreset,
   value,
   isLocked,
-  totalForDenom,
   onPresetChange,
   onInputChange,
   onFocus,
@@ -21,116 +20,116 @@ const PresetInput = ({
   onAdd
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const selectedDenom = presets.find(p => p.value === selectedPreset);
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 w-full">
+    <div className="flex items-center gap-3 w-full">
 
-          {/* Preset Dropdown */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100"
-              disabled={isLocked}
-            >
-              {selectedDenom && (
-                <div className={`${selectedDenom.color} px-2 py-1 rounded-md flex items-center justify-center`}>
-                  <span className="text-white font-bold text-xs">
-                    {selectedDenom.value}
-                  </span>
-                </div>
-              )}
-              <span className="text-xs text-gray-600 font-medium">{currency}</span>
-              <ChevronDown size={14} className="text-gray-500" />
-            </button>
+      {/* Preset Dropdown */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          disabled={isLocked}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium
+            transition-all
+            ${
+              isLocked
+                ? 'bg-green-50 border-green-300 text-green-700'
+                : 'bg-gray-50 border-gray-300 hover:bg-gray-100'
+            }`}
+        >
+          {selectedDenom && (
+            <div className={`${selectedDenom.color} px-2 py-1 rounded-md`}>
+              <span className="text-white text-xs font-bold">
+                {selectedDenom.value}
+              </span>
+            </div>
+          )}
+          <span className="text-gray-600">{currency}</span>
+          <ChevronDown size={14} />
+        </button>
 
-            {isDropdownOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setIsDropdownOpen(false)}
-                />
-                <div className="absolute z-20 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {presets.map((preset) => (
-                    <button
-                      key={preset.value}
-                      onClick={() => {
-                        onPresetChange(preset.value);
-                        setIsDropdownOpen(false);
-                      }}
-                      className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <div className={`${preset.color} px-2 py-1 rounded-md flex items-center justify-center`}>
-                        <span className="text-white font-bold text-xs">
-                          {preset.value}
-                        </span>
-                      </div>
-                      <span className="text-sm text-gray-700">
-                        {currency} {preset.value}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Input Field */}
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={value}
-              onChange={(e) => onInputChange(selectedPreset, e.target.value)}
-              onFocus={() => onFocus(selectedPreset)}
-              onBlur={() => onBlur(selectedPreset)}
-              onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
-              className={`w-full text-sm font-bold rounded px-3 py-2 border focus:outline-none focus:ring-2 text-center ${
-                isLocked
-                  ? 'text-green-700 bg-green-50 border-green-200 pr-8'
-                  : 'text-gray-900 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-              }`}
-              placeholder="0"
-              disabled={isLocked || !selectedPreset}
+        {isDropdownOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-10"
+              onClick={() => setIsDropdownOpen(false)}
             />
+            <div className="absolute z-20 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+              {presets.map((preset) => (
+                <button
+                  key={preset.value}
+                  onClick={() => {
+                    onPresetChange(preset.value);
+                    setIsDropdownOpen(false);
+                  }}
+                  className="w-full px-3 py-2 flex items-center gap-2 text-sm hover:bg-gray-50"
+                >
+                  <div className={`${preset.color} px-2 py-1 rounded-md`}>
+                    <span className="text-white text-xs font-bold">
+                      {preset.value}
+                    </span>
+                  </div>
+                  <span className="text-gray-700">
+                    {currency} {preset.value}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
-            {isLocked && (
-              <button
-                onClick={onUnlock}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-600"
-                title="Déverrouiller"
-              >
-                <Unlock size={14} />
-              </button>
-            )}
-          </div>
+      {/* Input */}
+      <div className="relative flex-1">
+        <input
+          type="text"
+          inputMode="numeric"
+          value={value}
+          onChange={(e) => onInputChange(selectedPreset, e.target.value)}
+          onFocus={() => onFocus(selectedPreset)}
+          onBlur={() => onBlur(selectedPreset)}
+          onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
+          placeholder="0"
+          disabled={isLocked || !selectedPreset}
+          className={`w-full px-4 py-2 text-center text-sm font-bold rounded-lg border
+            focus:outline-none focus:ring-2 transition-all
+            ${
+              isLocked
+                ? 'bg-green-50 border-green-300 text-green-700 pr-10'
+                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-200'
+            }`}
+        />
 
-          {/* Add Button */}
+        {isLocked && (
           <button
-            onClick={() => onAdd(selectedPreset, value)}
-            disabled={!value || parseFloat(value) <= 0 || isLocked}
-            className={`px-4 py-2 text-sm text-white rounded-md font-medium flex items-center gap-1 min-w-[80px]
-              ${
-                currency === 'HTG'
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700'
-                  : 'bg-gradient-to-r from-green-600 to-green-700'
-              }`}
+            onClick={onUnlock}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
+            title="Déverrouiller"
           >
-            <Plus size={16} />
-            <span>Add</span>
+            <Unlock size={16} />
           </button>
-        </div>
+        )}
       </div>
 
-      {/* Total */}
-      <div className="text-sm font-bold text-gray-700 text-center mt-2">
-        {totalForDenom > 0 ? formaterArgent(totalForDenom) : '—'}
-      </div>
-    </>
+      {/* Add Button */}
+      <button
+        onClick={() => onAdd(selectedPreset, value)}
+        disabled={!value || parseFloat(value) <= 0 || isLocked}
+        className={`px-5 py-2 rounded-lg text-sm font-semibold text-white
+          flex items-center gap-1 transition-all
+          disabled:opacity-50 disabled:cursor-not-allowed
+          ${
+            currency === 'HTG'
+              ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:brightness-110'
+              : 'bg-gradient-to-r from-green-600 to-green-700 hover:brightness-110'
+          }`}
+      >
+        <Plus size={16} />
+        Add
+      </button>
+    </div>
   );
 };
 
@@ -153,32 +152,25 @@ const MoneyCounterGrid = ({
   onAddSingleSequence
 }) => {
   const [selectedPreset, setSelectedPreset] = useState(denominations[0]?.value);
-
   const presets = [...denominations].sort((a, b) => b.value - a.value);
 
   const handleAdd = (preset, value) => {
-    if (onAddSingleSequence && preset && value && parseFloat(value) > 0) {
+    if (preset && value && parseFloat(value) > 0) {
       onAddSingleSequence(preset, value);
     }
   };
 
   const currentValue = selectedPreset ? gridInputs[selectedPreset] || '' : '';
-  const currentTotal =
-    currentValue && parseFloat(currentValue) > 0 && selectedPreset
-      ? selectedPreset * parseFloat(currentValue)
-      : 0;
 
   return (
     <>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-5">
         <div>
-          <div className="text-sm font-medium text-gray-600">Total compteur</div>
-          <div
-            className={`text-xl font-bold ${
-              currency === 'HTG' ? 'text-blue-700' : 'text-green-700'
-            }`}
-          >
+          <div className="text-sm text-gray-500">Total compteur</div>
+          <div className={`text-2xl font-bold ${
+            currency === 'HTG' ? 'text-blue-700' : 'text-green-700'
+          }`}>
             {formaterArgent(gridTotal)} {currency}
           </div>
         </div>
@@ -186,7 +178,7 @@ const MoneyCounterGrid = ({
         <div className="flex gap-2">
           <button
             onClick={onResetGrid}
-            className="px-3 py-1.5 text-sm bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 rounded-lg flex items-center gap-2"
+            className="px-4 py-2 rounded-lg border bg-gray-100 hover:bg-gray-200 flex items-center gap-2 text-sm"
           >
             <RotateCcw size={14} />
             Reset
@@ -195,7 +187,8 @@ const MoneyCounterGrid = ({
           <button
             onClick={onAddAllGridSequences}
             disabled={gridTotal === 0}
-            className={`px-3 py-1.5 text-sm text-white rounded-lg font-medium
+            className={`px-4 py-2 rounded-lg text-sm font-semibold text-white
+              disabled:opacity-50
               ${
                 currency === 'HTG'
                   ? 'bg-gradient-to-r from-blue-600 to-blue-700'
@@ -207,14 +200,13 @@ const MoneyCounterGrid = ({
         </div>
       </div>
 
-      {/* Single Input */}
+      {/* Input Row */}
       <PresetInput
         currency={currency}
         presets={presets}
         selectedPreset={selectedPreset}
         value={currentValue}
         isLocked={selectedPreset ? lockedInputs[selectedPreset] : false}
-        totalForDenom={currentTotal}
         onPresetChange={setSelectedPreset}
         onInputChange={onGridInputChange}
         onFocus={onGridInputFocus}
