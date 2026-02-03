@@ -28,15 +28,6 @@ const PresetInput = ({
   const selectedDenom = presets[selectedDenomIndex];
 
   /* =========================
-     Handle preset change
-     ========================= */
-  const handlePresetChange = (presetValue) => {
-    // Initialize undo stack for new preset if it doesn't exist
-    setUndoStacks(prev => ({ ...prev, [presetValue]: prev[presetValue] || [] }));
-    onPresetChange(presetValue);
-  };
-
-  /* =========================
      Add button
      ========================= */
   const handleAddClick = () => {
@@ -54,7 +45,7 @@ const PresetInput = ({
     // Auto advance to next denomination
     const nextPreset = presets[selectedDenomIndex + 1];
     if (nextPreset) {
-      handlePresetChange(nextPreset.value);
+      onPresetChange(nextPreset.value);
     }
 
     clearTimeout(resetTimer.current);
@@ -88,16 +79,10 @@ const PresetInput = ({
 
     setUndoStacks(prev => {
       const stack = prev[selectedPreset] || [];
-      const last = stack[stack.length - 1];
-
-      // Only push if different from last value
-      if (last !== value) {
-        return {
-          ...prev,
-          [selectedPreset]: [...stack, value]
-        };
-      }
-      return prev;
+      return {
+        ...prev,
+        [selectedPreset]: [...stack, value] // push current value before changing
+      };
     });
 
     onInputChange(selectedPreset, newValue);
@@ -116,10 +101,10 @@ const PresetInput = ({
         onBlur={() => onBlur(selectedPreset)}
         onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
         placeholder="0"
+        disabled={!selectedPreset}
         className="w-full h-12 rounded-xl border text-center text-sm font-bold
-          focus:outline-none
-          pl-28 pr-36 transition
-          bg-white border-gray-300 text-gray-900 focus:border-blue-500"
+          focus:outline-none bg-white border-gray-300 text-gray-900 
+          focus:border-blue-500 pl-28 pr-28 transition"
       />
 
       {/* LEFT: PRESET DROPDOWN */}
@@ -152,7 +137,7 @@ const PresetInput = ({
               <button
                 key={preset.value}
                 onClick={() => {
-                  handlePresetChange(preset.value);
+                  onPresetChange(preset.value);
                   setIsDropdownOpen(false);
                 }}
                 className="w-full px-3 py-2 flex items-center gap-2 text-sm hover:bg-gray-50"
@@ -191,11 +176,11 @@ const PresetInput = ({
         <span>{added ? 'Added' : 'Add'}</span>
       </button>
 
-      {/* UNDO: closer to Add button */}
+      {/* UNDO - moved closer to Add button */}
       {selectedPreset && undoStacks[selectedPreset]?.length > 0 && (
         <button
           onClick={handleUndo}
-          className="absolute right-16 top-1/2 -translate-y-1/2
+          className="absolute right-20 top-1/2 -translate-y-1/2
             h-8 px-2 rounded-lg text-xs font-bold flex items-center gap-1
             bg-yellow-100 hover:bg-yellow-200 text-yellow-800"
         >
