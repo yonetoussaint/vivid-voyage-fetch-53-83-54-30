@@ -95,25 +95,79 @@ const SequenceList = ({
     );
   }
 
-  return (
-    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-      {sequences.map((sequence) => {
-        const isEditing = sequence.id === editingSequenceId;
+  // Calculate totals by currency
+  const calculateTotals = () => {
+    const totals = {
+      USD: 0,
+      CAD: 0,
+      totalCount: sequences.length
+    };
 
-        return (
-          <SequenceItem
-            key={sequence.id}
-            sequence={sequence}
-            isEditing={isEditing}
-            vendorInputs={vendorInputs}
-            vendeur={vendeur}
-            onEdit={onEditSequence}
-            onRemove={onRemoveSequence}
-            onSave={onSaveEditedSequence}
-            onCancel={onCancelSequenceEdit}
-          />
-        );
-      })}
+    sequences.forEach(sequence => {
+      if (sequence.currency === 'USD') {
+        totals.USD += sequence.amount;
+      } else if (sequence.currency === 'CAD') {
+        totals.CAD += sequence.amount;
+      }
+    });
+
+    return totals;
+  };
+
+  const totals = calculateTotals();
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+        {sequences.map((sequence) => {
+          const isEditing = sequence.id === editingSequenceId;
+
+          return (
+            <SequenceItem
+              key={sequence.id}
+              sequence={sequence}
+              isEditing={isEditing}
+              vendorInputs={vendorInputs}
+              vendeur={vendeur}
+              onEdit={onEditSequence}
+              onRemove={onRemoveSequence}
+              onSave={onSaveEditedSequence}
+              onCancel={onCancelSequenceEdit}
+            />
+          );
+        })}
+      </div>
+
+      {/* Summary Section */}
+      <div className="pt-3 border-t border-gray-200">
+        <div className="text-sm font-medium text-gray-700 mb-2">Résumé</div>
+        <div className="grid grid-cols-2 gap-3">
+          {totals.USD > 0 && (
+            <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+              <div className="text-xs text-green-700 mb-1">Total USD</div>
+              <div className="text-lg font-bold text-green-800">
+                {formaterArgent(totals.USD)} USD
+              </div>
+            </div>
+          )}
+          {totals.CAD > 0 && (
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+              <div className="text-xs text-blue-700 mb-1">Total CAD</div>
+              <div className="text-lg font-bold text-blue-800">
+                {formaterArgent(totals.CAD)} CAD
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="mt-3 pt-3 border-t border-gray-200">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-600">Séquences</div>
+            <div className="text-sm font-semibold text-gray-800">
+              {totals.totalCount} séquence{totals.totalCount !== 1 ? 's' : ''}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
