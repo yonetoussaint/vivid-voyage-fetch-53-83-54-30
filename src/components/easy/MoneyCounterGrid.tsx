@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Unlock, ChevronDown, Plus } from 'lucide-react';
+import { Unlock, ChevronDown, Plus, Check } from 'lucide-react';
 
 /* =========================
    PresetInput
@@ -19,7 +19,24 @@ const PresetInput = ({
   onAdd
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [added, setAdded] = useState(false);
+
   const selectedDenom = presets.find(p => p.value === selectedPreset);
+
+  const handleAddClick = () => {
+    if (!value || parseFloat(value) <= 0 || isLocked) return;
+
+    onAdd(selectedPreset, value);
+
+    // success feedback
+    setAdded(true);
+
+    // auto clear input
+    onInputChange(selectedPreset, '');
+
+    // reset button after animation
+    setTimeout(() => setAdded(false), 900);
+  };
 
   return (
     <div className="grid grid-cols-[1fr_1fr] gap-3 w-full">
@@ -79,7 +96,7 @@ const PresetInput = ({
         )}
       </div>
 
-      {/* Input with ADD (icon + text) */}
+      {/* Input with animated ADD */}
       <div className="relative">
         <input
           type="text"
@@ -92,7 +109,7 @@ const PresetInput = ({
           placeholder="0"
           disabled={isLocked || !selectedPreset}
           className={`w-full h-11 text-center text-sm font-bold rounded-lg border
-            focus:outline-none pr-20
+            focus:outline-none pr-24 transition
             ${
               isLocked
                 ? 'bg-green-50 border-green-300 text-green-700'
@@ -104,28 +121,39 @@ const PresetInput = ({
         {isLocked && (
           <button
             onClick={onUnlock}
-            className="absolute right-20 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
-            title="Déverrouiller"
+            className="absolute right-24 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
           >
             <Unlock size={16} />
           </button>
         )}
 
-        {/* ADD button */}
+        {/* ADD / ADDED button */}
         <button
-          onClick={() => onAdd(selectedPreset, value)}
+          onClick={handleAddClick}
           disabled={!value || parseFloat(value) <= 0 || isLocked}
           className={`absolute right-2 top-1/2 -translate-y-1/2
             h-7 px-3 rounded-md text-xs font-bold flex items-center gap-1
+            transition-all duration-200
             disabled:opacity-50 disabled:cursor-not-allowed
             ${
-              currency === 'HTG'
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-green-600 hover:bg-green-700 text-white'
+              added
+                ? 'bg-green-600 text-white scale-105'
+                : currency === 'HTG'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
             }`}
         >
-          <Plus size={12} />
-          <span>Add</span>
+          {added ? (
+            <>
+              <Check size={12} />
+              <span>Added</span>
+            </>
+          ) : (
+            <>
+              <Plus size={12} />
+              <span>Add</span>
+            </>
+          )}
         </button>
       </div>
 
