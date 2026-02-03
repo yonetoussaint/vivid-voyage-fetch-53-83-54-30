@@ -3,7 +3,7 @@ import { RotateCcw, Unlock, ChevronDown, Plus } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 /* =========================
-   PresetInput (Improved UI)
+   PresetInput
    ========================= */
 const PresetInput = ({ 
   currency,
@@ -23,15 +23,15 @@ const PresetInput = ({
   const selectedDenom = presets.find(p => p.value === selectedPreset);
 
   return (
-    <div className="flex items-center gap-3 w-full">
+    <div className="grid grid-cols-[1.2fr_2fr_1fr] gap-3 w-full">
 
       {/* Preset Dropdown */}
       <div className="relative">
         <button
           type="button"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           disabled={isLocked}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm font-medium
             transition-all
             ${
               isLocked
@@ -56,7 +56,7 @@ const PresetInput = ({
               className="fixed inset-0 z-10"
               onClick={() => setIsDropdownOpen(false)}
             />
-            <div className="absolute z-20 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+            <div className="absolute z-20 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
               {presets.map((preset) => (
                 <button
                   key={preset.value}
@@ -82,7 +82,7 @@ const PresetInput = ({
       </div>
 
       {/* Input */}
-      <div className="relative flex-1">
+      <div className="relative">
         <input
           type="text"
           inputMode="numeric"
@@ -117,8 +117,8 @@ const PresetInput = ({
       <button
         onClick={() => onAdd(selectedPreset, value)}
         disabled={!value || parseFloat(value) <= 0 || isLocked}
-        className={`px-5 py-2 rounded-lg text-sm font-semibold text-white
-          flex items-center gap-1 transition-all
+        className={`w-full px-5 py-2 rounded-lg text-sm font-semibold text-white
+          flex items-center justify-center gap-1 transition-all
           disabled:opacity-50 disabled:cursor-not-allowed
           ${
             currency === 'HTG'
@@ -168,9 +168,11 @@ const MoneyCounterGrid = ({
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-5">
         <div>
           <div className="text-sm text-gray-500">Total compteur</div>
-          <div className={`text-2xl font-bold ${
-            currency === 'HTG' ? 'text-blue-700' : 'text-green-700'
-          }`}>
+          <div
+            className={`text-2xl font-bold ${
+              currency === 'HTG' ? 'text-blue-700' : 'text-green-700'
+            }`}
+          >
             {formaterArgent(gridTotal)} {currency}
           </div>
         </div>
