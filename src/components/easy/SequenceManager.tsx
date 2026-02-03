@@ -6,7 +6,6 @@ import { htgPresets, usdPresets } from './depositPresets';
 import SequenceHeader from './SequenceHeader';
 import CurrencySelector from './CurrencySelector';
 import MoneyCounterGrid from './MoneyCounterGrid';
-import SequenceList from './SequenceList';
 import MainInputSection from './MainInputSection';
 
 const SequenceManager = ({
@@ -167,23 +166,23 @@ const SequenceManager = ({
   const handleAddSingleSequence = (presetValue, count) => {
     const value = count;
     const multiplier = parseFloat(value);
-    
+
     if (!presetValue || !value || multiplier <= 0) return;
-    
+
     // Add the sequence
     handleAddSequence(vendeur, presetValue, value);
-    
+
     // Lock and clear the input for this denomination
     setLockedInputs(prev => ({
       ...prev,
       [presetValue]: true
     }));
-    
+
     setGridInputs(prev => ({
       ...prev,
       [presetValue]: ''
     }));
-    
+
     // Clear the focus
     setCurrentFocusedField(null);
   };
@@ -350,20 +349,8 @@ const SequenceManager = ({
         onUnlockField={unlockField}
         onResetGrid={resetGridInputs}
         onAddAllGridSequences={handleAddAllGridSequences}
-        onAddSingleSequence={handleAddSingleSequence} // This is the new prop
+        onAddSingleSequence={handleAddSingleSequence}
       />
-
-   <SequenceList 
-  sequences={sequences}
-  editingSequenceId={editingSequenceId}
-  vendorInputs={vendorInputs}
-  vendeur={vendeur}
-  onEditSequence={handleEditSequence} // This should be handleEditSequence, not onEditSequence
-  onRemoveSequence={handleRemoveSequence}
-  onSaveEditedSequence={handleSaveEditedSequence}
-  onCancelSequenceEdit={handleCancelSequenceEdit}
-  variant="card"
-/>
 
       <MainInputSection
         vendeur={vendeur}
