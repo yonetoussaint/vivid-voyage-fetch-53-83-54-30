@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, Unlock, ChevronDown, Plus } from 'lucide-react';
+import { Unlock, ChevronDown, Plus } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 /* =========================
@@ -146,8 +146,6 @@ const MoneyCounterGrid = ({
   onGridInputBlur,
   onGridInputKeyPress,
   onUnlockField,
-  onResetGrid,
-  onAddAllGridSequences,
   onAddSingleSequence
 }) => {
   const [selectedPreset, setSelectedPreset] = useState(denominations[0]?.value);
@@ -163,39 +161,13 @@ const MoneyCounterGrid = ({
 
   return (
     <>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-5">
-        <div>
-          <div className="text-sm text-gray-500">Total compteur</div>
-          <div className={`text-2xl font-bold ${
-            currency === 'HTG' ? 'text-blue-700' : 'text-green-700'
-          }`}>
-            {formaterArgent(gridTotal)} {currency}
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={onResetGrid}
-            className="px-4 py-2 rounded-lg border bg-gray-100 hover:bg-gray-200 flex items-center gap-2 text-sm"
-          >
-            <RotateCcw size={14} />
-            Reset
-          </button>
-
-          <button
-            onClick={onAddAllGridSequences}
-            disabled={gridTotal === 0}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold text-white
-              disabled:opacity-50
-              ${
-                currency === 'HTG'
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700'
-                  : 'bg-gradient-to-r from-green-600 to-green-700'
-              }`}
-          >
-            Tout ajouter
-          </button>
+      {/* Header: Only Total */}
+      <div className="mb-5">
+        <div className="text-sm text-gray-500">Total compteur</div>
+        <div className={`text-2xl font-bold ${
+          currency === 'HTG' ? 'text-blue-700' : 'text-green-700'
+        }`}>
+          {formaterArgent(gridTotal)} {currency}
         </div>
       </div>
 
