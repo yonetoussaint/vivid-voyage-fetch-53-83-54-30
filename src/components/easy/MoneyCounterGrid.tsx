@@ -23,7 +23,7 @@ const PresetInput = ({
   const selectedDenom = presets.find(p => p.value === selectedPreset);
 
   return (
-    <div className="grid grid-cols-[1.2fr_2fr_1fr] gap-3 w-full">
+    <div className="grid grid-cols-3 gap-3 w-full">
 
       {/* Preset Dropdown */}
       <div className="relative">
@@ -31,8 +31,7 @@ const PresetInput = ({
           type="button"
           disabled={isLocked}
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm font-medium
-            transition-all
+          className={`w-full h-11 flex items-center justify-between px-3 rounded-lg border text-sm font-medium
             ${
               isLocked
                 ? 'bg-green-50 border-green-300 text-green-700'
@@ -93,12 +92,12 @@ const PresetInput = ({
           onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
           placeholder="0"
           disabled={isLocked || !selectedPreset}
-          className={`w-full px-4 py-2 text-center text-sm font-bold rounded-lg border
-            focus:outline-none focus:ring-2 transition-all
+          className={`w-full h-11 text-center text-sm font-bold rounded-lg border
+            focus:outline-none
             ${
               isLocked
                 ? 'bg-green-50 border-green-300 text-green-700 pr-10'
-                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-200'
+                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
             }`}
         />
 
@@ -117,13 +116,13 @@ const PresetInput = ({
       <button
         onClick={() => onAdd(selectedPreset, value)}
         disabled={!value || parseFloat(value) <= 0 || isLocked}
-        className={`w-full px-5 py-2 rounded-lg text-sm font-semibold text-white
-          flex items-center justify-center gap-1 transition-all
+        className={`w-full h-11 rounded-lg text-sm font-semibold text-white
+          flex items-center justify-center gap-1
           disabled:opacity-50 disabled:cursor-not-allowed
           ${
             currency === 'HTG'
-              ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:brightness-110'
-              : 'bg-gradient-to-r from-green-600 to-green-700 hover:brightness-110'
+              ? 'bg-gradient-to-r from-blue-600 to-blue-700'
+              : 'bg-gradient-to-r from-green-600 to-green-700'
           }`}
       >
         <Plus size={16} />
@@ -168,11 +167,9 @@ const MoneyCounterGrid = ({
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-5">
         <div>
           <div className="text-sm text-gray-500">Total compteur</div>
-          <div
-            className={`text-2xl font-bold ${
-              currency === 'HTG' ? 'text-blue-700' : 'text-green-700'
-            }`}
-          >
+          <div className={`text-2xl font-bold ${
+            currency === 'HTG' ? 'text-blue-700' : 'text-green-700'
+          }`}>
             {formaterArgent(gridTotal)} {currency}
           </div>
         </div>
