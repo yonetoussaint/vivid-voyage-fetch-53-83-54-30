@@ -20,27 +20,24 @@ const PresetInput = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [added, setAdded] = useState(false);
-  const [lastAdd, setLastAdd] = useState(null);
-
+  const [lastValue, setLastValue] = useState(null); // store previous input value
   const resetTimer = useRef(null);
 
   const selectedDenomIndex = presets.findIndex(p => p.value === selectedPreset);
   const selectedDenom = presets[selectedDenomIndex];
 
+  /* =========================
+     Add button
+     ========================= */
   const handleAddClick = () => {
     if (!value || parseFloat(value) <= 0 || isLocked) return;
-
-    // Save for undo
-    setLastAdd({
-      preset: selectedPreset,
-      value
-    });
 
     onAdd(selectedPreset, value);
     setAdded(true);
 
     // Auto clear input
     onInputChange(selectedPreset, '');
+    setLastValue(null); // reset undo after add
 
     // Auto advance to next denomination
     const nextPreset = presets[selectedDenomIndex + 1];
@@ -51,17 +48,17 @@ const PresetInput = ({
     clearTimeout(resetTimer.current);
     resetTimer.current = setTimeout(() => {
       setAdded(false);
-      setLastAdd(null);
     }, 2500);
   };
 
+  /* =========================
+     Undo button (reverts last typed input)
+     ========================= */
   const handleUndo = () => {
-    if (!lastAdd) return;
+    if (lastValue === null) return;
 
-    onPresetChange(lastAdd.preset);
-    onInputChange(lastAdd.preset, lastAdd.value);
-    setLastAdd(null);
-    setAdded(false);
+    onInputChange(selectedPreset, lastValue);
+    setLastValue(null);
   };
 
   return (
@@ -72,7 +69,10 @@ const PresetInput = ({
         type="text"
         inputMode="numeric"
         value={value}
-        onChange={(e) => onInputChange(selectedPreset, e.target.value)}
+        onChange={(e) => {
+          setLastValue(value); // store previous input for undo
+          onInputChange(selectedPreset, e.target.value);
+        }}
         onFocus={() => onFocus(selectedPreset)}
         onBlur={() => onBlur(selectedPreset)}
         onKeyPress={(e) => onKeyPress(selectedPreset, value, e)}
@@ -163,7 +163,7 @@ const PresetInput = ({
       </button>
 
       {/* UNDO */}
-      {lastAdd && (
+      {lastValue !== null && value !== lastValue && (
         <button
           onClick={handleUndo}
           className="absolute right-24 top-1/2 -translate-y-1/2
