@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Unlock, ChevronDown, Plus } from 'lucide-react';
-import { formaterArgent } from '@/utils/formatters';
 
 /* =========================
    PresetInput
@@ -136,7 +135,6 @@ const PresetInput = ({
    MoneyCounterGrid
    ========================= */
 const MoneyCounterGrid = ({ 
-  gridTotal,
   currency,
   denominations,
   gridInputs,
@@ -161,17 +159,7 @@ const MoneyCounterGrid = ({
 
   return (
     <>
-      {/* Header: Only Total */}
-      <div className="mb-5">
-        <div className="text-sm text-gray-500">Total compteur</div>
-        <div className={`text-2xl font-bold ${
-          currency === 'HTG' ? 'text-blue-700' : 'text-green-700'
-        }`}>
-          {formaterArgent(gridTotal)} {currency}
-        </div>
-      </div>
-
-      {/* Input Row */}
+      {/* Only Input Row */}
       <PresetInput
         currency={currency}
         presets={presets}
