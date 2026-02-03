@@ -10,7 +10,7 @@ const CurrencySelector = ({ currency, onCurrencyChange }) => (
         currency === 'HTG' ? 'bg-blue-500 text-white' : 'text-gray-700'
       }`}
     >
-      <Coins size={20} />
+      <Coins size={18} />
       HTG
     </div>
 
@@ -21,7 +21,7 @@ const CurrencySelector = ({ currency, onCurrencyChange }) => (
         currency === 'USD' ? 'bg-green-500 text-white' : 'text-gray-700'
       }`}
     >
-      <DollarSign size={20} />
+      <DollarSign size={18} />
       USD
     </div>
   </div>
