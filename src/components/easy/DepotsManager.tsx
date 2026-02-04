@@ -48,7 +48,7 @@ const DepotsManager = ({
     calculateTotalSequencesHTG,
     handleAddCompleteDeposit,
     getMontantHTG,
-    isUSDDepot,
+    isUSDDepoit,
     getOriginalDepotAmount,
     getDepositDisplay
   } = useDepositLogic({
@@ -56,7 +56,7 @@ const DepotsManager = ({
     depotsActuels,
     vendeurs,
     mettreAJourDepot,
-    supprimerDepot
+    supprimerDepoit
   });
 
   // Auto-select first vendor if none selected
@@ -66,19 +66,14 @@ const DepotsManager = ({
     }
   }, [vendeurs, vendeurActif]);
 
-  // Auto-expand the active vendor
+  // Initialize vendor state if not exists
   useEffect(() => {
-    if (vendeurActif && expandedVendor !== vendeurActif && !editingDeposit) {
-      handleToggleVendor(vendeurActif);
-    }
-  }, [vendeurActif, editingDeposit]);
-
-  // Auto-collapse when editing starts
-  useEffect(() => {
-    if (editingDeposit && expandedVendor !== editingDeposit.vendeur) {
-      handleToggleVendor(editingDeposit.vendeur);
-    }
-  }, [editingDeposit]);
+    vendeurs.forEach(vendeur => {
+      if (!vendorPresets[vendeur]) {
+        initializeVendorState(vendeur, 'HTG');
+      }
+    });
+  }, [vendeurs]);
 
   // Filter to show only active vendor if vendeurActif is set
   const displayVendeurs = vendeurActif 
@@ -112,7 +107,6 @@ const DepotsManager = ({
             const sequencesTotalByCurrency = calculateSequencesTotalByCurrency(vendeur);
             const totalSequencesHTG = calculateTotalSequencesHTG(vendeur);
             const isEditingMode = editingDeposit?.vendeur === vendeur;
-            const isExpanded = expandedVendor === vendeur;
 
             return (
               <VendorDepositCard
@@ -121,56 +115,50 @@ const DepotsManager = ({
                 donneesVendeur={donneesVendeur}
                 especesAttendues={especesAttendues}
                 totalDepotHTG={totalDepotHTG}
-                isExpanded={isExpanded}
-                onToggle={() => {
-                  setVendeurActif(vendeur);
-                  handleToggleVendor(vendeur);
-                }}
+                // Remove toggle props since we're removing expand/collapse
               >
-                {/* Only render children if expanded or editing */}
-                {(isExpanded || isEditingMode) && (
-                  <div className="space-y-4 pt-3">
-                    <SequenceSection
-                      vendeur={vendeur}
-                      isEditingMode={isEditingMode}
-                      editingDeposit={editingDeposit}
-                      vendorState={vendorState}
-                      sequences={sequences}
-                      sequencesTotal={sequencesTotal}
-                      sequencesTotalByCurrency={sequencesTotalByCurrency}
-                      totalSequencesHTG={totalSequencesHTG}
-                      vendorInputs={vendorInputs}
-                      currentPresets={currentPresets}
-                      handleClearSequences={handleClearSequences}
-                      handleRemoveSequence={handleRemoveSequence}
-                      handleUpdateSequence={handleUpdateSequence}
-                      handlePresetSelect={handlePresetSelect}
-                      handleInputChange={handleInputChange}
-                      handleAddSequence={handleAddSequence}
-                      handleAddCompleteDeposit={isEditingMode ? 
-                        () => saveEditedDeposit(vendeur) : 
-                        () => handleAddCompleteDeposit(vendeur)}
-                      calculatePresetAmount={calculatePresetAmount}
-                      onCancelEdit={() => cancelEdit(vendeur)}
-                      TAUX_DE_CHANGE={TAUX_DE_CHANGE}
-                    />
+                {/* Always show the content - no conditional rendering */}
+                <div className="space-y-4 pt-3">
+                  <SequenceSection
+                    vendeur={vendeur}
+                    isEditingMode={isEditingMode}
+                    editingDeposit={editingDeposit}
+                    vendorState={vendorState}
+                    sequences={sequences}
+                    sequencesTotal={sequencesTotal}
+                    sequencesTotalByCurrency={sequencesTotalByCurrency}
+                    totalSequencesHTG={totalSequencesHTG}
+                    vendorInputs={vendorInputs}
+                    currentPresets={currentPresets}
+                    handleClearSequences={handleClearSequences}
+                    handleRemoveSequence={handleRemoveSequence}
+                    handleUpdateSequence={handleUpdateSequence}
+                    handlePresetSelect={handlePresetSelect}
+                    handleInputChange={handleInputChange}
+                    handleAddSequence={handleAddSequence}
+                    handleAddCompleteDeposit={isEditingMode ? 
+                      () => saveEditedDeposit(vendeur) : 
+                      () => handleAddCompleteDeposit(vendeur)}
+                    calculatePresetAmount={calculatePresetAmount}
+                    onCancelEdit={() => cancelEdit(vendeur)}
+                    TAUX_DE_CHANGE={TAUX_DE_CHANGE}
+                  />
 
-                    <DepositsSummary
-                      vendeur={vendeur}
-                      depots={depots}
-                      isRecentlyAdded={isRecentlyAdded}
-                      getMontantHTG={getMontantHTG}
-                      isUSDDepot={isUSDDepot}
-                      getOriginalDepotAmount={getOriginalDepotAmount}
-                      getDepositDisplay={getDepositDisplay}
-                      onEditDeposit={handleEditDeposit}
-                      onDeleteDeposit={supprimerDepot}
-                      editingDeposit={editingDeposit}
-                      isEditingThisDeposit={isEditingThisDeposit}
-                      exchangeRate={TAUX_DE_CHANGE}
-                    />
-                  </div>
-                )}
+                  <DepositsSummary
+                    vendeur={vendeur}
+                    depots={depots}
+                    isRecentlyAdded={isRecentlyAdded}
+                    getMontantHTG={getMontantHTG}
+                    isUSDDepot={isUSDDepot}
+                    getOriginalDepotAmount={getOriginalDepotAmount}
+                    getDepositDisplay={getDepositDisplay}
+                    onEditDeposit={handleEditDeposit}
+                    onDeleteDeposit={supprimerDepot}
+                    editingDeposit={editingDeposit}
+                    isEditingThisDeposit={isEditingThisDeposit}
+                    exchangeRate={TAUX_DE_CHANGE}
+                  />
+                </div>
               </VendorDepositCard>
             );
           })
