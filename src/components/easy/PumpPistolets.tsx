@@ -1,17 +1,17 @@
-// Updated PumpPistolets component with better data handling
 import React, { useState, useMemo } from 'react';
 import { formaterArgent, formaterGallons } from '@/utils/formatters';
 import { getCouleurCarburant, getCouleurBadge, calculerGallons } from '@/utils/helpers';
 import { Droplets, DollarSign } from 'lucide-react';
 
-// Phase Summary Card Component
-const PhaseSummary = ({ 
-  phase, 
-  title, 
-  totals 
-}) => {
+// Phase Summary Card
+const PhaseSummary = ({ totals, title, color }) => {
   return (
     <div className="w-full bg-white rounded-lg border border-gray-200 p-3 mb-4">
+      <div className="flex items-center mb-3">
+        <div className={`w-3 h-3 rounded-full mr-2 ${color}`} />
+        <h3 className="font-medium text-gray-900">{title} Summary</h3>
+      </div>
+      
       <div className="space-y-2">
         <div className="flex space-x-2">
           <div className="flex-1 rounded p-2 border border-gray-200">
@@ -20,7 +20,7 @@ const PhaseSummary = ({
               <div className="flex items-center space-x-1">
                 <Droplets size={12} className="text-blue-500" />
                 <p className="text-sm font-bold text-blue-900">
-                  {formaterGallons(totals.totalGallons)}
+                  {formaterGallons(totals.totalGallons || 0)}
                 </p>
               </div>
               <span className="text-xs font-medium text-blue-700">gallons</span>
@@ -32,7 +32,7 @@ const PhaseSummary = ({
               <div className="flex items-center space-x-1">
                 <DollarSign size={12} className="text-green-500" />
                 <p className="text-sm font-bold text-green-900">
-                  {formaterArgent(totals.totalSales)}
+                  {formaterArgent(totals.totalSales || 0)}
                 </p>
               </div>
               <span className="text-xs font-medium text-green-700">HTG</span>
@@ -46,13 +46,13 @@ const PhaseSummary = ({
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <p className="text-xs text-orange-900 font-medium">
-                  {formaterGallons(totals.totalGasoline)}
+                  {formaterGallons(totals.totalGasoline || 0)}
                 </p>
                 <span className="text-xs text-orange-600">gallons</span>
               </div>
               <div className="flex justify-between items-center">
                 <p className="text-xs text-orange-700">
-                  {formaterArgent(totals.salesGasoline)}
+                  {formaterArgent(totals.salesGasoline || 0)}
                 </p>
                 <span className="text-xs text-orange-500">HTG</span>
               </div>
@@ -64,13 +64,13 @@ const PhaseSummary = ({
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <p className="text-xs text-purple-900 font-medium">
-                  {formaterGallons(totals.totalDiesel)}
+                  {formaterGallons(totals.totalDiesel || 0)}
                 </p>
                 <span className="text-xs text-purple-600">gallons</span>
               </div>
               <div className="flex justify-between items-center">
                 <p className="text-xs text-purple-700">
-                  {formaterArgent(totals.salesDiesel)}
+                  {formaterArgent(totals.salesDiesel || 0)}
                 </p>
                 <span className="text-xs text-purple-500">HTG</span>
               </div>
@@ -82,233 +82,135 @@ const PhaseSummary = ({
   );
 };
 
-// Tab Bar Component
-const PhaseTabBar = ({ activeTab, onTabChange, phaseATotals, phaseBTotals }) => {
-  const hasPhaseB = phaseBTotals.totalGallons > 0 || phaseBTotals.totalSales > 0;
-  
-  return (
-    <div className="mb-6">
-      <div className="inline-flex bg-gray-100 p-1 rounded-lg">
-        <button
-          onClick={() => onTabChange('phaseA')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 min-w-[100px] ${
-            activeTab === 'phaseA'
-              ? 'bg-white shadow-sm text-gray-900'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          <div className="flex items-center justify-center space-x-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <span>Phase A</span>
-          </div>
-        </button>
-        
-        {hasPhaseB && (
-          <button
-            onClick={() => onTabChange('phaseB')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 min-w-[100px] ${
-              activeTab === 'phaseB'
-                ? 'bg-white shadow-sm text-gray-900'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span>Phase B</span>
-            </div>
-          </button>
-        )}
-      </div>
+// Pistolet Card
+const PistoletCard = ({ pistoletKey, donnees, pompe, mettreAJourLecture, prix }) => {
+  const gallons = calculerGallons(donnees.debut, donnees.fin);
+  const prixUnitaire = donnees.typeCarburant?.includes('Diesel') ? prix.diesel : prix.gasoline;
+  const ventesTotal = gallons * prixUnitaire;
+  const hasData = donnees.debut || donnees.fin;
 
-      {/* Quick Stats Indicator */}
-      <div className="flex gap-4 mt-3">
-        <div className="text-xs text-gray-500">
-          <span className="font-medium text-blue-600">
-            {formaterGallons(phaseATotals.totalGallons)}
-          </span> gallons Phase A
+  return (
+    <div className={`rounded-lg overflow-hidden border-2 ${getCouleurCarburant(donnees.typeCarburant)} mb-4`}>
+      {/* Header */}
+      <div className={`${getCouleurBadge(donnees.typeCarburant)} px-4 py-3 text-white`}>
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="font-semibold text-sm">
+              {pistoletKey.replace('pistolet', 'Pistolet ')}
+            </h3>
+            <p className="text-xs opacity-90">{donnees.typeCarburant}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs opacity-75">Prix</p>
+            <p className="font-bold text-sm">
+              {prixUnitaire} HTG
+            </p>
+          </div>
         </div>
-        {hasPhaseB && (
-          <div className="text-xs text-gray-500">
-            <span className="font-medium text-green-600">
-              {formaterGallons(phaseBTotals.totalGallons)}
-            </span> gallons Phase B
+      </div>
+
+      {/* Body */}
+      <div className="p-4 bg-white space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="text-left">
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Meter Ouverture
+            </label>
+            <input
+              type="number"
+              step="0.001"
+              value={donnees.debut || ''}
+              onChange={(e) => mettreAJourLecture(pompe, pistoletKey, 'debut', e.target.value)}
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="0.000"
+              inputMode="decimal"
+            />
+          </div>
+
+          <div className="text-left">
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Meter Fermeture
+            </label>
+            <input
+              type="number"
+              step="0.001"
+              value={donnees.fin || ''}
+              onChange={(e) => mettreAJourLecture(pompe, pistoletKey, 'fin', e.target.value)}
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="0.000"
+              inputMode="decimal"
+            />
+          </div>
+        </div>
+
+        {hasData && (
+          <div className="pt-3 border-t space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Gallons</span>
+              <span className="font-semibold text-gray-900">
+                {formaterGallons(gallons)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Ventes Total</span>
+              <span className="font-bold text-green-600">
+                {formaterArgent(ventesTotal)} HTG
+              </span>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
 };
-
-// Phase Content Section
-const PhaseSection = ({ 
-  pistolets, 
-  totals, 
-  pompe, 
-  mettreAJourLecture, 
-  prix 
-}) => {
-  const pistoletsArray = Object.entries(pistolets);
-
-  if (pistoletsArray.length === 0) {
-    return (
-      <div className="text-center py-8 text-gray-500">
-        <p>Aucun pistolet disponible pour cette phase</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {/* Pistolets Cards */}
-      {pistoletsArray.map(([pistolet, donnees]) => {
-        if (!donnees || !donnees.typeCarburant) return null;
-        
-        const gallons = calculerGallons(donnees.debut, donnees.fin);
-        const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
-        const ventesTotal = gallons * prixUnitaire;
-        const hasPistoletData = donnees.debut || donnees.fin;
-
-        return (
-          <div
-            key={pistolet}
-            className={`rounded-lg overflow-hidden border-2 ${getCouleurCarburant(donnees.typeCarburant)}`}
-          >
-            <div className={`${getCouleurBadge(donnees.typeCarburant)} px-3 py-2 text-white`}>
-              <div className="flex justify-between items-start">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm truncate">
-                    {pistolet.replace('pistolet', 'Pistolet ')}
-                  </h3>
-                  <p className="text-xs opacity-90">{donnees.typeCarburant}</p>
-                </div>
-                <div className="text-right flex-shrink-0 ml-2">
-                  <p className="text-xs opacity-75">Prix</p>
-                  <p className="font-bold text-sm whitespace-nowrap">
-                    {prixUnitaire} HTG
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-3 bg-white space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <InputField
-                  label="Meter Ouverture"
-                  value={donnees.debut || ''}
-                  onChange={(e) => mettreAJourLecture(pompe, pistolet, 'debut', e.target.value)}
-                />
-
-                <InputField
-                  label="Meter Fermeture"
-                  value={donnees.fin || ''}
-                  onChange={(e) => mettreAJourLecture(pompe, pistolet, 'fin', e.target.value)}
-                />
-              </div>
-
-              {hasPistoletData && (
-                <div className="pt-3 border-t space-y-2">
-                  <SummaryRow 
-                    label="Gallons" 
-                    value={formaterGallons(gallons)}
-                  />
-                  <SummaryRow 
-                    label="Ventes Total" 
-                    value={`${formaterArgent(ventesTotal)} HTG`}
-                    valueClassName="text-green-600 font-bold"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-// InputField component
-const InputField = ({ label, value, onChange }) => (
-  <div className="text-left">
-    <label className="block text-xs font-medium text-gray-600 mb-1">
-      {label}
-    </label>
-    <input
-      type="number"
-      step="0.001"
-      value={value}
-      onChange={onChange}
-      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-      placeholder="0.000"
-      inputMode="decimal"
-    />
-  </div>
-);
-
-// SummaryRow component
-const SummaryRow = ({ label, value, valueClassName = "text-gray-900" }) => (
-  <div className="flex justify-between items-center">
-    <span className="text-sm text-gray-600">{label}</span>
-    <span className={`font-semibold ${valueClassName}`}>
-      {value}
-    </span>
-  </div>
-);
 
 // Main PumpPistolets Component
 const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   const [activeTab, setActiveTab] = useState('phaseA');
 
-  // Debug: Log the incoming data structure
-  console.log('PumpPistolets - donneesPompe:', donneesPompe);
-  console.log('PumpPistolets - pompe:', pompe);
-
-  // Get all pistolets (excluding _vendeur) from donneesPompe
-  const allPistolets = Object.entries(donneesPompe || {})
-    .filter(([key]) => key !== '_vendeur' && key !== 'vendeur' && key !== 'depot')
-    .sort(([keyA], [keyB]) => {
-      // Sort by pistolet number
-      const numA = keyA.replace('pistolet', '');
-      const numB = keyB.replace('pistolet', '');
-      return parseInt(numA) - parseInt(numB);
+  // Filter to get only pistolet keys (excluding _vendeur)
+  const pistoletsKeys = Object.keys(donneesPompe || {})
+    .filter(key => key.startsWith('pistolet'))
+    .sort((a, b) => {
+      // Sort by pistolet number: pistolet1, pistolet2, etc.
+      const numA = parseInt(a.replace('pistolet', ''));
+      const numB = parseInt(b.replace('pistolet', ''));
+      return numA - numB;
     });
 
-  console.log('All pistolets:', allPistolets);
-
-  // Group into 2 phases with 3 pistolets each
+  // Group pistolets into phases (3 per phase)
   const groupedPistolets = {
     phaseA: {},
     phaseB: {}
   };
 
-  allPistolets.forEach(([pistolet, donnees], index) => {
+  pistoletsKeys.forEach((key, index) => {
     if (index < 3) {
-      groupedPistolets.phaseA[pistolet] = donnees;
+      groupedPistolets.phaseA[key] = donneesPompe[key];
     } else {
-      groupedPistolets.phaseB[pistolet] = donnees;
+      groupedPistolets.phaseB[key] = donneesPompe[key];
     }
   });
 
-  console.log('Grouped pistolets:', groupedPistolets);
-
-  // Helper function to calculate phase totals
+  // Calculate totals for each phase
   const calculatePhaseTotals = (pistolets) => {
-    return Object.entries(pistolets).reduce((totals, [_, donnees]) => {
+    return Object.values(pistolets).reduce((totals, donnees) => {
       if (!donnees) return totals;
-      
-      const gallons = calculerGallons(donnees.debut, donnees.fin);
-      const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
-      const ventesTotal = gallons * prixUnitaire;
 
-      if (donnees.typeCarburant === 'Diesel') {
-        totals.totalDiesel += gallons;
-        totals.salesDiesel += ventesTotal;
-      } else if (donnees.typeCarburant === 'Gasoline' || donnees.typeCarburant === 'Gas') {
-        totals.totalGasoline += gallons;
-        totals.salesGasoline += ventesTotal;
-      }
+      const gallons = calculerGallons(donnees.debut, donnees.fin);
+      const prixUnitaire = donnees.typeCarburant?.includes('Diesel') ? prix.diesel : prix.gasoline;
+      const ventesTotal = gallons * prixUnitaire;
 
       totals.totalGallons += gallons;
       totals.totalSales += ventesTotal;
+
+      if (donnees.typeCarburant?.includes('Diesel')) {
+        totals.totalDiesel += gallons;
+        totals.salesDiesel += ventesTotal;
+      } else {
+        totals.totalGasoline += gallons;
+        totals.salesGasoline += ventesTotal;
+      }
 
       return totals;
     }, {
@@ -326,63 +228,124 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
 
   const hasPhaseB = Object.keys(groupedPistolets.phaseB).length > 0;
 
-  // Auto-switch to Phase B if Phase A has no data but Phase B does
-  React.useEffect(() => {
-    if (Object.keys(groupedPistolets.phaseA).length === 0 && hasPhaseB) {
-      setActiveTab('phaseB');
-    }
-  }, [groupedPistolets.phaseA, hasPhaseB]);
+  // Handle P5 which only has 1 pistolet - show it in Phase A only
+  if (pompe === 'P5') {
+    return (
+      <div className="px-3">
+        <PhaseSummary 
+          totals={phaseATotals} 
+          title="Phase A" 
+          color="bg-blue-500" 
+        />
+        <div className="space-y-4">
+          {pistoletsKeys.map(key => (
+            <PistoletCard
+              key={key}
+              pistoletKey={key}
+              donnees={donneesPompe[key]}
+              pompe={pompe}
+              mettreAJourLecture={mettreAJourLecture}
+              prix={prix}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-3">
       {/* Segmented Control Tab Bar */}
-      <PhaseTabBar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        phaseATotals={phaseATotals}
-        phaseBTotals={phaseBTotals}
-      />
+      <div className="mb-6">
+        <div className="inline-flex bg-gray-100 p-1 rounded-lg">
+          <button
+            onClick={() => setActiveTab('phaseA')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 min-w-[100px] ${
+              activeTab === 'phaseA'
+                ? 'bg-white shadow-sm text-gray-900 border border-gray-200'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span>Phase A</span>
+            </div>
+          </button>
+          
+          {hasPhaseB && (
+            <button
+              onClick={() => setActiveTab('phaseB')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 min-w-[100px] ${
+                activeTab === 'phaseB'
+                  ? 'bg-white shadow-sm text-gray-900 border border-gray-200'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span>Phase B</span>
+              </div>
+            </button>
+          )}
+        </div>
 
-      {/* Phase Summary for active tab */}
+        {/* Quick Stats */}
+        <div className="flex gap-4 mt-3 text-xs text-gray-500">
+          <div>
+            Phase A: <span className="font-medium text-blue-600">{formaterGallons(phaseATotals.totalGallons)}</span> gallons
+          </div>
+          {hasPhaseB && (
+            <div>
+              Phase B: <span className="font-medium text-green-600">{formaterGallons(phaseBTotals.totalGallons)}</span> gallons
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Phase A Content */}
       {activeTab === 'phaseA' && (
         <>
-          <PhaseSummary
-            phase="phaseA"
-            title="Phase A"
-            totals={phaseATotals}
+          <PhaseSummary 
+            totals={phaseATotals} 
+            title="Phase A" 
+            color="bg-blue-500" 
           />
-          <PhaseSection
-            pistolets={groupedPistolets.phaseA}
-            totals={phaseATotals}
-            pompe={pompe}
-            mettreAJourLecture={mettreAJourLecture}
-            prix={prix}
-          />
+          <div className="space-y-4">
+            {Object.entries(groupedPistolets.phaseA).map(([key, donnees]) => (
+              <PistoletCard
+                key={key}
+                pistoletKey={key}
+                donnees={donnees}
+                pompe={pompe}
+                mettreAJourLecture={mettreAJourLecture}
+                prix={prix}
+              />
+            ))}
+          </div>
         </>
       )}
 
+      {/* Phase B Content */}
       {activeTab === 'phaseB' && hasPhaseB && (
         <>
-          <PhaseSummary
-            phase="phaseB"
-            title="Phase B"
-            totals={phaseBTotals}
+          <PhaseSummary 
+            totals={phaseBTotals} 
+            title="Phase B" 
+            color="bg-green-500" 
           />
-          <PhaseSection
-            pistolets={groupedPistolets.phaseB}
-            totals={phaseBTotals}
-            pompe={pompe}
-            mettreAJourLecture={mettreAJourLecture}
-            prix={prix}
-          />
+          <div className="space-y-4">
+            {Object.entries(groupedPistolets.phaseB).map(([key, donnees]) => (
+              <PistoletCard
+                key={key}
+                pistoletKey={key}
+                donnees={donnees}
+                pompe={pompe}
+                mettreAJourLecture={mettreAJourLecture}
+                prix={prix}
+              />
+            ))}
+          </div>
         </>
-      )}
-
-      {/* Show message if no pistolets at all */}
-      {allPistolets.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          <p>Aucun pistolet disponible pour cette pompe</p>
-        </div>
       )}
     </div>
   );
