@@ -254,7 +254,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   }
 
   return (
-    <div className="px-3">
+    <div className="">
       {/* Segmented Control Tab Bar */}
       <div className="mb-6">
         <div className="inline-flex bg-gray-100 p-1 rounded-lg">
