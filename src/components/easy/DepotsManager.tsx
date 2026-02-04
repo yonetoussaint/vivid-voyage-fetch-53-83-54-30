@@ -81,7 +81,7 @@ const DepotsManager = ({
     : vendeurs;
 
   return (
-    <div className="space-y-4"> {/* Reduced from space-y-6 */}
+    <div className="space-y-2"> {/* Reduced from space-y-6 */}
       {/* Vendor cards section */}
       <div className="space-y-2"> {/* Reduced from space-y-3 */}
         {displayVendeurs.length === 0 ? (
