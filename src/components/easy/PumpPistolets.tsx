@@ -1,3 +1,4 @@
+// Updated PumpPistolets component with better data handling
 import React, { useState, useMemo } from 'react';
 import { formaterArgent, formaterGallons } from '@/utils/formatters';
 import { getCouleurCarburant, getCouleurBadge, calculerGallons } from '@/utils/helpers';
@@ -7,16 +8,11 @@ import { Droplets, DollarSign } from 'lucide-react';
 const PhaseSummary = ({ 
   phase, 
   title, 
-  pistoletsCount, 
   totals 
 }) => {
-  const hasData = totals.totalGallons > 0;
-
   return (
-    <div className="w-full bg-white rounded-lg border border-gray-200 p-3">
-      {/* LEFT-ALIGNED Stats in Compact Layout */}
+    <div className="w-full bg-white rounded-lg border border-gray-200 p-3 mb-4">
       <div className="space-y-2">
-        {/* First Row: Total Gallons and Total Sales */}
         <div className="flex space-x-2">
           <div className="flex-1 rounded p-2 border border-gray-200">
             <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
@@ -44,7 +40,6 @@ const PhaseSummary = ({
           </div>
         </div>
 
-        {/* Second Row: Gasoline and Diesel Breakdown */}
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-orange-50 rounded p-2 border border-orange-100">
             <p className="text-xs font-medium text-orange-700 mb-1">Gasoline</p>
@@ -89,46 +84,56 @@ const PhaseSummary = ({
 
 // Tab Bar Component
 const PhaseTabBar = ({ activeTab, onTabChange, phaseATotals, phaseBTotals }) => {
+  const hasPhaseB = phaseBTotals.totalGallons > 0 || phaseBTotals.totalSales > 0;
+  
   return (
-    <div className="mb-4">
-      {/* iOS-style segmented control */}
+    <div className="mb-6">
       <div className="inline-flex bg-gray-100 p-1 rounded-lg">
         <button
           onClick={() => onTabChange('phaseA')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 min-w-[100px] ${
             activeTab === 'phaseA'
               ? 'bg-white shadow-sm text-gray-900'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-center space-x-2">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
             <span>Phase A</span>
           </div>
         </button>
-        <button
-          onClick={() => onTabChange('phaseB')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-            activeTab === 'phaseB'
-              ? 'bg-white shadow-sm text-gray-900'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span>Phase B</span>
-          </div>
-        </button>
+        
+        {hasPhaseB && (
+          <button
+            onClick={() => onTabChange('phaseB')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 min-w-[100px] ${
+              activeTab === 'phaseB'
+                ? 'bg-white shadow-sm text-gray-900'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <span>Phase B</span>
+            </div>
+          </button>
+        )}
       </div>
 
       {/* Quick Stats Indicator */}
-      <div className="flex gap-3 mt-2">
+      <div className="flex gap-4 mt-3">
         <div className="text-xs text-gray-500">
-          <span className="font-medium text-blue-600">{formaterGallons(phaseATotals.totalGallons)}</span> gallons
+          <span className="font-medium text-blue-600">
+            {formaterGallons(phaseATotals.totalGallons)}
+          </span> gallons Phase A
         </div>
-        <div className="text-xs text-gray-500">
-          <span className="font-medium text-green-600">{formaterGallons(phaseBTotals.totalGallons)}</span> gallons
-        </div>
+        {hasPhaseB && (
+          <div className="text-xs text-gray-500">
+            <span className="font-medium text-green-600">
+              {formaterGallons(phaseBTotals.totalGallons)}
+            </span> gallons Phase B
+          </div>
+        )}
       </div>
     </div>
   );
@@ -136,8 +141,6 @@ const PhaseTabBar = ({ activeTab, onTabChange, phaseATotals, phaseBTotals }) => 
 
 // Phase Content Section
 const PhaseSection = ({ 
-  phase, 
-  title, 
   pistolets, 
   totals, 
   pompe, 
@@ -147,21 +150,19 @@ const PhaseSection = ({
   const pistoletsArray = Object.entries(pistolets);
 
   if (pistoletsArray.length === 0) {
-    return null;
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <p>Aucun pistolet disponible pour cette phase</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
-      {/* Phase Summary Card */}
-      <PhaseSummary
-        phase={phase}
-        title={title}
-        pistoletsCount={pistoletsArray.length}
-        totals={totals}
-      />
-
       {/* Pistolets Cards */}
       {pistoletsArray.map(([pistolet, donnees]) => {
+        if (!donnees || !donnees.typeCarburant) return null;
+        
         const gallons = calculerGallons(donnees.debut, donnees.fin);
         const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
         const ventesTotal = gallons * prixUnitaire;
@@ -172,7 +173,6 @@ const PhaseSection = ({
             key={pistolet}
             className={`rounded-lg overflow-hidden border-2 ${getCouleurCarburant(donnees.typeCarburant)}`}
           >
-            {/* Header - ORIGINAL */}
             <div className={`${getCouleurBadge(donnees.typeCarburant)} px-3 py-2 text-white`}>
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">
@@ -190,18 +190,17 @@ const PhaseSection = ({
               </div>
             </div>
 
-            {/* Body - ORIGINAL */}
             <div className="p-3 bg-white space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <InputField
                   label="Meter Ouverture"
-                  value={donnees.debut}
+                  value={donnees.debut || ''}
                   onChange={(e) => mettreAJourLecture(pompe, pistolet, 'debut', e.target.value)}
                 />
 
                 <InputField
                   label="Meter Fermeture"
-                  value={donnees.fin}
+                  value={donnees.fin || ''}
                   onChange={(e) => mettreAJourLecture(pompe, pistolet, 'fin', e.target.value)}
                 />
               </div>
@@ -227,7 +226,7 @@ const PhaseSection = ({
   );
 };
 
-// Original InputField component
+// InputField component
 const InputField = ({ label, value, onChange }) => (
   <div className="text-left">
     <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -245,7 +244,7 @@ const InputField = ({ label, value, onChange }) => (
   </div>
 );
 
-// Original SummaryRow component
+// SummaryRow component
 const SummaryRow = ({ label, value, valueClassName = "text-gray-900" }) => (
   <div className="flex justify-between items-center">
     <span className="text-sm text-gray-600">{label}</span>
@@ -259,18 +258,21 @@ const SummaryRow = ({ label, value, valueClassName = "text-gray-900" }) => (
 const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   const [activeTab, setActiveTab] = useState('phaseA');
 
-  // Get all pistolets (excluding _vendeur) and sort them
-  const allPistolets = Object.entries(donneesPompe)
-    .filter(([key]) => key !== '_vendeur')
+  // Debug: Log the incoming data structure
+  console.log('PumpPistolets - donneesPompe:', donneesPompe);
+  console.log('PumpPistolets - pompe:', pompe);
+
+  // Get all pistolets (excluding _vendeur) from donneesPompe
+  const allPistolets = Object.entries(donneesPompe || {})
+    .filter(([key]) => key !== '_vendeur' && key !== 'vendeur' && key !== 'depot')
     .sort(([keyA], [keyB]) => {
-      const getSortValue = (key) => {
-        const lower = key.toLowerCase();
-        if (lower.includes('gasoline') || lower.includes('gas')) return 1;
-        if (lower.includes('diesel')) return 2;
-        return 3;
-      };
-      return getSortValue(keyA) - getSortValue(keyB);
+      // Sort by pistolet number
+      const numA = keyA.replace('pistolet', '');
+      const numB = keyB.replace('pistolet', '');
+      return parseInt(numA) - parseInt(numB);
     });
+
+  console.log('All pistolets:', allPistolets);
 
   // Group into 2 phases with 3 pistolets each
   const groupedPistolets = {
@@ -286,9 +288,13 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
     }
   });
 
+  console.log('Grouped pistolets:', groupedPistolets);
+
   // Helper function to calculate phase totals
   const calculatePhaseTotals = (pistolets) => {
     return Object.entries(pistolets).reduce((totals, [_, donnees]) => {
+      if (!donnees) return totals;
+      
       const gallons = calculerGallons(donnees.debut, donnees.fin);
       const prixUnitaire = donnees.typeCarburant === 'Diesel' ? prix.diesel : prix.gasoline;
       const ventesTotal = gallons * prixUnitaire;
@@ -296,7 +302,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
       if (donnees.typeCarburant === 'Diesel') {
         totals.totalDiesel += gallons;
         totals.salesDiesel += ventesTotal;
-      } else {
+      } else if (donnees.typeCarburant === 'Gasoline' || donnees.typeCarburant === 'Gas') {
         totals.totalGasoline += gallons;
         totals.salesGasoline += ventesTotal;
       }
@@ -318,8 +324,17 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
   const phaseATotals = useMemo(() => calculatePhaseTotals(groupedPistolets.phaseA), [groupedPistolets.phaseA, prix]);
   const phaseBTotals = useMemo(() => calculatePhaseTotals(groupedPistolets.phaseB), [groupedPistolets.phaseB, prix]);
 
+  const hasPhaseB = Object.keys(groupedPistolets.phaseB).length > 0;
+
+  // Auto-switch to Phase B if Phase A has no data but Phase B does
+  React.useEffect(() => {
+    if (Object.keys(groupedPistolets.phaseA).length === 0 && hasPhaseB) {
+      setActiveTab('phaseB');
+    }
+  }, [groupedPistolets.phaseA, hasPhaseB]);
+
   return (
-    <div>
+    <div className="px-3">
       {/* Segmented Control Tab Bar */}
       <PhaseTabBar
         activeTab={activeTab}
@@ -328,29 +343,46 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
         phaseBTotals={phaseBTotals}
       />
 
-      {/* Tab Content */}
-      {activeTab === 'phaseA' && Object.keys(groupedPistolets.phaseA).length > 0 && (
-        <PhaseSection
-          phase="phaseA"
-          title="Phase A"
-          pistolets={groupedPistolets.phaseA}
-          totals={phaseATotals}
-          pompe={pompe}
-          mettreAJourLecture={mettreAJourLecture}
-          prix={prix}
-        />
+      {/* Phase Summary for active tab */}
+      {activeTab === 'phaseA' && (
+        <>
+          <PhaseSummary
+            phase="phaseA"
+            title="Phase A"
+            totals={phaseATotals}
+          />
+          <PhaseSection
+            pistolets={groupedPistolets.phaseA}
+            totals={phaseATotals}
+            pompe={pompe}
+            mettreAJourLecture={mettreAJourLecture}
+            prix={prix}
+          />
+        </>
       )}
 
-      {activeTab === 'phaseB' && Object.keys(groupedPistolets.phaseB).length > 0 && (
-        <PhaseSection
-          phase="phaseB"
-          title="Phase B"
-          pistolets={groupedPistolets.phaseB}
-          totals={phaseBTotals}
-          pompe={pompe}
-          mettreAJourLecture={mettreAJourLecture}
-          prix={prix}
-        />
+      {activeTab === 'phaseB' && hasPhaseB && (
+        <>
+          <PhaseSummary
+            phase="phaseB"
+            title="Phase B"
+            totals={phaseBTotals}
+          />
+          <PhaseSection
+            pistolets={groupedPistolets.phaseB}
+            totals={phaseBTotals}
+            pompe={pompe}
+            mettreAJourLecture={mettreAJourLecture}
+            prix={prix}
+          />
+        </>
+      )}
+
+      {/* Show message if no pistolets at all */}
+      {allPistolets.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <p>Aucun pistolet disponible pour cette pompe</p>
+        </div>
       )}
     </div>
   );
