@@ -48,7 +48,7 @@ const DepotsManager = ({
     calculateTotalSequencesHTG,
     handleAddCompleteDeposit,
     getMontantHTG,
-    isUSDDepoit,
+    isUSDDepot,
     getOriginalDepotAmount,
     getDepositDisplay
   } = useDepositLogic({
@@ -56,7 +56,7 @@ const DepotsManager = ({
     depotsActuels,
     vendeurs,
     mettreAJourDepot,
-    supprimerDepoit
+    supprimerDepot
   });
 
   // Auto-select first vendor if none selected
@@ -81,11 +81,11 @@ const DepotsManager = ({
     : vendeurs;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4"> {/* Reduced from space-y-6 */}
       {/* Vendor cards section */}
-      <div className="space-y-3">
+      <div className="space-y-2"> {/* Reduced from space-y-3 */}
         {displayVendeurs.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-6 text-gray-500"> {/* Reduced py-8 to py-6 */}
             Aucun vendeur ajouté
           </div>
         ) : (
@@ -115,10 +115,9 @@ const DepotsManager = ({
                 donneesVendeur={donneesVendeur}
                 especesAttendues={especesAttendues}
                 totalDepotHTG={totalDepotHTG}
-                // Remove toggle props since we're removing expand/collapse
               >
-                {/* Always show the content - no conditional rendering */}
-                <div className="space-y-4 pt-3">
+                {/* Always show the content - reduced spacing */}
+                <div className="space-y-2 pt-2"> {/* Changed from space-y-4 pt-3 to space-y-2 pt-2 */}
                   <SequenceSection
                     vendeur={vendeur}
                     isEditingMode={isEditingMode}
