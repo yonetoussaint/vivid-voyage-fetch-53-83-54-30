@@ -3,7 +3,6 @@ import { RotateCcw } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 import { htgPresets, usdPresets } from './depositPresets';
 
-import SequenceHeader from './SequenceHeader';
 import CurrencySelector from './CurrencySelector';
 import MoneyCounterGrid from './MoneyCounterGrid';
 import SequenceList from './SequenceList';
@@ -324,14 +323,6 @@ const SequenceManager = ({
 
   return (
     <div className="space-y-4">
-      <SequenceHeader
-        currency={currency}
-        sequences={sequences}
-        sequencesTotalByCurrency={sequencesTotalByCurrency}
-        totalSequencesHTG={totalSequencesHTG}
-        onClearSequences={() => handleClearSequences(vendeur)}
-      />
-
       <CurrencySelector
         currency={currency}
         onCurrencyChange={handleCurrencyChange}
@@ -350,20 +341,20 @@ const SequenceManager = ({
         onUnlockField={unlockField}
         onResetGrid={resetGridInputs}
         onAddAllGridSequences={handleAddAllGridSequences}
-        onAddSingleSequence={handleAddSingleSequence} // This is the new prop
+        onAddSingleSequence={handleAddSingleSequence}
       />
 
-   <SequenceList 
-  sequences={sequences}
-  editingSequenceId={editingSequenceId}
-  vendorInputs={vendorInputs}
-  vendeur={vendeur}
-  onEditSequence={handleEditSequence} // This should be handleEditSequence, not onEditSequence
-  onRemoveSequence={handleRemoveSequence}
-  onSaveEditedSequence={handleSaveEditedSequence}
-  onCancelSequenceEdit={handleCancelSequenceEdit}
-  variant="card"
-/>
+      <SequenceList 
+        sequences={sequences}
+        editingSequenceId={editingSequenceId}
+        vendorInputs={vendorInputs}
+        vendeur={vendeur}
+        onEditSequence={handleEditSequence}
+        onRemoveSequence={handleRemoveSequence}
+        onSaveEditedSequence={handleSaveEditedSequence}
+        onCancelSequenceEdit={handleCancelSequenceEdit}
+        variant="card"
+      />
 
       <MainInputSection
         vendeur={vendeur}
