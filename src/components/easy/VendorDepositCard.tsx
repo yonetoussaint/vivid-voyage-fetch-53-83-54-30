@@ -10,7 +10,7 @@ const VendorDepositCard = ({
   return (
     <div className="bg-white">
       {/* Compact Stats Grid - 3 in a row */}
-      <div className="grid grid-cols-3 gap-1.5 mb-3">
+      <div className="grid grid-cols-3 gap-1.5">
         <div className="bg-gray-50 rounded-lg p-2 text-center">
           <div className="text-[10px] text-gray-500 font-medium truncate">Ventes</div>
           <div className="font-semibold text-gray-900 text-sm truncate">
