@@ -117,7 +117,7 @@ const DepotsManager = ({
                 totalDepotHTG={totalDepotHTG}
               >
                 {/* Always show the content - reduced spacing */}
-                <div className="space-y-2 pt-2"> {/* Changed from space-y-4 pt-3 to space-y-2 pt-2 */}
+                
                   <SequenceSection
                     vendeur={vendeur}
                     isEditingMode={isEditingMode}
@@ -157,7 +157,7 @@ const DepotsManager = ({
                     isEditingThisDeposit={isEditingThisDeposit}
                     exchangeRate={TAUX_DE_CHANGE}
                   />
-                </div>
+               
               </VendorDepositCard>
             );
           })
