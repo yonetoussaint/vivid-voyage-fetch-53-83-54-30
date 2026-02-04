@@ -255,12 +255,12 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
 
   return (
     <div className="">
-      {/* Segmented Control Tab Bar */}
+      {/* Segmented Control Tab Bar - UPDATED TO SPAN FULL WIDTH */}
       <div className="mb-6">
-        <div className="inline-flex bg-gray-100 p-1 rounded-lg">
+        <div className="flex bg-gray-100 p-1 rounded-lg w-full">
           <button
             onClick={() => setActiveTab('phaseA')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 min-w-[100px] ${
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
               activeTab === 'phaseA'
                 ? 'bg-white shadow-sm text-gray-900 border border-gray-200'
                 : 'text-gray-600 hover:bg-gray-50'
@@ -275,7 +275,7 @@ const PumpPistolets = ({ pompe, donneesPompe, mettreAJourLecture, prix }) => {
           {hasPhaseB && (
             <button
               onClick={() => setActiveTab('phaseB')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 min-w-[100px] ${
+              className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 activeTab === 'phaseB'
                   ? 'bg-white shadow-sm text-gray-900 border border-gray-200'
                   : 'text-gray-600 hover:bg-gray-50'
