@@ -96,23 +96,23 @@ const MainLayout = ({
 
         {/* Vendor Tab Selector - For vendeurs tab */}
         {activeTab === 'vendeurs' && (
-          <div className="bg-white border-b border-slate-200 py-2">
+         
             <VendorTabSelector
               vendeurs={vendeurs}
               vendeurActif={vendeurActif}
               setVendeurActif={setVendeurActif}
             />
-          </div>
+         
         )}
 
         {/* Task Type Selector - Only for tasks tab */}
         {activeTab === 'tasks' && (
-          <div className="bg-white border-b border-slate-200 py-2">
+          
             <TaskTypeSelector
               taskType={taskType}
               setTaskType={setTaskType}
             />
-          </div>
+          
         )}
       </div>
 
