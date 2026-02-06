@@ -1,42 +1,42 @@
 import React, { useState } from 'react';
-import { Calendar, DollarSign, CreditCard, AlertCircle, CheckCircle, Clock, XCircle, Lock, ChevronRight, Menu, MoreVertical } from 'lucide-react';
+import { Calendar, DollarSign, AlertCircle, CheckCircle, Clock, XCircle, Lock, ChevronDown, MoreVertical, Receipt, Bell } from 'lucide-react';
 
 const ShortsTab = ({ vendeurActif }) => {
   const [shorts, setShorts] = useState([
     {
       id: 1,
-      date: "15 Fév 2024",
-      shift: "Matin (7h - 15h)",
+      date: "15 Fév",
+      shift: "Matin",
       totalSales: 24500.00,
       moneyGiven: 24000.00,
       shortAmount: 500.00,
       status: 'pending',
-      notes: "Différence dans le compte de l'essence sans plomb 95"
+      notes: "Différence essence SP95"
     },
     {
       id: 2,
-      date: "14 Fév 2024",
-      shift: "Soir (15h - 23h)",
+      date: "14 Fév",
+      shift: "Soir",
       totalSales: 31200.00,
       moneyGiven: 31000.00,
       shortAmount: 200.00,
       status: 'paid',
-      notes: "Petite erreur de caisse"
+      notes: "Erreur de caisse"
     },
     {
       id: 3,
-      date: "12 Fév 2024",
-      shift: "Matin (7h - 15h)",
+      date: "12 Fév",
+      shift: "Matin",
       totalSales: 18900.00,
       moneyGiven: 18500.00,
       shortAmount: 400.00,
       status: 'overdue',
-      notes: "Manquant dans le compte du gasoil"
+      notes: "Manquant gasoil"
     },
     {
       id: 4,
-      date: "10 Fév 2024",
-      shift: "Nuit (23h - 7h)",
+      date: "10 Fév",
+      shift: "Nuit",
       totalSales: 15600.00,
       moneyGiven: 15600.00,
       shortAmount: 0.00,
@@ -45,38 +45,42 @@ const ShortsTab = ({ vendeurActif }) => {
     },
     {
       id: 5,
-      date: "8 Fév 2024",
-      shift: "Soir (15h - 23h)",
+      date: "8 Fév",
+      shift: "Soir",
       totalSales: 27800.00,
       moneyGiven: 27500.00,
       shortAmount: 300.00,
       status: 'pending',
-      notes: "Différence à régulariser"
+      notes: "À régulariser"
     }
   ]);
 
   const [showPinModal, setShowPinModal] = useState(false);
-  const [pin, setPin] = useState('');
+  const [pin, setPin] = useState(['', '', '', '']);
   const [currentAction, setCurrentAction] = useState(null);
   const [currentShortId, setCurrentShortId] = useState(null);
   const [pinError, setPinError] = useState('');
   const [expandedCard, setExpandedCard] = useState(null);
+  const [activePinIndex, setActivePinIndex] = useState(0);
 
   const totalShort = shorts.reduce((sum, short) => sum + short.shortAmount, 0);
   const pendingShort = shorts
     .filter(short => short.status === 'pending' || short.status === 'overdue')
     .reduce((sum, short) => sum + short.shortAmount, 0);
 
-  const handleActionClick = (action, shortId) => {
+  const handleActionClick = (action, shortId, e) => {
+    e.stopPropagation();
     setCurrentAction(action);
     setCurrentShortId(shortId);
     setShowPinModal(true);
-    setPin('');
+    setPin(['', '', '', '']);
     setPinError('');
+    setActivePinIndex(0);
   };
 
   const handlePinSubmit = () => {
-    if (pin === '1234') {
+    const pinString = pin.join('');
+    if (pinString === '1234') {
       if (currentAction === 'markPaid') {
         setShorts(shorts.map(short => 
           short.id === currentShortId ? { ...short, status: 'paid' } : short
@@ -87,148 +91,175 @@ const ShortsTab = ({ vendeurActif }) => {
         ));
       }
       setShowPinModal(false);
-      setPin('');
     } else {
-      setPinError('Code PIN incorrect. Essayez à nouveau.');
+      setPinError('PIN incorrect');
+      setTimeout(() => setPinError(''), 2000);
+    }
+  };
+
+  const handlePinInput = (index, value) => {
+    if (/^\d$/.test(value) || value === '') {
+      const newPin = [...pin];
+      newPin[index] = value;
+      setPin(newPin);
+      
+      if (value !== '' && index < 3) {
+        setActivePinIndex(index + 1);
+      }
+      
+      setPinError('');
+      
+      // Auto-submit when all digits entered
+      if (newPin.every(digit => digit !== '') && index === 3) {
+        setTimeout(handlePinSubmit, 100);
+      }
     }
   };
 
   const getStatusIcon = (status) => {
+    const size = "w-3.5 h-3.5";
     switch(status) {
-      case 'paid':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'pending':
-        return <Clock className="w-5 h-5 text-amber-500" />;
-      case 'overdue':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch(status) {
-      case 'paid':
-        return 'Payé';
-      case 'pending':
-        return 'En attente';
-      case 'overdue':
-        return 'En retard';
-      default:
-        return '';
+      case 'paid': return <div className={`${size} rounded-full bg-green-500 flex items-center justify-center`}><CheckCircle className="w-2.5 h-2.5 text-white" /></div>;
+      case 'pending': return <div className={`${size} rounded-full bg-amber-500 flex items-center justify-center`}><Clock className="w-2.5 h-2.5 text-white" /></div>;
+      case 'overdue': return <div className={`${size} rounded-full bg-red-500 flex items-center justify-center`}><AlertCircle className="w-2.5 h-2.5 text-white" /></div>;
+      default: return null;
     }
   };
 
   const getStatusColor = (status) => {
     switch(status) {
-      case 'paid':
-        return 'bg-green-50 text-green-700 border-green-200';
-      case 'pending':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'overdue':
-        return 'bg-red-50 text-red-700 border-red-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
+      case 'paid': return 'text-green-600 bg-green-50';
+      case 'pending': return 'text-amber-600 bg-amber-50';
+      case 'overdue': return 'text-red-600 bg-red-50';
+      default: return 'text-gray-600 bg-gray-50';
     }
   };
 
-  const getActionText = (action) => {
-    switch(action) {
-      case 'markPaid':
-        return 'marquer comme payé';
-      case 'cancelPayment':
-        return 'annuler le paiement';
-      default:
-        return '';
+  const getStatusText = (status) => {
+    switch(status) {
+      case 'paid': return 'Payé';
+      case 'pending': return 'En attente';
+      case 'overdue': return 'En retard';
+      default: return '';
     }
   };
 
-  const toggleCardExpand = (id) => {
-    setExpandedCard(expandedCard === id ? null : id);
-  };
-
-  const handlePinInput = (value) => {
-    if (value.length <= 4) {
-      setPin(value);
-      setPinError('');
+  const formatAmount = (amount) => {
+    if (amount >= 1000) {
+      return `${(amount/1000).toFixed(0)}k`;
     }
+    return amount.toFixed(0);
   };
 
   return (
-    <div className="p-4 pb-24 max-w-full overflow-x-hidden">
-      {/* PIN Confirmation Modal - Mobile Optimized */}
+    <div className="p-3 pb-20 max-w-full overflow-x-hidden min-h-screen bg-gray-50">
+      {/* PIN Modal - Bottom Sheet */}
       {showPinModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-full w-full max-h-[80vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-              <h3 className="font-bold text-lg text-black">Confirmation</h3>
-              <button 
-                onClick={() => setShowPinModal(false)}
-                className="text-gray-500 text-lg font-bold"
-              >
-                ✕
-              </button>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-2xl shadow-lg animate-slideUp">
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Lock className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm text-black">Confirmation PIN</h3>
+                    <p className="text-xs text-gray-500">Entrez votre code à 4 chiffres</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowPinModal(false)}
+                  className="text-gray-400 text-lg"
+                >
+                  ×
+                </button>
+              </div>
             </div>
             
             <div className="p-4">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Lock className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-base text-black">Confirmer l'action</h3>
-                  <p className="text-gray-600 text-sm">
-                    {getActionText(currentAction)} pour ce déficit
-                  </p>
-                </div>
-              </div>
-              
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Entrez votre code PIN
-                </label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    value={pin}
-                    onChange={(e) => handlePinInput(e.target.value)}
-                    className="w-full px-4 py-4 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder="••••"
-                    maxLength="4"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    autoFocus
-                  />
+                <div className="flex justify-center gap-2 mb-4">
+                  {[0, 1, 2, 3].map((index) => (
+                    <div key={index} className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center text-lg font-semibold ${
+                      activePinIndex === index 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-300'
+                    }`}>
+                      {pin[index] ? '•' : ''}
+                    </div>
+                  ))}
                 </div>
+                
                 {pinError && (
-                  <p className="mt-2 text-sm text-red-600">{pinError}</p>
+                  <div className="text-center">
+                    <p className="text-sm text-red-600">{pinError}</p>
+                    <p className="text-xs text-gray-400 mt-1">Essai: 1234</p>
+                  </div>
                 )}
-                <p className="mt-3 text-xs text-gray-500 text-center">
-                  Code PIN démo: 1234
-                </p>
               </div>
               
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={handlePinSubmit}
-                  disabled={pin.length !== 4}
-                  className={`w-full py-4 rounded-xl font-medium transition-colors ${
-                    pin.length === 4 
-                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  Confirmer
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                  <button
+                    key={num}
+                    onClick={() => {
+                      const nextIndex = pin.findIndex(digit => digit === '');
+                      if (nextIndex !== -1) {
+                        handlePinInput(nextIndex, num.toString());
+                      }
+                    }}
+                    className="h-12 rounded-lg bg-gray-100 text-gray-700 font-medium text-lg active:bg-gray-200 transition-colors"
+                  >
+                    {num}
+                  </button>
+                ))}
+                <button className="h-12 rounded-lg bg-gray-100 text-gray-400 font-medium text-lg active:bg-gray-200 transition-colors">
+                  ✕
                 </button>
                 <button
                   onClick={() => {
-                    setShowPinModal(false);
-                    setPin('');
-                    setPinError('');
+                    const nextIndex = pin.findIndex(digit => digit === '');
+                    if (nextIndex !== -1) {
+                      handlePinInput(nextIndex, '0');
+                    }
                   }}
-                  className="w-full border border-gray-300 text-gray-700 py-4 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                  className="h-12 rounded-lg bg-gray-100 text-gray-700 font-medium text-lg active:bg-gray-200 transition-colors"
+                >
+                  0
+                </button>
+                <button
+                  onClick={() => {
+                    const lastFilledIndex = [...pin].reverse().findIndex(digit => digit !== '');
+                    if (lastFilledIndex !== -1) {
+                      const indexToClear = 3 - lastFilledIndex;
+                      handlePinInput(indexToClear, '');
+                      setActivePinIndex(Math.max(0, indexToClear - 1));
+                    }
+                  }}
+                  className="h-12 rounded-lg bg-gray-100 text-gray-700 font-medium text-lg active:bg-gray-200 transition-colors"
+                >
+                  ←
+                </button>
+              </div>
+              
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setShowPinModal(false)}
+                  className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg text-sm font-medium active:bg-gray-50"
                 >
                   Annuler
+                </button>
+                <button
+                  onClick={handlePinSubmit}
+                  disabled={pin.some(digit => digit === '')}
+                  className={`flex-1 py-3 rounded-lg text-sm font-medium ${
+                    pin.every(digit => digit !== '')
+                      ? 'bg-blue-600 text-white active:bg-blue-700'
+                      : 'bg-gray-300 text-gray-500'
+                  }`}
+                >
+                  Confirmer
                 </button>
               </div>
             </div>
@@ -236,70 +267,80 @@ const ShortsTab = ({ vendeurActif }) => {
         </div>
       )}
 
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+      {/* Header - Compact */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-lg font-bold text-black">Déficits</h3>
-            <p className="text-gray-600 text-xs mt-1">
-              {vendeurActif} • {shorts.length} enregistrements
-            </p>
+            <h1 className="text-lg font-bold text-black">Déficits</h1>
+            <p className="text-xs text-gray-500">{vendeurActif}</p>
           </div>
+          <button className="text-xs text-blue-600 font-medium px-2 py-1 rounded-lg active:bg-blue-50">
+            Voir tout
+          </button>
         </div>
         
-        {/* Summary Cards - Stack on mobile */}
-        <div className="flex flex-col gap-3 mb-4">
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+        {/* Mini Summary Cards */}
+        <div className="flex gap-2 mb-3">
+          <div className="flex-1 bg-white rounded-lg p-3 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500">Déficit total</p>
-                <p className="text-xl font-bold text-black mt-1">{totalShort.toFixed(2)} DH</p>
+                <p className="text-xs text-gray-500 mb-1">Total</p>
+                <p className="text-sm font-bold text-black">{totalShort.toFixed(0)} DH</p>
               </div>
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <DollarSign className="w-6 h-6 text-gray-600" />
+              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-gray-600" />
               </div>
             </div>
           </div>
           
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div className="flex-1 bg-white rounded-lg p-3 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-amber-600">À payer</p>
-                <p className="text-xl font-bold text-amber-700 mt-1">{pendingShort.toFixed(2)} DH</p>
+                <p className="text-xs text-amber-600 mb-1">À payer</p>
+                <p className="text-sm font-bold text-amber-700">{pendingShort.toFixed(0)} DH</p>
               </div>
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <AlertCircle className="w-6 h-6 text-amber-600" />
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                <AlertCircle className="w-4 h-4 text-amber-600" />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Shorts List */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="font-semibold text-black text-base">Historique</h4>
-          <button className="text-sm text-blue-600 font-medium">
-            Tout voir
-          </button>
-        </div>
-        
+      {/* Filter Tabs */}
+      <div className="flex gap-1 mb-3 overflow-x-auto pb-2 -mx-3 px-3">
+        <button className="text-xs px-3 py-1.5 rounded-full bg-blue-600 text-white font-medium whitespace-nowrap">
+          Tous ({shorts.length})
+        </button>
+        <button className="text-xs px-3 py-1.5 rounded-full bg-white text-gray-600 border border-gray-300 font-medium whitespace-nowrap active:bg-gray-50">
+          En attente ({shorts.filter(s => s.status === 'pending').length})
+        </button>
+        <button className="text-xs px-3 py-1.5 rounded-full bg-white text-gray-600 border border-gray-300 font-medium whitespace-nowrap active:bg-gray-50">
+          Payés ({shorts.filter(s => s.status === 'paid').length})
+        </button>
+      </div>
+
+      {/* Shorts List - Ultra Compact */}
+      <div className="space-y-2">
         {shorts.map((short) => (
           <div 
-            key={short.id} 
-            className="border border-gray-200 rounded-xl overflow-hidden bg-white"
+            key={short.id}
+            className={`bg-white rounded-lg border border-gray-200 overflow-hidden active:bg-gray-50 transition-colors ${
+              expandedCard === short.id ? 'shadow-sm' : ''
+            }`}
+            onClick={() => setExpandedCard(expandedCard === short.id ? null : short.id)}
           >
-            {/* Card Header - Always visible */}
-            <div 
-              className="p-4 active:bg-gray-50 transition-colors"
-              onClick={() => toggleCardExpand(short.id)}
-            >
-              <div className="flex items-center justify-between mb-2">
+            {/* Compact Row */}
+            <div className="p-3">
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-medium text-black">{short.date}</span>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs font-medium text-black">{short.date}</span>
+                  </div>
+                  <span className="text-xs text-gray-500">• {short.shift}</span>
                 </div>
-                <div className={`px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(short.status)} flex items-center gap-1.5`}>
+                <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(short.status)} flex items-center gap-1`}>
                   {getStatusIcon(short.status)}
                   {getStatusText(short.status)}
                 </div>
@@ -307,69 +348,76 @@ const ShortsTab = ({ vendeurActif }) => {
               
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">{short.shift}</p>
-                  <p className="text-sm text-gray-700 line-clamp-1">{short.notes}</p>
+                  <p className="text-xs text-gray-600 line-clamp-1">{short.notes}</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-xs text-gray-500">
+                      Vente: {formatAmount(short.totalSales)} DH
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      Rendu: {formatAmount(short.moneyGiven)} DH
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-red-600">
-                    {short.shortAmount.toFixed(2)} DH
+                  <span className="text-base font-bold text-red-600">
+                    {formatAmount(short.shortAmount)} DH
                   </span>
-                  <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${
-                    expandedCard === short.id ? 'rotate-90' : ''
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${
+                    expandedCard === short.id ? 'rotate-180' : ''
                   }`} />
                 </div>
               </div>
             </div>
             
-            {/* Expandable Content */}
+            {/* Expanded Actions - Compact */}
             {expandedCard === short.id && (
-              <div className="border-t border-gray-100 p-4">
-                {/* Financial Details Grid */}
-                <div className="grid grid-cols-1 gap-2 mb-4">
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">Ventes totales</span>
-                    <span className="font-semibold text-blue-700">{short.totalSales.toFixed(2)} DH</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">Argent rendu</span>
-                    <span className="font-semibold text-green-700">{short.moneyGiven.toFixed(2)} DH</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-sm text-gray-600">Déficit</span>
-                    <span className="font-semibold text-red-700">{short.shortAmount.toFixed(2)} DH</span>
-                  </div>
-                </div>
-                
-                {/* Action Buttons - Full width on mobile */}
-                <div className="space-y-2">
+              <div className="border-t border-gray-100 p-3">
+                <div className="grid grid-cols-2 gap-2 mb-3">
                   {short.status === 'pending' || short.status === 'overdue' ? (
                     <>
                       <button 
-                        onClick={() => handleActionClick('markPaid', short.id)}
-                        className="w-full bg-green-500 text-white px-4 py-3.5 rounded-xl text-base font-medium hover:bg-green-600 active:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                        onClick={(e) => handleActionClick('markPaid', short.id, e)}
+                        className="bg-green-500 text-white py-2 rounded-lg text-xs font-medium active:bg-green-600 flex items-center justify-center gap-1"
                       >
-                        <CheckCircle className="w-5 h-5" />
-                        Marquer comme payé
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        Marquer payé
                       </button>
-                      <button className="w-full border border-gray-300 text-gray-700 px-4 py-3.5 rounded-xl text-base font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors">
-                        Rappeler le vendeur
+                      <button className="border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-medium active:bg-gray-50 flex items-center justify-center gap-1">
+                        <Bell className="w-3.5 h-3.5" />
+                        Rappeler
                       </button>
                     </>
                   ) : short.status === 'paid' ? (
                     <>
                       <button 
-                        onClick={() => handleActionClick('cancelPayment', short.id)}
-                        className="w-full bg-red-500 text-white px-4 py-3.5 rounded-xl text-base font-medium hover:bg-red-600 active:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                        onClick={(e) => handleActionClick('cancelPayment', short.id, e)}
+                        className="bg-red-500 text-white py-2 rounded-lg text-xs font-medium active:bg-red-600 flex items-center justify-center gap-1"
                       >
-                        <XCircle className="w-5 h-5" />
-                        Annuler le paiement
+                        <XCircle className="w-3.5 h-3.5" />
+                        Annuler
                       </button>
-                      <button className="w-full border border-gray-300 text-gray-700 px-4 py-3.5 rounded-xl text-base font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-center gap-2">
-                        <CreditCard className="w-5 h-5" />
-                        Voir le reçu
+                      <button className="border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-medium active:bg-gray-50 flex items-center justify-center gap-1">
+                        <Receipt className="w-3.5 h-3.5" />
+                        Reçu
                       </button>
                     </>
                   ) : null}
+                </div>
+                
+                {/* Quick Details */}
+                <div className="text-xs text-gray-500 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Ventes:</span>
+                    <span className="font-medium">{short.totalSales.toFixed(2)} DH</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Argent rendu:</span>
+                    <span className="font-medium">{short.moneyGiven.toFixed(2)} DH</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Différence:</span>
+                    <span className="font-bold text-red-600">{short.shortAmount.toFixed(2)} DH</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -379,30 +427,64 @@ const ShortsTab = ({ vendeurActif }) => {
 
       {/* Empty State */}
       {shorts.length === 0 && (
-        <div className="text-center py-12 px-4">
-          <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-            <CreditCard className="w-10 h-10 text-gray-400" />
+        <div className="text-center py-8 px-4">
+          <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+            <DollarSign className="w-6 h-6 text-gray-400" />
           </div>
-          <h3 className="text-lg font-bold text-black mb-2">Aucun déficit</h3>
-          <p className="text-gray-500 mb-6">Tous les comptes sont à jour</p>
-          <button className="bg-black text-white font-bold px-6 py-3.5 rounded-xl text-base hover:bg-gray-800 active:bg-gray-900 transition-colors w-full max-w-xs">
-            Nouvelle vérification
-          </button>
+          <h3 className="text-sm font-bold text-black mb-1">Aucun déficit</h3>
+          <p className="text-xs text-gray-500 mb-4">Tous les comptes sont à jour</p>
         </div>
       )}
 
-      {/* Quick Add Button - Fixed at bottom for mobile */}
-      <div className="fixed bottom-4 left-4 right-4 sm:static sm:mt-6 sm:pt-6 sm:border-t sm:border-gray-200">
-        <button className="w-full bg-black text-white font-bold px-4 py-4 rounded-xl text-base hover:bg-gray-800 active:bg-gray-900 transition-colors flex items-center justify-center gap-2 shadow-lg">
-          <CreditCard className="w-5 h-5" />
-          Ajouter un déficit
+      {/* Floating Action Button */}
+      <div className="fixed bottom-4 right-4">
+        <button className="w-12 h-12 bg-black text-white rounded-full shadow-lg flex items-center justify-center active:bg-gray-800 active:scale-95 transition-all">
+          <span className="text-lg font-bold">+</span>
         </button>
-        <p className="text-center text-xs text-gray-500 mt-2 hidden sm:block">
-          Utilisez le formulaire de clôture de caisse
-        </p>
+      </div>
+
+      {/* Stats Footer */}
+      <div className="mt-4 pt-3 border-t border-gray-200">
+        <div className="flex justify-between text-xs text-gray-500">
+          <div className="text-center">
+            <p className="font-medium text-gray-700">{shorts.length}</p>
+            <p>Total</p>
+          </div>
+          <div className="text-center">
+            <p className="font-medium text-amber-600">{shorts.filter(s => s.status === 'pending').length}</p>
+            <p>En attente</p>
+          </div>
+          <div className="text-center">
+            <p className="font-medium text-green-600">{shorts.filter(s => s.status === 'paid').length}</p>
+            <p>Payés</p>
+          </div>
+          <div className="text-center">
+            <p className="font-medium text-red-600">{shorts.filter(s => s.status === 'overdue').length}</p>
+            <p>En retard</p>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+
+// Add animation keyframes
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .animate-slideUp {
+    animation: slideUp 0.2s ease-out;
+  }
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+`;
+document.head.appendChild(style);
 
 export default ShortsTab;
