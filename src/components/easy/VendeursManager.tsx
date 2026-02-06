@@ -51,7 +51,7 @@ const VendeursManager = ({
           
           {/* Action Buttons - Positioned below the banner */}
           
-<div className="absolute top-[128px] right-4 z-20">
+<div className="absolute top-[128px] right-2 z-20">
   <ActionButtons />
 </div>
           
