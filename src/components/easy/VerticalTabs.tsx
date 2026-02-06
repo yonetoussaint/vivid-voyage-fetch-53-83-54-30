@@ -1,15 +1,72 @@
 import React from 'react';
+import { 
+  Fuel, 
+  Calendar, 
+  Users, 
+  Package, 
+  Store, 
+  BarChart3, 
+  DollarSign, 
+  FileText,
+  Flame
+} from 'lucide-react';
 
 const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
   const tabs = [
-    { id: 'pumps', label: 'Pompes & Propane', icon: '⛽', color: 'bg-blue-100 text-blue-700' },
-    { id: 'vendeurs', label: 'Vendeurs', icon: '👥', color: 'bg-green-100 text-green-700' },
-    { id: 'conditionnement', label: 'Conditionnement', icon: '📦', color: 'bg-purple-100 text-purple-700' },
-    { id: 'depots', label: 'Dépôts', icon: '🏪', color: 'bg-orange-100 text-orange-700' },
-    { id: 'stock', label: 'Stock Restant', icon: '📊', color: 'bg-red-100 text-red-700' },
-    { id: 'usd', label: 'Ventes USD', icon: '💵', color: 'bg-yellow-100 text-yellow-700' },
-    { id: 'report', label: 'Rapports', icon: '📋', color: 'bg-indigo-100 text-indigo-700' },
-    { id: 'rapport', label: 'Rapport Gaz', icon: '🔥', color: 'bg-teal-100 text-teal-700' }
+    { 
+      id: 'pumps', 
+      label: 'Pompes & Propane', 
+      icon: <Fuel className="w-5 h-5" />, 
+      color: 'bg-blue-100 text-blue-700'
+    },
+    { 
+      id: 'tasks', 
+      label: 'Tasks & Reminders', 
+      icon: <Calendar className="w-5 h-5" />, 
+      color: 'bg-purple-100 text-purple-700'
+    },
+    { 
+      id: 'vendeurs', 
+      label: 'Vendeurs', 
+      icon: <Users className="w-5 h-5" />, 
+      color: 'bg-green-100 text-green-700'
+    },
+    { 
+      id: 'conditionnement', 
+      label: 'Conditionnement', 
+      icon: <Package className="w-5 h-5" />, 
+      color: 'bg-yellow-100 text-yellow-700'
+    },
+    { 
+      id: 'depots', 
+      label: 'Dépôts', 
+      icon: <Store className="w-5 h-5" />, 
+      color: 'bg-orange-100 text-orange-700'
+    },
+    { 
+      id: 'stock', 
+      label: 'Stock Restant', 
+      icon: <BarChart3 className="w-5 h-5" />, 
+      color: 'bg-red-100 text-red-700'
+    },
+    { 
+      id: 'usd', 
+      label: 'Ventes USD', 
+      icon: <DollarSign className="w-5 h-5" />, 
+      color: 'bg-teal-100 text-teal-700'
+    },
+    { 
+      id: 'report', 
+      label: 'Rapports', 
+      icon: <FileText className="w-5 h-5" />, 
+      color: 'bg-indigo-100 text-indigo-700'
+    },
+    { 
+      id: 'rapport', 
+      label: 'Rapport Gaz', 
+      icon: <Flame className="w-5 h-5" />, 
+      color: 'bg-pink-100 text-pink-700'
+    }
   ];
 
   return (
@@ -37,26 +94,28 @@ const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
                 transition-all duration-200
                 ${activeTab === tab.id 
                   ? `${tab.color} shadow-sm border-l-4 ${tab.color.includes('blue') ? 'border-blue-500' : 
-                     tab.color.includes('green') ? 'border-green-500' :
                      tab.color.includes('purple') ? 'border-purple-500' :
+                     tab.color.includes('green') ? 'border-green-500' :
+                     tab.color.includes('yellow') ? 'border-yellow-500' :
                      tab.color.includes('orange') ? 'border-orange-500' :
                      tab.color.includes('red') ? 'border-red-500' :
-                     tab.color.includes('yellow') ? 'border-yellow-500' :
-                     tab.color.includes('indigo') ? 'border-indigo-500' : 'border-teal-500'}`
+                     tab.color.includes('teal') ? 'border-teal-500' :
+                     tab.color.includes('indigo') ? 'border-indigo-500' : 'border-pink-500'}`
                   : 'hover:bg-gray-50 text-gray-700 border-l-4 border-transparent'
                 }
               `}
             >
               <div className={`
-                flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-lg
+                flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
                 ${activeTab === tab.id 
                   ? tab.color.includes('blue') ? 'bg-blue-500' : 
-                    tab.color.includes('green') ? 'bg-green-500' :
                     tab.color.includes('purple') ? 'bg-purple-500' :
+                    tab.color.includes('green') ? 'bg-green-500' :
+                    tab.color.includes('yellow') ? 'bg-yellow-500' :
                     tab.color.includes('orange') ? 'bg-orange-500' :
                     tab.color.includes('red') ? 'bg-red-500' :
-                    tab.color.includes('yellow') ? 'bg-yellow-500' :
-                    tab.color.includes('indigo') ? 'bg-indigo-500' : 'bg-teal-500'
+                    tab.color.includes('teal') ? 'bg-teal-500' :
+                    tab.color.includes('indigo') ? 'bg-indigo-500' : 'bg-pink-500'
                   : 'bg-gray-100 text-gray-600'
                 } text-white
               `}>
