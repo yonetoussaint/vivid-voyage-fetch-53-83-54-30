@@ -6,7 +6,7 @@ const VendeursManager = ({
   vendeurActif,
   getNombreAffectations 
 }) => {
-  const [activeTab, setActiveTab] = useState('posts');
+  const [activeTab, setActiveTab] = useState('retards');
   const [sellerData, setSellerData] = useState({});
 
   if (!vendeurActif) {
@@ -85,11 +85,9 @@ const VendeursManager = ({
   const following = Math.floor(Math.random() * 300) + 50;
 
   const tabs = [
-    { id: 'posts', label: 'Posts' },
-    { id: 'replies', label: 'Réponses' },
-    { id: 'highlights', label: 'En avant' },
-    { id: 'media', label: 'Médias' },
-    { id: 'likes', label: 'J\'aime' }
+    { id: 'retards', label: 'Retards' },
+    { id: 'ventes', label: 'Ventes' },
+    { id: 'meters', label: 'Meters' }
   ];
 
   return (
