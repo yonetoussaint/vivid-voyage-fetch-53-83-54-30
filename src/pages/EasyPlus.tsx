@@ -156,7 +156,6 @@ const SystemeStationService = () => {
               date={date}
               vendeurs={vendeurs}
               taskType={taskType}
-              vendeurActif={vendeurActif}
             />
           </div>
         );
@@ -286,11 +285,7 @@ const SystemeStationService = () => {
         pompeEtendue={pompeEtendue}
         setPompeEtendue={setPompeEtendue}
         showPropane={true}
-        // Vendor props
-        vendeurs={vendeurs}
-        vendeurActif={vendeurActif}
-        setVendeurActif={setVendeurActif}
-        // Task props
+        // Task props only
         taskType={taskType}
         setTaskType={setTaskType}
         // Reset functions
