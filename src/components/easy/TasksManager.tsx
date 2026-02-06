@@ -21,25 +21,29 @@ import {
   Flag,
   Target,
   BarChart3,
-  Mail,
-  Phone,
   MapPin,
-  Users,
   FileText,
   CalendarDays,
   AlertTriangle,
   CheckCheck,
-  XCircle
+  XCircle,
+  Tag,
+  Folder,
+  List,
+  Eye,
+  EyeOff,
+  SortAsc,
+  SortDesc
 } from 'lucide-react';
 
-const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurActif = null }) => {
+const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all' }) => {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     type: 'task',
     priority: 'medium',
-    assignedTo: vendeurActif || '',
+    assignedTo: '',
     dueDate: date,
     dueTime: '',
     shift: shift,
@@ -52,13 +56,7 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
   const [searchQuery, setSearchQuery] = useState('');
   const [showCompleted, setShowCompleted] = useState(true);
   const [sortBy, setSortBy] = useState('priority');
-
-  // Update newTask when vendeurActif changes
-  useEffect(() => {
-    if (vendeurActif) {
-      setNewTask(prev => ({ ...prev, assignedTo: vendeurActif }));
-    }
-  }, [vendeurActif]);
+  const [sortOrder, setSortOrder] = useState('desc');
 
   // Load tasks from localStorage
   useEffect(() => {
@@ -223,7 +221,7 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
       id: Date.now(),
       createdAt: new Date().toISOString(),
       dueDate: newTask.dueDate || date,
-      assignedTo: newTask.assignedTo || vendeurActif || 'All',
+      assignedTo: newTask.assignedTo || 'All',
       reminders: newTask.type === 'reminder' ? ['Daily'] : []
     };
 
@@ -235,7 +233,7 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
       description: '',
       type: 'task',
       priority: 'medium',
-      assignedTo: vendeurActif || '',
+      assignedTo: '',
       dueDate: date,
       dueTime: '',
       shift: shift,
@@ -351,7 +349,7 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
     }
   };
 
-  // Filter tasks based on multiple criteria
+  // Filter tasks based on task type
   const filteredTasks = tasks.filter(task => {
     // Filter by task type/category
     if (taskType !== 'all') {
@@ -360,21 +358,6 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
       if (taskType === 'in-progress' && task.status !== 'in-progress') return false;
       if (taskType === 'critical' && task.priority !== 'critical') return false;
       if (['meeting', 'reminder', 'task', 'todo'].includes(taskType) && task.type !== taskType) return false;
-    }
-
-    // Filter by assigned vendor if vendeurActif is set
-    if (vendeurActif && vendeurActif !== 'All' && task.assignedTo !== vendeurActif) {
-      return false;
-    }
-
-    // Filter by shift
-    if (task.shift !== 'Both' && task.shift !== shift && taskType !== 'all') {
-      return false;
-    }
-
-    // Filter by completed status
-    if (!showCompleted && task.status === 'completed') {
-      return false;
     }
 
     // Filter by search query
@@ -386,25 +369,38 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
       return false;
     }
 
+    // Filter by completed status
+    if (!showCompleted && task.status === 'completed') {
+      return false;
+    }
+
     return true;
   });
 
   // Sort tasks
   const sortedTasks = [...filteredTasks].sort((a, b) => {
+    let result;
     switch(sortBy) {
       case 'priority':
         const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
+        result = priorityOrder[a.priority] - priorityOrder[b.priority];
+        break;
       case 'dueDate':
-        return new Date(a.dueDate) - new Date(b.dueDate);
+        result = new Date(a.dueDate) - new Date(b.dueDate);
+        break;
       case 'title':
-        return a.title.localeCompare(b.title);
+        result = a.title.localeCompare(b.title);
+        break;
       case 'status':
         const statusOrder = { pending: 0, 'in-progress': 1, completed: 2, cancelled: 3 };
-        return statusOrder[a.status] - statusOrder[b.status];
+        result = statusOrder[a.status] - statusOrder[b.status];
+        break;
       default:
-        return 0;
+        result = 0;
     }
+    
+    // Apply sort order
+    return sortOrder === 'desc' ? -result : result;
   });
 
   // Calculate statistics
@@ -419,6 +415,10 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
     reminders: tasks.filter(t => t.type === 'reminder').length,
     todaysTasks: tasks.filter(t => t.dueDate === date).length,
     overdue: tasks.filter(t => new Date(t.dueDate) < new Date(date) && t.status !== 'completed').length
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
   return (
@@ -439,7 +439,18 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Sort by:</label>
+              <button
+                onClick={toggleSortOrder}
+                className="p-1.5 hover:bg-gray-100 rounded"
+                title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+              >
+                {sortOrder === 'asc' ? 
+                  <SortAsc className="w-4 h-4" /> : 
+                  <SortDesc className="w-4 h-4" />
+                }
+              </button>
+              
+              <label className="text-sm text-gray-600">Sort:</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -525,17 +536,10 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
         <div className="lg:w-1/3 space-y-6">
           {/* Add Task Form */}
           <div className="bg-white rounded-lg shadow border p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center">
-                <Plus className="w-5 h-5 mr-2 text-blue-600" />
-                Add New Task
-              </h2>
-              {vendeurActif && (
-                <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                  For: {vendeurActif}
-                </span>
-              )}
-            </div>
+            <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <Plus className="w-5 h-5 mr-2 text-blue-600" />
+              Add New Task
+            </h2>
             
             <form onSubmit={handleAddTask} className="space-y-3">
               <div>
@@ -761,20 +765,11 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
                       ({sortedTasks.length} of {tasks.length})
                     </span>
                   </h2>
-                  {vendeurActif ? (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Showing tasks for: <span className="font-medium text-blue-600">{vendeurActif}</span>
-                      {taskType !== 'all' && (
-                        <span className="ml-2">
-                          • Type: <span className="font-medium capitalize">{taskType}</span>
-                        </span>
-                      )}
-                    </p>
-                  ) : taskType !== 'all' ? (
+                  {taskType !== 'all' && (
                     <p className="text-sm text-gray-500 mt-1">
                       Filter: <span className="font-medium capitalize">{taskType}</span>
                     </p>
-                  ) : null}
+                  )}
                 </div>
                 
                 <div className="text-sm text-gray-500">
@@ -784,7 +779,7 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
                       {stats.overdue} overdue
                     </span>
                   )}
-                  Sorted by: {sortBy}
+                  Sorted by: {sortBy} ({sortOrder})
                 </div>
               </div>
             </div>
@@ -804,11 +799,16 @@ const TasksManager = ({ shift, date, vendeurs = [], taskType = 'all', vendeurAct
                         Clear search
                       </button>
                     </div>
-                  ) : vendeurActif ? (
+                  ) : taskType !== 'all' ? (
                     <div className="space-y-2">
-                      <Users className="w-12 h-12 mx-auto text-gray-300" />
-                      <p>No tasks assigned to <span className="font-medium">{vendeurActif}</span></p>
-                      <p className="text-sm">Try changing the filter or assign a new task</p>
+                      <Filter className="w-12 h-12 mx-auto text-gray-300" />
+                      <p>No tasks found for type: <span className="font-medium capitalize">{taskType}</span></p>
+                      <button 
+                        onClick={() => setTaskType('all')}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        Show all tasks
+                      </button>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -870,7 +870,7 @@ const TaskItem = ({
             title={task.status === 'completed' ? 'Mark as pending' : 'Mark as completed'}
           >
             {task.status === 'completed' ? (
-              <CheckCheck className="w-5 h-5 text-green-600" />
+              <CheckCircle className="w-5 h-5 text-green-600" />
             ) : (
               <Square className="w-5 h-5 text-gray-400 hover:text-gray-600" />
             )}
