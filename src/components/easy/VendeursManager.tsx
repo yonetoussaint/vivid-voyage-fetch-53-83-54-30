@@ -103,9 +103,19 @@ const VendeursManager = ({
           />
         </div>
 
+        {/* Action Buttons - Now placed below the banner */}
+        <div className="px-4 flex justify-end gap-2 pt-3">
+          <button className="hover:bg-gray-100 rounded-full p-2 border border-gray-300 transition-colors">
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+          <button className="bg-black text-white font-bold px-4 py-[7px] rounded-full text-[15px] hover:bg-gray-800 transition-colors">
+            Suivre
+          </button>
+        </div>
+
         {/* Profile Section */}
         <div className="px-4 pb-4 border-b border-gray-200">
-          {/* Avatar & Action Buttons */}
+          {/* Avatar */}
           <div className="flex justify-between items-start -mt-[56px] mb-3 relative z-10">
             <div>
               <div className="w-[112px] h-[112px] rounded-full border-4 border-white bg-gray-100 overflow-hidden">
@@ -115,14 +125,6 @@ const VendeursManager = ({
                   className="w-full h-full object-cover"
                 />
               </div>
-            </div>
-            <div className="flex gap-2 pt-3">
-              <button className="hover:bg-gray-100 rounded-full p-2 border border-gray-300 transition-colors">
-                <MoreHorizontal className="w-5 h-5" />
-              </button>
-              <button className="bg-black text-white font-bold px-4 py-[7px] rounded-full text-[15px] hover:bg-gray-800 transition-colors">
-                Suivre
-              </button>
             </div>
           </div>
 
