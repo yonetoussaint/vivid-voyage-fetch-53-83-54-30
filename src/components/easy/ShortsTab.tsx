@@ -13,9 +13,10 @@ const ShortsTab = ({ vendeurActif }) => {
       shortAmount: 13500.00,
       status: 'overdue', // Will be calculated
       originalStatus: 'pending',
+      wasOverdue: true, // Track if it was ever overdue
       notes: "Différence essence SP95",
       paidFromPayroll: false,
-      daysOverdue: 0
+      daysOverdue: 8
     },
     {
       id: 2,
@@ -27,6 +28,7 @@ const ShortsTab = ({ vendeurActif }) => {
       shortAmount: 2200.00,
       status: 'paid',
       originalStatus: 'paid',
+      wasOverdue: false,
       notes: "Erreur de caisse",
       paidFromPayroll: false,
       daysOverdue: 0
@@ -41,9 +43,10 @@ const ShortsTab = ({ vendeurActif }) => {
       shortAmount: 4000.00,
       status: 'overdue',
       originalStatus: 'pending',
+      wasOverdue: true,
       notes: "Manquant gasoil",
       paidFromPayroll: false,
-      daysOverdue: 0
+      daysOverdue: 12
     },
     {
       id: 4,
@@ -55,6 +58,7 @@ const ShortsTab = ({ vendeurActif }) => {
       shortAmount: 0.00,
       status: 'paid',
       originalStatus: 'paid',
+      wasOverdue: false,
       notes: "Compte exact",
       paidFromPayroll: false,
       daysOverdue: 0
@@ -69,9 +73,10 @@ const ShortsTab = ({ vendeurActif }) => {
       shortAmount: 3300.00,
       status: 'overdue',
       originalStatus: 'pending',
+      wasOverdue: true,
       notes: "À régulariser",
       paidFromPayroll: false,
-      daysOverdue: 0
+      daysOverdue: 15
     }
   ]);
 
@@ -94,24 +99,14 @@ const ShortsTab = ({ vendeurActif }) => {
   // Calculate due dates and update status
   useEffect(() => {
     const updatedShorts = shorts.map(short => {
-      // For demo, let's simulate some are overdue
-      const today = new Date();
-      const dueDate = new Date(today);
-      
-      // Simulate overdue dates (adjust based on dueDate string)
-      const isOverdue = short.originalStatus === 'pending' && Math.random() > 0.3;
-      
-      // Calculate days overdue for demonstration
-      const daysOverdue = isOverdue ? Math.floor(Math.random() * 10) + 1 : 0;
-      
-      // Check if should be deducted from payroll
-      const shouldDeductFromPayroll = isOverdue && daysOverdue > 7;
+      // For demo, we'll pre-set some as overdue based on daysOverdue
+      const isOverdue = short.daysOverdue > 0;
+      const shouldDeductFromPayroll = isOverdue && short.daysOverdue > 7;
       
       return {
         ...short,
         status: isOverdue ? 'overdue' : short.originalStatus,
-        daysOverdue,
-        paidFromPayroll: shouldDeductFromPayroll
+        wasOverdue: isOverdue || short.wasOverdue
       };
     });
     
@@ -169,9 +164,14 @@ const ShortsTab = ({ vendeurActif }) => {
             : short
         ));
       } else if (currentAction === 'cancelPayment') {
+        // FIX: If card was previously overdue, return to 'overdue' status, not 'pending'
         setShorts(shorts.map(short => 
           short.id === currentShortId 
-            ? { ...short, status: 'pending', paidFromPayroll: false }
+            ? { 
+                ...short, 
+                status: short.wasOverdue ? 'overdue' : 'pending', 
+                paidFromPayroll: false 
+              }
             : short
         ));
       } else if (currentAction === 'payrollPayment') {
