@@ -3,9 +3,9 @@ import { MapPin, Calendar } from 'lucide-react';
 
 const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
   return (
-    <div className="px-2 pb-4 border-b border-gray-200 relative z-10">
+    <div className="px-2 pb-2 border-b border-gray-200 relative z-10">
       {/* Avatar positioned with negative margin */}
-      <div className="-mt-[56px] mb-3">
+      <div className="-mt-[56px] mb-2">
         <div className="w-[112px] h-[112px] rounded-full border-4 border-white bg-gray-100 overflow-hidden">
           <img 
             src={profileImage}
@@ -16,7 +16,7 @@ const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
       </div>
 
       {/* Rest of the profile content remains the same */}
-      <div className="mb-3">
+      <div className="mb-2">
         <h1 className="font-bold text-[20px] leading-6 flex items-center gap-1">
           {vendeurActif}
           <svg viewBox="0 0 22 22" className="w-[20px] h-[20px]" fill="#1d9bf0">
@@ -25,7 +25,7 @@ const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
         </h1>
       </div>
 
-      <div className="mb-3 text-[15px] leading-5">
+      <div className="mb-2 text-[15px] leading-5">
         <p>Vendeur à la station service • {currentSeller.shift}</p>
         <p className="mt-2">
           <span className="font-semibold">Easy Plus Gaz</span>
@@ -34,7 +34,7 @@ const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[15px] text-gray-500 mb-3">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[15px] text-gray-500 mb-2">
         <div className="flex items-center gap-1">
           <MapPin className="w-[18px] h-[18px]" />
           <span>{currentSeller.location}</span>
