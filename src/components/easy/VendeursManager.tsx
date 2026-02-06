@@ -50,9 +50,10 @@ const VendeursManager = ({
           </div>
           
           {/* Action Buttons - Positioned below the banner */}
-          <div className="absolute top-[124px] right-4 z-20">
-            <ActionButtons />
-          </div>
+          
+<div className="absolute top-[128px] right-4 z-20">
+  <ActionButtons />
+</div>
           
           {/* Profile Section - This will overlap the banner area */}
           <ProfileSection 
