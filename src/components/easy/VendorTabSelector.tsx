@@ -1,14 +1,13 @@
 // components/easy/VendorTabSelector.jsx
 import React from 'react';
-import { User, Users } from 'lucide-react';
+import { User, Users, Filter } from 'lucide-react';
 
 const VendorTabSelector = ({ vendeurs, vendeurActif, setVendeurActif }) => {
   console.log('VendorTabSelector received:', { vendeurs, vendeurActif });
-  
-  // Always render, even if no vendeurs
+
   return (
     <div className="flex gap-1.5 overflow-x-auto pb-1 px-2 no-scrollbar">
-      {/* "All" tab - always shown */}
+      {/* "All" tab */}
       <button
         onClick={() => setVendeurActif(null)}
         className={`px-3 py-1 font-medium text-sm whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5 rounded-full ${
@@ -16,12 +15,13 @@ const VendorTabSelector = ({ vendeurs, vendeurActif, setVendeurActif }) => {
             ? 'bg-blue-600 text-white border-blue-600'
             : 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
         }`}
+        style={{ borderRadius: '20px !important' }}
       >
         <Users size={14} />
-        Tous
+        Tous les Vendeurs
       </button>
       
-      {/* Render vendeur tabs if available */}
+      {/* Individual vendor tabs */}
       {vendeurs && vendeurs.length > 0 ? (
         vendeurs.map((vendeur) => (
           <button
@@ -32,6 +32,7 @@ const VendorTabSelector = ({ vendeurs, vendeurActif, setVendeurActif }) => {
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
             }`}
+            style={{ borderRadius: '20px !important' }}
           >
             <User size={14} />
             {vendeur}
