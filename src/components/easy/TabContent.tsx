@@ -1,8 +1,8 @@
 import React from 'react';
-import RetardsTab from './tabs/RetardsTab';
-import VentesTab from './tabs/VentesTab';
-import MetersTab from './tabs/MetersTab';
-import ShortsTab from './tabs/ShortsTab';
+import RetardsTab from './RetardsTab';
+import VentesTab from './VentesTab';
+import MetersTab from './MetersTab';
+import ShortsTab from './ShortsTab';
 
 const TabContent = ({ activeTab, vendeurActif, currentSeller, affectations }) => {
   switch (activeTab) {
