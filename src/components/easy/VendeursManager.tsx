@@ -8,7 +8,6 @@ import TabContent from './TabContent';
 import { getHashFromString, bannerImages, profileImages } from './imageUtils';
 import { getSellerData } from './sellerData';
 
-
 const VendeursManager = ({ 
   vendeurs, 
   vendeurActif,
@@ -43,26 +42,27 @@ const VendeursManager = ({
   return (
     <div className="min-h-screen bg-white text-black">
       <div className="max-w-[600px] mx-auto">
-        <div className="relative">
+        {/* Banner container with relative positioning */}
+        <div className="relative h-[120px]">
           <BannerSection bannerImage={bannerImage} />
           
-          {/* Action Buttons - Positioned absolutely over the banner */}
-          <div className="absolute top-3 right-4 z-20">
+          {/* Action Buttons - Positioned absolutely at the bottom of the banner */}
+          <div className="absolute bottom-3 right-4 z-20">
             <ActionButtons />
           </div>
         </div>
-        
+
         <ProfileSection 
           vendeurActif={vendeurActif}
           profileImage={profileImage}
           currentSeller={currentSeller}
         />
-        
+
         <TabsSection 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
         />
-        
+
         <TabContent 
           activeTab={activeTab}
           vendeurActif={vendeurActif}
