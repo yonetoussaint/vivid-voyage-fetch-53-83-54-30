@@ -69,7 +69,7 @@ const VendeursManager = ({
         {/* Profile Section */}
         <div className="px-4 pb-4 border-b border-gray-800">
           {/* Avatar & Action Buttons */}
-          <div className="flex justify-between items-start -mt-[67px] mb-4">
+          <div className="flex justify-between items-start -mt-[67px] mb-4 relative z-10">
             <div>
               <div className="w-[133px] h-[133px] rounded-full border-4 border-black bg-gray-900 overflow-hidden">
                 <img 
