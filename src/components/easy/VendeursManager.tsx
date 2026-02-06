@@ -47,7 +47,7 @@ const VendeursManager = ({
           <BannerSection bannerImage={bannerImage} />
           
           {/* Action Buttons - Positioned absolutely at the bottom of the banner */}
-          <div className="absolute bottom-3 right-4 z-20">
+          <div className="absolute bottom-6 right-4 z-20">
             <ActionButtons />
           </div>
         </div>
