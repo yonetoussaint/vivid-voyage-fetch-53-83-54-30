@@ -16,7 +16,7 @@ const TabsSection = ({ activeTab, setActiveTab }) => {
           onClick={() => setActiveTab(tab.id)}
           className="flex-1 relative hover:bg-gray-50 transition-colors"
         >
-          <div className="py-4 text-[15px] font-medium">
+          <div className="py-2 text-[15px] font-medium">
             <span className={activeTab === tab.id ? 'text-black' : 'text-gray-500'}>
               {tab.label}
             </span>
