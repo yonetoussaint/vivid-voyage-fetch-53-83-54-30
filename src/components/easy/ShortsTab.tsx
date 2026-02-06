@@ -1,57 +1,77 @@
-import React, { useState } from 'react';
-import { Calendar, DollarSign, AlertCircle, CheckCircle, Clock, XCircle, Lock, Bell, Receipt } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, DollarSign, AlertCircle, CheckCircle, Clock, XCircle, Lock, Bell, Receipt, CalendarDays } from 'lucide-react';
 
 const ShortsTab = ({ vendeurActif }) => {
   const [shorts, setShorts] = useState([
     {
       id: 1,
       date: "15 Fév, 24",
+      dueDate: "20 Fév, 24",
       shift: "Matin",
       totalSales: 1243526.25,
       moneyGiven: 1230026.25,
       shortAmount: 13500.00,
-      status: 'pending',
-      notes: "Différence essence SP95"
+      status: 'overdue', // Will be calculated
+      originalStatus: 'pending',
+      notes: "Différence essence SP95",
+      paidFromPayroll: false,
+      daysOverdue: 0
     },
     {
       id: 2,
       date: "14 Fév, 24",
+      dueDate: "19 Fév, 24",
       shift: "Soir",
       totalSales: 2112200.50,
       moneyGiven: 2110000.50,
       shortAmount: 2200.00,
       status: 'paid',
-      notes: "Erreur de caisse"
+      originalStatus: 'paid',
+      notes: "Erreur de caisse",
+      paidFromPayroll: false,
+      daysOverdue: 0
     },
     {
       id: 3,
       date: "12 Fév, 24",
+      dueDate: "17 Fév, 24",
       shift: "Matin",
       totalSales: 1894500.75,
       moneyGiven: 1890500.75,
       shortAmount: 4000.00,
       status: 'overdue',
-      notes: "Manquant gasoil"
+      originalStatus: 'pending',
+      notes: "Manquant gasoil",
+      paidFromPayroll: false,
+      daysOverdue: 0
     },
     {
       id: 4,
       date: "10 Fév, 24",
+      dueDate: "15 Fév, 24",
       shift: "Nuit",
       totalSales: 1560000.00,
       moneyGiven: 1560000.00,
       shortAmount: 0.00,
       status: 'paid',
-      notes: "Compte exact"
+      originalStatus: 'paid',
+      notes: "Compte exact",
+      paidFromPayroll: false,
+      daysOverdue: 0
     },
     {
       id: 5,
       date: "8 Fév, 24",
+      dueDate: "13 Fév, 24",
       shift: "Soir",
       totalSales: 2783300.25,
       moneyGiven: 2780000.25,
       shortAmount: 3300.00,
-      status: 'pending',
-      notes: "À régulariser"
+      status: 'overdue',
+      originalStatus: 'pending',
+      notes: "À régulariser",
+      paidFromPayroll: false,
+      daysOverdue: 0
     }
   ]);
 
@@ -61,7 +81,8 @@ const ShortsTab = ({ vendeurActif }) => {
   const [currentShortId, setCurrentShortId] = useState(null);
   const [pinError, setPinError] = useState('');
   const [activePinIndex, setActivePinIndex] = useState(0);
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'pending', 'paid'
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'pending', 'paid', 'overdue'
+  const [monthlySalary, setMonthlySalary] = useState(15000.00);
 
   const formatNumber = (num) => {
     return num.toLocaleString('en-US', {
@@ -70,18 +91,56 @@ const ShortsTab = ({ vendeurActif }) => {
     });
   };
 
+  // Calculate due dates and update status
+  useEffect(() => {
+    const updatedShorts = shorts.map(short => {
+      // For demo, let's simulate some are overdue
+      const today = new Date();
+      const dueDate = new Date(today);
+      
+      // Simulate overdue dates (adjust based on dueDate string)
+      const isOverdue = short.originalStatus === 'pending' && Math.random() > 0.3;
+      
+      // Calculate days overdue for demonstration
+      const daysOverdue = isOverdue ? Math.floor(Math.random() * 10) + 1 : 0;
+      
+      // Check if should be deducted from payroll
+      const shouldDeductFromPayroll = isOverdue && daysOverdue > 7;
+      
+      return {
+        ...short,
+        status: isOverdue ? 'overdue' : short.originalStatus,
+        daysOverdue,
+        paidFromPayroll: shouldDeductFromPayroll
+      };
+    });
+    
+    setShorts(updatedShorts);
+  }, []);
+
   // Filter shorts based on active filter
   const filteredShorts = shorts.filter(short => {
     if (activeFilter === 'all') return true;
-    if (activeFilter === 'pending') return short.status === 'pending' || short.status === 'overdue';
+    if (activeFilter === 'pending') return short.status === 'pending';
+    if (activeFilter === 'overdue') return short.status === 'overdue';
     if (activeFilter === 'paid') return short.status === 'paid';
     return true;
   });
 
   const totalShort = shorts.reduce((sum, short) => sum + short.shortAmount, 0);
   const pendingShort = shorts
-    .filter(short => short.status === 'pending' || short.status === 'overdue')
+    .filter(short => short.status === 'pending')
     .reduce((sum, short) => sum + short.shortAmount, 0);
+  
+  const overdueShort = shorts
+    .filter(short => short.status === 'overdue')
+    .reduce((sum, short) => sum + short.shortAmount, 0);
+  
+  const payrollDeductions = shorts
+    .filter(short => short.paidFromPayroll)
+    .reduce((sum, short) => sum + short.shortAmount, 0);
+  
+  const remainingPayroll = monthlySalary - payrollDeductions;
 
   const handleActionClick = (action, shortId) => {
     setCurrentAction(action);
@@ -92,17 +151,31 @@ const ShortsTab = ({ vendeurActif }) => {
     setActivePinIndex(0);
   };
 
+  const handlePayrollPayment = (shortId) => {
+    setShorts(shorts.map(short => 
+      short.id === shortId 
+        ? { ...short, status: 'paid', paidFromPayroll: true }
+        : short
+    ));
+  };
+
   const handlePinSubmit = () => {
     const pinString = pin.join('');
     if (pinString === '1234') {
       if (currentAction === 'markPaid') {
         setShorts(shorts.map(short => 
-          short.id === currentShortId ? { ...short, status: 'paid' } : short
+          short.id === currentShortId 
+            ? { ...short, status: 'paid', paidFromPayroll: false }
+            : short
         ));
       } else if (currentAction === 'cancelPayment') {
         setShorts(shorts.map(short => 
-          short.id === currentShortId ? { ...short, status: 'pending' } : short
+          short.id === currentShortId 
+            ? { ...short, status: 'pending', paidFromPayroll: false }
+            : short
         ));
+      } else if (currentAction === 'payrollPayment') {
+        handlePayrollPayment(currentShortId);
       }
       setShowPinModal(false);
     } else {
@@ -273,7 +346,23 @@ const ShortsTab = ({ vendeurActif }) => {
         </div>
       )}
 
-      {/* Summary Cards - Moved to top, compact */}
+      {/* Payroll Deduction Summary */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-blue-600 mb-1">Déduction mensuelle</p>
+            <p className="text-sm font-bold text-blue-700">Salaire: {formatNumber(monthlySalary)} HTG</p>
+            <p className="text-xs text-blue-600">
+              Déductions: {formatNumber(payrollDeductions)} HTG • Reste: {formatNumber(remainingPayroll)} HTG
+            </p>
+          </div>
+          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+            <DollarSign className="w-4 h-4 text-blue-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
       <div className="flex gap-2 mb-3">
         <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-200">
           <div className="flex items-center justify-between">
@@ -287,11 +376,11 @@ const ShortsTab = ({ vendeurActif }) => {
           </div>
         </div>
         
-        <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-200">
+        <div className="flex-1 bg-amber-50 rounded-lg p-3 border border-amber-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-amber-600 mb-1">À payer</p>
-              <p className="text-sm font-bold text-amber-700">{formatNumber(pendingShort)} HTG</p>
+              <p className="text-sm font-bold text-amber-700">{formatNumber(pendingShort + overdueShort)} HTG</p>
             </div>
             <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
               <AlertCircle className="w-4 h-4 text-amber-600" />
@@ -300,7 +389,7 @@ const ShortsTab = ({ vendeurActif }) => {
         </div>
       </div>
 
-      {/* Filter Tabs - Now functional */}
+      {/* Filter Tabs */}
       <div className="flex gap-1 mb-3 overflow-x-auto pb-2">
         <button 
           onClick={() => setActiveFilter('all')}
@@ -320,7 +409,17 @@ const ShortsTab = ({ vendeurActif }) => {
               : 'bg-white text-gray-600 border border-gray-300 active:bg-gray-50'
           }`}
         >
-          En attente ({shorts.filter(s => s.status === 'pending' || s.status === 'overdue').length})
+          En attente ({shorts.filter(s => s.status === 'pending').length})
+        </button>
+        <button 
+          onClick={() => setActiveFilter('overdue')}
+          className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap ${
+            activeFilter === 'overdue' 
+              ? 'bg-blue-600 text-white' 
+              : 'bg-white text-gray-600 border border-gray-300 active:bg-gray-50'
+          }`}
+        >
+          En retard ({shorts.filter(s => s.status === 'overdue').length})
         </button>
         <button 
           onClick={() => setActiveFilter('paid')}
@@ -334,7 +433,7 @@ const ShortsTab = ({ vendeurActif }) => {
         </button>
       </div>
 
-      {/* Shorts List - Always Open */}
+      {/* Shorts List */}
       <div className="space-y-2">
         {filteredShorts.length === 0 ? (
           <div className="text-center py-8 px-4">
@@ -350,7 +449,6 @@ const ShortsTab = ({ vendeurActif }) => {
               key={short.id}
               className="bg-white rounded-lg border border-gray-200 overflow-hidden"
             >
-              {/* Main Card Content */}
               <div className="p-3">
                 {/* Header Row */}
                 <div className="flex items-center justify-between mb-2">
@@ -365,12 +463,28 @@ const ShortsTab = ({ vendeurActif }) => {
                   </div>
                 </div>
                 
+                {/* Due Date Info */}
+                <div className="flex items-center gap-1 mb-2 text-xs">
+                  <CalendarDays className="w-3 h-3 text-gray-400" />
+                  <span className="text-gray-600">Date limite: </span>
+                  <span className={`font-medium ${
+                    short.status === 'overdue' ? 'text-red-600' : 'text-gray-700'
+                  }`}>
+                    {short.dueDate}
+                  </span>
+                  {short.daysOverdue > 0 && (
+                    <span className="text-red-600 font-medium">
+                      • {short.daysOverdue} jour{short.daysOverdue > 1 ? 's' : ''} de retard
+                    </span>
+                  )}
+                </div>
+                
                 {/* Notes with Gray Background */}
                 <div className="bg-gray-50 rounded-lg p-2 mb-3">
                   <p className="text-xs text-gray-600">{short.notes}</p>
                 </div>
                 
-                {/* Financial Details - Always Visible */}
+                {/* Financial Details */}
                 <div className="space-y-2 mb-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">Ventes totales:</span>
@@ -386,9 +500,28 @@ const ShortsTab = ({ vendeurActif }) => {
                   </div>
                 </div>
                 
-                {/* Action Buttons - Always Visible */}
+                {/* Payroll Deduction Warning */}
+                {short.status === 'overdue' && !short.paidFromPayroll && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-red-700 font-medium">
+                          {short.daysOverdue > 7 
+                            ? `À déduire du salaire (${formatNumber(monthlySalary)} HTG)` 
+                            : "À payer avant déduction salariale"}
+                        </p>
+                        <p className="text-xs text-red-600 mt-1">
+                          Salaire restant: {formatNumber(remainingPayroll)} HTG
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Action Buttons */}
                 <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100">
-                  {short.status === 'pending' || short.status === 'overdue' ? (
+                  {short.status === 'pending' ? (
                     <>
                       <button 
                         onClick={() => handleActionClick('markPaid', short.id)}
@@ -400,6 +533,23 @@ const ShortsTab = ({ vendeurActif }) => {
                       <button className="border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-medium active:bg-gray-50 flex items-center justify-center gap-1">
                         <Bell className="w-3.5 h-3.5" />
                         Rappeler
+                      </button>
+                    </>
+                  ) : short.status === 'overdue' ? (
+                    <>
+                      <button 
+                        onClick={() => handleActionClick('markPaid', short.id)}
+                        className="bg-green-500 text-white py-2 rounded-lg text-xs font-medium active:bg-green-600 flex items-center justify-center gap-1"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        Payer maintenant
+                      </button>
+                      <button 
+                        onClick={() => handleActionClick('payrollPayment', short.id)}
+                        className="bg-blue-600 text-white py-2 rounded-lg text-xs font-medium active:bg-blue-700 flex items-center justify-center gap-1"
+                      >
+                        <DollarSign className="w-3.5 h-3.5" />
+                        Déduire du salaire
                       </button>
                     </>
                   ) : short.status === 'paid' ? (
