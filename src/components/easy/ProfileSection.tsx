@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Calendar, MoreHorizontal } from 'lucide-react';
+import { MapPin, Calendar } from 'lucide-react';
 
 const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
   return (
@@ -13,16 +13,6 @@ const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
             className="w-full h-full object-cover"
           />
         </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-2 mb-4">
-        <button className="hover:bg-gray-100 rounded-full p-2 border border-gray-300 transition-colors">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
-        <button className="bg-black text-white font-bold px-4 py-[7px] rounded-full text-[15px] hover:bg-gray-800 transition-colors">
-          Suivre
-        </button>
       </div>
 
       {/* Name & Username */}
