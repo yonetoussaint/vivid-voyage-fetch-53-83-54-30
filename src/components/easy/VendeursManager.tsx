@@ -20,21 +20,21 @@ const VendeursManager = ({
     if (vendeurActif && vendeur !== vendeurActif) {
       return false;
     }
-    
+
     // Filter by search query
     if (searchQuery && !vendeur.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
-    
+
     return true;
   });
 
   // Initialize seller data when a new seller is added
   const handleAddVendeur = () => {
     if (!nouveauVendeur.trim()) return;
-    
+
     ajouterVendeur();
-    
+
     // Initialize seller data
     setSellerData(prev => ({
       ...prev,
@@ -45,7 +45,7 @@ const VendeursManager = ({
         affectations: 0
       }
     }));
-    
+
     setNouveauVendeur("");
   };
 
@@ -159,7 +159,7 @@ const VendeursManager = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
               {filteredVendeurs.map((vendeur, index) => {
                 const info = getSellerInfo(vendeur);
-                
+
                 return (
                   <div 
                     key={vendeur} 
