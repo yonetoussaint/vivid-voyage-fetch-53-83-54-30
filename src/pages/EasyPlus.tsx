@@ -12,7 +12,7 @@ import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
 import { useStationData } from '@/hooks/useStationData';
 
-// Import the new components
+// Import the layout components
 import MainLayout from '@/components/easy/MainLayout';
 import VerticalTabs from '@/components/easy/VerticalTabs';
 import SidePanel from '@/components/easy/SidePanel';
@@ -26,7 +26,9 @@ const SystemeStationService = () => {
   const [pompeEtendue, setPompeEtendue] = useState('P1');
   const [showContact, setShowContact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [vendeurActif, setVendeurActif] = useState(null); // New state for active vendor
+  const [vendeurActif, setVendeurActif] = useState(null);
+  const [taskType, setTaskType] = useState('all');
+  const [tasksStats, setTasksStats] = useState(null);
 
   const {
     toutesDonnees,
@@ -74,6 +76,30 @@ const SystemeStationService = () => {
     }
   }, [vendeurs]);
 
+  // Load tasks stats
+  useEffect(() => {
+    const savedTasks = localStorage.getItem(`gasStationTasks_${date}`);
+    if (savedTasks) {
+      const tasks = JSON.parse(savedTasks);
+      const stats = {
+        total: tasks.length,
+        pending: tasks.filter(t => t.status === 'pending').length,
+        critical: tasks.filter(t => t.priority === 'critical').length,
+        completed: tasks.filter(t => t.status === 'completed').length,
+        overdue: tasks.filter(t => new Date(t.dueDate) < new Date(date) && t.status !== 'completed').length
+      };
+      setTasksStats(stats);
+    } else {
+      setTasksStats({
+        total: 0,
+        pending: 0,
+        critical: 0,
+        completed: 0,
+        overdue: 0
+      });
+    }
+  }, [date, activeTab]);
+
   const handlePompeSelection = (selection) => {
     setPompeEtendue(selection);
   };
@@ -90,7 +116,7 @@ const SystemeStationService = () => {
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    if (window.innerWidth < 1024) { // Close menu on mobile after selection
+    if (window.innerWidth < 1024) {
       setIsMenuOpen(false);
     }
   };
@@ -129,6 +155,8 @@ const SystemeStationService = () => {
               shift={shift}
               date={date}
               vendeurs={vendeurs}
+              taskType={taskType}
+              vendeurActif={vendeurActif}
             />
           </div>
         );
@@ -258,15 +286,18 @@ const SystemeStationService = () => {
         pompeEtendue={pompeEtendue}
         setPompeEtendue={setPompeEtendue}
         showPropane={true}
-        // Vendor props for depots tab
+        // Vendor props
         vendeurs={vendeurs}
         vendeurActif={vendeurActif}
         setVendeurActif={setVendeurActif}
+        // Task props
+        taskType={taskType}
+        setTaskType={setTaskType}
         // Reset functions
         onResetShift={handleReinitialiserShift}
         onResetDay={handleReinitialiserJour}
-        // Tasks stats props (you might want to add these later)
-        // tasksStats={tasksStats}
+        // Tasks stats
+        tasksStats={tasksStats}
       >
         {renderActiveTabContent()}
       </MainLayout>
