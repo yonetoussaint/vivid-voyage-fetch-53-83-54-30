@@ -1,268 +1,281 @@
 // components/easy/VendeursManager.jsx
 import React, { useState } from 'react';
-import { Users, User, Plus, Trash2, Phone, Clock, AlertCircle, Search } from 'lucide-react';
+import { User, Phone, Clock, AlertCircle, Edit2 } from 'lucide-react';
 
 const VendeursManager = ({ 
   vendeurs, 
-  nouveauVendeur, 
-  setNouveauVendeur, 
-  ajouterVendeur, 
-  supprimerVendeur, 
-  getNombreAffectations,
-  vendeurActif 
+  vendeurActif,
+  getNombreAffectations 
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [sellerData, setSellerData] = useState({});
+  const [editing, setEditing] = useState(false);
+  
+  // If no active vendor, show placeholder
+  if (!vendeurActif) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="bg-white rounded-lg shadow border p-8 text-center">
+          <User className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+          <h2 className="text-xl font-semibold text-gray-600 mb-2">
+            Aucun vendeur sélectionné
+          </h2>
+          <p className="text-gray-500">
+            Sélectionnez un vendeur pour voir son profil
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  // Filter vendeurs based on search and active tab
-  const filteredVendeurs = vendeurs.filter(vendeur => {
-    // Filter by active vendor tab
-    if (vendeurActif && vendeur !== vendeurActif) {
-      return false;
-    }
+  // Initialize seller data if not exists
+  const currentSeller = sellerData[vendeurActif] || {
+    phone: "+212 600-000000",
+    shift: "AM",
+    tardiness: 0,
+    joinDate: new Date().toLocaleDateString('fr-FR'),
+    email: `${vendeurActif.toLowerCase().replace(/\s+/g, '.')}@station.com`
+  };
 
-    // Filter by search query
-    if (searchQuery && !vendeur.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-
-    return true;
-  });
-
-  // Initialize seller data when a new seller is added
-  const handleAddVendeur = () => {
-    if (!nouveauVendeur.trim()) return;
-
-    ajouterVendeur();
-
-    // Initialize seller data
+  const updateSellerData = (field, value) => {
     setSellerData(prev => ({
       ...prev,
-      [nouveauVendeur]: {
-        phone: "",
-        shift: "AM",
-        tardiness: 0,
-        affectations: 0
+      [vendeurActif]: {
+        ...currentSeller,
+        [field]: value
       }
     }));
-
-    setNouveauVendeur("");
   };
 
-  const getSellerInfo = (vendeur) => {
-    return sellerData[vendeur] || {
-      phone: "Non défini",
-      shift: "AM",
-      tardiness: 0,
-      affectations: getNombreAffectations ? getNombreAffectations(vendeur) : 0
-    };
-  };
+  const affectations = getNombreAffectations ? getNombreAffectations(vendeurActif) : 0;
 
   return (
-    <div className="p-4 max-w-6xl mx-auto">
-      {/* Search Bar */}
-      <div className="mb-6 relative">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher un vendeur..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
-            {filteredVendeurs.length} trouvé(s)
+    <div className="p-6 max-w-4xl mx-auto">
+      {/* Profile Header */}
+      <div className="bg-white rounded-lg shadow border overflow-hidden mb-6">
+        {/* Profile Cover */}
+        <div className="h-32 bg-gradient-to-r from-blue-600 to-blue-800 relative">
+          <div className="absolute -bottom-12 left-6">
+            <div className="w-24 h-24 rounded-full border-4 border-white bg-blue-100 flex items-center justify-center">
+              <User className="w-12 h-12 text-blue-600" />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Add Vendeur Form */}
-      <div className="bg-white rounded-lg shadow border p-4 mb-6">
-        <h2 className="text-lg font-semibold mb-4 flex items-center">
-          <Plus className="w-5 h-5 mr-2 text-blue-600" />
-          Ajouter un vendeur
-        </h2>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            value={nouveauVendeur}
-            onChange={(e) => setNouveauVendeur(e.target.value)}
-            placeholder="Nom du vendeur"
-            className="flex-1 p-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            onKeyPress={(e) => e.key === 'Enter' && handleAddVendeur()}
-          />
-          <button
-            onClick={handleAddVendeur}
-            className="bg-blue-600 text-white px-4 py-2.5 rounded font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Ajouter
-          </button>
-        </div>
-      </div>
-
-      {/* Vendeurs List */}
-      <div className="bg-white rounded-lg shadow border overflow-hidden">
-        {/* Header */}
-        <div className="px-4 py-3 border-b bg-gray-50">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        {/* Profile Info */}
+        <div className="pt-16 px-6 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold">
-                Liste des Vendeurs
-                <span className="ml-2 text-sm font-normal text-gray-600">
-                  ({filteredVendeurs.length} sur {vendeurs.length})
-                </span>
-              </h2>
-              {vendeurActif && (
-                <p className="text-sm text-gray-500 mt-1">
-                  Affichage: <span className="font-medium">{vendeurActif}</span>
-                </p>
-              )}
+              <h1 className="text-2xl font-bold text-gray-900">{vendeurActif}</h1>
+              <p className="text-gray-600">Vendeur • Station Service</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Membre depuis {currentSeller.joinDate}
+              </p>
             </div>
-            <div className="text-sm text-gray-500">
-              Total: {vendeurs.length}
+            
+            <button
+              onClick={() => setEditing(!editing)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+            >
+              <Edit2 className="w-4 h-4" />
+              {editing ? 'Annuler' : 'Modifier'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Profile Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Personal Info */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Personal Information Card */}
+          <div className="bg-white rounded-lg shadow border p-6">
+            <h2 className="text-lg font-semibold mb-4 pb-3 border-b">
+              Informations Personnelles
+            </h2>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Phone */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                    <Phone className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Téléphone</p>
+                    {editing ? (
+                      <input
+                        type="text"
+                        value={currentSeller.phone}
+                        onChange={(e) => updateSellerData('phone', e.target.value)}
+                        className="border-b border-gray-300 focus:border-blue-500 focus:outline-none"
+                      />
+                    ) : (
+                      <p className="font-medium">{currentSeller.phone}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
+                    <span className="text-lg">@</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    {editing ? (
+                      <input
+                        type="email"
+                        value={currentSeller.email}
+                        onChange={(e) => updateSellerData('email', e.target.value)}
+                        className="border-b border-gray-300 focus:border-blue-500 focus:outline-none"
+                      />
+                    ) : (
+                      <p className="font-medium">{currentSeller.email}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Shift Info */}
+              <div className="flex items-center gap-3 pt-4 border-t">
+                <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500">Quart de travail</p>
+                  {editing ? (
+                    <select
+                      value={currentSeller.shift}
+                      onChange={(e) => updateSellerData('shift', e.target.value)}
+                      className="border rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="AM">Matin (AM)</option>
+                      <option value="PM">Après-midi (PM)</option>
+                      <option value="NIGHT">Nuit</option>
+                      <option value="FULL">Temps plein</option>
+                    </select>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{currentSeller.shift}</span>
+                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                        Actif
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
+          </div>
+
+          {/* Performance Stats */}
+          <div className="bg-white rounded-lg shadow border p-6">
+            <h2 className="text-lg font-semibold mb-4 pb-3 border-b">
+              Performance
+            </h2>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-3xl font-bold text-blue-600">
+                  {affectations}
+                </div>
+                <p className="text-sm text-gray-500 mt-1">Pompes affectées</p>
+              </div>
+              
+              <div className="text-center p-4 border rounded-lg">
+                <div className={`text-3xl font-bold ${
+                  currentSeller.tardiness > 0 ? 'text-amber-600' : 'text-green-600'
+                }`}>
+                  {currentSeller.tardiness}
+                </div>
+                <p className="text-sm text-gray-500 mt-1">Retards</p>
+              </div>
+            </div>
+
+            {/* Tardiness Warning */}
+            {currentSeller.tardiness > 0 && (
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800">
+                    Attention aux retards
+                  </p>
+                  <p className="text-xs text-amber-600 mt-1">
+                    Ce vendeur a {currentSeller.tardiness} retard{currentSeller.tardiness > 1 ? 's' : ''} enregistré{currentSeller.tardiness > 1 ? 's' : ''}.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Content */}
-        <div className="divide-y">
-          {filteredVendeurs.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              {searchQuery ? (
-                <div className="space-y-2">
-                  <Search className="w-12 h-12 mx-auto text-gray-300" />
-                  <p>Aucun vendeur trouvé pour "{searchQuery}"</p>
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    Effacer la recherche
-                  </button>
-                </div>
-              ) : vendeurs.length === 0 ? (
-                <div className="space-y-2">
-                  <Users className="w-12 h-12 mx-auto text-gray-300" />
-                  <p>Aucun vendeur enregistré</p>
-                  <p className="text-sm">Ajoutez votre premier vendeur</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Filter className="w-12 h-12 mx-auto text-gray-300" />
-                  <p>Aucun vendeur à afficher avec le filtre actuel</p>
-                  <p className="text-sm">Essayez un autre filtre</p>
+        {/* Right Column - Quick Stats */}
+        <div className="space-y-6">
+          {/* Status Card */}
+          <div className="bg-white rounded-lg shadow border p-6">
+            <h3 className="font-semibold mb-4">Statut</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Disponibilité</span>
+                <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                  Actif
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Performance</span>
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                  {affectations > 5 ? 'Élevée' : affectations > 2 ? 'Moyenne' : 'Faible'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Ponctualité</span>
+                <span className={`px-3 py-1 text-sm rounded-full ${
+                  currentSeller.tardiness === 0 
+                    ? 'bg-green-100 text-green-800' 
+                    : currentSeller.tardiness < 3 
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {currentSeller.tardiness === 0 ? 'Excellente' : 'À améliorer'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white rounded-lg shadow border p-6">
+            <h3 className="font-semibold mb-4">Activité récente</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-2 text-gray-600">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Connecté aujourd'hui</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>{affectations} pompes assignées</span>
+              </div>
+              {currentSeller.tardiness > 0 && (
+                <div className="flex items-center gap-2 text-amber-600">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                  <span>Dernier retard: Il y a 2 jours</span>
                 </div>
               )}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-              {filteredVendeurs.map((vendeur, index) => {
-                const info = getSellerInfo(vendeur);
+          </div>
 
-                return (
-                  <div 
-                    key={vendeur} 
-                    className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                          <User className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{vendeur}</h3>
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <span>ID: {String(index + 1).padStart(3, '0')}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              info.tardiness > 0 ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'
-                            }`}>
-                              {info.tardiness > 0 ? `${info.tardiness} retard(s)` : 'À jour'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => supprimerVendeur(vendeur)}
-                        className="p-1.5 hover:bg-red-100 text-red-600 rounded transition"
-                        title="Supprimer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Info Grid */}
-                    <div className="space-y-3">
-                      {/* Phone */}
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600 truncate">
-                          {info.phone || "Non défini"}
-                        </span>
-                      </div>
-
-                      {/* Shift */}
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
-                          Quart: {info.shift}
-                        </span>
-                      </div>
-
-                      {/* Affectations */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Affectations pompes:</span>
-                        <span className="text-lg font-bold text-blue-600">
-                          {info.affectations}
-                        </span>
-                      </div>
-
-                      {/* Tardiness Warning */}
-                      {info.tardiness > 0 && (
-                        <div className="flex items-center gap-2 text-amber-600">
-                          <AlertCircle className="w-4 h-4" />
-                          <span className="text-sm">
-                            {info.tardiness} retard{info.tardiness > 1 ? 's' : ''} enregistré{info.tardiness > 1 ? 's' : ''}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Save Button when editing */}
+          {editing && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800 mb-3">
+                Les modifications seront enregistrées automatiquement
+              </p>
+              <button
+                onClick={() => setEditing(false)}
+                className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+              >
+                Enregistrer les modifications
+              </button>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Statistics */}
-      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white p-4 rounded-lg shadow border">
-          <div className="text-sm text-gray-500">Total Vendeurs</div>
-          <div className="text-2xl font-bold">{vendeurs.length}</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border">
-          <div className="text-sm text-gray-500">Affichage</div>
-          <div className="text-2xl font-bold">{filteredVendeurs.length}</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border">
-          <div className="text-sm text-gray-500">Affectations totales</div>
-          <div className="text-2xl font-bold">
-            {vendeurs.reduce((total, vendeur) => {
-              const affectations = getNombreAffectations ? getNombreAffectations(vendeur) : 0;
-              return total + affectations;
-            }, 0)}
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border">
-          <div className="text-sm text-gray-500">Retards totaux</div>
-          <div className="text-2xl font-bold">
-            {vendeurs.reduce((total, vendeur) => {
-              const info = getSellerInfo(vendeur);
-              return total + (info.tardiness || 0);
-            }, 0)}
-          </div>
         </div>
       </div>
     </div>
