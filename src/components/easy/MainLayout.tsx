@@ -4,7 +4,6 @@ import Header from './Header';
 import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
 import PumpSelector from './PumpSelector';
-import VendorSelector from './VendorSelector';
 import TaskTypeSelector from './TaskTypeSelector';
 
 const MainLayout = ({ 
@@ -20,10 +19,6 @@ const MainLayout = ({
   pompeEtendue,
   setPompeEtendue,
   showPropane,
-  // Vendor props for depots tab
-  vendeurs,
-  vendeurActif,
-  setVendeurActif,
   // Task props
   taskType,
   setTaskType,
@@ -47,7 +42,7 @@ const MainLayout = ({
 
       return () => window.removeEventListener('resize', updateHeight);
     }
-  }, [activeTab, vendeurs]); // Include vendeurs dependency
+  }, [activeTab]); // Remove vendeurs dependency since we're not showing VendorSelector for tasks
 
   return (
     <div className="h-screen flex flex-col">
@@ -76,17 +71,6 @@ const MainLayout = ({
               pompeEtendue={pompeEtendue}
               setPompeEtendue={setPompeEtendue}
               showPropane={showPropane}
-            />
-          </div>
-        )}
-
-        {/* Vendor Selector - For depots and tasks tabs */}
-        {((activeTab === 'depots' || activeTab === 'tasks') && vendeurs && vendeurs.length > 0) && (
-          <div className="bg-white border-b border-slate-200 py-2">
-            <VendorSelector
-              vendeurs={vendeurs}
-              vendeurActif={vendeurActif}
-              setVendeurActif={setVendeurActif}
             />
           </div>
         )}
