@@ -3,9 +3,9 @@ import { MapPin, Calendar } from 'lucide-react';
 
 const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
   return (
-    <div className="px-4 pb-4 border-b border-gray-200">
-      {/* Avatar positioned with negative margin - This will overlap the banner area */}
-      <div className="-mt-[56px] mb-3 relative z-10">
+    <div className="px-4 pb-4 border-b border-gray-200 relative z-10">
+      {/* Avatar positioned with negative margin */}
+      <div className="-mt-[56px] mb-3">
         <div className="w-[112px] h-[112px] rounded-full border-4 border-white bg-gray-100 overflow-hidden">
           <img 
             src={profileImage}
@@ -15,7 +15,7 @@ const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
         </div>
       </div>
 
-      {/* Name & Username */}
+      {/* Rest of the profile content remains the same */}
       <div className="mb-3">
         <h1 className="font-bold text-[20px] leading-6 flex items-center gap-1">
           {vendeurActif}
@@ -25,7 +25,6 @@ const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
         </h1>
       </div>
 
-      {/* Bio */}
       <div className="mb-3 text-[15px] leading-5">
         <p>Vendeur à la station service • {currentSeller.shift}</p>
         <p className="mt-2">
@@ -35,7 +34,6 @@ const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
         </p>
       </div>
 
-      {/* Meta Info */}
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-[15px] text-gray-500 mb-3">
         <div className="flex items-center gap-1">
           <MapPin className="w-[18px] h-[18px]" />
