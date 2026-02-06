@@ -1,12 +1,20 @@
 // components/easy/TaskTypeSelector.jsx
 import React from 'react';
 import { 
+  Filter,
   Calendar, 
-  AlertCircle, 
-  CheckCircle, 
-  Circle,
+  Bell, 
+  Target, 
+  CheckSquare,
+  AlertTriangle,
+  CheckCircle,
   ListTodo,
-  Filter
+  Flag,
+  Users,
+  Clock,
+  BarChart3,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 
 const TaskTypeSelector = ({ taskType, setTaskType }) => {
@@ -15,49 +23,57 @@ const TaskTypeSelector = ({ taskType, setTaskType }) => {
       id: 'all', 
       label: 'All Tasks', 
       icon: <Filter className="w-4 h-4" />,
-      color: 'bg-gray-100 text-gray-800 border-gray-300'
+      color: 'bg-blue-600 text-white',
+      borderColor: 'border-blue-600'
     },
     { 
       id: 'meeting', 
       label: 'Meetings', 
       icon: <Calendar className="w-4 h-4" />,
-      color: 'bg-blue-100 text-blue-800 border-blue-300'
+      color: 'bg-purple-600 text-white',
+      borderColor: 'border-purple-600'
     },
     { 
       id: 'reminder', 
       label: 'Reminders', 
-      icon: <AlertCircle className="w-4 h-4" />,
-      color: 'bg-orange-100 text-orange-800 border-orange-300'
+      icon: <Bell className="w-4 h-4" />,
+      color: 'bg-orange-600 text-white',
+      borderColor: 'border-orange-600'
     },
     { 
       id: 'task', 
       label: 'Tasks', 
-      icon: <CheckCircle className="w-4 h-4" />,
-      color: 'bg-green-100 text-green-800 border-green-300'
+      icon: <Target className="w-4 h-4" />,
+      color: 'bg-green-600 text-white',
+      borderColor: 'border-green-600'
     },
     { 
       id: 'todo', 
       label: 'To-Dos', 
-      icon: <Circle className="w-4 h-4" />,
-      color: 'bg-purple-100 text-purple-800 border-purple-300'
+      icon: <CheckSquare className="w-4 h-4" />,
+      color: 'bg-indigo-600 text-white',
+      borderColor: 'border-indigo-600'
     },
     { 
       id: 'pending', 
       label: 'Pending', 
-      icon: <ListTodo className="w-4 h-4" />,
-      color: 'bg-yellow-100 text-yellow-800 border-yellow-300'
+      icon: <Clock className="w-4 h-4" />,
+      color: 'bg-yellow-600 text-white',
+      borderColor: 'border-yellow-600'
     },
     { 
       id: 'completed', 
       label: 'Completed', 
       icon: <CheckCircle className="w-4 h-4" />,
-      color: 'bg-emerald-100 text-emerald-800 border-emerald-300'
+      color: 'bg-emerald-600 text-white',
+      borderColor: 'border-emerald-600'
     },
     { 
       id: 'critical', 
       label: 'Critical', 
-      icon: <AlertCircle className="w-4 h-4" />,
-      color: 'bg-red-100 text-red-800 border-red-300'
+      icon: <AlertTriangle className="w-4 h-4" />,
+      color: 'bg-red-600 text-white',
+      borderColor: 'border-red-600'
     }
   ];
 
@@ -67,15 +83,14 @@ const TaskTypeSelector = ({ taskType, setTaskType }) => {
         <button
           key={type.id}
           onClick={() => setTaskType(type.id)}
-          className={`px-3 py-1.5 font-medium text-sm whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5 rounded-full ${
+          className={`px-3 py-1 font-medium text-sm whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5 ${
             taskType === type.id
-              ? `${type.color} border-2 shadow-sm`
-              : 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-50'
+              ? `${type.color} ${type.borderColor}`
+              : 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
           }`}
+          style={{ borderRadius: '20px !important' }}
         >
-          <div className={`${taskType === type.id ? 'text-current' : 'text-slate-500'}`}>
-            {type.icon}
-          </div>
+          {type.icon}
           {type.label}
         </button>
       ))}
