@@ -4,7 +4,7 @@ import { MapPin, Calendar } from 'lucide-react';
 const ProfileSection = ({ vendeurActif, profileImage, currentSeller }) => {
   return (
     <div className="px-4 pb-4 border-b border-gray-200">
-      {/* Avatar positioned with negative margin */}
+      {/* Avatar positioned with negative margin - This will overlap the banner area */}
       <div className="-mt-[56px] mb-3 relative z-10">
         <div className="w-[112px] h-[112px] rounded-full border-4 border-white bg-gray-100 overflow-hidden">
           <img 
