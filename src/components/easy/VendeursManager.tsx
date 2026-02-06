@@ -39,7 +39,7 @@ const VendeursManager = ({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Edge-to-edge cover */}
-      <div className="h-56 bg-gradient-to-r from-blue-600 to-blue-800 w-full">
+      <div className="h-56 -mx-2 bg-gradient-to-r from-blue-600 to-blue-800 w-full">
         <div className="max-w-6xl mx-auto px-4 h-full flex items-end pb-6">
           <div className="flex items-end gap-6">
             <div className="w-28 h-28 rounded-full border-4 border-white bg-blue-100 flex items-center justify-center">
