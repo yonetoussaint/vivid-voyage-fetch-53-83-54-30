@@ -42,12 +42,12 @@ const VendeursManager = ({
   return (
     <div className="min-h-screen bg-white text-black">
       <div className="max-w-[600px] mx-auto">
-        {/* Banner container with relative positioning */}
-        <div className="relative h-[120px]">
-          <BannerSection bannerImage={bannerImage} />
-          
-          {/* Action Buttons - Positioned absolutely at the bottom of the banner */}
-          <div className="absolute bottom-6 right-4 z-20">
+        {/* Banner only */}
+        <BannerSection bannerImage={bannerImage} />
+        
+        {/* Action Buttons - Positioned right below the banner */}
+        <div className="px-4">
+          <div className="flex justify-end -mt-2 mb-2">
             <ActionButtons />
           </div>
         </div>
