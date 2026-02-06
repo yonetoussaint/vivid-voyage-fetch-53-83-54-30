@@ -8,7 +8,7 @@ const VendeursManager = ({
   getNombreAffectations 
 }) => {
   const [sellerData, setSellerData] = useState({});
-  
+
   if (!vendeurActif) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
@@ -38,8 +38,8 @@ const VendeursManager = ({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Edge-to-edge cover */}
-      <div className="h-56 -mx-2 bg-gradient-to-r from-blue-600 to-blue-800 w-full">
+      {/* Edge-to-edge cover - now truly edge to edge */}
+      <div className="w-screen relative left-1/2 right-1/2 -mx-[50vw] h-56 bg-gradient-to-r from-blue-600 to-blue-800">
         <div className="max-w-6xl mx-auto px-4 h-full flex items-end pb-6">
           <div className="flex items-end gap-6">
             <div className="w-28 h-28 rounded-full border-4 border-white bg-blue-100 flex items-center justify-center">
@@ -53,7 +53,7 @@ const VendeursManager = ({
         </div>
       </div>
 
-      {/* Main content */}
+      {/* Profile content */}
       <div className="max-w-6xl mx-auto px-4 -mt-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left column - Info */}
