@@ -42,21 +42,25 @@ const VendeursManager = ({
   return (
     <div className="min-h-screen bg-white text-black">
       <div className="max-w-[600px] mx-auto">
-        {/* Banner only */}
-        <BannerSection bannerImage={bannerImage} />
-        
-        {/* Action Buttons - Positioned right below the banner */}
-        <div className="px-4">
-          <div className="flex justify-end -mt-2 mb-2">
+        {/* Main container with relative positioning */}
+        <div className="relative">
+          {/* Banner */}
+          <div className="h-[120px]">
+            <BannerSection bannerImage={bannerImage} />
+          </div>
+          
+          {/* Action Buttons - Positioned absolutely relative to the main container */}
+          <div className="absolute top-[120px] right-4 z-20">
             <ActionButtons />
           </div>
+          
+          {/* Profile Section - This will overlap the banner area */}
+          <ProfileSection 
+            vendeurActif={vendeurActif}
+            profileImage={profileImage}
+            currentSeller={currentSeller}
+          />
         </div>
-
-        <ProfileSection 
-          vendeurActif={vendeurActif}
-          profileImage={profileImage}
-          currentSeller={currentSeller}
-        />
 
         <TabsSection 
           activeTab={activeTab}
