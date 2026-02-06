@@ -9,6 +9,7 @@ import StockRestant from '@/components/easy/StockRestant';
 import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
+import TasksManager from '@/components/easy/TasksManager';
 import { useStationData } from '@/hooks/useStationData';
 
 // Import the new components
@@ -118,6 +119,16 @@ const SystemeStationService = () => {
               prixPropane={prixPropane}
               showPropane={true}
               tousDepots={tousDepots}
+            />
+          </div>
+        );
+      case 'tasks':
+        return (
+          <div className="p-2 sm:p-4">
+            <TasksManager
+              shift={shift}
+              date={date}
+              vendeurs={vendeurs}
             />
           </div>
         );
@@ -251,6 +262,11 @@ const SystemeStationService = () => {
         vendeurs={vendeurs}
         vendeurActif={vendeurActif}
         setVendeurActif={setVendeurActif}
+        // Reset functions
+        onResetShift={handleReinitialiserShift}
+        onResetDay={handleReinitialiserJour}
+        // Tasks stats props (you might want to add these later)
+        // tasksStats={tasksStats}
       >
         {renderActiveTabContent()}
       </MainLayout>
