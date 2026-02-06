@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, DollarSign, CreditCard, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Calendar, DollarSign, CreditCard, AlertCircle, CheckCircle, Clock, XCircle, Lock } from 'lucide-react';
 
 const ShortsTab = ({ vendeurActif }) => {
   const [shorts, setShorts] = useState([
@@ -55,15 +55,42 @@ const ShortsTab = ({ vendeurActif }) => {
     }
   ]);
 
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pin, setPin] = useState('');
+  const [currentAction, setCurrentAction] = useState(null); // 'markPaid' or 'cancelPayment'
+  const [currentShortId, setCurrentShortId] = useState(null);
+  const [pinError, setPinError] = useState('');
+
   const totalShort = shorts.reduce((sum, short) => sum + short.shortAmount, 0);
   const pendingShort = shorts
     .filter(short => short.status === 'pending' || short.status === 'overdue')
     .reduce((sum, short) => sum + short.shortAmount, 0);
 
-  const handleMarkAsPaid = (id) => {
-    setShorts(shorts.map(short => 
-      short.id === id ? { ...short, status: 'paid' } : short
-    ));
+  const handleActionClick = (action, shortId) => {
+    setCurrentAction(action);
+    setCurrentShortId(shortId);
+    setShowPinModal(true);
+    setPin('');
+    setPinError('');
+  };
+
+  const handlePinSubmit = () => {
+    // Simple PIN validation - in real app, this would verify against backend
+    if (pin === '1234') { // Demo PIN
+      if (currentAction === 'markPaid') {
+        setShorts(shorts.map(short => 
+          short.id === currentShortId ? { ...short, status: 'paid' } : short
+        ));
+      } else if (currentAction === 'cancelPayment') {
+        setShorts(shorts.map(short => 
+          short.id === currentShortId ? { ...short, status: 'pending' } : short
+        ));
+      }
+      setShowPinModal(false);
+      setPin('');
+    } else {
+      setPinError('Code PIN incorrect. Essayez à nouveau.');
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -105,8 +132,78 @@ const ShortsTab = ({ vendeurActif }) => {
     }
   };
 
+  const getActionText = (action) => {
+    switch(action) {
+      case 'markPaid':
+        return 'marquer comme payé';
+      case 'cancelPayment':
+        return 'annuler le paiement';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="p-4">
+      {/* PIN Confirmation Modal */}
+      {showPinModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Lock className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-black">Confirmation requise</h3>
+                <p className="text-gray-600 text-sm">
+                  Confirmez que vous voulez {getActionText(currentAction)} pour ce déficit
+                </p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Entrez votre code PIN
+              </label>
+              <input
+                type="password"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                placeholder="••••"
+                maxLength="4"
+                inputMode="numeric"
+              />
+              {pinError && (
+                <p className="mt-2 text-sm text-red-600">{pinError}</p>
+              )}
+              <p className="mt-2 text-xs text-gray-500">
+                Code PIN démo: 1234
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowPinModal(false);
+                  setPin('');
+                  setPinError('');
+                }}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handlePinSubmit}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header with summary */}
       <div className="mb-6">
         <h3 className="text-lg font-bold text-black mb-2">Déficits de {vendeurActif}</h3>
@@ -187,7 +284,7 @@ const ShortsTab = ({ vendeurActif }) => {
               {short.status === 'pending' || short.status === 'overdue' ? (
                 <>
                   <button 
-                    onClick={() => handleMarkAsPaid(short.id)}
+                    onClick={() => handleActionClick('markPaid', short.id)}
                     className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors flex items-center gap-2"
                   >
                     <CheckCircle className="w-4 h-4" />
@@ -197,12 +294,21 @@ const ShortsTab = ({ vendeurActif }) => {
                     Rappeler
                   </button>
                 </>
-              ) : (
-                <div className="text-sm text-gray-500 flex items-center gap-1">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  Déficit réglé
-                </div>
-              )}
+              ) : short.status === 'paid' ? (
+                <>
+                  <button 
+                    onClick={() => handleActionClick('cancelPayment', short.id)}
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors flex items-center gap-2"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Annuler le paiement
+                  </button>
+                  <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    Voir reçu
+                  </button>
+                </>
+              ) : null}
             </div>
           </div>
         ))}
