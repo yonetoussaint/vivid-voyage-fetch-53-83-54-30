@@ -161,7 +161,7 @@ const SystemeStationService = () => {
         );
       case 'vendeurs':
   return (
-    <div className="p-2 sm:p-4">
+    
       <VendeursManager
         vendeurs={vendeurs}
         nouveauVendeur={nouveauVendeur}
@@ -171,7 +171,7 @@ const SystemeStationService = () => {
         getNombreAffectations={getNombreAffectations}
         vendeurActif={vendeurActif} // Make sure to pass this!
       />
-    </div>
+    
   );
       case 'conditionnement':
         return (
