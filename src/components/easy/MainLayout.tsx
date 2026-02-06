@@ -5,6 +5,7 @@ import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
 import PumpSelector from './PumpSelector';
 import VendorSelector from './VendorSelector';
+import TaskTypeSelector from './TaskTypeSelector';
 
 const MainLayout = ({ 
   date, 
@@ -22,7 +23,15 @@ const MainLayout = ({
   // Vendor props for depots tab
   vendeurs,
   vendeurActif,
-  setVendeurActif
+  setVendeurActif,
+  // Task props
+  taskType,
+  setTaskType,
+  // Reset functions
+  onResetShift,
+  onResetDay,
+  // Tasks stats
+  tasksStats
 }) => {
   const headerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(64);
@@ -45,7 +54,7 @@ const MainLayout = ({
       {/* Fixed Header Container */}
       <div 
         ref={headerRef}
-        className="fixed top-0 left-0 right-0 z-50 bg-white"
+        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm"
       >
         <Header
           date={date}
@@ -54,11 +63,14 @@ const MainLayout = ({
           onMenuToggle={onMenuToggle}
           onDateChange={onDateChange}
           onShiftChange={onShiftChange}
+          onResetShift={onResetShift}
+          onResetDay={onResetDay}
+          tasksStats={tasksStats}
         />
 
         {/* Pump Selector - Only for pumps tab */}
         {activeTab === 'pumps' && (
-          <div className="bg-white">
+          <div className="bg-white border-b border-slate-200">
             <PumpSelector 
               pompes={pompes}
               pompeEtendue={pompeEtendue}
@@ -68,17 +80,26 @@ const MainLayout = ({
           </div>
         )}
 
-        {/* Vendor Selector - Only for depots tab */}
-        
-{activeTab === 'depots' && vendeurs && vendeurs.length > 0 && (
-  <div className="bg-white border-b border-slate-200 py-2">
-    <VendorSelector
-      vendeurs={vendeurs}
-      vendeurActif={vendeurActif}
-      setVendeurActif={setVendeurActif}
-    />
-  </div>
-)}
+        {/* Vendor Selector - For depots and tasks tabs */}
+        {((activeTab === 'depots' || activeTab === 'tasks') && vendeurs && vendeurs.length > 0) && (
+          <div className="bg-white border-b border-slate-200 py-2">
+            <VendorSelector
+              vendeurs={vendeurs}
+              vendeurActif={vendeurActif}
+              setVendeurActif={setVendeurActif}
+            />
+          </div>
+        )}
+
+        {/* Task Type Selector - Only for tasks tab */}
+        {activeTab === 'tasks' && (
+          <div className="bg-white border-b border-slate-200 py-2">
+            <TaskTypeSelector
+              taskType={taskType}
+              setTaskType={setTaskType}
+            />
+          </div>
+        )}
       </div>
 
       {/* Spacer - Dynamic height based on actual header height */}
