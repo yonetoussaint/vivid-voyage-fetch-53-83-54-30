@@ -160,18 +160,19 @@ const SystemeStationService = () => {
           </div>
         );
       case 'vendeurs':
-        return (
-          <div className="p-2 sm:p-4">
-            <VendeursManager
-              vendeurs={vendeurs}
-              nouveauVendeur={nouveauVendeur}
-              setNouveauVendeur={setNouveauVendeur}
-              ajouterVendeur={ajouterVendeur}
-              supprimerVendeur={supprimerVendeur}
-              getNombreAffectations={getNombreAffectations}
-            />
-          </div>
-        );
+  return (
+    <div className="p-2 sm:p-4">
+      <VendeursManager
+        vendeurs={vendeurs}
+        nouveauVendeur={nouveauVendeur}
+        setNouveauVendeur={setNouveauVendeur}
+        ajouterVendeur={ajouterVendeur}
+        supprimerVendeur={supprimerVendeur}
+        getNombreAffectations={getNombreAffectations}
+        vendeurActif={vendeurActif} // Make sure to pass this!
+      />
+    </div>
+  );
       case 'conditionnement':
         return (
           <div className="p-2 sm:p-6">
