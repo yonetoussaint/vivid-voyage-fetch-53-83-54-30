@@ -48,24 +48,6 @@ const VendeursManager = ({
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header Bar */}
-      <div className="sticky top-0 z-50 backdrop-blur-md bg-black/65 border-b border-gray-800">
-        <div className="max-w-[600px] mx-auto px-4 h-[53px] flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <button className="hover:bg-white/10 rounded-full p-2 transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h2 className="font-bold text-[20px] leading-6">{vendeurActif}</h2>
-              <p className="text-[13px] text-gray-500">{affectations} pompes</p>
-            </div>
-          </div>
-          <button className="hover:bg-white/10 rounded-full p-2 transition-colors">
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-[600px] mx-auto">
         {/* Cover Photo */}
@@ -75,13 +57,13 @@ const VendeursManager = ({
         {/* Profile Section */}
         <div className="px-4 pb-4 border-b border-gray-800">
           {/* Avatar & Action Buttons */}
-          <div className="flex justify-between items-start mb-3">
-            <div className="-mt-[67px]">
-              <div className="w-[133px] h-[133px] rounded-full border-4 border-black bg-gray-900 flex items-center justify-center">
-                <User className="w-16 h-16 text-gray-400" />
+          <div className="flex justify-between items-start -mt-[75px] mb-4">
+            <div>
+              <div className="w-[150px] h-[150px] rounded-full border-4 border-black bg-gray-900 flex items-center justify-center">
+                <User className="w-20 h-20 text-gray-400" />
               </div>
             </div>
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2 pt-3">
               <button className="hover:bg-white/10 rounded-full p-2 border border-gray-600 transition-colors">
                 <MoreHorizontal className="w-5 h-5" />
               </button>
@@ -102,6 +84,11 @@ const VendeursManager = ({
           {/* Bio */}
           <div className="mb-3 text-[15px] leading-5">
             <p>Vendeur à la station service • {currentSeller.shift}</p>
+            <p className="mt-2">
+              <span className="font-semibold">Easy Plus Gaz</span>
+              <span className="text-gray-500"> • Groupe </span>
+              <span className="font-semibold">Imperial Center</span>
+            </p>
           </div>
 
           {/* Meta Info */}
