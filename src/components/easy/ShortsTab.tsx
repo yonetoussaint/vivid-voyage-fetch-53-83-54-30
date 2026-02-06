@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Calendar, DollarSign, AlertCircle, CheckCircle, Clock, XCircle, Lock, ChevronDown, Bell, Receipt } from 'lucide-react';
+import { Calendar, DollarSign, AlertCircle, CheckCircle, Clock, XCircle, Lock, Bell, Receipt } from 'lucide-react';
 
 const ShortsTab = ({ vendeurActif }) => {
   const [shorts, setShorts] = useState([
     {
       id: 1,
-      date: "15 Fév",
-      year: "24",
+      date: "15 Fév, 24",
       shift: "Matin",
       totalSales: 24500.00,
       moneyGiven: 24000.00,
@@ -16,8 +15,7 @@ const ShortsTab = ({ vendeurActif }) => {
     },
     {
       id: 2,
-      date: "14 Fév",
-      year: "24",
+      date: "14 Fév, 24",
       shift: "Soir",
       totalSales: 31200.00,
       moneyGiven: 31000.00,
@@ -27,8 +25,7 @@ const ShortsTab = ({ vendeurActif }) => {
     },
     {
       id: 3,
-      date: "12 Fév",
-      year: "24",
+      date: "12 Fév, 24",
       shift: "Matin",
       totalSales: 18900.00,
       moneyGiven: 18500.00,
@@ -38,8 +35,7 @@ const ShortsTab = ({ vendeurActif }) => {
     },
     {
       id: 4,
-      date: "10 Fév",
-      year: "24",
+      date: "10 Fév, 24",
       shift: "Nuit",
       totalSales: 15600.00,
       moneyGiven: 15600.00,
@@ -49,8 +45,7 @@ const ShortsTab = ({ vendeurActif }) => {
     },
     {
       id: 5,
-      date: "8 Fév",
-      year: "24",
+      date: "8 Fév, 24",
       shift: "Soir",
       totalSales: 27800.00,
       moneyGiven: 27500.00,
@@ -65,7 +60,6 @@ const ShortsTab = ({ vendeurActif }) => {
   const [currentAction, setCurrentAction] = useState(null);
   const [currentShortId, setCurrentShortId] = useState(null);
   const [pinError, setPinError] = useState('');
-  const [expandedCard, setExpandedCard] = useState(null);
   const [activePinIndex, setActivePinIndex] = useState(0);
 
   const totalShort = shorts.reduce((sum, short) => sum + short.shortAmount, 0);
@@ -73,8 +67,7 @@ const ShortsTab = ({ vendeurActif }) => {
     .filter(short => short.status === 'pending' || short.status === 'overdue')
     .reduce((sum, short) => sum + short.shortAmount, 0);
 
-  const handleActionClick = (action, shortId, e) => {
-    e.stopPropagation();
+  const handleActionClick = (action, shortId) => {
     setCurrentAction(action);
     setCurrentShortId(shortId);
     setShowPinModal(true);
@@ -114,7 +107,6 @@ const ShortsTab = ({ vendeurActif }) => {
       
       setPinError('');
       
-      // Auto-submit when all digits entered
       if (newPin.every(digit => digit !== '') && index === 3) {
         setTimeout(handlePinSubmit, 100);
       }
@@ -290,7 +282,7 @@ const ShortsTab = ({ vendeurActif }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500 mb-1">Total</p>
-                <p className="text-sm font-bold text-black">{totalShort.toFixed(0)} DH</p>
+                <p className="text-sm font-bold text-black">{totalShort.toFixed(0)} HTG</p>
               </div>
               <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
                 <DollarSign className="w-4 h-4 text-gray-600" />
@@ -302,7 +294,7 @@ const ShortsTab = ({ vendeurActif }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-amber-600 mb-1">À payer</p>
-                <p className="text-sm font-bold text-amber-700">{pendingShort.toFixed(0)} DH</p>
+                <p className="text-sm font-bold text-amber-700">{pendingShort.toFixed(0)} HTG</p>
               </div>
               <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
                 <AlertCircle className="w-4 h-4 text-amber-600" />
@@ -325,24 +317,20 @@ const ShortsTab = ({ vendeurActif }) => {
         </button>
       </div>
 
-      {/* Shorts List - Ultra Compact */}
+      {/* Shorts List - Always Open */}
       <div className="space-y-2">
         {shorts.map((short) => (
           <div 
             key={short.id}
-            className={`bg-white rounded-lg border border-gray-200 overflow-hidden active:bg-gray-50 transition-colors ${
-              expandedCard === short.id ? 'shadow-sm' : ''
-            }`}
-            onClick={() => setExpandedCard(expandedCard === short.id ? null : short.id)}
+            className="bg-white rounded-lg border border-gray-200 overflow-hidden active:bg-gray-50 transition-colors"
           >
-            {/* Compact Row */}
+            {/* Main Card Content */}
             <div className="p-3">
-              <div className="flex items-center justify-between mb-1">
+              {/* Header Row */}
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-gray-400" />
-                    <span className="text-xs font-medium text-black">{short.date} '{short.year}</span>
-                  </div>
+                  <Calendar className="w-3 h-3 text-gray-400" />
+                  <span className="text-xs font-medium text-black">{short.date}</span>
                   <span className="text-xs text-gray-500">• {short.shift}</span>
                 </div>
                 <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(short.status)} flex items-center gap-1`}>
@@ -351,81 +339,58 @@ const ShortsTab = ({ vendeurActif }) => {
                 </div>
               </div>
               
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-600 line-clamp-1">{short.notes}</p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xs text-gray-500">
-                      Vente: {formatAmount(short.totalSales)} DH
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      Rendu: {formatAmount(short.moneyGiven)} DH
-                    </span>
-                  </div>
+              {/* Notes */}
+              <p className="text-xs text-gray-600 mb-3">{short.notes}</p>
+              
+              {/* Financial Details - Always Visible */}
+              <div className="space-y-2 mb-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Ventes totales:</span>
+                  <span className="text-xs font-medium text-blue-700">{short.totalSales.toFixed(2)} HTG</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-base font-bold text-red-600">
-                    {formatAmount(short.shortAmount)} DH
-                  </span>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${
-                    expandedCard === short.id ? 'rotate-180' : ''
-                  }`} />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Argent rendu:</span>
+                  <span className="text-xs font-medium text-green-700">{short.moneyGiven.toFixed(2)} HTG</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Déficit:</span>
+                  <span className="text-sm font-bold text-red-600">{short.shortAmount.toFixed(2)} HTG</span>
+                </div>
+              </div>
+              
+              {/* Action Buttons - Always Visible */}
+              <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100">
+                {short.status === 'pending' || short.status === 'overdue' ? (
+                  <>
+                    <button 
+                      onClick={() => handleActionClick('markPaid', short.id)}
+                      className="bg-green-500 text-white py-2 rounded-lg text-xs font-medium active:bg-green-600 flex items-center justify-center gap-1"
+                    >
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      Marquer payé
+                    </button>
+                    <button className="border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-medium active:bg-gray-50 flex items-center justify-center gap-1">
+                      <Bell className="w-3.5 h-3.5" />
+                      Rappeler
+                    </button>
+                  </>
+                ) : short.status === 'paid' ? (
+                  <>
+                    <button 
+                      onClick={() => handleActionClick('cancelPayment', short.id)}
+                      className="bg-red-500 text-white py-2 rounded-lg text-xs font-medium active:bg-red-600 flex items-center justify-center gap-1"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      Annuler
+                    </button>
+                    <button className="border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-medium active:bg-gray-50 flex items-center justify-center gap-1">
+                      <Receipt className="w-3.5 h-3.5" />
+                      Reçu
+                    </button>
+                  </>
+                ) : null}
               </div>
             </div>
-            
-            {/* Expanded Actions - Compact */}
-            {expandedCard === short.id && (
-              <div className="border-t border-gray-100 p-3">
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {short.status === 'pending' || short.status === 'overdue' ? (
-                    <>
-                      <button 
-                        onClick={(e) => handleActionClick('markPaid', short.id, e)}
-                        className="bg-green-500 text-white py-2 rounded-lg text-xs font-medium active:bg-green-600 flex items-center justify-center gap-1"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        Marquer payé
-                      </button>
-                      <button className="border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-medium active:bg-gray-50 flex items-center justify-center gap-1">
-                        <Bell className="w-3.5 h-3.5" />
-                        Rappeler
-                      </button>
-                    </>
-                  ) : short.status === 'paid' ? (
-                    <>
-                      <button 
-                        onClick={(e) => handleActionClick('cancelPayment', short.id, e)}
-                        className="bg-red-500 text-white py-2 rounded-lg text-xs font-medium active:bg-red-600 flex items-center justify-center gap-1"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        Annuler
-                      </button>
-                      <button className="border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-medium active:bg-gray-50 flex items-center justify-center gap-1">
-                        <Receipt className="w-3.5 h-3.5" />
-                        Reçu
-                      </button>
-                    </>
-                  ) : null}
-                </div>
-                
-                {/* Quick Details */}
-                <div className="text-xs text-gray-500 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Ventes:</span>
-                    <span className="font-medium">{short.totalSales.toFixed(2)} DH</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Argent rendu:</span>
-                    <span className="font-medium">{short.moneyGiven.toFixed(2)} DH</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Différence:</span>
-                    <span className="font-bold text-red-600">{short.shortAmount.toFixed(2)} DH</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         ))}
       </div>
@@ -460,12 +425,6 @@ style.textContent = `
   }
   .animate-slideUp {
     animation: slideUp 0.2s ease-out;
-  }
-  .line-clamp-1 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
   }
 `;
 document.head.appendChild(style);
