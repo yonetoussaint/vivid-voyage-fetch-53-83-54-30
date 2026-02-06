@@ -64,10 +64,10 @@ const ShortsTab = ({ vendeurActif }) => {
   const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'pending', 'paid'
 
   const formatNumber = (num) => {
-    return new Intl.NumberFormat('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(num);
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
+    });
   };
 
   // Filter shorts based on active filter
@@ -365,8 +365,10 @@ const ShortsTab = ({ vendeurActif }) => {
                   </div>
                 </div>
                 
-                {/* Notes */}
-                <p className="text-xs text-gray-600 mb-3">{short.notes}</p>
+                {/* Notes with Gray Background */}
+                <div className="bg-gray-50 rounded-lg p-2 mb-3">
+                  <p className="text-xs text-gray-600">{short.notes}</p>
+                </div>
                 
                 {/* Financial Details - Always Visible */}
                 <div className="space-y-2 mb-3">
