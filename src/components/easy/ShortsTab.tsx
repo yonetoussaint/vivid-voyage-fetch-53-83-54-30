@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, DollarSign, CreditCard, AlertCircle, CheckCircle, Clock, XCircle, Lock } from 'lucide-react';
+import { Calendar, DollarSign, CreditCard, AlertCircle, CheckCircle, Clock, XCircle, Lock, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 
 const ShortsTab = ({ vendeurActif }) => {
   const [shorts, setShorts] = useState([
@@ -245,7 +245,7 @@ const ShortsTab = ({ vendeurActif }) => {
         
         {shorts.map((short) => (
           <div key={short.id} className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors">
-            <div className="flex justify-between items-start mb-3">
+            <div className="flex justify-between items-start mb-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Calendar className="w-4 h-4 text-gray-400" />
@@ -261,21 +261,39 @@ const ShortsTab = ({ vendeurActif }) => {
               </div>
             </div>
             
-            {/* Financial Details */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
-                <p className="text-xs text-blue-600 mb-1">Ventes totales</p>
-                <p className="font-bold text-blue-700">{short.totalSales.toFixed(2)} DH</p>
+            {/* Financial Details in ROWS */}
+            <div className="space-y-2 mb-4">
+              {/* Ventes totales Row */}
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-50 rounded">
+                    <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+                  </div>
+                  <span className="text-sm text-gray-600">Ventes totales</span>
+                </div>
+                <span className="font-bold text-blue-700">{short.totalSales.toFixed(2)} DH</span>
               </div>
               
-              <div className="bg-green-50 border border-green-100 rounded-lg p-3">
-                <p className="text-xs text-green-600 mb-1">Argent rendu</p>
-                <p className="font-bold text-green-700">{short.moneyGiven.toFixed(2)} DH</p>
+              {/* Argent rendu Row */}
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-green-50 rounded">
+                    <Wallet className="w-3.5 h-3.5 text-green-600" />
+                  </div>
+                  <span className="text-sm text-gray-600">Argent rendu</span>
+                </div>
+                <span className="font-bold text-green-700">{short.moneyGiven.toFixed(2)} DH</span>
               </div>
               
-              <div className="bg-red-50 border border-red-100 rounded-lg p-3">
-                <p className="text-xs text-red-600 mb-1">Déficit</p>
-                <p className="font-bold text-red-700">{short.shortAmount.toFixed(2)} DH</p>
+              {/* Déficit Row */}
+              <div className="flex justify-between items-center py-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-red-50 rounded">
+                    <TrendingDown className="w-3.5 h-3.5 text-red-600" />
+                  </div>
+                  <span className="text-sm text-gray-600">Déficit</span>
+                </div>
+                <span className="font-bold text-red-700">{short.shortAmount.toFixed(2)} DH</span>
               </div>
             </div>
             
