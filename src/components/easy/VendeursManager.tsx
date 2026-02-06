@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User } from 'lucide-react';
 import BannerSection from './BannerSection';
+import ActionButtons from './ActionButtons';
 import ProfileSection from './ProfileSection';
 import TabsSection from './TabsSection';
 import TabContent from './TabContent';
@@ -42,6 +43,9 @@ const VendeursManager = ({
     <div className="min-h-screen bg-white text-black">
       <div className="max-w-[600px] mx-auto">
         <BannerSection bannerImage={bannerImage} />
+        
+        {/* Action Buttons - Positioned right below the banner */}
+        <ActionButtons />
         
         <ProfileSection 
           vendeurActif={vendeurActif}
