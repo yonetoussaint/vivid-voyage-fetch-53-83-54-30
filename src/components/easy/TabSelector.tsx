@@ -21,16 +21,18 @@ const TabSelector = ({
           style={{ borderRadius: '20px !important' }}
         >
           {tab.icon && <span className="flex-shrink-0">{tab.icon}</span>}
-          {tab.label}
-          {tab.badge !== undefined && tab.badge > 0 && (
-            <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full min-w-[20px] text-center ${
-              activeTab === tab.id 
-                ? 'bg-white text-gray-800' 
-                : 'bg-gray-200 text-gray-700'
-            }`}>
-              {tab.badge}
-            </span>
-          )}
+          <span className="flex items-center gap-1">
+            {tab.label}
+            {tab.badge !== undefined && tab.badge > 0 && (
+              <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full min-w-[20px] flex items-center justify-center ${
+                activeTab === tab.id 
+                  ? 'bg-white text-gray-800' 
+                  : 'bg-gray-200 text-gray-700'
+              }`}>
+                {tab.badge}
+              </span>
+            )}
+          </span>
         </button>
       ))}
     </div>
