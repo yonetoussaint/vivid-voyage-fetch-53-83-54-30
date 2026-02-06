@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, DollarSign, CreditCard, AlertCircle, CheckCircle, Clock, XCircle, Lock, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Calendar, DollarSign, CreditCard, AlertCircle, CheckCircle, Clock, XCircle, Lock, ChevronRight, Menu, MoreVertical } from 'lucide-react';
 
 const ShortsTab = ({ vendeurActif }) => {
   const [shorts, setShorts] = useState([
@@ -10,7 +10,7 @@ const ShortsTab = ({ vendeurActif }) => {
       totalSales: 24500.00,
       moneyGiven: 24000.00,
       shortAmount: 500.00,
-      status: 'pending', // 'pending', 'paid', 'overdue'
+      status: 'pending',
       notes: "Différence dans le compte de l'essence sans plomb 95"
     },
     {
@@ -57,9 +57,10 @@ const ShortsTab = ({ vendeurActif }) => {
 
   const [showPinModal, setShowPinModal] = useState(false);
   const [pin, setPin] = useState('');
-  const [currentAction, setCurrentAction] = useState(null); // 'markPaid' or 'cancelPayment'
+  const [currentAction, setCurrentAction] = useState(null);
   const [currentShortId, setCurrentShortId] = useState(null);
   const [pinError, setPinError] = useState('');
+  const [expandedCard, setExpandedCard] = useState(null);
 
   const totalShort = shorts.reduce((sum, short) => sum + short.shortAmount, 0);
   const pendingShort = shorts
@@ -75,8 +76,7 @@ const ShortsTab = ({ vendeurActif }) => {
   };
 
   const handlePinSubmit = () => {
-    // Simple PIN validation - in real app, this would verify against backend
-    if (pin === '1234') { // Demo PIN
+    if (pin === '1234') {
       if (currentAction === 'markPaid') {
         setShorts(shorts.map(short => 
           short.id === currentShortId ? { ...short, status: 'paid' } : short
@@ -96,11 +96,11 @@ const ShortsTab = ({ vendeurActif }) => {
   const getStatusIcon = (status) => {
     switch(status) {
       case 'paid':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
       case 'pending':
-        return <Clock className="w-4 h-4 text-amber-500" />;
+        return <Clock className="w-5 h-5 text-amber-500" />;
       case 'overdue':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle className="w-5 h-5 text-red-500" />;
       default:
         return null;
     }
@@ -143,96 +143,132 @@ const ShortsTab = ({ vendeurActif }) => {
     }
   };
 
+  const toggleCardExpand = (id) => {
+    setExpandedCard(expandedCard === id ? null : id);
+  };
+
+  const handlePinInput = (value) => {
+    if (value.length <= 4) {
+      setPin(value);
+      setPinError('');
+    }
+  };
+
   return (
-    <div className="p-4">
-      {/* PIN Confirmation Modal */}
+    <div className="p-4 pb-24 max-w-full overflow-x-hidden">
+      {/* PIN Confirmation Modal - Mobile Optimized */}
       {showPinModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Lock className="w-6 h-6 text-blue-600" />
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-full w-full max-h-[80vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+              <h3 className="font-bold text-lg text-black">Confirmation</h3>
+              <button 
+                onClick={() => setShowPinModal(false)}
+                className="text-gray-500 text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Lock className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-base text-black">Confirmer l'action</h3>
+                  <p className="text-gray-600 text-sm">
+                    {getActionText(currentAction)} pour ce déficit
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-lg text-black">Confirmation requise</h3>
-                <p className="text-gray-600 text-sm">
-                  Confirmez que vous voulez {getActionText(currentAction)} pour ce déficit
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Entrez votre code PIN
+                </label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    value={pin}
+                    onChange={(e) => handlePinInput(e.target.value)}
+                    className="w-full px-4 py-4 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    placeholder="••••"
+                    maxLength="4"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoFocus
+                  />
+                </div>
+                {pinError && (
+                  <p className="mt-2 text-sm text-red-600">{pinError}</p>
+                )}
+                <p className="mt-3 text-xs text-gray-500 text-center">
+                  Code PIN démo: 1234
                 </p>
               </div>
-            </div>
-            
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Entrez votre code PIN
-              </label>
-              <input
-                type="password"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="••••"
-                maxLength="4"
-                inputMode="numeric"
-              />
-              {pinError && (
-                <p className="mt-2 text-sm text-red-600">{pinError}</p>
-              )}
-              <p className="mt-2 text-xs text-gray-500">
-                Code PIN démo: 1234
-              </p>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowPinModal(false);
-                  setPin('');
-                  setPinError('');
-                }}
-                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handlePinSubmit}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              >
-                Confirmer
-              </button>
+              
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={handlePinSubmit}
+                  disabled={pin.length !== 4}
+                  className={`w-full py-4 rounded-xl font-medium transition-colors ${
+                    pin.length === 4 
+                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  Confirmer
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPinModal(false);
+                    setPin('');
+                    setPinError('');
+                  }}
+                  className="w-full border border-gray-300 text-gray-700 py-4 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Annuler
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Header with summary */}
+      {/* Header */}
       <div className="mb-6">
-        <h3 className="text-lg font-bold text-black mb-2">Déficits de {vendeurActif}</h3>
-        <p className="text-gray-600 text-sm mb-4">
-          Montants manquants à régulariser après vérification des caisses
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-black">Déficits</h3>
+            <p className="text-gray-600 text-xs mt-1">
+              {vendeurActif} • {shorts.length} enregistrements
+            </p>
+          </div>
+        </div>
         
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
+        {/* Summary Cards - Stack on mobile */}
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Déficit total</p>
-                <p className="text-lg font-bold text-black">{totalShort.toFixed(2)} DH</p>
+                <p className="text-xl font-bold text-black mt-1">{totalShort.toFixed(2)} DH</p>
               </div>
               <div className="p-2 bg-gray-100 rounded-lg">
-                <DollarSign className="w-5 h-5 text-gray-600" />
+                <DollarSign className="w-6 h-6 text-gray-600" />
               </div>
             </div>
           </div>
           
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-amber-600">À payer</p>
-                <p className="text-lg font-bold text-amber-700">{pendingShort.toFixed(2)} DH</p>
+                <p className="text-xl font-bold text-amber-700 mt-1">{pendingShort.toFixed(2)} DH</p>
               </div>
               <div className="p-2 bg-amber-100 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-amber-600" />
+                <AlertCircle className="w-6 h-6 text-amber-600" />
               </div>
             </div>
           </div>
@@ -241,119 +277,129 @@ const ShortsTab = ({ vendeurActif }) => {
 
       {/* Shorts List */}
       <div className="space-y-3">
-        <h4 className="font-semibold text-black mb-3">Historique des déficits</h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-semibold text-black text-base">Historique</h4>
+          <button className="text-sm text-blue-600 font-medium">
+            Tout voir
+          </button>
+        </div>
         
         {shorts.map((short) => (
-          <div key={short.id} className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
+          <div 
+            key={short.id} 
+            className="border border-gray-200 rounded-xl overflow-hidden bg-white"
+          >
+            {/* Card Header - Always visible */}
+            <div 
+              className="p-4 active:bg-gray-50 transition-colors"
+              onClick={() => toggleCardExpand(short.id)}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <span className="text-sm font-medium text-black">{short.date}</span>
-                  <span className="text-xs text-gray-500">• {short.shift}</span>
                 </div>
-                <p className="text-xs text-gray-500">{short.notes}</p>
+                <div className={`px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(short.status)} flex items-center gap-1.5`}>
+                  {getStatusIcon(short.status)}
+                  {getStatusText(short.status)}
+                </div>
               </div>
               
-              <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(short.status)} flex items-center gap-1`}>
-                {getStatusIcon(short.status)}
-                {getStatusText(short.status)}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">{short.shift}</p>
+                  <p className="text-sm text-gray-700 line-clamp-1">{short.notes}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-red-600">
+                    {short.shortAmount.toFixed(2)} DH
+                  </span>
+                  <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${
+                    expandedCard === short.id ? 'rotate-90' : ''
+                  }`} />
+                </div>
               </div>
             </div>
             
-            {/* Financial Details in ROWS */}
-            <div className="space-y-2 mb-4">
-              {/* Ventes totales Row */}
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-blue-50 rounded">
-                    <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+            {/* Expandable Content */}
+            {expandedCard === short.id && (
+              <div className="border-t border-gray-100 p-4">
+                {/* Financial Details Grid */}
+                <div className="grid grid-cols-1 gap-2 mb-4">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-600">Ventes totales</span>
+                    <span className="font-semibold text-blue-700">{short.totalSales.toFixed(2)} DH</span>
                   </div>
-                  <span className="text-sm text-gray-600">Ventes totales</span>
-                </div>
-                <span className="font-bold text-blue-700">{short.totalSales.toFixed(2)} DH</span>
-              </div>
-              
-              {/* Argent rendu Row */}
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-green-50 rounded">
-                    <Wallet className="w-3.5 h-3.5 text-green-600" />
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-600">Argent rendu</span>
+                    <span className="font-semibold text-green-700">{short.moneyGiven.toFixed(2)} DH</span>
                   </div>
-                  <span className="text-sm text-gray-600">Argent rendu</span>
-                </div>
-                <span className="font-bold text-green-700">{short.moneyGiven.toFixed(2)} DH</span>
-              </div>
-              
-              {/* Déficit Row */}
-              <div className="flex justify-between items-center py-2">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-red-50 rounded">
-                    <TrendingDown className="w-3.5 h-3.5 text-red-600" />
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-gray-600">Déficit</span>
+                    <span className="font-semibold text-red-700">{short.shortAmount.toFixed(2)} DH</span>
                   </div>
-                  <span className="text-sm text-gray-600">Déficit</span>
                 </div>
-                <span className="font-bold text-red-700">{short.shortAmount.toFixed(2)} DH</span>
+                
+                {/* Action Buttons - Full width on mobile */}
+                <div className="space-y-2">
+                  {short.status === 'pending' || short.status === 'overdue' ? (
+                    <>
+                      <button 
+                        onClick={() => handleActionClick('markPaid', short.id)}
+                        className="w-full bg-green-500 text-white px-4 py-3.5 rounded-xl text-base font-medium hover:bg-green-600 active:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        Marquer comme payé
+                      </button>
+                      <button className="w-full border border-gray-300 text-gray-700 px-4 py-3.5 rounded-xl text-base font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors">
+                        Rappeler le vendeur
+                      </button>
+                    </>
+                  ) : short.status === 'paid' ? (
+                    <>
+                      <button 
+                        onClick={() => handleActionClick('cancelPayment', short.id)}
+                        className="w-full bg-red-500 text-white px-4 py-3.5 rounded-xl text-base font-medium hover:bg-red-600 active:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <XCircle className="w-5 h-5" />
+                        Annuler le paiement
+                      </button>
+                      <button className="w-full border border-gray-300 text-gray-700 px-4 py-3.5 rounded-xl text-base font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-center gap-2">
+                        <CreditCard className="w-5 h-5" />
+                        Voir le reçu
+                      </button>
+                    </>
+                  ) : null}
+                </div>
               </div>
-            </div>
-            
-            {/* Actions */}
-            <div className="flex justify-end gap-2">
-              {short.status === 'pending' || short.status === 'overdue' ? (
-                <>
-                  <button 
-                    onClick={() => handleActionClick('markPaid', short.id)}
-                    className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors flex items-center gap-2"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Marquer comme payé
-                  </button>
-                  <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                    Rappeler
-                  </button>
-                </>
-              ) : short.status === 'paid' ? (
-                <>
-                  <button 
-                    onClick={() => handleActionClick('cancelPayment', short.id)}
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors flex items-center gap-2"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    Annuler le paiement
-                  </button>
-                  <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
-                    <CreditCard className="w-4 h-4" />
-                    Voir reçu
-                  </button>
-                </>
-              ) : null}
-            </div>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Empty state */}
+      {/* Empty State */}
       {shorts.length === 0 && (
-        <div className="text-center py-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-            <CreditCard className="w-8 h-8 text-gray-400" />
+        <div className="text-center py-12 px-4">
+          <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+            <CreditCard className="w-10 h-10 text-gray-400" />
           </div>
-          <h3 className="text-lg font-bold text-black mb-2">Aucun déficit enregistré</h3>
-          <p className="text-gray-500 mb-4">Tous les comptes sont à jour</p>
+          <h3 className="text-lg font-bold text-black mb-2">Aucun déficit</h3>
+          <p className="text-gray-500 mb-6">Tous les comptes sont à jour</p>
+          <button className="bg-black text-white font-bold px-6 py-3.5 rounded-xl text-base hover:bg-gray-800 active:bg-gray-900 transition-colors w-full max-w-xs">
+            Nouvelle vérification
+          </button>
         </div>
       )}
 
-      {/* Add Short Form (optional) */}
-      <div className="mt-6 pt-6 border-t border-gray-200">
-        <h4 className="font-semibold text-black mb-3">Ajouter un nouveau déficit</h4>
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-          <p className="text-sm text-gray-600 mb-3">
-            Pour ajouter un nouveau déficit, utilisez le formulaire de clôture de caisse.
-          </p>
-          <button className="bg-black text-white font-bold px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition-colors">
-            Ouvrir le formulaire de caisse
-          </button>
-        </div>
+      {/* Quick Add Button - Fixed at bottom for mobile */}
+      <div className="fixed bottom-4 left-4 right-4 sm:static sm:mt-6 sm:pt-6 sm:border-t sm:border-gray-200">
+        <button className="w-full bg-black text-white font-bold px-4 py-4 rounded-xl text-base hover:bg-gray-800 active:bg-gray-900 transition-colors flex items-center justify-center gap-2 shadow-lg">
+          <CreditCard className="w-5 h-5" />
+          Ajouter un déficit
+        </button>
+        <p className="text-center text-xs text-gray-500 mt-2 hidden sm:block">
+          Utilisez le formulaire de clôture de caisse
+        </p>
       </div>
     </div>
   );
