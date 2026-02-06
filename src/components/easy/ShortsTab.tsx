@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Calendar, DollarSign, AlertCircle, CheckCircle, Clock, XCircle, Lock, ChevronDown, MoreVertical, Receipt, Bell } from 'lucide-react';
+import { Calendar, DollarSign, AlertCircle, CheckCircle, Clock, XCircle, Lock, ChevronDown, Bell, Receipt } from 'lucide-react';
 
 const ShortsTab = ({ vendeurActif }) => {
   const [shorts, setShorts] = useState([
     {
       id: 1,
       date: "15 Fév",
+      year: "24",
       shift: "Matin",
       totalSales: 24500.00,
       moneyGiven: 24000.00,
@@ -16,6 +17,7 @@ const ShortsTab = ({ vendeurActif }) => {
     {
       id: 2,
       date: "14 Fév",
+      year: "24",
       shift: "Soir",
       totalSales: 31200.00,
       moneyGiven: 31000.00,
@@ -26,6 +28,7 @@ const ShortsTab = ({ vendeurActif }) => {
     {
       id: 3,
       date: "12 Fév",
+      year: "24",
       shift: "Matin",
       totalSales: 18900.00,
       moneyGiven: 18500.00,
@@ -36,6 +39,7 @@ const ShortsTab = ({ vendeurActif }) => {
     {
       id: 4,
       date: "10 Fév",
+      year: "24",
       shift: "Nuit",
       totalSales: 15600.00,
       moneyGiven: 15600.00,
@@ -46,6 +50,7 @@ const ShortsTab = ({ vendeurActif }) => {
     {
       id: 5,
       date: "8 Fév",
+      year: "24",
       shift: "Soir",
       totalSales: 27800.00,
       moneyGiven: 27500.00,
@@ -333,10 +338,10 @@ const ShortsTab = ({ vendeurActif }) => {
             {/* Compact Row */}
             <div className="p-3">
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-gray-400" />
-                    <span className="text-xs font-medium text-black">{short.date}</span>
+                    <span className="text-xs font-medium text-black">{short.date} '{short.year}</span>
                   </div>
                   <span className="text-xs text-gray-500">• {short.shift}</span>
                 </div>
@@ -441,28 +446,6 @@ const ShortsTab = ({ vendeurActif }) => {
         <button className="w-12 h-12 bg-black text-white rounded-full shadow-lg flex items-center justify-center active:bg-gray-800 active:scale-95 transition-all">
           <span className="text-lg font-bold">+</span>
         </button>
-      </div>
-
-      {/* Stats Footer */}
-      <div className="mt-4 pt-3 border-t border-gray-200">
-        <div className="flex justify-between text-xs text-gray-500">
-          <div className="text-center">
-            <p className="font-medium text-gray-700">{shorts.length}</p>
-            <p>Total</p>
-          </div>
-          <div className="text-center">
-            <p className="font-medium text-amber-600">{shorts.filter(s => s.status === 'pending').length}</p>
-            <p>En attente</p>
-          </div>
-          <div className="text-center">
-            <p className="font-medium text-green-600">{shorts.filter(s => s.status === 'paid').length}</p>
-            <p>Payés</p>
-          </div>
-          <div className="text-center">
-            <p className="font-medium text-red-600">{shorts.filter(s => s.status === 'overdue').length}</p>
-            <p>En retard</p>
-          </div>
-        </div>
       </div>
     </div>
   );
