@@ -2,54 +2,58 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Clock, AlertCircle, DollarSign, Calendar, X, CheckCircle, Lock, Receipt, FileText, Download, History, Printer, Zap } from 'lucide-react';
 
 const RetardsTab = ({ currentSeller }) => {
+  // Get today's date and some recent dates for sample data
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  
+  const twoDaysAgo = new Date(today);
+  twoDaysAgo.setDate(today.getDate() - 2);
+  const twoDaysAgoStr = twoDaysAgo.toISOString().split('T')[0];
+  
+  const threeDaysAgo = new Date(today);
+  threeDaysAgo.setDate(today.getDate() - 3);
+  const threeDaysAgoStr = threeDaysAgo.toISOString().split('T')[0];
+
   const [lateEntries, setLateEntries] = useState([
     { 
       id: 1, 
-      date: '2024-01-15', 
+      date: twoDaysAgoStr, // 2 days ago
       time: '08:45', 
       penalty: 500, 
-      dueDate: '2024-01-20', // 5 days after 15th
+      dueDate: new Date(new Date(twoDaysAgoStr).setDate(new Date(twoDaysAgoStr).getDate() + 5)).toISOString().split('T')[0],
       status: 'pending', 
-      overdue: 6, // More than 5 days overdue
+      overdue: 0,
       paymentDate: null, 
       receiptId: null,
-      createdAt: '2024-01-15T08:45:00'
+      createdAt: `${twoDaysAgoStr}T08:45:00`
     },
     { 
       id: 2, 
-      date: '2024-01-10', 
+      date: threeDaysAgoStr, // 3 days ago
       time: '08:30', 
       penalty: 500, 
-      dueDate: '2024-01-15', 
+      dueDate: new Date(new Date(threeDaysAgoStr).setDate(new Date(threeDaysAgoStr).getDate() + 5)).toISOString().split('T')[0],
       status: 'paid', 
       overdue: 0, 
-      paymentDate: '2024-01-12', 
+      paymentDate: yesterdayStr, 
       receiptId: 'REC-001',
-      createdAt: '2024-01-10T08:30:00'
+      createdAt: `${threeDaysAgoStr}T08:30:00`
     },
     { 
       id: 3, 
-      date: '2024-01-05', 
+      date: yesterdayStr, // yesterday
       time: '08:15', 
       penalty: 500, 
-      dueDate: '2024-01-10', 
+      dueDate: new Date(new Date(yesterdayStr).setDate(new Date(yesterdayStr).getDate() + 5)).toISOString().split('T')[0],
       status: 'deducted', 
-      overdue: 2, // Was 2 days overdue before deduction
-      paymentDate: '2024-01-12', 
+      overdue: 0,
+      paymentDate: todayStr, 
       receiptId: 'SAL-001',
-      createdAt: '2024-01-05T08:15:00'
-    },
-    { 
-      id: 4, 
-      date: '2024-01-18', 
-      time: '08:50', 
-      penalty: 500, 
-      dueDate: '2024-01-23', 
-      status: 'pending', 
-      overdue: 0, // Still within 5 days
-      paymentDate: null, 
-      receiptId: null,
-      createdAt: '2024-01-18T08:50:00'
+      createdAt: `${yesterdayStr}T08:15:00`
     }
   ]);
   
@@ -209,9 +213,9 @@ const RetardsTab = ({ currentSeller }) => {
   };
 
   const handleAddEntry = () => {
-    const today = new Date(newEntry.date || getCurrentDate());
-    const dueDate = new Date(today);
-    dueDate.setDate(today.getDate() + 5); // 5 days deadline
+    const entryDate = newEntry.date || getCurrentDate();
+    const dueDate = new Date(entryDate);
+    dueDate.setDate(new Date(entryDate).getDate() + 5); // 5 days deadline
     
     // Use entered time or current time
     let timeToStore = newEntry.time;
@@ -231,7 +235,7 @@ const RetardsTab = ({ currentSeller }) => {
     
     const entry = {
       id: lateEntries.length + 1,
-      date: newEntry.date || getCurrentDate(),
+      date: entryDate,
       time: timeToStore,
       displayTime: displayTime,
       penalty: 500,
