@@ -35,7 +35,7 @@ import {
   getDurationText,
   formatFileSize,
   isVirtualMeeting
-} from './tasksUtils';
+} from './taskUtils';
 
 const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveFile }) => {
   const [expanded, setExpanded] = useState(false);
