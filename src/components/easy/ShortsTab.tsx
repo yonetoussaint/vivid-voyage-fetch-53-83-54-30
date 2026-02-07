@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, DollarSign, AlertCircle, CheckCircle, Clock, XCircle, Lock, Bell, Receipt, CalendarDays, Camera, Download, FileText, UserCheck, UserX, Signature } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, DollarSign, AlertCircle, CheckCircle, Clock, XCircle, Lock, Bell, Receipt, CalendarDays, Printer, FileText, Archive, Eye } from 'lucide-react';
 
 const ShortsTab = ({ vendeurActif }) => {
   const [shorts, setShorts] = useState([
@@ -17,17 +17,21 @@ const ShortsTab = ({ vendeurActif }) => {
       notes: "Différence essence SP95",
       paidFromPayroll: false,
       daysOverdue: 8,
-      paymentProof: null,
-      vendorSignature: null,
-      managerSignature: null,
-      paymentDate: null,
-      paymentMethod: null,
-      receiptNumber: null
+      // Physical receipt tracking
+      receiptPrinted: false,
+      receiptNumber: null,
+      printDate: null,
+      vendorSigned: false,
+      managerSigned: false,
+      receiptCopyArchived: false,
+      receiptCopies: {
+        vendorCopy: { printed: false, signed: false, archived: false },
+        companyCopy: { printed: false, signed: false, archived: false }
+      }
     },
     {
       id: 2,
       date: "14 Fév, 24",
-      dueDate: "19 Fév, 24",
       shift: "Soir",
       totalSales: 2112200.50,
       moneyGiven: 2110000.50,
@@ -38,12 +42,16 @@ const ShortsTab = ({ vendeurActif }) => {
       notes: "Erreur de caisse",
       paidFromPayroll: false,
       daysOverdue: 0,
-      paymentProof: 'cash_receipt_001.jpg',
-      vendorSignature: 'vendor_sig_001.png',
-      managerSignature: 'manager_sig_001.png',
-      paymentDate: "2024-02-14 16:30:00",
-      paymentMethod: 'cash',
-      receiptNumber: 'REC-2024-001'
+      receiptPrinted: true,
+      receiptNumber: 'REC-20240214-001',
+      printDate: '2024-02-14 16:45:00',
+      vendorSigned: true,
+      managerSigned: true,
+      receiptCopyArchived: true,
+      receiptCopies: {
+        vendorCopy: { printed: true, signed: true, archived: true },
+        companyCopy: { printed: true, signed: true, archived: true }
+      }
     },
     {
       id: 3,
@@ -59,12 +67,16 @@ const ShortsTab = ({ vendeurActif }) => {
       notes: "Manquant gasoil",
       paidFromPayroll: false,
       daysOverdue: 12,
-      paymentProof: null,
-      vendorSignature: null,
-      managerSignature: null,
-      paymentDate: null,
-      paymentMethod: null,
-      receiptNumber: null
+      receiptPrinted: false,
+      receiptNumber: null,
+      printDate: null,
+      vendorSigned: false,
+      managerSigned: false,
+      receiptCopyArchived: false,
+      receiptCopies: {
+        vendorCopy: { printed: false, signed: false, archived: false },
+        companyCopy: { printed: false, signed: false, archived: false }
+      }
     },
     {
       id: 4,
@@ -80,12 +92,16 @@ const ShortsTab = ({ vendeurActif }) => {
       notes: "Compte exact",
       paidFromPayroll: false,
       daysOverdue: 0,
-      paymentProof: null,
-      vendorSignature: null,
-      managerSignature: null,
-      paymentDate: null,
-      paymentMethod: null,
-      receiptNumber: null
+      receiptPrinted: false,
+      receiptNumber: null,
+      printDate: null,
+      vendorSigned: false,
+      managerSigned: false,
+      receiptCopyArchived: false,
+      receiptCopies: {
+        vendorCopy: { printed: false, signed: false, archived: false },
+        companyCopy: { printed: false, signed: false, archived: false }
+      }
     },
     {
       id: 5,
@@ -101,20 +117,24 @@ const ShortsTab = ({ vendeurActif }) => {
       notes: "À régulariser",
       paidFromPayroll: false,
       daysOverdue: 15,
-      paymentProof: null,
-      vendorSignature: null,
-      managerSignature: null,
-      paymentDate: null,
-      paymentMethod: null,
-      receiptNumber: null
+      receiptPrinted: false,
+      receiptNumber: null,
+      printDate: null,
+      vendorSigned: false,
+      managerSigned: false,
+      receiptCopyArchived: false,
+      receiptCopies: {
+        vendorCopy: { printed: false, signed: false, archived: false },
+        companyCopy: { printed: false, signed: false, archived: false }
+      }
     }
   ]);
 
   const [showPinModal, setShowPinModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showSignModal, setShowSignModal] = useState(false);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [showProofModal, setShowProofModal] = useState(false);
   const [pin, setPin] = useState(['', '', '', '']);
   const [currentAction, setCurrentAction] = useState(null);
   const [currentShortId, setCurrentShortId] = useState(null);
@@ -124,12 +144,11 @@ const ShortsTab = ({ vendeurActif }) => {
   const [monthlySalary, setMonthlySalary] = useState(15000.00);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [currentReceipt, setCurrentReceipt] = useState(null);
-  const [signatureType, setSignatureType] = useState('vendor'); // 'vendor' or 'manager'
-  const [signatureData, setSignatureData] = useState('');
-  const [paymentProof, setPaymentProof] = useState(null);
-  
-  const signatureCanvasRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [signStep, setSignStep] = useState('print'); // 'print', 'vendor_sign', 'manager_sign', 'archive'
+  const [copiesPrinted, setCopiesPrinted] = useState({
+    vendorCopy: false,
+    companyCopy: false
+  });
 
   const formatNumber = (num) => {
     return num.toLocaleString('en-US', {
@@ -139,7 +158,7 @@ const ShortsTab = ({ vendeurActif }) => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Non payé';
+    if (!dateString) return 'Non imprimé';
     const date = new Date(dateString);
     return date.toLocaleString('fr-FR', {
       day: '2-digit',
@@ -189,8 +208,12 @@ const ShortsTab = ({ vendeurActif }) => {
     setCurrentShortId(shortId);
     
     if (action === 'markPaid') {
-      setShowPaymentModal(true);
-      setPaymentMethod('cash');
+      // Start payment process - first print receipts
+      const short = shorts.find(s => s.id === shortId);
+      setCurrentReceipt(short);
+      setShowPrintModal(true);
+      setSignStep('print');
+      setCopiesPrinted({ vendorCopy: false, companyCopy: false });
     } else if (action === 'cancelPayment') {
       setShowPinModal(true);
     } else if (action === 'payrollPayment') {
@@ -199,6 +222,21 @@ const ShortsTab = ({ vendeurActif }) => {
       const short = shorts.find(s => s.id === shortId);
       setCurrentReceipt(short);
       setShowReceiptModal(true);
+    } else if (action === 'continuePayment') {
+      const short = shorts.find(s => s.id === shortId);
+      setCurrentReceipt(short);
+      if (!short.receiptPrinted) {
+        setShowPrintModal(true);
+        setSignStep('print');
+      } else if (short.receiptPrinted && !short.vendorSigned) {
+        setShowSignModal(true);
+        setSignStep('vendor_sign');
+      } else if (short.vendorSigned && !short.managerSigned) {
+        setShowSignModal(true);
+        setSignStep('manager_sign');
+      } else if (short.managerSigned && !short.receiptCopyArchived) {
+        setShowArchiveModal(true);
+      }
     }
     
     setPin(['', '', '', '']);
@@ -219,110 +257,119 @@ const ShortsTab = ({ vendeurActif }) => {
             paymentDate: now,
             paymentMethod: 'payroll',
             receiptNumber,
-            managerSignature: 'manager_payroll_sig.png', // Auto-signed by system
-            vendorSignature: 'vendor_acknowledge_sig.png' // Would be captured separately
+            receiptPrinted: true,
+            printDate: now,
+            vendorSigned: true, // Auto-signed for payroll deduction
+            managerSigned: true,
+            receiptCopyArchived: true,
+            receiptCopies: {
+              vendorCopy: { printed: true, signed: true, archived: true },
+              companyCopy: { printed: true, signed: true, archived: true }
+            }
           }
         : short
     ));
   };
 
-  const handleCashPayment = () => {
-    const short = shorts.find(s => s.id === currentShortId);
-    setCurrentReceipt({
-      ...short,
-      paymentMethod,
-      receiptNumber: generateReceiptNumber(),
-      paymentDate: new Date().toISOString()
+  const handlePrintReceipts = () => {
+    // Simulate printing two copies
+    setCopiesPrinted({
+      vendorCopy: true,
+      companyCopy: true
     });
-    setShowPaymentModal(false);
-    setShowSignatureModal(true);
-    setSignatureType('vendor');
-    setSignatureData('');
-  };
-
-  const startSignatureCapture = () => {
-    const canvas = signatureCanvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-  };
-
-  const handleSignatureStart = (e) => {
-    const canvas = signatureCanvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const ctx = canvas.getContext('2d');
     
-    ctx.beginPath();
-    ctx.moveTo(
-      e.touches ? e.touches[0].clientX - rect.left : e.clientX - rect.left,
-      e.touches ? e.touches[0].clientY - rect.top : e.clientY - rect.top
-    );
-    setIsDrawing(true);
-  };
-
-  const handleSignatureMove = (e) => {
-    if (!isDrawing) return;
+    // In real app, this would trigger actual printer
+    console.log('Printing receipt copies...');
     
-    const canvas = signatureCanvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const ctx = canvas.getContext('2d');
+    // After printing, update state
+    const receiptNumber = generateReceiptNumber();
+    const now = new Date().toISOString();
     
-    ctx.lineTo(
-      e.touches ? e.touches[0].clientX - rect.left : e.clientX - rect.left,
-      e.touches ? e.touches[0].clientY - rect.top : e.clientY - rect.top
-    );
-    ctx.stroke();
-  };
-
-  const handleSignatureEnd = () => {
-    const canvas = signatureCanvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.closePath();
-    setIsDrawing(false);
-    setSignatureData(canvas.toDataURL());
-  };
-
-  const completeSignature = () => {
-    if (signatureType === 'vendor') {
-      // Save vendor signature and ask for manager signature
-      const updatedShort = {
-        ...currentReceipt,
-        vendorSignature: signatureData
-      };
-      setCurrentReceipt(updatedShort);
-      setSignatureType('manager');
-      setSignatureData('');
-      startSignatureCapture();
-    } else {
-      // Complete payment with both signatures
-      const updatedShort = {
-        ...currentReceipt,
-        managerSignature: signatureData,
-        paymentProof: paymentProof || 'cash_payment_proof.jpg'
-      };
-      
-      setShorts(shorts.map(short => 
-        short.id === currentShortId 
-          ? { 
-              ...short, 
-              status: 'paid', 
-              paidFromPayroll: false,
-              paymentDate: updatedShort.paymentDate,
-              paymentMethod: updatedShort.paymentMethod,
-              receiptNumber: updatedShort.receiptNumber,
-              vendorSignature: updatedShort.vendorSignature,
-              managerSignature: updatedShort.managerSignature,
-              paymentProof: updatedShort.paymentProof
+    setShorts(shorts.map(short => 
+      short.id === currentShortId 
+        ? { 
+            ...short, 
+            receiptPrinted: true,
+            receiptNumber,
+            printDate: now,
+            receiptCopies: {
+              vendorCopy: { printed: true, signed: false, archived: false },
+              companyCopy: { printed: true, signed: false, archived: false }
             }
-          : short
-      ));
-      
-      setShowSignatureModal(false);
-      setShowProofModal(true);
-    }
+          }
+        : short
+    ));
+    
+    setCurrentReceipt({
+      ...currentReceipt,
+      receiptPrinted: true,
+      receiptNumber,
+      printDate: now
+    });
+    
+    setShowPrintModal(false);
+    setShowSignModal(true);
+    setSignStep('vendor_sign');
+  };
+
+  const handleVendorSign = () => {
+    // Mark vendor copy as signed
+    setShorts(shorts.map(short => 
+      short.id === currentShortId 
+        ? { 
+            ...short, 
+            vendorSigned: true,
+            receiptCopies: {
+              ...short.receiptCopies,
+              vendorCopy: { ...short.receiptCopies.vendorCopy, signed: true }
+            }
+          }
+        : short
+    ));
+    
+    setSignStep('manager_sign');
+  };
+
+  const handleManagerSign = () => {
+    // Mark company copy as signed
+    setShorts(shorts.map(short => 
+      short.id === currentShortId 
+        ? { 
+            ...short, 
+            managerSigned: true,
+            receiptCopies: {
+              ...short.receiptCopies,
+              companyCopy: { ...short.receiptCopies.companyCopy, signed: true }
+            }
+          }
+        : short
+    ));
+    
+    setShowSignModal(false);
+    setShowArchiveModal(true);
+  };
+
+  const handleArchiveReceipts = () => {
+    // Mark both copies as archived
+    const now = new Date().toISOString();
+    
+    setShorts(shorts.map(short => 
+      short.id === currentShortId 
+        ? { 
+            ...short, 
+            status: 'paid',
+            paymentDate: now,
+            paymentMethod,
+            receiptCopyArchived: true,
+            receiptCopies: {
+              vendorCopy: { printed: true, signed: true, archived: true },
+              companyCopy: { printed: true, signed: true, archived: true }
+            }
+          }
+        : short
+    ));
+    
+    setShowArchiveModal(false);
   };
 
   const handlePinSubmit = () => {
@@ -335,12 +382,16 @@ const ShortsTab = ({ vendeurActif }) => {
                 ...short, 
                 status: short.wasOverdue ? 'overdue' : 'pending', 
                 paidFromPayroll: false,
-                paymentProof: null,
-                vendorSignature: null,
-                managerSignature: null,
-                paymentDate: null,
-                paymentMethod: null,
-                receiptNumber: null
+                receiptPrinted: false,
+                receiptNumber: null,
+                printDate: null,
+                vendorSigned: false,
+                managerSigned: false,
+                receiptCopyArchived: false,
+                receiptCopies: {
+                  vendorCopy: { printed: false, signed: false, archived: false },
+                  companyCopy: { printed: false, signed: false, archived: false }
+                }
               }
             : short
         ));
@@ -400,58 +451,36 @@ const ShortsTab = ({ vendeurActif }) => {
     }
   };
 
-  const PaymentMethodSelect = () => (
-    <div className="space-y-2 mb-4">
-      <p className="text-sm font-medium text-gray-700">Mode de paiement:</p>
-      <div className="grid grid-cols-2 gap-2">
-        {['cash', 'mobile_money', 'bank_transfer', 'check'].map(method => (
-          <button
-            key={method}
-            onClick={() => setPaymentMethod(method)}
-            className={`p-3 rounded-lg border ${
-              paymentMethod === method
-                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-300 text-gray-700'
-            }`}
-          >
-            <div className="text-xs font-medium capitalize">
-              {method === 'cash' && 'Espèces'}
-              {method === 'mobile_money' && 'Mobile Money'}
-              {method === 'bank_transfer' && 'Virement bancaire'}
-              {method === 'check' && 'Chèque'}
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+  const getPaymentMethodText = (method) => {
+    switch(method) {
+      case 'cash': return 'Espèces';
+      case 'mobile_money': return 'Mobile Money';
+      case 'bank_transfer': return 'Virement bancaire';
+      case 'check': return 'Chèque';
+      case 'payroll': return 'Déduction salariale';
+      default: return method;
+    }
+  };
 
   return (
     <div className="p-3 pb-20 max-w-full overflow-x-hidden min-h-screen bg-white">
       {/* PIN Modal */}
       {showPinModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
-          {/* ... PIN Modal content same as before ... */}
-        </div>
-      )}
-
-      {/* Payment Method Modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
           <div className="bg-white w-full rounded-t-2xl">
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 text-blue-600" />
+                    <Lock className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sm text-black">Mode de paiement</h3>
-                    <p className="text-xs text-gray-500">Sélectionnez comment le vendeur paie</p>
+                    <h3 className="font-semibold text-sm text-black">Confirmation PIN</h3>
+                    <p className="text-xs text-gray-500">Entrez votre code à 4 chiffres</p>
                   </div>
                 </div>
                 <button 
-                  onClick={() => setShowPaymentModal(false)}
+                  onClick={() => setShowPinModal(false)}
                   className="text-gray-400 text-lg"
                 >
                   ×
@@ -460,20 +489,88 @@ const ShortsTab = ({ vendeurActif }) => {
             </div>
             
             <div className="p-4">
-              <PaymentMethodSelect />
+              <div className="mb-6">
+                <div className="flex justify-center gap-2 mb-4">
+                  {[0, 1, 2, 3].map((index) => (
+                    <div key={index} className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center text-lg font-semibold ${
+                      activePinIndex === index 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-300'
+                    }`}>
+                      {pin[index] ? '•' : ''}
+                    </div>
+                  ))}
+                </div>
+                
+                {pinError && (
+                  <div className="text-center">
+                    <p className="text-sm text-red-600">{pinError}</p>
+                    <p className="text-xs text-gray-400 mt-1">Essai: 1234</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                  <button
+                    key={num}
+                    onClick={() => {
+                      const nextIndex = pin.findIndex(digit => digit === '');
+                      if (nextIndex !== -1) {
+                        handlePinInput(nextIndex, num.toString());
+                      }
+                    }}
+                    className="h-12 rounded-lg bg-gray-100 text-gray-700 font-medium text-lg active:bg-gray-200 transition-colors"
+                  >
+                    {num}
+                  </button>
+                ))}
+                <button className="h-12 rounded-lg bg-gray-100 text-gray-400 font-medium text-lg active:bg-gray-200 transition-colors">
+                  ✕
+                </button>
+                <button
+                  onClick={() => {
+                    const nextIndex = pin.findIndex(digit => digit === '');
+                    if (nextIndex !== -1) {
+                      handlePinInput(nextIndex, '0');
+                    }
+                  }}
+                  className="h-12 rounded-lg bg-gray-100 text-gray-700 font-medium text-lg active:bg-gray-200 transition-colors"
+                >
+                  0
+                </button>
+                <button
+                  onClick={() => {
+                    const lastFilledIndex = [...pin].reverse().findIndex(digit => digit !== '');
+                    if (lastFilledIndex !== -1) {
+                      const indexToClear = 3 - lastFilledIndex;
+                      handlePinInput(indexToClear, '');
+                      setActivePinIndex(Math.max(0, indexToClear - 1));
+                    }
+                  }}
+                  className="h-12 rounded-lg bg-gray-100 text-gray-700 font-medium text-lg active:bg-gray-200 transition-colors"
+                >
+                  ←
+                </button>
+              </div>
               
               <div className="flex gap-2 mt-4">
                 <button
-                  onClick={() => setShowPaymentModal(false)}
+                  onClick={() => setShowPinModal(false)}
                   className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg text-sm font-medium active:bg-gray-50"
                 >
                   Annuler
                 </button>
                 <button
-                  onClick={handleCashPayment}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg text-sm font-medium active:bg-blue-700"
+                  onClick={handlePinSubmit}
+                  disabled={pin.some(digit => digit === '')}
+                  className={`flex-1 py-3 rounded-lg text-sm font-medium ${
+                    pin.every(digit => digit !== '')
+                      ? 'bg-blue-600 text-white active:bg-blue-700'
+                      : 'bg-gray-300 text-gray-500'
+                  }`}
                 >
-                  Continuer
+                  Confirmer
                 </button>
               </div>
             </div>
@@ -481,96 +578,23 @@ const ShortsTab = ({ vendeurActif }) => {
         </div>
       )}
 
-      {/* Signature Capture Modal */}
-      {showSignatureModal && (
+      {/* Print Receipt Modal */}
+      {showPrintModal && currentReceipt && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
           <div className="bg-white w-full rounded-t-2xl">
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <Signature className="w-4 h-4 text-blue-600" />
+                    <Printer className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sm text-black">
-                      Signature {signatureType === 'vendor' ? 'du vendeur' : 'du manager'}
-                    </h3>
-                    <p className="text-xs text-gray-500">Signez pour confirmer le paiement</p>
+                    <h3 className="font-semibold text-sm text-black">Imprimer les reçus</h3>
+                    <p className="text-xs text-gray-500">Deux copies nécessaires</p>
                   </div>
                 </div>
                 <button 
-                  onClick={() => setShowSignatureModal(false)}
-                  className="text-gray-400 text-lg"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-4">
-              <div className="mb-4">
-                <p className="text-sm text-gray-700 mb-2">
-                  {signatureType === 'vendor' 
-                    ? `${vendeurActif}, signez pour confirmer le paiement`
-                    : 'Manager, signez pour confirmer la réception'}
-                </p>
-                <div className="bg-gray-100 rounded-lg p-2">
-                  <canvas
-                    ref={signatureCanvasRef}
-                    width={300}
-                    height={150}
-                    className="w-full h-[150px] bg-white rounded border border-gray-300"
-                    onMouseDown={handleSignatureStart}
-                    onMouseMove={handleSignatureMove}
-                    onMouseUp={handleSignatureEnd}
-                    onMouseLeave={handleSignatureEnd}
-                    onTouchStart={handleSignatureStart}
-                    onTouchMove={handleSignatureMove}
-                    onTouchEnd={handleSignatureEnd}
-                  />
-                </div>
-                <div className="flex justify-between mt-2">
-                  <button
-                    onClick={startSignatureCapture}
-                    className="text-xs text-red-600 font-medium"
-                  >
-                    Effacer
-                  </button>
-                  <button
-                    onClick={completeSignature}
-                    disabled={!signatureData}
-                    className={`text-xs px-3 py-1 rounded ${
-                      signatureData 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-300 text-gray-500'
-                    }`}
-                  >
-                    {signatureType === 'vendor' ? 'Vendeur a signé' : 'Terminer'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Payment Proof Modal */}
-      {showProofModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
-          <div className="bg-white w-full rounded-t-2xl">
-            <div className="p-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <Camera className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-sm text-black">Preuve de paiement</h3>
-                    <p className="text-xs text-gray-500">Capturez un reçu ou une preuve</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setShowProofModal(false)}
+                  onClick={() => setShowPrintModal(false)}
                   className="text-gray-400 text-lg"
                 >
                   ×
@@ -581,41 +605,68 @@ const ShortsTab = ({ vendeurActif }) => {
             <div className="p-4">
               <div className="mb-4">
                 <p className="text-sm text-gray-700 mb-3">
-                  Prenez une photo du reçu ou téléchargez une preuve de paiement
+                  Imprimez <span className="font-bold">DEUX copies</span> du reçu :
                 </p>
                 
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  <button className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center">
-                    <Camera className="w-6 h-6 text-gray-400 mb-2" />
-                    <span className="text-xs text-gray-600">Prendre une photo</span>
-                  </button>
-                  <button className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center">
-                    <FileText className="w-6 h-6 text-gray-400 mb-2" />
-                    <span className="text-xs text-gray-600">Télécharger</span>
-                  </button>
+                <div className="space-y-3 mb-4">
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                          copiesPrinted.vendorCopy ? 'bg-green-100' : 'bg-gray-100'
+                        }`}>
+                          {copiesPrinted.vendorCopy ? '✓' : '1'}
+                        </div>
+                        <span className="text-sm font-medium">Copie vendeur</span>
+                      </div>
+                      <span className="text-xs text-gray-500">Signée par le vendeur</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                          copiesPrinted.companyCopy ? 'bg-green-100' : 'bg-gray-100'
+                        }`}>
+                          {copiesPrinted.companyCopy ? '✓' : '2'}
+                        </div>
+                        <span className="text-sm font-medium">Copie entreprise</span>
+                      </div>
+                      <span className="text-xs text-gray-500">Signée par le manager</span>
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="text-xs text-gray-500 text-center">
-                  Optionnel: Vous pouvez ajouter la preuve plus tard
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                  <p className="text-xs text-blue-700 font-medium mb-1">
+                    Numéro de reçu généré:
+                  </p>
+                  <p className="text-sm font-bold text-blue-800">
+                    {generateReceiptNumber()}
+                  </p>
+                </div>
+                
+                <div className="text-xs text-gray-500">
+                  <p className="mb-1">• Imprimez les deux copies sur papier</p>
+                  <p className="mb-1">• Faites signer le vendeur sur SA copie</p>
+                  <p>• Signez VOUS-MÊME sur la copie entreprise</p>
                 </div>
               </div>
               
               <div className="flex gap-2 mt-4">
                 <button
-                  onClick={() => setShowProofModal(false)}
+                  onClick={() => setShowPrintModal(false)}
                   className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg text-sm font-medium active:bg-gray-50"
                 >
-                  Ajouter plus tard
+                  Annuler
                 </button>
                 <button
-                  onClick={() => {
-                    setShowProofModal(false);
-                    setCurrentReceipt(currentReceipt);
-                    setShowReceiptModal(true);
-                  }}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg text-sm font-medium active:bg-blue-700"
+                  onClick={handlePrintReceipts}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg text-sm font-medium active:bg-blue-700 flex items-center justify-center gap-2"
                 >
-                  Voir le reçu
+                  <Printer className="w-4 h-4" />
+                  J'ai imprimé
                 </button>
               </div>
             </div>
@@ -623,8 +674,181 @@ const ShortsTab = ({ vendeurActif }) => {
         </div>
       )}
 
-      {/* Receipt Modal */}
-      {showReceiptModal && currentReceipt && (
+      {/* Sign Receipts Modal */}
+      {showSignModal && currentReceipt && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-2xl">
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm text-black">
+                      {signStep === 'vendor_sign' ? 'Signature du vendeur' : 'Signature du manager'}
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      {signStep === 'vendor_sign' 
+                        ? 'Le vendeur signe sa copie' 
+                        : 'Vous signez la copie entreprise'}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowSignModal(false)}
+                  className="text-gray-400 text-lg"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4">
+              <div className="mb-4">
+                {signStep === 'vendor_sign' ? (
+                  <>
+                    <p className="text-sm text-gray-700 mb-3">
+                      Donnez la <span className="font-bold">copie vendeur</span> à <span className="font-bold">{vendeurActif}</span> pour signature.
+                    </p>
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+                      <p className="text-sm text-yellow-800 font-medium">
+                        Vérifiez que le vendeur signe bien SA copie, pas la vôtre.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-700 mb-3">
+                      Signez maintenant la <span className="font-bold">copie entreprise</span>.
+                    </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                      <p className="text-sm text-blue-800 font-medium">
+                        Signez avec votre nom complet et titre.
+                      </p>
+                    </div>
+                  </>
+                )}
+                
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Numéro de reçu:</span>
+                    <span className="text-sm font-bold">{currentReceipt.receiptNumber}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Montant:</span>
+                    <span className="text-sm font-bold text-red-600">
+                      {formatNumber(currentReceipt.shortAmount)} HTG
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setShowSignModal(false)}
+                  className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg text-sm font-medium active:bg-gray-50"
+                >
+                  Retour
+                </button>
+                <button
+                  onClick={signStep === 'vendor_sign' ? handleVendorSign : handleManagerSign}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg text-sm font-medium active:bg-blue-700"
+                >
+                  {signStep === 'vendor_sign' ? 'Vendeur a signé' : 'J\'ai signé'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Archive Receipt Modal */}
+      {showArchiveModal && currentReceipt && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-2xl">
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Archive className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm text-black">Archiver les reçus</h3>
+                    <p className="text-xs text-gray-500">Finaliser la transaction</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowArchiveModal(false)}
+                  className="text-gray-400 text-lg"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4">
+              <div className="mb-4">
+                <p className="text-sm text-gray-700 mb-3">
+                  Maintenant que les deux copies sont signées :
+                </p>
+                
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckCircle className="w-3 h-3 text-green-600" />
+                    </div>
+                    <span className="text-sm">1. Donnez la copie vendeur à {vendeurActif}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckCircle className="w-3 h-3 text-green-600" />
+                    </div>
+                    <span className="text-sm">2. Archivez la copie entreprise</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
+                      <span className="text-xs">3</span>
+                    </div>
+                    <span className="text-sm">3. Marquer la transaction comme terminée</span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                  <p className="text-xs text-gray-600 mb-1">Résumé de la transaction:</p>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Montant:</span>
+                    <span className="text-sm font-bold">{formatNumber(currentReceipt.shortAmount)} HTG</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Reçu:</span>
+                    <span className="text-sm font-medium">{currentReceipt.receiptNumber}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setShowArchiveModal(false)}
+                  className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg text-sm font-medium active:bg-gray-50"
+                >
+                  Retour
+                </button>
+                <button
+                  onClick={handleArchiveReceipts}
+                  className="flex-1 bg-green-600 text-white py-3 rounded-lg text-sm font-medium active:bg-green-700 flex items-center justify-center gap-2"
+                >
+                  <Archive className="w-4 h-4" />
+                  Archiver et terminer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Receipt Details Modal */}
+      {showReceiptModal && currentReceipt && currentReceipt.receiptNumber && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
           <div className="bg-white w-full rounded-t-2xl max-h-[80vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-100 p-4">
@@ -634,100 +858,61 @@ const ShortsTab = ({ vendeurActif }) => {
                     <Receipt className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sm text-black">Reçu de paiement</h3>
-                    <p className="text-xs text-gray-500">N° {currentReceipt.receiptNumber}</p>
+                    <h3 className="font-semibold text-sm text-black">Détails du reçu</h3>
+                    <p className="text-xs text-gray-500">{currentReceipt.receiptNumber}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button className="p-2 rounded-lg bg-gray-100">
-                    <Download className="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button 
-                    onClick={() => setShowReceiptModal(false)}
-                    className="text-gray-400 text-lg"
-                  >
-                    ×
-                  </button>
-                </div>
+                <button 
+                  onClick={() => setShowReceiptModal(false)}
+                  className="text-gray-400 text-lg"
+                >
+                  ×
+                </button>
               </div>
             </div>
             
             <div className="p-4">
-              {/* Receipt Header */}
-              <div className="text-center mb-6">
-                <h2 className="font-bold text-lg text-black">REÇU DE PAIEMENT</h2>
-                <p className="text-xs text-gray-500">Station Service Excellence</p>
-                <p className="text-xs text-gray-500">Port-au-Prince, Haïti</p>
-              </div>
-              
-              {/* Receipt Details */}
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Numéro:</span>
-                  <span className="text-sm font-medium">{currentReceipt.receiptNumber}</span>
+                  <span className="text-sm text-gray-600">Statut:</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(currentReceipt.status)}`}>
+                    {getStatusText(currentReceipt.status)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Date:</span>
-                  <span className="text-sm font-medium">{formatDate(currentReceipt.paymentDate)}</span>
+                  <span className="text-sm text-gray-600">Date d'impression:</span>
+                  <span className="text-sm font-medium">{formatDate(currentReceipt.printDate)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Vendeur:</span>
-                  <span className="text-sm font-medium">{vendeurActif}</span>
+                  <span className="text-sm text-gray-600">Vendeur signé:</span>
+                  <span className={`text-sm font-medium ${currentReceipt.vendorSigned ? 'text-green-600' : 'text-red-600'}`}>
+                    {currentReceipt.vendorSigned ? 'Oui' : 'Non'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Shift:</span>
-                  <span className="text-sm font-medium">{currentReceipt.shift} • {currentReceipt.date}</span>
+                  <span className="text-sm text-gray-600">Manager signé:</span>
+                  <span className={`text-sm font-medium ${currentReceipt.managerSigned ? 'text-green-600' : 'text-red-600'}`}>
+                    {currentReceipt.managerSigned ? 'Oui' : 'Non'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Mode de paiement:</span>
-                  <span className="text-sm font-medium capitalize">
-                    {currentReceipt.paymentMethod === 'cash' && 'Espèces'}
-                    {currentReceipt.paymentMethod === 'payroll' && 'Déduction salariale'}
-                    {currentReceipt.paymentMethod === 'mobile_money' && 'Mobile Money'}
-                    {currentReceipt.paymentMethod === 'bank_transfer' && 'Virement bancaire'}
+                  <span className="text-sm text-gray-600">Archivé:</span>
+                  <span className={`text-sm font-medium ${currentReceipt.receiptCopyArchived ? 'text-green-600' : 'text-red-600'}`}>
+                    {currentReceipt.receiptCopyArchived ? 'Oui' : 'Non'}
                   </span>
                 </div>
               </div>
               
-              {/* Amount Section */}
-              <div className="border-t border-b border-gray-200 py-4 my-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-gray-700">Montant payé:</span>
-                  <span className="text-xl font-bold text-green-600">
-                    {formatNumber(currentReceipt.shortAmount)} HTG
-                  </span>
-                </div>
-              </div>
-              
-              {/* Signatures */}
-              <div className="grid grid-cols-2 gap-4 mt-6">
-                <div className="text-center">
-                  <div className="h-16 border-b border-gray-300 mb-2"></div>
-                  <p className="text-xs text-gray-600">Signature du vendeur</p>
-                  <p className="text-xs text-gray-500">{vendeurActif}</p>
-                </div>
-                <div className="text-center">
-                  <div className="h-16 border-b border-gray-300 mb-2"></div>
-                  <p className="text-xs text-gray-600">Signature du manager</p>
-                  <p className="text-xs text-gray-500">Manager responsable</p>
-                </div>
-              </div>
-              
-              {/* Footer */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <p className="text-xs text-gray-500 text-center">
-                  Ce reçu sert de preuve de paiement pour les déficits de caisse.
-                  Conservez-le pour vos archives.
-                </p>
-              </div>
-            </div>
-            
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4">
               <button
-                onClick={() => setShowReceiptModal(false)}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg text-sm font-medium active:bg-blue-700"
+                onClick={() => {
+                  // In real app, this would re-print the receipt
+                  console.log('Re-printing receipt:', currentReceipt.receiptNumber);
+                  alert('Ré-impression déclenchée. Vérifiez l\'imprimante.');
+                }}
+                className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg text-sm font-medium active:bg-gray-50 flex items-center justify-center gap-2 mb-2"
               >
-                Fermer
+                <Printer className="w-4 h-4" />
+                Ré-imprimer le reçu
               </button>
             </div>
           </div>
@@ -888,48 +1073,63 @@ const ShortsTab = ({ vendeurActif }) => {
                   </div>
                 </div>
                 
-                {/* Payment Proof Indicator */}
-                {short.status === 'paid' && short.receiptNumber && (
+                {/* Receipt Status */}
+                {short.status === 'paid' && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-2 mb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Receipt className="w-3.5 h-3.5 text-green-600" />
                         <div>
                           <p className="text-xs text-green-700 font-medium">
-                            Payé le {formatDate(short.paymentDate)}
+                            {short.receiptNumber || 'En cours de paiement...'}
                           </p>
                           <p className="text-xs text-green-600">
-                            Reçu: {short.receiptNumber}
+                            {short.receiptPrinted ? (
+                              <span className="flex items-center gap-1">
+                                <span>Signatures: </span>
+                                <span className={short.vendorSigned ? 'text-green-500' : 'text-red-500'}>
+                                  Vendeur {short.vendorSigned ? '✓' : '✗'}
+                                </span>
+                                <span className={short.managerSigned ? 'text-green-500' : 'text-red-500'}>
+                                  Manager {short.managerSigned ? '✓' : '✗'}
+                                </span>
+                              </span>
+                            ) : 'Reçu non imprimé'}
                           </p>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => handleActionClick('viewReceipt', short.id)}
-                        className="text-xs text-blue-600 font-medium"
-                      >
-                        Voir
-                      </button>
+                      {short.receiptNumber && (
+                        <button 
+                          onClick={() => handleActionClick('viewReceipt', short.id)}
+                          className="text-xs text-blue-600 font-medium"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
-                    
-                    {/* Signature Status */}
-                    <div className="flex items-center gap-4 mt-2">
-                      <div className="flex items-center gap-1">
-                        {short.vendorSignature ? (
-                          <UserCheck className="w-3 h-3 text-green-500" />
-                        ) : (
-                          <UserX className="w-3 h-3 text-gray-400" />
-                        )}
-                        <span className="text-xs text-gray-600">Vendeur</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {short.managerSignature ? (
-                          <UserCheck className="w-3 h-3 text-green-500" />
-                        ) : (
-                          <UserX className="w-3 h-3 text-gray-400" />
-                        )}
-                        <span className="text-xs text-gray-600">Manager</span>
+                  </div>
+                )}
+                
+                {/* Payment in Progress */}
+                {short.status !== 'paid' && short.receiptPrinted && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-yellow-600" />
+                      <div>
+                        <p className="text-xs text-yellow-700 font-medium">
+                          Reçu imprimé • En attente de signature
+                        </p>
+                        <p className="text-xs text-yellow-600">
+                          Numéro: {short.receiptNumber}
+                        </p>
                       </div>
                     </div>
+                    <button 
+                      onClick={() => handleActionClick('continuePayment', short.id)}
+                      className="w-full mt-2 bg-yellow-500 text-white py-1.5 rounded text-xs font-medium active:bg-yellow-600"
+                    >
+                      Continuer le paiement
+                    </button>
                   </div>
                 )}
                 
@@ -961,7 +1161,7 @@ const ShortsTab = ({ vendeurActif }) => {
                         className="bg-green-500 text-white py-2 rounded-lg text-xs font-medium active:bg-green-600 flex items-center justify-center gap-1"
                       >
                         <CheckCircle className="w-3.5 h-3.5" />
-                        Marquer payé
+                        Payer
                       </button>
                       <button className="border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-medium active:bg-gray-50 flex items-center justify-center gap-1">
                         <Bell className="w-3.5 h-3.5" />
@@ -992,14 +1192,14 @@ const ShortsTab = ({ vendeurActif }) => {
                         className="bg-red-500 text-white py-2 rounded-lg text-xs font-medium active:bg-red-600 flex items-center justify-center gap-1"
                       >
                         <XCircle className="w-3.5 h-3.5" />
-                        Annuler paiement
+                        Annuler
                       </button>
                       <button 
                         onClick={() => handleActionClick('viewReceipt', short.id)}
                         className="border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-medium active:bg-gray-50 flex items-center justify-center gap-1"
                       >
                         <Receipt className="w-3.5 h-3.5" />
-                        Voir reçu
+                        Reçu
                       </button>
                     </>
                   ) : null}
