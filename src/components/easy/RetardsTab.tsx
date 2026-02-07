@@ -56,63 +56,63 @@ const RetardsTab = ({ currentSeller }) => {
   const pendingCount = lateEntries.filter(e => e.status === 'pending').length;
 
   return (
-    <div className="p-3 space-y-3">
+    <div className="p-3 space-y-3 min-h-screen">
       {/* Floating Add Button */}
       <button
         onClick={() => setShowAddForm(true)}
-        className="fixed bottom-5 right-5 z-10 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
+        className="fixed bottom-6 right-6 z-10 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
       >
-        <Plus className="w-5 h-5" />
+        <Plus className="w-7 h-7" />
       </button>
 
       {/* Quick Add Form (Modal) */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black/50 z-20 flex items-center justify-center p-3">
-          <div className="bg-white rounded-xl p-3 w-full max-w-xs shadow-xl">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="font-bold text-gray-900 text-sm">Nouveau retard</h3>
+        <div className="fixed inset-0 bg-black/50 z-20 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-4 w-full max-w-sm shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-gray-900 text-lg">Nouveau retard</h3>
               <button onClick={() => setShowAddForm(false)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Date</label>
+                <label className="block font-medium text-gray-700 mb-2">Date</label>
                 <input
                   type="date"
                   value={newEntry.date}
                   onChange={(e) => setNewEntry({...newEntry, date: e.target.value})}
-                  className="w-full p-1.5 border border-gray-300 rounded text-xs"
+                  className="w-full p-3 border border-gray-300 rounded-lg text-base"
                 />
                 {newEntry.date && (
-                  <p className="text-xs text-gray-600 mt-0.5 truncate">
+                  <p className="text-gray-600 mt-2 font-medium">
                     {formatDate(newEntry.date)}
                   </p>
                 )}
               </div>
               
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Heure d'arrivée</label>
+                <label className="block font-medium text-gray-700 mb-2">Heure d'arrivée</label>
                 <input
                   type="time"
                   value={newEntry.time}
                   onChange={(e) => setNewEntry({...newEntry, time: e.target.value})}
-                  className="w-full p-1.5 border border-gray-300 rounded text-xs"
+                  className="w-full p-3 border border-gray-300 rounded-lg text-base"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Heure prévue: 08:00</p>
+                <p className="text-gray-500 mt-2">Heure prévue: 08:00</p>
               </div>
               
-              <div className="pt-1">
-                <div className="flex items-center justify-between p-2 bg-red-50 rounded text-xs mb-2">
+              <div className="pt-2">
+                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg mb-4">
                   <span className="font-medium text-red-800">Pénalité fixe:</span>
-                  <span className="font-bold text-red-600">500 GDS</span>
+                  <span className="font-bold text-red-600 text-lg">500 GDS</span>
                 </div>
                 <button
                   onClick={handleAddEntry}
-                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded text-xs"
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-base"
                 >
-                  Enregistrer
+                  Enregistrer le retard
                 </button>
               </div>
             </div>
@@ -120,131 +120,149 @@ const RetardsTab = ({ currentSeller }) => {
         </div>
       )}
 
-      {/* Masonry Header - Grid of Stats */}
-      <div className="grid grid-cols-2 gap-2 mb-2">
-        <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
-          <p className="text-xs text-gray-500">Impayer</p>
-          <p className="text-sm font-bold text-red-600">{pendingCount}</p>
+      {/* Header Stats - Grid Layout */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-gray-50 p-3 rounded-lg">
+          <p className="text-gray-600 mb-1">Retards</p>
+          <p className="text-2xl font-bold text-gray-900">{lateEntries.length}</p>
         </div>
-        <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
-          <p className="text-xs text-gray-500">Montant</p>
-          <p className="text-sm font-bold text-red-600">{totalPending} GDS</p>
+        <div className="bg-red-50 p-3 rounded-lg">
+          <p className="text-red-600 mb-1">Impayés</p>
+          <p className="text-2xl font-bold text-red-700">{pendingCount}</p>
         </div>
-        <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
-          <p className="text-xs text-gray-500">Salaire</p>
-          <p className="text-sm font-bold text-gray-900">15,000 GDS</p>
+        <div className="bg-blue-50 p-3 rounded-lg">
+          <p className="text-blue-600 mb-1">Dû</p>
+          <p className="text-2xl font-bold text-blue-700">{totalPending} GDS</p>
         </div>
-        <div className="bg-green-50 p-2 rounded-lg border border-green-200">
-          <p className="text-xs text-green-600">Salaire net</p>
-          <p className="text-sm font-bold text-green-700">{15000 - totalPending} GDS</p>
+        <div className="bg-green-50 p-3 rounded-lg">
+          <p className="text-green-600 mb-1">Salaire net</p>
+          <p className="text-2xl font-bold text-green-700">{15000 - totalPending} GDS</p>
         </div>
       </div>
 
-      {/* Masonry Grid of Late Entries */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+      {/* Late Entries - Masonry Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
         {lateEntries.map((entry) => (
-          <div key={entry.id} className="border border-gray-200 rounded-lg p-2 hover:border-gray-300 transition-colors">
-            {/* Top Row - Date & Status */}
-            <div className="flex justify-between items-start mb-1">
-              <div className="flex items-center gap-1 min-w-0">
-                <Calendar className="w-3 h-3 text-blue-600 flex-shrink-0" />
-                <span className="font-bold text-gray-900 text-xs truncate">
+          <div key={entry.id} className="border border-gray-200 rounded-xl p-3 bg-white">
+            {/* Top Row */}
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-600" />
+                <span className="font-bold text-gray-900 text-base">
                   {formatDate(entry.date)}
                 </span>
               </div>
+              
               <button
                 onClick={() => togglePaid(entry.id)}
-                className={`flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium rounded transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-2 px-3 py-1.5 font-medium rounded-lg text-sm ${
                   entry.status === 'paid' 
-                    ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                    : 'bg-red-100 text-red-800 hover:bg-red-200'
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
                 }`}
               >
                 {entry.status === 'paid' ? (
                   <>
-                    <CheckCircle className="w-2.5 h-2.5" />
+                    <CheckCircle className="w-4 h-4" />
                     <span>Payé</span>
                   </>
                 ) : (
                   <>
-                    <AlertCircle className="w-2.5 h-2.5" />
+                    <AlertCircle className="w-4 h-4" />
                     <span>À payer</span>
                   </>
                 )}
               </button>
             </div>
-            
-            {/* Middle Row - Time & Penalty */}
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-1">
-                <Clock className="w-3 h-3 text-gray-500" />
-                <span className="font-medium text-gray-900 text-xs whitespace-nowrap">{entry.time}</span>
-                <span className="text-gray-400 text-[10px]">•</span>
-                <span className="text-gray-500 text-[10px]">08:00</span>
+
+            {/* Middle Row */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                <Clock className="w-5 h-5 text-gray-600" />
+                <div>
+                  <p className="text-gray-600 text-sm">Arrivée</p>
+                  <p className="font-bold text-gray-900">{entry.time}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <DollarSign className="w-3 h-3 text-red-500" />
-                <span className="font-bold text-red-600 text-xs">500 GDS</span>
+              
+              <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
+                <DollarSign className="w-5 h-5 text-red-600" />
+                <div>
+                  <p className="text-red-600 text-sm">Pénalité</p>
+                  <p className="font-bold text-red-700">500 GDS</p>
+                </div>
               </div>
             </div>
-            
-            {/* Bottom Row - Due Date */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-gray-600">
-                <span className="text-[10px]">Échéance:</span>
-                <span className="font-medium text-[10px] truncate">{formatDate(entry.dueDate)}</span>
+
+            {/* Bottom Row */}
+            <div className="border-t border-gray-100 pt-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Échéance</p>
+                  <p className="font-medium text-gray-900">{formatDate(entry.dueDate)}</p>
+                </div>
+                {entry.overdue > 0 && (
+                  <span className="text-red-600 font-bold">
+                    +{entry.overdue} jours
+                  </span>
+                )}
               </div>
-              {entry.overdue > 0 && (
-                <span className="text-[10px] text-red-500 font-bold whitespace-nowrap">+{entry.overdue}j</span>
-              )}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Warning Alert - Masonry Style */}
+      {/* Salary Warning */}
       {totalPending > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-2 mb-2">
-          <div className="flex items-center gap-1.5">
-            <AlertCircle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-red-800 truncate">RETENUE AUTOMATIQUE</p>
-              <p className="text-xs text-red-700">
-                {totalPending} GDS → {15000 - totalPending} GDS net
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-xl p-4 mb-3">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
+            <div>
+              <h3 className="font-bold text-red-800 text-base mb-1">
+                Retenue automatique sur salaire
+              </h3>
+              <p className="text-red-700">
+                {totalPending} GDS seront déduits du salaire de 15,000 GDS
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Final Salary Summary - Masonry Grid */}
-      <div className="border border-gray-200 rounded-lg p-2">
-        <div className="grid grid-cols-3 gap-1 mb-2">
-          <div className="text-center">
-            <p className="text-[10px] text-gray-500">Salaire</p>
-            <p className="text-sm font-bold text-gray-900">15,000</p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] text-red-500">Retenues</p>
-            <p className="text-sm font-bold text-red-600">-{totalPending}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] text-green-600">Net</p>
-            <p className="text-sm font-bold text-green-700">{15000 - totalPending}</p>
-          </div>
-        </div>
+      {/* Salary Summary */}
+      <div className="border border-gray-200 rounded-xl p-4 bg-white">
+        <h3 className="font-bold text-gray-900 text-lg mb-3">Calcul du salaire</h3>
         
-        {/* Percentage Bar */}
-        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-green-600 transition-all duration-300"
-            style={{ width: `${((15000 - totalPending) / 15000 * 100)}%` }}
-          />
-        </div>
-        <div className="flex justify-between mt-0.5">
-          <span className="text-[9px] text-gray-500">0%</span>
-          <span className="text-[9px] text-gray-500">{((15000 - totalPending) / 15000 * 100).toFixed(0)}% restant</span>
-          <span className="text-[9px] text-gray-500">100%</span>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-700">Salaire de base</span>
+            </div>
+            <span className="font-bold text-gray-900">15,000 GDS</span>
+          </div>
+          
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-500" />
+              <span className="text-gray-700">Retenues retards</span>
+            </div>
+            <span className="font-bold text-red-600">-{totalPending} GDS</span>
+          </div>
+          
+          <div className="pt-2">
+            <div className="flex justify-between items-center bg-green-50 p-3 rounded-lg">
+              <div>
+                <p className="font-bold text-gray-900 text-base">SALAIRE NET</p>
+                <p className="text-green-700 text-sm">À verser</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-green-700">{15000 - totalPending} GDS</p>
+                <p className="text-green-600 text-sm">
+                  {((15000 - totalPending) / 15000 * 100).toFixed(0)}% du salaire
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
