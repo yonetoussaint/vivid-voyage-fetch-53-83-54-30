@@ -86,7 +86,7 @@ const RetardsTab = ({ currentSeller }) => {
                   className="w-full p-2 border border-gray-300 rounded-lg text-sm"
                 />
                 {newEntry.date && (
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-gray-600 mt-1 truncate">
                     {formatDate(newEntry.date)}
                   </p>
                 )}
@@ -100,12 +100,12 @@ const RetardsTab = ({ currentSeller }) => {
                   onChange={(e) => setNewEntry({...newEntry, time: e.target.value})}
                   className="w-full p-2 border border-gray-300 rounded-lg text-sm"
                 />
-                <p className="text-xs text-gray-500 mt-1">Heure prévue: 08:00</p>
+                <p className="text-xs text-gray-500 mt-1 truncate">Heure prévue: 08:00</p>
               </div>
               
               <div className="pt-2">
                 <div className="flex items-center justify-between p-2 bg-red-50 rounded-lg mb-3">
-                  <span className="text-sm font-medium text-red-800">Pénalité fixe:</span>
+                  <span className="text-sm font-medium text-red-800 truncate">Pénalité fixe:</span>
                   <span className="font-bold text-red-600">500 GDS</span>
                 </div>
                 <button
@@ -122,83 +122,86 @@ const RetardsTab = ({ currentSeller }) => {
 
       {/* Header Stats */}
       <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="font-bold text-gray-900 text-lg">Retards & Pénalités</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
+        <div className="min-w-0">
+          <h3 className="font-bold text-gray-900 text-lg truncate">Retards & Pénalités</h3>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full whitespace-nowrap">
               {pendingCount} impayés
             </span>
             <span className="text-xs text-gray-500">•</span>
-            <span className="text-xs text-gray-700">{totalPending} GDS dus</span>
+            <span className="text-xs text-gray-700 whitespace-nowrap">{totalPending} GDS dus</span>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-sm font-bold text-green-700">{15000 - totalPending} GDS</p>
-          <p className="text-xs text-gray-500">Salaire net</p>
+        <div className="text-right flex-shrink-0">
+          <p className="text-sm font-bold text-green-700 whitespace-nowrap">{15000 - totalPending} GDS</p>
+          <p className="text-xs text-gray-500 whitespace-nowrap">Salaire net</p>
         </div>
       </div>
 
       {/* Entries List */}
       <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1 border-b border-gray-200 pb-4">
         {lateEntries.map((entry) => (
-          <div key={entry.id} className="border border-gray-200 rounded-lg p-3 text-sm hover:border-gray-300 transition-colors">
-            <div className="flex justify-between items-start gap-3">
+          <div key={entry.id} className="border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+              {/* Left Column - Main Info */}
               <div className="min-w-0 flex-1">
                 {/* Date Row */}
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  <span className="font-bold text-gray-900">
+                  <span className="font-bold text-gray-900 truncate">
                     {formatDate(entry.date)}
                   </span>
                 </div>
                 
                 {/* Time & Penalty Row */}
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-500" />
-                    <span className="font-medium text-gray-900">{entry.time}</span>
-                    <span className="text-sm text-gray-500">(prévu 08:00)</span>
+                <div className="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-3 mb-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Clock className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                    <span className="font-medium text-gray-900 whitespace-nowrap">{entry.time}</span>
+                    <span className="text-sm text-gray-500 whitespace-nowrap hidden xs:inline">(08:00)</span>
                   </div>
                   
-                  <span className="text-gray-300">|</span>
+                  <div className="hidden xs:block text-gray-300">|</div>
                   
                   <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-red-500" />
-                    <span className="font-bold text-red-600">500 GDS</span>
+                    <DollarSign className="w-4 h-4 text-red-500 flex-shrink-0" />
+                    <span className="font-bold text-red-600 whitespace-nowrap">500 GDS</span>
                   </div>
                 </div>
                 
                 {/* Due Date Row */}
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>Échéance:</span>
-                  <span className="font-medium">{formatDate(entry.dueDate)}</span>
+                <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
+                  <span className="whitespace-nowrap">Échéance:</span>
+                  <span className="font-medium truncate">{formatDate(entry.dueDate)}</span>
                   {entry.overdue > 0 && (
-                    <span className="text-red-500 font-bold">(+{entry.overdue} jours)</span>
+                    <span className="text-red-500 font-bold whitespace-nowrap">(+{entry.overdue} jours)</span>
                   )}
                 </div>
               </div>
               
-              {/* Compact Status Badge Only */}
-              <button
-                onClick={() => togglePaid(entry.id)}
-                className={`flex items-center gap-1 px-3 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                  entry.status === 'paid' 
-                    ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                }`}
-              >
-                {entry.status === 'paid' ? (
-                  <>
-                    <CheckCircle className="w-3 h-3" />
-                    <span>Payé</span>
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle className="w-3 h-3" />
-                    <span>À payer</span>
-                  </>
-                )}
-              </button>
+              {/* Right Column - Status Badge */}
+              <div className="flex-shrink-0 self-start sm:self-center">
+                <button
+                  onClick={() => togglePaid(entry.id)}
+                  className={`flex items-center gap-1 px-3 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                    entry.status === 'paid' 
+                      ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                      : 'bg-red-100 text-red-800 hover:bg-red-200'
+                  }`}
+                >
+                  {entry.status === 'paid' ? (
+                    <>
+                      <CheckCircle className="w-3 h-3" />
+                      <span>Payé</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-3 h-3" />
+                      <span>À payer</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -212,12 +215,11 @@ const RetardsTab = ({ currentSeller }) => {
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-sm font-bold text-red-800 mb-0.5">
+                <p className="text-sm font-bold text-red-800 mb-0.5 truncate">
                   RETENUE AUTOMATIQUE SUR SALAIRE
                 </p>
-                <p className="text-sm text-red-700">
-                  {totalPending} GDS seront retenus sur le salaire de 15,000 GDS
-                  {totalPending >= 5000 && ' • MONTANT IMPORTANT'}
+                <p className="text-sm text-red-700 truncate">
+                  {totalPending} GDS seront retenus sur 15,000 GDS
                 </p>
               </div>
             </div>
@@ -227,26 +229,26 @@ const RetardsTab = ({ currentSeller }) => {
         {/* Salary Breakdown */}
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="grid grid-cols-2 gap-4 mb-3">
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-sm text-gray-500 mb-1">Salaire de base</p>
-              <p className="font-bold text-gray-900 text-lg">15,000 GDS</p>
+            <div className="bg-gray-50 p-3 rounded-lg min-w-0">
+              <p className="text-sm text-gray-500 mb-1 truncate">Salaire base</p>
+              <p className="font-bold text-gray-900 text-lg truncate">15,000 GDS</p>
             </div>
-            <div className="bg-red-50 p-3 rounded-lg">
-              <p className="text-sm text-red-500 mb-1">Retenues retards</p>
-              <p className="font-bold text-red-700 text-lg">-{totalPending} GDS</p>
+            <div className="bg-red-50 p-3 rounded-lg min-w-0">
+              <p className="text-sm text-red-500 mb-1 truncate">Retenues</p>
+              <p className="font-bold text-red-700 text-lg truncate">-{totalPending} GDS</p>
             </div>
           </div>
           
           <div className="border-t border-gray-200 pt-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-bold text-gray-900 text-sm">SALAIRE NET</p>
-                <p className="text-sm text-gray-500">À verser</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-bold text-gray-900 text-sm truncate">SALAIRE NET</p>
+                <p className="text-sm text-gray-500 truncate">À verser</p>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-green-700">{15000 - totalPending} GDS</p>
-                <p className="text-sm text-gray-500">
-                  {((15000 - totalPending) / 15000 * 100).toFixed(0)}% du salaire base
+              <div className="text-right flex-shrink-0">
+                <p className="text-xl font-bold text-green-700 whitespace-nowrap">{15000 - totalPending} GDS</p>
+                <p className="text-sm text-gray-500 whitespace-nowrap">
+                  {((15000 - totalPending) / 15000 * 100).toFixed(0)}% du salaire
                 </p>
               </div>
             </div>
