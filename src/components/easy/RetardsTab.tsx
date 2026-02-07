@@ -67,7 +67,7 @@ const RetardsTab = ({ currentSeller }) => {
 
   const receiptRef = useRef(null);
 
-  // Calculate overdue days automatically
+  // Calculate overdue days automatically and auto-deduct after 5+ days
   useEffect(() => {
     const checkOverdueEntries = () => {
       const today = new Date();
@@ -349,17 +349,19 @@ const RetardsTab = ({ currentSeller }) => {
     );
   };
 
-  // Calculate statistics
+  // Calculate statistics with CORRECT LOGIC
   const totalPending = calculateTotalPenalty();
   const totalDeducted = calculateMonthlyDeduction();
   const totalPaid = calculateTotalPaid();
   const monthlySalary = 15000;
+  
+  // CORRECT NET SALARY CALCULATION:
+  // Base salary MINUS already deducted MINUS pending to deduct
+  const netSalary = monthlySalary - totalDeducted - totalPending;
+  
   const pendingCount = lateEntries.filter(e => e.status === 'pending').length;
   const deductedCount = lateEntries.filter(e => e.status === 'deducted').length;
   const paidCount = lateEntries.filter(e => e.status === 'paid').length;
-
-  // Calculate net salary correctly
-  const netSalary = monthlySalary - totalPending;
 
   // Get overdue status color
   const getOverdueColor = (daysOverdue) => {
@@ -454,12 +456,18 @@ const RetardsTab = ({ currentSeller }) => {
                     <span className="font-medium">15,000 GDS</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Retenue totale:</span>
-                    <span className="font-bold text-red-600">{totalPending + 500} GDS</span>
+                    <span className="text-gray-600">Déjà retenu:</span>
+                    <span className="font-bold text-blue-600">-{totalDeducted} GDS</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">À retenir total:</span>
+                    <span className="font-bold text-red-600">-{totalPending + 500} GDS</span>
                   </div>
                   <div className="flex justify-between border-t border-red-200 pt-2">
-                    <span className="font-medium">Salaire net:</span>
-                    <span className="font-bold text-green-700">{15000 - (totalPending + 500)} GDS</span>
+                    <span className="font-medium">Salaire net après retenue:</span>
+                    <span className="font-bold text-green-700">
+                      {15000 - totalDeducted - (totalPending + 500)} GDS
+                    </span>
                   </div>
                 </div>
               </div>
@@ -598,7 +606,7 @@ const RetardsTab = ({ currentSeller }) => {
         </div>
       )}
 
-      {/* Header Stats - Correct Calculations */}
+      {/* Header Stats - CORRECT CALCULATIONS */}
       <div className="grid grid-cols-2 gap-2">
         <div className="bg-gray-50 p-2 rounded-lg">
           <p className="text-gray-600 text-xs">Total retards</p>
@@ -606,7 +614,7 @@ const RetardsTab = ({ currentSeller }) => {
           <p className="text-gray-500 text-xs">{pendingCount} en attente</p>
         </div>
         <div className="bg-red-50 p-2 rounded-lg">
-          <p className="text-red-600 text-xs">À payer</p>
+          <p className="text-red-600 text-xs">À retenir</p>
           <p className="font-bold text-red-700 text-lg">{totalPending} GDS</p>
           <p className="text-red-500 text-xs">{pendingCount} retards</p>
         </div>
@@ -754,7 +762,7 @@ const RetardsTab = ({ currentSeller }) => {
         ))}
       </div>
 
-      {/* Salary Summary - Correct Calculations */}
+      {/* Salary Summary - CORRECT CALCULATIONS */}
       <div className="border border-gray-200 rounded-lg p-3">
         <div className="space-y-3">
           <div className="flex justify-between items-center">
@@ -766,15 +774,15 @@ const RetardsTab = ({ currentSeller }) => {
             <div className="flex justify-between items-center">
               <div>
                 <span className="text-gray-700">Pénalités payées</span>
-                <p className="text-green-600 text-xs">{paidCount} retards</p>
+                <p className="text-green-600 text-xs">{paidCount} retards payés directement</p>
               </div>
-              <span className="font-bold text-green-600">+{totalPaid} GDS</span>
+              <span className="font-bold text-green-600">+{totalPaid} GDS (hors salaire)</span>
             </div>
             
             <div className="flex justify-between items-center">
               <div>
-                <span className="text-gray-700">Retenues appliquées</span>
-                <p className="text-blue-600 text-xs">{deductedCount} retards</p>
+                <span className="text-gray-700">Déjà retenu du salaire</span>
+                <p className="text-blue-600 text-xs">{deductedCount} retards retenus</p>
               </div>
               <span className="font-bold text-blue-600">-{totalDeducted} GDS</span>
             </div>
@@ -782,8 +790,8 @@ const RetardsTab = ({ currentSeller }) => {
             <div className="bg-red-50 p-2 rounded">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-red-700">Retenues en attente</span>
-                  <p className="text-red-600 text-xs">{pendingCount} retards</p>
+                  <span className="text-red-700">À retenir du salaire</span>
+                  <p className="text-red-600 text-xs">{pendingCount} retards en attente</p>
                 </div>
                 <span className="font-bold text-red-600">-{totalPending} GDS</span>
               </div>
@@ -794,7 +802,7 @@ const RetardsTab = ({ currentSeller }) => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="font-bold text-gray-900">SALAIRE NET FINAL</p>
-                <p className="text-gray-600 text-sm">À verser</p>
+                <p className="text-gray-600 text-sm">Montant réel à verser</p>
               </div>
               <div className="text-right">
                 <p className="text-xl font-bold text-green-700">{netSalary} GDS</p>
