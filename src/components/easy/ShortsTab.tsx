@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import SummaryCards from './SummaryCards';
 import FilterTabs from './FilterTabs';
 import ShortsList from './ShortsList';
@@ -34,12 +34,6 @@ const ShortsTab = ({ vendeurActif }) => {
     showPinModal,
     showPrintModal,
     showReceiptModal,
-    showAddModal,
-    showEditModal,
-    showSettingsModal,
-    showStatsModal,
-    showExportModal,
-    showPartialPaymentModal,
     pin,
     setPin,
     pinError,
@@ -67,18 +61,61 @@ const ShortsTab = ({ vendeurActif }) => {
     exportShorts,
     appSettings,
     updateSettings,
-    generateStatistics
+    generateStatistics,
+    // Modal controllers from hook
+    setShowPinModal,
+    setShowPrintModal,
+    setShowReceiptModal,
+    setShowAddModal,
+    setShowEditModal,
+    setShowSettingsModal,
+    setShowStatsModal,
+    setShowExportModal,
+    setShowPartialPaymentModal,
+    setCurrentReceipt,
+    setCurrentShortId,
+    setCurrentAction
   } = useShortsLogic(vendeurActif);
 
+  // Local states for modals that aren't in the hook
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showPartialPaymentModal, setShowPartialPaymentModal] = useState(false);
+  
   const [selectedShortForEdit, setSelectedShortForEdit] = useState(null);
   const [selectedShortForPartial, setSelectedShortForPartial] = useState(null);
 
   const handleEditClick = (short) => {
     setSelectedShortForEdit(short);
+    setShowEditModal(true);
   };
 
   const handlePartialClick = (short) => {
     setSelectedShortForPartial(short);
+    setShowPartialPaymentModal(true);
+  };
+
+  const handleAddNewShort = (newShort) => {
+    addNewShort(newShort);
+  };
+
+  const handleUpdateShort = (updatedShort) => {
+    updateShort(updatedShort);
+  };
+
+  const handleDeleteShort = (shortId) => {
+    deleteShort(shortId);
+  };
+
+  const handleSavePartialPayment = (shortId, amount, notes) => {
+    handlePartialPayment(shortId, amount, notes);
+  };
+
+  const handleExport = (filteredShorts, format) => {
+    exportShorts(filteredShorts, format);
   };
 
   return (
@@ -158,7 +195,7 @@ const ShortsTab = ({ vendeurActif }) => {
         <AddShortModal
           vendeurActif={vendeurActif}
           onClose={() => setShowAddModal(false)}
-          onSave={addNewShort}
+          onSave={handleAddNewShort}
         />
       )}
 
@@ -169,8 +206,8 @@ const ShortsTab = ({ vendeurActif }) => {
             setShowEditModal(false);
             setSelectedShortForEdit(null);
           }}
-          onSave={updateShort}
-          onDelete={deleteShort}
+          onSave={handleUpdateShort}
+          onDelete={handleDeleteShort}
         />
       )}
 
@@ -181,7 +218,7 @@ const ShortsTab = ({ vendeurActif }) => {
             setShowPartialPaymentModal(false);
             setSelectedShortForPartial(null);
           }}
-          onSave={handlePartialPayment}
+          onSave={handleSavePartialPayment}
         />
       )}
 
@@ -205,7 +242,7 @@ const ShortsTab = ({ vendeurActif }) => {
         <ExportModal
           shorts={shorts}
           onClose={() => setShowExportModal(false)}
-          onExport={exportShorts}
+          onExport={handleExport}
         />
       )}
 
