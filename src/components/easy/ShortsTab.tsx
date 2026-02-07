@@ -17,7 +17,6 @@ import { Plus, Settings, BarChart, Download } from 'lucide-react';
 const ShortsTab = ({ vendeurActif }) => {
   const {
     shorts,
-    setShorts,
     filteredShorts,
     totalShort,
     pendingShort,
@@ -34,6 +33,12 @@ const ShortsTab = ({ vendeurActif }) => {
     showPinModal,
     showPrintModal,
     showReceiptModal,
+    showAddModal,
+    showEditModal,
+    showSettingsModal,
+    showStatsModal,
+    showExportModal,
+    showPartialPaymentModal,
     pin,
     setPin,
     pinError,
@@ -63,28 +68,20 @@ const ShortsTab = ({ vendeurActif }) => {
     updateSettings,
     generateStatistics,
     // Modal controllers from hook
-    setShowPinModal,
-    setShowPrintModal,
-    setShowReceiptModal,
     setShowAddModal,
     setShowEditModal,
     setShowSettingsModal,
     setShowStatsModal,
     setShowExportModal,
     setShowPartialPaymentModal,
+    setShowPinModal,
+    setShowPrintModal,
+    setShowReceiptModal,
     setCurrentReceipt,
     setCurrentShortId,
     setCurrentAction
   } = useShortsLogic(vendeurActif);
 
-  // Local states for modals that aren't in the hook
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showStatsModal, setShowStatsModal] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [showPartialPaymentModal, setShowPartialPaymentModal] = useState(false);
-  
   const [selectedShortForEdit, setSelectedShortForEdit] = useState(null);
   const [selectedShortForPartial, setSelectedShortForPartial] = useState(null);
 
