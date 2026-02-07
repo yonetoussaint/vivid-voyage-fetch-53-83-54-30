@@ -15,9 +15,9 @@ const RetardsTab = ({ currentSeller }) => {
 
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
-    const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+    const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '');
     const day = date.getDate();
-    const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+    const month = date.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
     const year = date.getFullYear().toString().slice(-2);
     return `${dayName}. ${day} ${month}, ${year}`;
   };
@@ -142,46 +142,46 @@ const RetardsTab = ({ currentSeller }) => {
       <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1 border-b border-gray-200 pb-3">
         {lateEntries.map((entry) => (
           <div key={entry.id} className="border border-gray-200 rounded-lg p-2.5 text-sm hover:border-gray-300 transition-colors">
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start gap-2">
               <div className="min-w-0 flex-1">
                 {/* Date Row */}
-                <div className="flex items-center gap-1.5 mb-2">
+                <div className="flex items-center gap-1.5 mb-1">
                   <Calendar className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
-                  <span className="font-bold text-gray-900">
+                  <span className="font-bold text-gray-900 text-xs">
                     {formatDate(entry.date)}
                   </span>
                 </div>
                 
                 {/* Time & Penalty Row */}
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-gray-500" />
-                    <span className="font-medium text-gray-900">{entry.time}</span>
-                    <span className="text-xs text-gray-500">(prévu 08:00)</span>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-gray-500" />
+                    <span className="font-medium text-gray-900 text-xs">{entry.time}</span>
+                    <span className="text-xs text-gray-500 text-xs">(prévu 08:00)</span>
                   </div>
                   
                   <span className="text-gray-300">|</span>
                   
-                  <div className="flex items-center gap-1.5">
-                    <DollarSign className="w-3.5 h-3.5 text-red-500" />
-                    <span className="font-bold text-red-600">500 GDS</span>
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="w-3 h-3 text-red-500" />
+                    <span className="font-bold text-red-600 text-xs">500 GDS</span>
                   </div>
                 </div>
                 
                 {/* Due Date Row */}
-                <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-600">
-                  <span>Échéance:</span>
-                  <span className="font-medium">{formatDate(entry.dueDate)}</span>
+                <div className="flex items-center gap-1 text-xs text-gray-600">
+                  <span className="text-xs">Échéance:</span>
+                  <span className="font-medium text-xs">{formatDate(entry.dueDate)}</span>
                   {entry.overdue > 0 && (
-                    <span className="text-red-500 font-bold">(+{entry.overdue} jours)</span>
+                    <span className="text-red-500 font-bold text-xs">(+{entry.overdue}j)</span>
                   )}
                 </div>
               </div>
               
-              {/* Status Button with Lucide Icon */}
+              {/* Status Badge - Compact Size */}
               <button
                 onClick={() => togglePaid(entry.id)}
-                className={`ml-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+                className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
                   entry.status === 'paid' 
                     ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                     : 'bg-red-100 text-red-800 hover:bg-red-200'
@@ -189,12 +189,12 @@ const RetardsTab = ({ currentSeller }) => {
               >
                 {entry.status === 'paid' ? (
                   <>
-                    <CheckCircle className="w-4 h-4" />
+                    <CheckCircle className="w-3 h-3" />
                     <span>Payé</span>
                   </>
                 ) : (
                   <>
-                    <AlertCircle className="w-4 h-4" />
+                    <AlertCircle className="w-3 h-3" />
                     <span>À payer</span>
                   </>
                 )}
@@ -208,16 +208,15 @@ const RetardsTab = ({ currentSeller }) => {
       <div className="space-y-3">
         {/* Warning Alert */}
         {totalPending > 0 && (
-          <div className="bg-gradient-to-r from-red-50 to-amber-50 border border-red-200 rounded-lg p-3">
+          <div className="bg-gradient-to-r from-red-50 to-amber-50 border border-red-200 rounded-lg p-2">
             <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-sm font-bold text-red-800 mb-0.5">
-                  RETENUE AUTOMATIQUE SUR SALAIRE
+                <p className="text-xs font-bold text-red-800 mb-0.5">
+                  RETENUE AUTOMATIQUE
                 </p>
                 <p className="text-xs text-red-700">
-                  {totalPending} GDS seront retenus sur le salaire de 15,000 GDS
-                  {totalPending >= 5000 && ' • MONTANT IMPORTANT'}
+                  {totalPending} GDS sur 15,000 GDS
                 </p>
               </div>
             </div>
@@ -226,27 +225,27 @@ const RetardsTab = ({ currentSeller }) => {
 
         {/* Salary Breakdown */}
         <div className="border border-gray-200 rounded-lg p-3">
-          <div className="grid grid-cols-2 gap-3 mb-2">
-            <div className="bg-gray-50 p-2 rounded">
-              <p className="text-xs text-gray-500 mb-1">Salaire de base</p>
-              <p className="font-bold text-gray-900">15,000 GDS</p>
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="bg-gray-50 p-1.5 rounded">
+              <p className="text-xs text-gray-500">Salaire base</p>
+              <p className="font-bold text-gray-900 text-sm">15,000 GDS</p>
             </div>
-            <div className="bg-red-50 p-2 rounded">
-              <p className="text-xs text-red-500 mb-1">Retenues retards</p>
-              <p className="font-bold text-red-700">-{totalPending} GDS</p>
+            <div className="bg-red-50 p-1.5 rounded">
+              <p className="text-xs text-red-500">Retenues</p>
+              <p className="font-bold text-red-700 text-sm">-{totalPending} GDS</p>
             </div>
           </div>
           
           <div className="border-t border-gray-200 pt-2">
             <div className="flex justify-between items-center">
               <div>
-                <p className="font-bold text-gray-900 text-sm">SALAIRE NET</p>
+                <p className="font-bold text-gray-900 text-xs">SALAIRE NET</p>
                 <p className="text-xs text-gray-500">À verser</p>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-green-700">{15000 - totalPending} GDS</p>
+                <p className="text-lg font-bold text-green-700">{15000 - totalPending} GDS</p>
                 <p className="text-xs text-gray-500">
-                  {((15000 - totalPending) / 15000 * 100).toFixed(0)}% du salaire base
+                  {((15000 - totalPending) / 15000 * 100).toFixed(0)}% du salaire
                 </p>
               </div>
             </div>
