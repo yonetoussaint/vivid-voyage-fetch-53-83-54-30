@@ -2,21 +2,29 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Clock, AlertCircle, DollarSign, Calendar, X, CheckCircle, Lock, Receipt, FileText, Download, History, Printer, Zap } from 'lucide-react';
 
 const RetardsTab = ({ currentSeller }) => {
-  // Get today's date and some recent dates for sample data
+  // Get today's date correctly for your timezone
+  const getLocalDateStr = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Get dates for sample data
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = getLocalDateStr(today);
   
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const yesterdayStr = getLocalDateStr(yesterday);
   
   const twoDaysAgo = new Date(today);
   twoDaysAgo.setDate(today.getDate() - 2);
-  const twoDaysAgoStr = twoDaysAgo.toISOString().split('T')[0];
+  const twoDaysAgoStr = getLocalDateStr(twoDaysAgo);
   
   const threeDaysAgo = new Date(today);
   threeDaysAgo.setDate(today.getDate() - 3);
-  const threeDaysAgoStr = threeDaysAgo.toISOString().split('T')[0];
+  const threeDaysAgoStr = getLocalDateStr(threeDaysAgo);
 
   const [lateEntries, setLateEntries] = useState([
     { 
@@ -24,7 +32,7 @@ const RetardsTab = ({ currentSeller }) => {
       date: twoDaysAgoStr, // 2 days ago
       time: '08:45', 
       penalty: 500, 
-      dueDate: new Date(new Date(twoDaysAgoStr).setDate(new Date(twoDaysAgoStr).getDate() + 5)).toISOString().split('T')[0],
+      dueDate: getLocalDateStr(new Date(new Date(twoDaysAgoStr).setDate(new Date(twoDaysAgoStr).getDate() + 5))),
       status: 'pending', 
       overdue: 0,
       paymentDate: null, 
@@ -36,7 +44,7 @@ const RetardsTab = ({ currentSeller }) => {
       date: threeDaysAgoStr, // 3 days ago
       time: '08:30', 
       penalty: 500, 
-      dueDate: new Date(new Date(threeDaysAgoStr).setDate(new Date(threeDaysAgoStr).getDate() + 5)).toISOString().split('T')[0],
+      dueDate: getLocalDateStr(new Date(new Date(threeDaysAgoStr).setDate(new Date(threeDaysAgoStr).getDate() + 5))),
       status: 'paid', 
       overdue: 0, 
       paymentDate: yesterdayStr, 
@@ -48,7 +56,7 @@ const RetardsTab = ({ currentSeller }) => {
       date: yesterdayStr, // yesterday
       time: '08:15', 
       penalty: 500, 
-      dueDate: new Date(new Date(yesterdayStr).setDate(new Date(yesterdayStr).getDate() + 5)).toISOString().split('T')[0],
+      dueDate: getLocalDateStr(new Date(new Date(yesterdayStr).setDate(new Date(yesterdayStr).getDate() + 5))),
       status: 'deducted', 
       overdue: 0,
       paymentDate: todayStr, 
@@ -87,7 +95,7 @@ const RetardsTab = ({ currentSeller }) => {
               ...entry,
               overdue: daysOverdue,
               status: 'deducted',
-              paymentDate: new Date().toISOString(),
+              paymentDate: getLocalDateStr(new Date()),
               receiptId: `AUTO-${Date.now().toString().slice(-6)}`
             };
           }
@@ -103,12 +111,12 @@ const RetardsTab = ({ currentSeller }) => {
     checkOverdueEntries();
   }, []); // Run once on component mount
 
-  // Get current date in YYYY-MM-DD format
+  // Get current date in YYYY-MM-DD format (LOCAL TIME)
   const getCurrentDate = () => {
     const now = new Date();
     const year = now.getFullYear();
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const day = now.getDate().toString().padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
 
@@ -126,7 +134,7 @@ const RetardsTab = ({ currentSeller }) => {
   const getCurrentTime12Hour = () => {
     const now = new Date();
     const hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     const hour12 = hours % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
@@ -138,13 +146,15 @@ const RetardsTab = ({ currentSeller }) => {
     const [time, period] = time12.split(' ');
     let [hours, minutes] = time.split(':');
     
-    if (period === 'PM' && hours !== '12') {
-      hours = parseInt(hours) + 12;
-    } else if (period === 'AM' && hours === '12') {
-      hours = '00';
+    hours = parseInt(hours);
+    
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
     }
     
-    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+    return `${String(hours).padStart(2, '0')}:${minutes}`;
   };
 
   // Quick add with current date and time
@@ -160,11 +170,11 @@ const RetardsTab = ({ currentSeller }) => {
     
     const entry = {
       id: lateEntries.length + 1,
-      date: getCurrentDate(), // Current date
+      date: getCurrentDate(), // Current LOCAL date
       time: storageTime, // Store in 24h format
       displayTime: displayTime, // Keep 12h format for display
       penalty: 500,
-      dueDate: dueDate.toISOString().split('T')[0],
+      dueDate: getLocalDateStr(dueDate),
       status: 'pending',
       overdue: 0,
       paymentDate: null,
@@ -176,7 +186,7 @@ const RetardsTab = ({ currentSeller }) => {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
+    const date = new Date(dateStr + 'T12:00:00'); // Add noon to avoid timezone issues
     const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '');
     const day = date.getDate();
     const month = date.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
@@ -214,8 +224,8 @@ const RetardsTab = ({ currentSeller }) => {
 
   const handleAddEntry = () => {
     const entryDate = newEntry.date || getCurrentDate();
-    const dueDate = new Date(entryDate);
-    dueDate.setDate(new Date(entryDate).getDate() + 5); // 5 days deadline
+    const dueDate = new Date(entryDate + 'T12:00:00');
+    dueDate.setDate(dueDate.getDate() + 5); // 5 days deadline
     
     // Use entered time or current time
     let timeToStore = newEntry.time;
@@ -239,7 +249,7 @@ const RetardsTab = ({ currentSeller }) => {
       time: timeToStore,
       displayTime: displayTime,
       penalty: 500,
-      dueDate: dueDate.toISOString().split('T')[0],
+      dueDate: getLocalDateStr(dueDate),
       status: 'pending',
       overdue: 0,
       paymentDate: null,
@@ -278,7 +288,7 @@ const RetardsTab = ({ currentSeller }) => {
             entry.id === selectedEntry ? { 
               ...entry, 
               status: 'paid',
-              paymentDate: new Date().toISOString(),
+              paymentDate: getLocalDateStr(new Date()),
               receiptId: receiptId
             } : entry
           )
@@ -290,7 +300,7 @@ const RetardsTab = ({ currentSeller }) => {
             entry.id === selectedEntry ? { 
               ...entry, 
               status: 'deducted',
-              paymentDate: new Date().toISOString(),
+              paymentDate: getLocalDateStr(new Date()),
               receiptId: receiptId
             } : entry
           )
