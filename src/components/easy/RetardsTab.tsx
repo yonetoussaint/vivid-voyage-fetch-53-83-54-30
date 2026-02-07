@@ -1,11 +1,56 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Clock, AlertCircle, DollarSign, Calendar, X, CheckCircle, Lock, Receipt, FileText, Download, History, Printer } from 'lucide-react';
 
 const RetardsTab = ({ currentSeller }) => {
   const [lateEntries, setLateEntries] = useState([
-    { id: 1, date: '2024-01-15', time: '08:45', penalty: 500, dueDate: '2024-01-25', status: 'pending', overdue: 2, paymentDate: null, receiptId: null },
-    { id: 2, date: '2024-01-10', time: '08:30', penalty: 500, dueDate: '2024-01-20', status: 'paid', overdue: 0, paymentDate: '2024-01-18', receiptId: 'REC-001' },
-    { id: 3, date: '2024-01-05', time: '08:15', penalty: 500, dueDate: '2024-01-15', status: 'deducted', overdue: 0, paymentDate: '2024-01-31', receiptId: 'SAL-001' }
+    { 
+      id: 1, 
+      date: '2024-01-15', 
+      time: '08:45', 
+      penalty: 500, 
+      dueDate: '2024-01-20', // 5 days after 15th
+      status: 'pending', 
+      overdue: 6, // More than 5 days overdue
+      paymentDate: null, 
+      receiptId: null,
+      createdAt: '2024-01-15T08:45:00'
+    },
+    { 
+      id: 2, 
+      date: '2024-01-10', 
+      time: '08:30', 
+      penalty: 500, 
+      dueDate: '2024-01-15', 
+      status: 'paid', 
+      overdue: 0, 
+      paymentDate: '2024-01-12', 
+      receiptId: 'REC-001',
+      createdAt: '2024-01-10T08:30:00'
+    },
+    { 
+      id: 3, 
+      date: '2024-01-05', 
+      time: '08:15', 
+      penalty: 500, 
+      dueDate: '2024-01-10', 
+      status: 'deducted', 
+      overdue: 2, // Was 2 days overdue before deduction
+      paymentDate: '2024-01-12', 
+      receiptId: 'SAL-001',
+      createdAt: '2024-01-05T08:15:00'
+    },
+    { 
+      id: 4, 
+      date: '2024-01-18', 
+      time: '08:50', 
+      penalty: 500, 
+      dueDate: '2024-01-23', 
+      status: 'pending', 
+      overdue: 0, // Still within 5 days
+      paymentDate: null, 
+      receiptId: null,
+      createdAt: '2024-01-18T08:50:00'
+    }
   ]);
   
   const [showAddForm, setShowAddForm] = useState(false);
@@ -22,37 +67,37 @@ const RetardsTab = ({ currentSeller }) => {
 
   const receiptRef = useRef(null);
 
-  // Calculate overdue days and auto-deduct after 5 days
+  // Calculate overdue days automatically
   useEffect(() => {
-    const updatedEntries = lateEntries.map(entry => {
-      if (entry.status === 'pending') {
-        const dueDate = new Date(entry.dueDate);
-        const today = new Date();
-        const diffTime = today - dueDate;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        const overdue = Math.max(0, diffDays);
-        
-        // Auto-deduct if overdue more than 5 days
-        if (overdue > 5 && entry.status === 'pending') {
-          return {
-            ...entry,
-            status: 'deducted',
-            overdue: overdue,
-            paymentDate: new Date().toISOString(),
-            receiptId: `AUTO-${Date.now().toString().slice(-6)}`
-          };
+    const checkOverdueEntries = () => {
+      const today = new Date();
+      const updatedEntries = lateEntries.map(entry => {
+        if (entry.status === 'pending') {
+          const dueDate = new Date(entry.dueDate);
+          const timeDiff = today - dueDate;
+          const daysOverdue = Math.max(0, Math.floor(timeDiff / (1000 * 60 * 60 * 24)));
+          
+          // Auto-deduct if more than 5 days overdue
+          if (daysOverdue > 5 && entry.status === 'pending') {
+            return {
+              ...entry,
+              overdue: daysOverdue,
+              status: 'deducted',
+              paymentDate: new Date().toISOString(),
+              receiptId: `AUTO-${Date.now().toString().slice(-6)}`
+            };
+          }
+          
+          return { ...entry, overdue: daysOverdue };
         }
-        
-        return { ...entry, overdue: overdue };
-      }
-      return entry;
-    });
-    
-    // Check if any entries changed
-    if (JSON.stringify(updatedEntries) !== JSON.stringify(lateEntries)) {
+        return entry;
+      });
+      
       setLateEntries(updatedEntries);
-    }
-  }, [lateEntries]);
+    };
+    
+    checkOverdueEntries();
+  }, []); // Run once on component mount
 
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
@@ -87,23 +132,15 @@ const RetardsTab = ({ currentSeller }) => {
     return deductedEntries.reduce((total, entry) => total + entry.penalty, 0);
   };
 
-  const calculateAutoDeducted = () => {
-    const autoEntries = lateEntries.filter(entry => 
-      entry.status === 'deducted' && entry.receiptId?.startsWith('AUTO')
-    );
-    return autoEntries.reduce((total, entry) => total + entry.penalty, 0);
-  };
-
-  const getDueDateStatus = (overdue) => {
-    if (overdue === 0) return { color: 'text-green-600', bg: 'bg-green-100', text: 'Dans délai' };
-    if (overdue <= 2) return { color: 'text-amber-600', bg: 'bg-amber-100', text: `${overdue} jour(s)` };
-    if (overdue <= 5) return { color: 'text-orange-600', bg: 'bg-orange-100', text: `${overdue} jour(s)` };
-    return { color: 'text-red-600', bg: 'bg-red-100', text: `${overdue} jour(s)` };
+  const calculateTotalPaid = () => {
+    const paidEntries = lateEntries.filter(entry => entry.status === 'paid');
+    return paidEntries.reduce((total, entry) => total + entry.penalty, 0);
   };
 
   const handleAddEntry = () => {
-    const dueDate = new Date(newEntry.date);
-    dueDate.setDate(dueDate.getDate() + 5); // 5 days grace period
+    const today = new Date();
+    const dueDate = new Date(today);
+    dueDate.setDate(today.getDate() + 5); // 5 days deadline
     
     const entry = {
       id: lateEntries.length + 1,
@@ -155,7 +192,7 @@ const RetardsTab = ({ currentSeller }) => {
           )
         );
       } else if (selectedAction === 'deductPayroll' && selectedEntry) {
-        const receiptId = `MANUAL-${Date.now().toString().slice(-6)}`;
+        const receiptId = `SAL-${Date.now().toString().slice(-6)}`;
         setLateEntries(entries =>
           entries.map(entry =>
             entry.id === selectedEntry ? { 
@@ -181,6 +218,7 @@ const RetardsTab = ({ currentSeller }) => {
     setShowReceiptView(receiptId);
   };
 
+  // Android printing function
   const printReceiptAndroid = (receiptId) => {
     const entry = lateEntries.find(e => e.receiptId === receiptId);
     if (!entry) return;
@@ -207,8 +245,7 @@ const RetardsTab = ({ currentSeller }) => {
       date: new Date().toLocaleDateString('fr-FR'),
       time: new Date().toLocaleTimeString('fr-FR'),
       vendorName: "Vendeur: " + (currentSeller?.name || "N/A"),
-      transactionType: entry.receiptId.startsWith('REC') ? "Paiement Direct" : 
-                     entry.receiptId.startsWith('AUTO') ? "Retenue Automatique" : "Retenue Manuel",
+      transactionType: entry.receiptId.startsWith('REC') ? "Paiement Direct" : "Retenue Salaire",
       amount: "500 GDS",
       description: `Retard du ${formatDate(entry.date)} à ${entry.time}`,
       footer: "Merci de votre visite",
@@ -220,9 +257,12 @@ const RetardsTab = ({ currentSeller }) => {
     };
   };
 
+  // HTML receipt for printing
   const renderPrintableReceipt = (receiptId) => {
     const entry = lateEntries.find(e => e.receiptId === receiptId);
     if (!entry) return null;
+
+    const receiptData = generateReceiptData(entry);
 
     return (
       <div ref={receiptRef} className="p-4 bg-white" style={{ width: '80mm' }}>
@@ -255,38 +295,53 @@ const RetardsTab = ({ currentSeller }) => {
           </div>
           
           <div className="border-t border-b border-black py-1 my-2 text-center">
-            <p className="font-bold">{entry.receiptId}</p>
+            <p className="font-bold">{receiptData.receiptId}</p>
           </div>
           
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
               <span>Date:</span>
-              <span className="font-medium">{new Date().toLocaleDateString('fr-FR')}</span>
+              <span className="font-medium">{receiptData.date}</span>
             </div>
             <div className="flex justify-between">
               <span>Heure:</span>
-              <span className="font-medium">{new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}</span>
+              <span className="font-medium">{receiptData.time}</span>
             </div>
             <div className="flex justify-between">
               <span>Type:</span>
-              <span className="font-medium">
-                {entry.receiptId.startsWith('REC') ? 'Paiement Direct' : 
-                 entry.receiptId.startsWith('AUTO') ? 'Retenue Automatique' : 'Retenue Manuel'}
-              </span>
+              <span className="font-medium">{receiptData.transactionType}</span>
             </div>
             <div className="flex justify-between">
-              <span>Montant:</span>
-              <span className="font-bold">500 GDS</span>
+              <span>Vendeur:</span>
+              <span className="font-medium">{receiptData.vendorName.replace('Vendeur: ', '')}</span>
             </div>
             
             <div className="my-2 border-t border-dashed border-gray-400 pt-2">
-              <div className="text-center font-bold">Détails pénalité</div>
-              <p className="text-center">Retard du {formatDate(entry.date)} à {entry.time}</p>
+              <div className="text-center font-bold">Détails de la pénalité</div>
+              <p className="text-center">{receiptData.description}</p>
+            </div>
+            
+            <div className="border-t border-black pt-2">
+              <div className="flex justify-between font-bold">
+                <span>MONTANT:</span>
+                <span>{receiptData.amount}</span>
+              </div>
+            </div>
+            
+            <div className="my-2 text-center border border-dashed border-gray-400 p-1">
+              <p className="text-xs">Code: {receiptData.qrCode}</p>
             </div>
             
             <div className="text-center mt-4">
-              <p className="font-bold">Merci de votre visite</p>
+              <p className="font-bold">{receiptData.footer}</p>
               <p className="text-xs mt-2">***************************</p>
+            </div>
+            
+            <div className="mt-4 pt-2 border-t border-black">
+              <p className="text-xs text-center">
+                {receiptData.signature}<br/>
+                Cachet de la station
+              </p>
             </div>
           </div>
         </div>
@@ -294,23 +349,32 @@ const RetardsTab = ({ currentSeller }) => {
     );
   };
 
+  // Calculate statistics
   const totalPending = calculateTotalPenalty();
   const totalDeducted = calculateMonthlyDeduction();
-  const totalAutoDeducted = calculateAutoDeducted();
+  const totalPaid = calculateTotalPaid();
   const monthlySalary = 15000;
   const pendingCount = lateEntries.filter(e => e.status === 'pending').length;
   const deductedCount = lateEntries.filter(e => e.status === 'deducted').length;
+  const paidCount = lateEntries.filter(e => e.status === 'paid').length;
 
   // Calculate net salary correctly
   const netSalary = monthlySalary - totalPending;
-  const deductionPercentage = ((totalPending / monthlySalary) * 100).toFixed(1);
+
+  // Get overdue status color
+  const getOverdueColor = (daysOverdue) => {
+    if (daysOverdue === 0) return 'text-green-600';
+    if (daysOverdue <= 2) return 'text-amber-600';
+    if (daysOverdue <= 4) return 'text-orange-600';
+    return 'text-red-600 font-bold';
+  };
 
   return (
     <div className="p-3 space-y-3 min-h-screen">
       {/* Receipt Viewer Modal */}
       {showReceiptView && (
         <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-4 w-full max-w-sm">
+          <div className="bg-white rounded-xl p-4 w-full max-w-md max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-blue-600" />
@@ -318,9 +382,9 @@ const RetardsTab = ({ currentSeller }) => {
               </div>
               <button 
                 onClick={() => setShowReceiptView(false)} 
-                className="p-2 text-gray-500 hover:bg-gray-100 rounded-full"
+                className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
             
@@ -332,23 +396,31 @@ const RetardsTab = ({ currentSeller }) => {
               <div className="space-y-2">
                 <button 
                   onClick={() => printReceiptAndroid(showReceiptView)}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium active:scale-95 transition-all"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-base active:scale-95 transition-transform"
                 >
                   <Printer className="w-5 h-5" />
-                  <span>Imprimer sur Android</span>
+                  Imprimer sur Android
                 </button>
                 
                 <button 
                   onClick={() => window.print()}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium active:scale-95 transition-all"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium text-base active:scale-95 transition-transform"
                 >
                   <Download className="w-5 h-5" />
-                  <span>Imprimer via navigateur</span>
+                  Imprimer dans le navigateur
+                </button>
+                
+                <button 
+                  onClick={() => setShowReceiptView(false)}
+                  className="w-full py-3 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium text-base active:scale-95 transition-transform"
+                >
+                  Retour
                 </button>
               </div>
               
-              <div className="text-xs text-gray-500 text-center pt-2 border-t">
-                Format: 80mm thermal printer • 5 jours limite
+              <div className="text-xs text-gray-500 text-center p-2 bg-gray-50 rounded-lg">
+                <p>📱 Optimisé pour mobile</p>
+                <p>Taille ticket: 80mm (Imprimante thermique)</p>
               </div>
             </div>
           </div>
@@ -364,8 +436,8 @@ const RetardsTab = ({ currentSeller }) => {
                 <DollarSign className="w-5 h-5 text-red-600" />
                 <h3 className="font-bold text-gray-900">Aperçu de la retenue</h3>
               </div>
-              <button onClick={() => setShowDeductionPreview(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
-                <X className="w-5 h-5" />
+              <button onClick={() => setShowDeductionPreview(false)} className="text-gray-500">
+                <X className="w-4 h-4" />
               </button>
             </div>
             
@@ -382,30 +454,26 @@ const RetardsTab = ({ currentSeller }) => {
                     <span className="font-medium">15,000 GDS</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Retenues actuelles:</span>
-                    <span className="font-medium text-red-600">{totalPending} GDS</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Nouvelle retenue:</span>
-                    <span className="font-bold text-red-600">+500 GDS</span>
+                    <span className="text-gray-600">Retenue totale:</span>
+                    <span className="font-bold text-red-600">{totalPending + 500} GDS</span>
                   </div>
                   <div className="flex justify-between border-t border-red-200 pt-2">
                     <span className="font-medium">Salaire net:</span>
-                    <span className="font-bold text-green-700">14,500 GDS</span>
+                    <span className="font-bold text-green-700">{15000 - (totalPending + 500)} GDS</span>
                   </div>
                 </div>
               </div>
               
-              <div className="space-y-2">
+              <div className="pt-2 space-y-2">
                 <button
                   onClick={confirmDeduction}
-                  className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg active:scale-95 transition-all"
+                  className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg active:scale-95 transition-transform"
                 >
                   Confirmer la retenue
                 </button>
                 <button
                   onClick={() => setShowDeductionPreview(false)}
-                  className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg active:scale-95 transition-all"
+                  className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg active:scale-95 transition-transform"
                 >
                   Annuler
                 </button>
@@ -429,8 +497,8 @@ const RetardsTab = ({ currentSeller }) => {
                 setPin('');
                 setSelectedAction(null);
                 setSelectedEntry(null);
-              }} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
-                <X className="w-5 h-5" />
+              }} className="text-gray-500">
+                <X className="w-4 h-4" />
               </button>
             </div>
             
@@ -447,19 +515,21 @@ const RetardsTab = ({ currentSeller }) => {
                   type="password"
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg text-center text-lg"
+                  className="w-full p-3 border border-gray-300 rounded-lg text-center text-xl"
                   maxLength={4}
                   placeholder="0000"
                   autoFocus
                 />
               </div>
               
-              <button
-                onClick={verifyPin}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg active:scale-95 transition-all"
-              >
-                Confirmer
-              </button>
+              <div className="pt-2">
+                <button
+                  onClick={verifyPin}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg active:scale-95 transition-transform"
+                >
+                  Confirmer
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -468,7 +538,7 @@ const RetardsTab = ({ currentSeller }) => {
       {/* Floating Add Button */}
       <button
         onClick={() => setShowAddForm(true)}
-        className="fixed bottom-4 right-4 z-20 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95"
+        className="fixed bottom-6 right-6 z-20 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95"
       >
         <Plus className="w-6 h-6" />
       </button>
@@ -479,8 +549,11 @@ const RetardsTab = ({ currentSeller }) => {
           <div className="bg-white rounded-xl p-4 w-full max-w-sm">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-bold text-gray-900">Nouveau retard</h3>
-              <button onClick={() => setShowAddForm(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
-                <X className="w-5 h-5" />
+              <button 
+                onClick={() => setShowAddForm(false)} 
+                className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
             
@@ -491,7 +564,7 @@ const RetardsTab = ({ currentSeller }) => {
                   type="date"
                   value={newEntry.date}
                   onChange={(e) => setNewEntry({...newEntry, date: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded-lg"
+                  className="w-full p-3 border border-gray-300 rounded-lg text-base"
                 />
               </div>
               
@@ -501,18 +574,21 @@ const RetardsTab = ({ currentSeller }) => {
                   type="time"
                   value={newEntry.time}
                   onChange={(e) => setNewEntry({...newEntry, time: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded-lg"
+                  className="w-full p-3 border border-gray-300 rounded-lg text-base"
                 />
               </div>
               
               <div className="pt-2">
-                <div className="flex items-center justify-between p-2 bg-red-50 rounded mb-2">
+                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg mb-2">
                   <span className="text-sm text-red-800">Pénalité:</span>
                   <span className="font-bold text-red-600">500 GDS</span>
                 </div>
+                <p className="text-xs text-gray-500 mb-3">
+                  ⚠️ Délai de paiement: 5 jours. Après, retenue automatique sur salaire.
+                </p>
                 <button
                   onClick={handleAddEntry}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg active:scale-95 transition-all"
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg active:scale-95 transition-transform"
                 >
                   Enregistrer
                 </button>
@@ -522,42 +598,40 @@ const RetardsTab = ({ currentSeller }) => {
         </div>
       )}
 
-      {/* Header Stats - CORRECTED CALCULATIONS */}
+      {/* Header Stats - Correct Calculations */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <p className="text-gray-600 text-xs mb-1">Total retards</p>
-          <p className="font-bold text-gray-900 text-xl">{lateEntries.length}</p>
+        <div className="bg-gray-50 p-2 rounded-lg">
+          <p className="text-gray-600 text-xs">Total retards</p>
+          <p className="font-bold text-gray-900 text-lg">{lateEntries.length}</p>
+          <p className="text-gray-500 text-xs">{pendingCount} en attente</p>
         </div>
-        <div className="bg-red-50 p-3 rounded-lg">
-          <p className="text-red-600 text-xs mb-1">À payer</p>
-          <p className="font-bold text-red-700 text-xl">{pendingCount}</p>
-          <p className="text-red-600 text-xs mt-1">{totalPending} GDS</p>
+        <div className="bg-red-50 p-2 rounded-lg">
+          <p className="text-red-600 text-xs">À payer</p>
+          <p className="font-bold text-red-700 text-lg">{totalPending} GDS</p>
+          <p className="text-red-500 text-xs">{pendingCount} retards</p>
         </div>
-        <div className="bg-blue-50 p-3 rounded-lg">
-          <p className="text-blue-600 text-xs mb-1">Auto-retenu</p>
-          <p className="font-bold text-blue-700 text-xl">
-            {lateEntries.filter(e => e.receiptId?.startsWith('AUTO')).length}
-          </p>
-          <p className="text-blue-600 text-xs mt-1">{totalAutoDeducted} GDS</p>
+        <div className="bg-blue-50 p-2 rounded-lg">
+          <p className="text-blue-600 text-xs">Déjà retenu</p>
+          <p className="font-bold text-blue-700 text-lg">{totalDeducted} GDS</p>
+          <p className="text-blue-500 text-xs">{deductedCount} retenues</p>
         </div>
-        <div className="bg-green-50 p-3 rounded-lg">
-          <p className="text-green-600 text-xs mb-1">Salaire net</p>
-          <p className="font-bold text-green-700 text-xl">{netSalary} GDS</p>
-          <p className="text-green-600 text-xs mt-1">{deductionPercentage}% retenu</p>
+        <div className="bg-green-50 p-2 rounded-lg">
+          <p className="text-green-600 text-xs">Salaire net</p>
+          <p className="font-bold text-green-700 text-lg">{netSalary} GDS</p>
+          <p className="text-green-500 text-xs">{((netSalary / 15000) * 100).toFixed(0)}% du salaire</p>
         </div>
       </div>
 
-      {/* Auto-Deduction Warning */}
-      {totalAutoDeducted > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+      {/* Auto-deduction Warning */}
+      {lateEntries.some(entry => entry.status === 'pending' && entry.overdue >= 5) && (
+        <div className="bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
             <div>
-              <p className="text-blue-800 font-bold text-sm mb-1">
-                ⚠️ RETENUES AUTOMATIQUES APPLIQUÉES
-              </p>
-              <p className="text-blue-700 text-sm">
-                {totalAutoDeducted} GDS retenus automatiquement (délai de 5 jours dépassé)
+              <p className="font-bold text-sm">RETENUE AUTOMATIQUE ACTIVÉE</p>
+              <p className="text-xs opacity-90">
+                {lateEntries.filter(e => e.status === 'pending' && e.overdue >= 5).length} 
+                retards de +5 jours seront retenus sur salaire
               </p>
             </div>
           </div>
@@ -566,159 +640,166 @@ const RetardsTab = ({ currentSeller }) => {
 
       {/* Late Entries */}
       <div className="space-y-2">
-        {lateEntries.map((entry) => {
-          const dueStatus = getDueDateStatus(entry.overdue);
-          const isAutoDeducted = entry.receiptId?.startsWith('AUTO');
-          
-          return (
-            <div key={entry.id} className="border border-gray-200 rounded-lg p-3">
-              {/* First Row */}
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-blue-600" />
-                  <span className="font-bold text-gray-900">
-                    {formatDate(entry.date)}
+        {lateEntries.map((entry) => (
+          <div key={entry.id} className="border border-gray-200 rounded-lg p-2">
+            {/* First Row */}
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-blue-600" />
+                <span className="font-bold text-gray-900">
+                  {formatDate(entry.date)}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-1">
+                {entry.status === 'paid' ? (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                    <CheckCircle className="w-3 h-3" />
+                    Payé
                   </span>
-                </div>
-                
-                <div className="flex items-center gap-1">
-                  {entry.status === 'paid' ? (
-                    <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                      <CheckCircle className="w-3 h-3" />
-                      Payé
-                    </span>
-                  ) : entry.status === 'deducted' ? (
-                    <span className={`flex items-center gap-1 px-2 py-1 ${isAutoDeducted ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'} text-xs rounded`}>
-                      {isAutoDeducted ? '🤖' : <Receipt className="w-3 h-3" />}
-                      {isAutoDeducted ? 'Auto-retenu' : 'Retenu'}
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
-                      <AlertCircle className="w-3 h-3" />
-                      À payer
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Second Row */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gray-500" />
-                  <span className="font-medium text-gray-900">{entry.time}</span>
-                  <span className="text-gray-500 text-sm">(prévu 08:00)</span>
-                </div>
-                
-                <div className="flex items-center gap-1">
-                  <DollarSign className="w-4 h-4 text-red-500" />
-                  <span className="font-bold text-red-600">500 GDS</span>
-                </div>
-              </div>
-
-              {/* Third Row - Due Date with Color Coding */}
-              <div className="flex items-center justify-between text-sm mb-2">
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-600">Échéance:</span>
-                  <span className="font-medium">{formatDate(entry.dueDate)}</span>
-                </div>
-                {entry.overdue > 0 && (
-                  <span className={`px-2 py-1 rounded ${dueStatus.bg} ${dueStatus.color} text-xs font-medium`}>
-                    {dueStatus.text}
+                ) : entry.status === 'deducted' ? (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                    <Receipt className="w-3 h-3" />
+                    Retenu
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
+                    <AlertCircle className="w-3 h-3" />
+                    À payer
                   </span>
                 )}
               </div>
+            </div>
 
-              {/* Auto-deduction warning */}
-              {entry.status === 'pending' && entry.overdue > 3 && (
-                <div className="bg-orange-50 border border-orange-200 rounded p-2 mb-2">
-                  <p className="text-orange-700 text-xs font-medium">
-                    ⚠️ {5 - entry.overdue} jour(s) avant retenue automatique
-                  </p>
-                </div>
-              )}
+            {/* Second Row */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-gray-500" />
+                <span className="font-medium text-gray-900">{entry.time}</span>
+                <span className="text-gray-500 text-sm">(prévu 08:00)</span>
+              </div>
+              
+              <div className="flex items-center gap-1">
+                <DollarSign className="w-4 h-4 text-red-500" />
+                <span className="font-bold text-red-600">500 GDS</span>
+              </div>
+            </div>
 
-              {/* Fourth Row - Payment Info */}
-              {(entry.status === 'paid' || entry.status === 'deducted') && (
-                <div className="border-t border-gray-100 pt-2 mt-2">
-                  <div className="flex justify-between items-center text-xs">
-                    <div className="flex items-center gap-1">
-                      <span className="text-gray-500">Payé le:</span>
-                      <span className="font-medium">{formatDate(entry.paymentDate)}</span>
-                      {isAutoDeducted && <span className="text-purple-600 ml-1">(Auto)</span>}
-                    </div>
-                    <button
-                      onClick={() => viewReceipt(entry.receiptId)}
-                      className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
-                    >
-                      <Receipt className="w-3 h-3" />
-                      Voir reçu
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons for pending entries */}
-              {entry.status === 'pending' && (
-                <div className="flex gap-2 mt-2 pt-2 border-t border-gray-100">
-                  <button
-                    onClick={() => handleMarkAsPaid(entry.id)}
-                    className="flex-1 flex items-center justify-center gap-1 py-2 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded transition-colors active:scale-95"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    Marquer payé
-                  </button>
-                  <button
-                    onClick={() => handleDeductFromPayroll(entry.id)}
-                    className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded transition-colors active:scale-95"
-                  >
-                    <DollarSign className="w-3.5 h-3.5" />
-                    Retenir salaire
-                  </button>
-                </div>
+            {/* Third Row - Due Date with Color Coding */}
+            <div className="flex items-center justify-between text-sm mb-2">
+              <div className="flex items-center gap-1">
+                <span className="text-gray-600">Échéance:</span>
+                <span className="font-medium">{formatDate(entry.dueDate)}</span>
+              </div>
+              {entry.overdue > 0 && (
+                <span className={`font-medium ${getOverdueColor(entry.overdue)}`}>
+                  +{entry.overdue} jour{entry.overdue > 1 ? 's' : ''}
+                  {entry.overdue >= 5 && (
+                    <span className="ml-1 animate-pulse">⚡</span>
+                  )}
+                </span>
               )}
             </div>
-          );
-        })}
+
+            {/* Auto-deduction notice for overdue > 5 days */}
+            {entry.status === 'pending' && entry.overdue >= 5 && (
+              <div className="bg-red-50 border border-red-200 rounded p-2 mb-2">
+                <div className="flex items-center gap-1 text-red-700 text-xs">
+                  <AlertCircle className="w-3 h-3" />
+                  <span className="font-bold">RETENUE AUTOMATIQUE:</span>
+                  <span>500 GDS sera retenu sur salaire (délai dépassé)</span>
+                </div>
+              </div>
+            )}
+
+            {/* Fourth Row - Payment Info */}
+            {(entry.status === 'paid' || entry.status === 'deducted') && (
+              <div className="border-t border-gray-100 pt-2 mt-2">
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Payé le:</span>
+                    <span className="font-medium">{formatDate(entry.paymentDate)}</span>
+                  </div>
+                  <button
+                    onClick={() => viewReceipt(entry.receiptId)}
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 active:scale-95 transition-transform"
+                  >
+                    <Receipt className="w-3 h-3" />
+                    Voir reçu
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons for pending entries */}
+            {entry.status === 'pending' && (
+              <div className="flex gap-2 mt-2 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => handleMarkAsPaid(entry.id)}
+                  className="flex-1 flex items-center justify-center gap-1 py-2 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded active:scale-95 transition-transform"
+                >
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  Marquer payé
+                </button>
+                <button
+                  onClick={() => handleDeductFromPayroll(entry.id)}
+                  className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded active:scale-95 transition-transform"
+                >
+                  <DollarSign className="w-3.5 h-3.5" />
+                  Retenir salaire
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* Salary Summary - CORRECTED */}
+      {/* Salary Summary - Correct Calculations */}
       <div className="border border-gray-200 rounded-lg p-3">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-gray-700">Salaire mensuel</span>
-            <span className="font-bold">15,000 GDS</span>
+            <span className="font-bold text-gray-900">15,000 GDS</span>
           </div>
           
-          <div className="bg-red-50 p-2 rounded">
+          <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-red-700">À retenir (immatriculé)</span>
-              <span className="font-bold text-red-600">-{totalPending} GDS</span>
+              <div>
+                <span className="text-gray-700">Pénalités payées</span>
+                <p className="text-green-600 text-xs">{paidCount} retards</p>
+              </div>
+              <span className="font-bold text-green-600">+{totalPaid} GDS</span>
             </div>
-            <div className="text-xs text-red-600 mt-1">
-              {pendingCount} retards en attente • 5 jours limite
-            </div>
-          </div>
-          
-          <div className="bg-blue-50 p-2 rounded">
+            
             <div className="flex justify-between items-center">
-              <span className="text-blue-700">Déjà retenu ce mois</span>
+              <div>
+                <span className="text-gray-700">Retenues appliquées</span>
+                <p className="text-blue-600 text-xs">{deductedCount} retards</p>
+              </div>
               <span className="font-bold text-blue-600">-{totalDeducted} GDS</span>
             </div>
-            <div className="text-xs text-blue-600 mt-1">
-              {deductedCount} retenues (dont {totalAutoDeducted / 500} auto)
+            
+            <div className="bg-red-50 p-2 rounded">
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="text-red-700">Retenues en attente</span>
+                  <p className="text-red-600 text-xs">{pendingCount} retards</p>
+                </div>
+                <span className="font-bold text-red-600">-{totalPending} GDS</span>
+              </div>
             </div>
           </div>
           
-          <div className="border-t border-gray-200 pt-2">
+          <div className="border-t border-gray-200 pt-3">
             <div className="flex justify-between items-center">
               <div>
                 <p className="font-bold text-gray-900">SALAIRE NET FINAL</p>
-                <p className="text-gray-600 text-sm">À verser le 31/01/24</p>
+                <p className="text-gray-600 text-sm">À verser</p>
               </div>
               <div className="text-right">
                 <p className="text-xl font-bold text-green-700">{netSalary} GDS</p>
                 <p className="text-gray-600 text-xs">
-                  {deductionPercentage}% du salaire initial
+                  {((netSalary / 15000) * 100).toFixed(1)}% du salaire initial
                 </p>
               </div>
             </div>
