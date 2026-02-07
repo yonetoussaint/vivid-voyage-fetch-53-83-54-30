@@ -1,3 +1,15 @@
+
+import { 
+  FileText, 
+  Image, 
+  Video, 
+  File, 
+  Folder,
+  Volume2,
+  Presentation
+} from 'lucide-react';
+
+
 // File type detection and utilities
 export const getFileType = (fileName) => {
   if (!fileName) return 'other';
