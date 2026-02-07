@@ -1,20 +1,25 @@
-
+import React from 'react';
 import { 
   FileText, 
   Image, 
   Video, 
-  File, 
-  Folder,
-  Volume2,
-  Presentation
+  Volume2, 
+  Folder, 
+  Presentation,
+  File,
+  Users,
+  Shield,
+  GraduationCap,
+  ClipboardCheck,
+  Calendar,
+  LucideIcon
 } from 'lucide-react';
 
-
 // File type detection and utilities
-export const getFileType = (fileName) => {
+export const getFileType = (fileName: string): string => {
   if (!fileName) return 'other';
   
-  const ext = fileName.split('.').pop().toLowerCase();
+  const ext = fileName.split('.').pop()?.toLowerCase() || '';
   
   if (['pdf'].includes(ext)) return 'pdf';
   if (['xlsx', 'xls', 'csv'].includes(ext)) return 'excel';
@@ -27,8 +32,8 @@ export const getFileType = (fileName) => {
   return 'other';
 };
 
-export const getFileIcon = (fileType) => {
-  const iconClasses = {
+export const getFileIconColor = (fileType: string): string => {
+  const iconClasses: Record<string, string> = {
     pdf: 'text-red-500',
     excel: 'text-green-500',
     document: 'text-blue-500',
@@ -42,32 +47,34 @@ export const getFileIcon = (fileType) => {
   return iconClasses[fileType] || 'text-gray-500';
 };
 
-export const getFileIconComponent = (fileType, size = 'w-4 h-4') => {
+export const getFileIconComponent = (fileType: string, size: string = 'w-4 h-4'): JSX.Element => {
+  const iconProps = { className: `${size} ${getFileIconColor(fileType)}` };
+  
   switch(fileType) {
     case 'pdf':
-      return <FileText className={`${size} text-red-500`} />;
+      return <FileText {...iconProps} />;
     case 'excel':
-      return <FileText className={`${size} text-green-500`} />;
+      return <FileText {...iconProps} />;
     case 'document':
-      return <FileText className={`${size} text-blue-500`} />;
+      return <FileText {...iconProps} />;
     case 'image':
-      return <Image className={`${size} text-purple-500`} />;
+      return <Image {...iconProps} />;
     case 'video':
-      return <Video className={`${size} text-orange-500`} />;
+      return <Video {...iconProps} />;
     case 'audio':
-      return <Volume2 className={`${size} text-pink-500`} />;
+      return <Volume2 {...iconProps} />;
     case 'archive':
-      return <Folder className={`${size} text-yellow-500`} />;
+      return <Folder {...iconProps} />;
     case 'presentation':
-      return <Presentation className={`${size} text-red-400`} />;
+      return <Presentation {...iconProps} />;
     default:
-      return <File className={`${size} text-gray-500`} />;
+      return <File {...iconProps} />;
   }
 };
 
 // Priority utilities
-export const getPriorityColor = (priority) => {
-  const colors = {
+export const getPriorityColor = (priority: string): string => {
+  const colors: Record<string, string> = {
     critical: 'bg-red-100 text-red-800 border-red-200',
     high: 'bg-orange-100 text-orange-800 border-orange-200',
     medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -76,8 +83,8 @@ export const getPriorityColor = (priority) => {
   return colors[priority] || 'bg-gray-100 text-gray-800 border-gray-200';
 };
 
-export const getPriorityBadgeColor = (priority) => {
-  const colors = {
+export const getPriorityBadgeColor = (priority: string): string => {
+  const colors: Record<string, string> = {
     critical: 'bg-red-500 text-white',
     high: 'bg-orange-500 text-white',
     medium: 'bg-yellow-500 text-white',
@@ -87,8 +94,8 @@ export const getPriorityBadgeColor = (priority) => {
 };
 
 // Meeting type utilities
-export const getMeetingTypeColor = (meetingType) => {
-  const colors = {
+export const getMeetingTypeColor = (meetingType: string): string => {
+  const colors: Record<string, string> = {
     staff: 'bg-blue-100 text-blue-800',
     safety: 'bg-red-100 text-red-800',
     training: 'bg-green-100 text-green-800',
@@ -98,8 +105,8 @@ export const getMeetingTypeColor = (meetingType) => {
   return colors[meetingType] || 'bg-gray-100 text-gray-800';
 };
 
-export const getMeetingTypeIcon = (meetingType) => {
-  const icons = {
+export const getMeetingTypeIcon = (meetingType: string): string => {
+  const icons: Record<string, string> = {
     staff: 'Users',
     safety: 'Shield',
     training: 'GraduationCap',
@@ -110,8 +117,8 @@ export const getMeetingTypeIcon = (meetingType) => {
 };
 
 // Status utilities
-export const getStatusColor = (status) => {
-  const colors = {
+export const getStatusColor = (status: string): string => {
+  const colors: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     'in-progress': 'bg-blue-100 text-blue-800 border-blue-200',
     completed: 'bg-green-100 text-green-800 border-green-200',
@@ -121,9 +128,9 @@ export const getStatusColor = (status) => {
 };
 
 // Date and time utilities
-export const formatMeetingDate = (date, time) => {
+export const formatMeetingDate = (date: string, time?: string): string => {
   const meetingDate = new Date(date);
-  const options = { weekday: 'short', month: 'short', day: 'numeric' };
+  const options: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
   const formattedDate = meetingDate.toLocaleDateString('en-US', options);
   
   if (time) {
@@ -132,7 +139,7 @@ export const formatMeetingDate = (date, time) => {
   return formattedDate;
 };
 
-export const formatTime = (time) => {
+export const formatTime = (time: string): string => {
   if (!time) return '';
   
   const [hours, minutes] = time.split(':');
@@ -142,10 +149,10 @@ export const formatTime = (time) => {
   return `${formattedHour}:${minutes} ${ampm}`;
 };
 
-export const getDurationText = (duration, unit) => {
+export const getDurationText = (duration: string | number, unit: string = 'minutes'): string => {
   if (!duration) return '';
   
-  const numDuration = parseInt(duration, 10);
+  const numDuration = typeof duration === 'string' ? parseInt(duration, 10) : duration;
   
   if (unit === 'hours') {
     return numDuration === 1 ? '1 hour' : `${numDuration} hours`;
@@ -166,7 +173,7 @@ export const getDurationText = (duration, unit) => {
 };
 
 // File size formatting
-export const formatFileSize = (bytes) => {
+export const formatFileSize = (bytes: string | number): string => {
   if (!bytes || bytes === 'N/A') return 'N/A';
   
   if (typeof bytes === 'string') {
@@ -176,12 +183,12 @@ export const formatFileSize = (bytes) => {
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   if (bytes === 0) return '0 Bytes';
   
-  const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)), 10);
+  const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)).toString(), 10);
   return `${Math.round(bytes / Math.pow(1024, i) * 100) / 100} ${sizes[i]}`;
 };
 
 // Attendee utilities
-export const filterAttendees = (attendees, searchTerm = '') => {
+export const filterAttendees = (attendees: string[], searchTerm: string = ''): string[] => {
   if (!searchTerm) return attendees;
   
   return attendees.filter(attendee =>
@@ -189,12 +196,12 @@ export const filterAttendees = (attendees, searchTerm = '') => {
   );
 };
 
-export const getAttendeeGroups = (attendees) => {
+export const getAttendeeGroups = (attendees: string[]) => {
   const groups = {
-    managers: [],
-    staff: [],
-    external: [],
-    other: []
+    managers: [] as string[],
+    staff: [] as string[],
+    external: [] as string[],
+    other: [] as string[]
   };
   
   attendees.forEach(attendee => {
@@ -215,10 +222,50 @@ export const getAttendeeGroups = (attendees) => {
 };
 
 // Meeting statistics
-export const calculateMeetingStats = (meetings) => {
+export interface MeetingStats {
+  total: number;
+  upcoming: number;
+  completed: number;
+  cancelled: number;
+  withFiles: number;
+  virtual: number;
+  inPerson: number;
+  totalDuration: number;
+  attendeesCount: number;
+}
+
+export interface Meeting {
+  id: number;
+  title: string;
+  description?: string;
+  priority: string;
+  assignedTo: string;
+  dueDate: string;
+  dueTime?: string;
+  shift: string;
+  status: string;
+  location: string;
+  attendees: string[];
+  agenda?: string;
+  meetingType: string;
+  duration: string;
+  durationUnit: string;
+  files?: Array<{
+    id: number;
+    name: string;
+    url: string;
+    type: string;
+    size: string;
+  }>;
+  notes?: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export const calculateMeetingStats = (meetings: Meeting[]): MeetingStats => {
   const now = new Date();
   
-  const stats = {
+  const stats: MeetingStats = {
     total: meetings.length,
     upcoming: 0,
     completed: 0,
@@ -242,7 +289,7 @@ export const calculateMeetingStats = (meetings) => {
     }
     
     // Count virtual vs in-person
-    if (meeting.location?.toLowerCase().includes('virtual')) {
+    if (isVirtualMeeting(meeting.location)) {
       stats.virtual++;
     } else {
       stats.inPerson++;
@@ -270,7 +317,7 @@ export const calculateMeetingStats = (meetings) => {
 };
 
 // Search and filter utilities
-export const searchMeetings = (meetings, searchTerm) => {
+export const searchMeetings = (meetings: Meeting[], searchTerm: string): Meeting[] => {
   if (!searchTerm) return meetings;
   
   const term = searchTerm.toLowerCase();
@@ -289,32 +336,32 @@ export const searchMeetings = (meetings, searchTerm) => {
   });
 };
 
-export const filterMeetingsByDate = (meetings, date) => {
+export const filterMeetingsByDate = (meetings: Meeting[], date: string): Meeting[] => {
   if (!date) return meetings;
   
   return meetings.filter(meeting => meeting.dueDate === date);
 };
 
-export const filterMeetingsByType = (meetings, type) => {
+export const filterMeetingsByType = (meetings: Meeting[], type: string): Meeting[] => {
   if (!type || type === 'all') return meetings;
   
   return meetings.filter(meeting => meeting.meetingType === type);
 };
 
-export const filterMeetingsByStatus = (meetings, status) => {
+export const filterMeetingsByStatus = (meetings: Meeting[], status: string): Meeting[] => {
   if (!status || status === 'all') return meetings;
   
   return meetings.filter(meeting => meeting.status === status);
 };
 
-export const filterMeetingsByPriority = (meetings, priority) => {
+export const filterMeetingsByPriority = (meetings: Meeting[], priority: string): Meeting[] => {
   if (!priority || priority === 'all') return meetings;
   
   return meetings.filter(meeting => meeting.priority === priority);
 };
 
 // Sort utilities
-export const sortMeetings = (meetings, sortBy, sortOrder = 'asc') => {
+export const sortMeetings = (meetings: Meeting[], sortBy: string, sortOrder: string = 'asc'): Meeting[] => {
   const sorted = [...meetings];
   
   sorted.sort((a, b) => {
@@ -322,7 +369,7 @@ export const sortMeetings = (meetings, sortBy, sortOrder = 'asc') => {
     
     switch(sortBy) {
       case 'date':
-        comparison = new Date(a.dueDate) - new Date(b.dueDate);
+        comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
         break;
       case 'time':
         comparison = (a.dueTime || '').localeCompare(b.dueTime || '');
@@ -331,16 +378,16 @@ export const sortMeetings = (meetings, sortBy, sortOrder = 'asc') => {
         comparison = a.title.localeCompare(b.title);
         break;
       case 'priority':
-        const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-        comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+        const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+        comparison = (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4);
         break;
       case 'status':
-        const statusOrder = { pending: 0, 'in-progress': 1, completed: 2, cancelled: 3 };
-        comparison = statusOrder[a.status] - statusOrder[b.status];
+        const statusOrder: Record<string, number> = { pending: 0, 'in-progress': 1, completed: 2, cancelled: 3 };
+        comparison = (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
         break;
       case 'duration':
-        const durationA = parseInt(a.duration || 0, 10);
-        const durationB = parseInt(b.duration || 0, 10);
+        const durationA = parseInt(a.duration || '0', 10);
+        const durationB = parseInt(b.duration || '0', 10);
         comparison = durationA - durationB;
         break;
       default:
@@ -354,7 +401,7 @@ export const sortMeetings = (meetings, sortBy, sortOrder = 'asc') => {
 };
 
 // Export/Import utilities
-export const exportMeetingsToJSON = (meetings, fileName = 'meetings_export') => {
+export const exportMeetingsToJSON = (meetings: Meeting[], fileName: string = 'meetings_export'): void => {
   const dataStr = JSON.stringify(meetings, null, 2);
   const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
   
@@ -364,13 +411,13 @@ export const exportMeetingsToJSON = (meetings, fileName = 'meetings_export') => 
   linkElement.click();
 };
 
-export const importMeetingsFromJSON = (file) => {
+export const importMeetingsFromJSON = (file: File): Promise<Meeting[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
     reader.onload = (e) => {
       try {
-        const importedMeetings = JSON.parse(e.target.result);
+        const importedMeetings = JSON.parse(e.target?.result as string) as Meeting[];
         resolve(importedMeetings);
       } catch (error) {
         reject(new Error('Invalid JSON file format'));
@@ -386,8 +433,8 @@ export const importMeetingsFromJSON = (file) => {
 };
 
 // Sample data generation
-export const generateSampleMeetings = (date, vendeurs = []) => {
-  const sampleMeetings = [
+export const generateSampleMeetings = (date: string, vendeurs: string[] = []): Meeting[] => {
+  const sampleMeetings: Meeting[] = [
     {
       id: 1,
       title: 'Weekly Staff Meeting',
@@ -435,53 +482,6 @@ export const generateSampleMeetings = (date, vendeurs = []) => {
       ],
       notes: 'Mandatory attendance for all employees. Certificates will be issued upon completion.',
       createdAt: new Date().toISOString()
-    },
-    {
-      id: 3,
-      title: 'Quarterly Financial Review',
-      description: 'Review of Q1 financial performance and budget planning for Q2',
-      priority: 'high',
-      assignedTo: 'Finance Manager',
-      dueDate: date,
-      dueTime: '11:00',
-      shift: 'AM',
-      status: 'in-progress',
-      location: 'Virtual - Zoom',
-      attendees: ['Finance Manager', 'Operations Manager', 'CEO', 'CFO'],
-      agenda: '1. Q1 financial results\n2. Budget variance analysis\n3. Q2 budget proposal\n4. Cost optimization strategies',
-      meetingType: 'review',
-      duration: '90',
-      durationUnit: 'minutes',
-      files: [
-        { id: 1, name: 'Q1_Financial_Report.pdf', type: 'pdf', url: 'https://example.com/files/q1_report.pdf', size: '4.2MB' },
-        { id: 2, name: 'Budget_Analysis.xlsx', type: 'excel', url: 'https://example.com/files/budget_analysis.xlsx', size: '2.8MB' }
-      ],
-      notes: 'Zoom link will be shared 30 minutes before the meeting.',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 4,
-      title: 'New Product Planning',
-      description: 'Brainstorming session for new product development',
-      priority: 'medium',
-      assignedTo: 'Product Manager',
-      dueDate: date,
-      dueTime: '15:30',
-      shift: 'PM',
-      status: 'pending',
-      location: 'Conference Room',
-      attendees: ['Product Team', 'Marketing Team', 'Design Team'],
-      agenda: '1. Market analysis presentation\n2. New product ideas brainstorming\n3. Timeline discussion\n4. Resource allocation',
-      meetingType: 'planning',
-      duration: '120',
-      durationUnit: 'minutes',
-      files: [
-        { id: 1, name: 'Market_Research.pdf', type: 'pdf', url: 'https://example.com/files/market_research.pdf', size: '5.1MB' },
-        { id: 2, name: 'Competitor_Analysis.pptx', type: 'presentation', url: 'https://example.com/files/competitor_analysis.pptx', size: '6.3MB' },
-        { id: 3, name: 'Product_Sketches.jpg', type: 'image', url: 'https://example.com/files/sketches.jpg', size: '8.7MB' }
-      ],
-      notes: 'Please come prepared with at least 3 new product ideas.',
-      createdAt: new Date().toISOString()
     }
   ];
 
@@ -489,8 +489,8 @@ export const generateSampleMeetings = (date, vendeurs = []) => {
 };
 
 // Validation utilities
-export const validateMeetingData = (meeting) => {
-  const errors = [];
+export const validateMeetingData = (meeting: Partial<Meeting>): string[] => {
+  const errors: string[] = [];
   
   if (!meeting.title?.trim()) {
     errors.push('Meeting title is required');
@@ -515,8 +515,8 @@ export const validateMeetingData = (meeting) => {
   return errors;
 };
 
-export const validateFileLink = (fileName, fileUrl) => {
-  const errors = [];
+export const validateFileLink = (fileName: string, fileUrl: string): string[] => {
+  const errors: string[] = [];
   
   if (!fileName.trim()) {
     errors.push('File name is required');
@@ -536,8 +536,8 @@ export const validateFileLink = (fileName, fileUrl) => {
 };
 
 // Helper function to get meeting duration in minutes
-export const getDurationInMinutes = (duration, unit) => {
-  const numDuration = parseInt(duration, 10);
+export const getDurationInMinutes = (duration: string | number, unit: string): number => {
+  const numDuration = typeof duration === 'string' ? parseInt(duration, 10) : duration;
   
   if (unit === 'hours') {
     return numDuration * 60;
@@ -547,15 +547,18 @@ export const getDurationInMinutes = (duration, unit) => {
 };
 
 // Helper function to check if meeting is virtual
-export const isVirtualMeeting = (location) => {
-  return location?.toLowerCase().includes('virtual') || 
-         location?.toLowerCase().includes('zoom') || 
-         location?.toLowerCase().includes('teams') ||
-         location?.toLowerCase().includes('meet');
+export const isVirtualMeeting = (location: string): boolean => {
+  if (!location) return false;
+  
+  const lowerLocation = location.toLowerCase();
+  return lowerLocation.includes('virtual') || 
+         lowerLocation.includes('zoom') || 
+         lowerLocation.includes('teams') ||
+         lowerLocation.includes('meet');
 };
 
 // Helper function to get meeting time in 12-hour format
-export const getMeetingTime12Hour = (time) => {
+export const getMeetingTime12Hour = (time: string): string => {
   if (!time) return '';
   
   const [hours, minutes] = time.split(':');
@@ -566,7 +569,16 @@ export const getMeetingTime12Hour = (time) => {
 };
 
 // Helper function to format meeting date for display
-export const formatMeetingDateForDisplay = (date) => {
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+export const formatMeetingDateForDisplay = (date: string): string => {
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   return new Date(date).toLocaleDateString('en-US', options);
 };
+
+// Types for file objects
+export interface FileAttachment {
+  id: number;
+  name: string;
+  url: string;
+  type: string;
+  size: string;
+}
