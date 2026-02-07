@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Clock, AlertCircle, DollarSign, Calendar, X, CheckCircle } from 'lucide-react';
+import { Plus, Clock, AlertCircle, DollarSign, Calendar, X, CheckCircle, Lock, Receipt } from 'lucide-react';
 
 const RetardsTab = ({ currentSeller }) => {
   const [lateEntries, setLateEntries] = useState([
@@ -8,6 +8,10 @@ const RetardsTab = ({ currentSeller }) => {
   ]);
   
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showPinForm, setShowPinForm] = useState(false);
+  const [selectedAction, setSelectedAction] = useState(null);
+  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [pin, setPin] = useState('');
   const [newEntry, setNewEntry] = useState({
     date: new Date().toISOString().split('T')[0],
     time: '08:45'
@@ -43,12 +47,42 @@ const RetardsTab = ({ currentSeller }) => {
     setNewEntry({ date: new Date().toISOString().split('T')[0], time: '08:45' });
   };
 
-  const togglePaid = (id) => {
-    setLateEntries(entries =>
-      entries.map(entry =>
-        entry.id === id ? { ...entry, status: entry.status === 'paid' ? 'pending' : 'paid' } : entry
-      )
-    );
+  const handleMarkAsPaid = (id) => {
+    setSelectedEntry(id);
+    setSelectedAction('markPaid');
+    setShowPinForm(true);
+  };
+
+  const handleDeductFromPayroll = (id) => {
+    setSelectedEntry(id);
+    setSelectedAction('deductPayroll');
+    setShowPinForm(true);
+  };
+
+  const verifyPin = () => {
+    const correctPin = '1234'; // Replace with actual PIN verification
+    if (pin === correctPin) {
+      if (selectedAction === 'markPaid' && selectedEntry) {
+        setLateEntries(entries =>
+          entries.map(entry =>
+            entry.id === selectedEntry ? { ...entry, status: 'paid' } : entry
+          )
+        );
+      } else if (selectedAction === 'deductPayroll' && selectedEntry) {
+        setLateEntries(entries =>
+          entries.map(entry =>
+            entry.id === selectedEntry ? { ...entry, status: 'deducted' } : entry
+          )
+        );
+      }
+      setShowPinForm(false);
+      setPin('');
+      setSelectedAction(null);
+      setSelectedEntry(null);
+    } else {
+      alert('PIN incorrect');
+      setPin('');
+    }
   };
 
   const totalPending = calculateTotalPenalty();
@@ -57,17 +91,69 @@ const RetardsTab = ({ currentSeller }) => {
 
   return (
     <div className="p-3 space-y-3 min-h-screen">
+      {/* PIN Verification Modal */}
+      {showPinForm && (
+        <div className="fixed inset-0 bg-black/50 z-30 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-4 w-full max-w-sm">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                <Lock className="w-5 h-5 text-gray-600" />
+                <h3 className="font-bold text-gray-900">Vérification requise</h3>
+              </div>
+              <button onClick={() => {
+                setShowPinForm(false);
+                setPin('');
+                setSelectedAction(null);
+                setSelectedEntry(null);
+              }} className="text-gray-500">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              <p className="text-gray-700 text-sm">
+                {selectedAction === 'markPaid' 
+                  ? 'Marquer comme payé ?' 
+                  : 'Déduire du salaire ?'}
+              </p>
+              
+              <div>
+                <label className="block text-sm text-gray-700 mb-2">Entrez votre PIN</label>
+                <input
+                  type="password"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-center text-lg"
+                  maxLength={4}
+                  placeholder="0000"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="pt-2">
+                <button
+                  onClick={verifyPin}
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
+                >
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Floating Add Button */}
       <button
         onClick={() => setShowAddForm(true)}
-        className="fixed bottom-4 right-4 z-10 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all"
+        className="fixed bottom-4 right-4 z-20 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all"
       >
         <Plus className="w-5 h-5" />
       </button>
 
       {/* Quick Add Form (Modal) */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black/50 z-20 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-10 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl p-4 w-full max-w-sm">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-bold text-gray-900">Nouveau retard</h3>
@@ -147,21 +233,24 @@ const RetardsTab = ({ currentSeller }) => {
                 </span>
               </div>
               
-              <button
-                onClick={() => togglePaid(entry.id)}
-                className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded ${
-                  entry.status === 'paid' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}
-              >
+              <div className="flex items-center gap-1">
                 {entry.status === 'paid' ? (
-                  <CheckCircle className="w-3 h-3" />
+                  <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                    <CheckCircle className="w-3 h-3" />
+                    Payé
+                  </span>
+                ) : entry.status === 'deducted' ? (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                    <DollarSign className="w-3 h-3" />
+                    Retenu
+                  </span>
                 ) : (
-                  <AlertCircle className="w-3 h-3" />
+                  <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
+                    <AlertCircle className="w-3 h-3" />
+                    À payer
+                  </span>
                 )}
-                <span>{entry.status === 'paid' ? 'Payé' : 'À payer'}</span>
-              </button>
+              </div>
             </div>
 
             {/* Second Row */}
@@ -188,6 +277,26 @@ const RetardsTab = ({ currentSeller }) => {
                 <span className="text-red-600 font-medium">+{entry.overdue}j</span>
               )}
             </div>
+
+            {/* Action Buttons for pending entries */}
+            {entry.status === 'pending' && (
+              <div className="flex gap-2 mt-2 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => handleMarkAsPaid(entry.id)}
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded transition-colors"
+                >
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  Marquer payé
+                </button>
+                <button
+                  onClick={() => handleDeductFromPayroll(entry.id)}
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded transition-colors"
+                >
+                  <Receipt className="w-3.5 h-3.5" />
+                  Retenir salaire
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
