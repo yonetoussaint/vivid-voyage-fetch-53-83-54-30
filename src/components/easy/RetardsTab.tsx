@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Clock, AlertCircle, DollarSign, Calendar, X, CheckCircle, Lock, Receipt, FileText, Download, History, Printer } from 'lucide-react';
+import { Plus, Clock, AlertCircle, DollarSign, Calendar, X, CheckCircle, Lock, Receipt, FileText, Download, History, Printer, Zap } from 'lucide-react';
 
 const RetardsTab = ({ currentSeller }) => {
   const [lateEntries, setLateEntries] = useState([
@@ -62,7 +62,7 @@ const RetardsTab = ({ currentSeller }) => {
   const [pin, setPin] = useState('');
   const [newEntry, setNewEntry] = useState({
     date: new Date().toISOString().split('T')[0],
-    time: '08:45'
+    time: ''
   });
 
   const receiptRef = useRef(null);
@@ -98,6 +98,35 @@ const RetardsTab = ({ currentSeller }) => {
     
     checkOverdueEntries();
   }, []); // Run once on component mount
+
+  // Get current time in HH:mm format
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  // Quick add with current time
+  const handleQuickAdd = () => {
+    const today = new Date();
+    const dueDate = new Date(today);
+    dueDate.setDate(today.getDate() + 5); // 5 days deadline
+    
+    const entry = {
+      id: lateEntries.length + 1,
+      date: today.toISOString().split('T')[0],
+      time: getCurrentTime(),
+      penalty: 500,
+      dueDate: dueDate.toISOString().split('T')[0],
+      status: 'pending',
+      overdue: 0,
+      paymentDate: null,
+      receiptId: null,
+      createdAt: new Date().toISOString()
+    };
+    setLateEntries([entry, ...lateEntries]);
+  };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
@@ -145,7 +174,7 @@ const RetardsTab = ({ currentSeller }) => {
     const entry = {
       id: lateEntries.length + 1,
       date: newEntry.date,
-      time: newEntry.time,
+      time: newEntry.time || getCurrentTime(),
       penalty: 500,
       dueDate: dueDate.toISOString().split('T')[0],
       status: 'pending',
@@ -156,7 +185,7 @@ const RetardsTab = ({ currentSeller }) => {
     };
     setLateEntries([entry, ...lateEntries]);
     setShowAddForm(false);
-    setNewEntry({ date: new Date().toISOString().split('T')[0], time: '08:45' });
+    setNewEntry({ date: new Date().toISOString().split('T')[0], time: '' });
   };
 
   const handleMarkAsPaid = (id) => {
@@ -543,7 +572,15 @@ const RetardsTab = ({ currentSeller }) => {
         </div>
       )}
 
-      {/* Floating Add Button */}
+      {/* Floating Quick Add Button */}
+      <button
+        onClick={handleQuickAdd}
+        className="fixed bottom-24 right-6 z-20 w-14 h-14 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95"
+      >
+        <Zap className="w-6 h-6" />
+      </button>
+
+      {/* Floating Add Form Button */}
       <button
         onClick={() => setShowAddForm(true)}
         className="fixed bottom-6 right-6 z-20 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95"
@@ -565,9 +602,9 @@ const RetardsTab = ({ currentSeller }) => {
               </button>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Date</label>
+                <label className="block text-sm text-gray-700 mb-2">Date</label>
                 <input
                   type="date"
                   value={newEntry.date}
@@ -577,18 +614,31 @@ const RetardsTab = ({ currentSeller }) => {
               </div>
               
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Heure d'arrivée</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm text-gray-700">Heure d'arrivée</label>
+                  <button
+                    type="button"
+                    onClick={() => setNewEntry({...newEntry, time: getCurrentTime()})}
+                    className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded"
+                  >
+                    Maintenant ({getCurrentTime()})
+                  </button>
+                </div>
                 <input
                   type="time"
                   value={newEntry.time}
                   onChange={(e) => setNewEntry({...newEntry, time: e.target.value})}
                   className="w-full p-3 border border-gray-300 rounded-lg text-base"
+                  placeholder="HH:mm"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Heure prévue: 08:00 • Heure actuelle: {getCurrentTime()}
+                </p>
               </div>
               
               <div className="pt-2">
                 <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg mb-2">
-                  <span className="text-sm text-red-800">Pénalité:</span>
+                  <span className="text-sm text-red-800">Pénalité fixe:</span>
                   <span className="font-bold text-red-600">500 GDS</span>
                 </div>
                 <p className="text-xs text-gray-500 mb-3">
@@ -627,6 +677,25 @@ const RetardsTab = ({ currentSeller }) => {
           <p className="text-green-600 text-xs">Salaire net</p>
           <p className="font-bold text-green-700 text-lg">{netSalary} GDS</p>
           <p className="text-green-500 text-xs">{((netSalary / 15000) * 100).toFixed(0)}% du salaire</p>
+        </div>
+      </div>
+
+      {/* Quick Add Banner */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5" />
+            <div>
+              <p className="font-bold text-sm">AJOUT RAPIDE</p>
+              <p className="text-xs opacity-90">
+                Cliquez sur le bouton rouge pour ajouter un retard avec l'heure actuelle
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-xs opacity-90">Heure: {getCurrentTime()}</p>
+            <p className="text-xs opacity-90">500 GDS</p>
+          </div>
         </div>
       </div>
 
