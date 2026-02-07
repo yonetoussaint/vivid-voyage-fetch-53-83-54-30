@@ -12,7 +12,6 @@ import {
   FileText,
   Image,
   File,
-  Download,
   ExternalLink,
   CheckCircle,
   Circle,
@@ -22,11 +21,21 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  MoreVertical,
   Paperclip,
   Plus,
   AlertCircle
 } from 'lucide-react';
+import {
+  getFileType,
+  getFileIconComponent,
+  getPriorityColor,
+  getMeetingTypeColor,
+  getStatusColor,
+  formatTime,
+  getDurationText,
+  formatFileSize,
+  isVirtualMeeting
+} from './tasksUtils';
 
 const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveFile }) => {
   const [expanded, setExpanded] = useState(false);
@@ -34,39 +43,6 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
   const [meetingNotes, setMeetingNotes] = useState(meeting.notes || '');
   const [showFileInput, setShowFileInput] = useState(false);
   const [newFile, setNewFile] = useState({ name: '', url: '' });
-
-  const getPriorityColor = (priority) => {
-    switch(priority) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getFileIcon = (type) => {
-    switch(type) {
-      case 'pdf': return <FileText className="w-4 h-4 text-red-500" />;
-      case 'excel': return <FileText className="w-4 h-4 text-green-500" />;
-      case 'word': return <FileText className="w-4 h-4 text-blue-500" />;
-      case 'image': return <Image className="w-4 h-4 text-purple-500" />;
-      case 'video': return <Video className="w-4 h-4 text-orange-500" />;
-      case 'archive': return <File className="w-4 h-4 text-gray-500" />;
-      default: return <File className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  const getFileType = (fileName) => {
-    const ext = fileName.split('.').pop().toLowerCase();
-    if (['pdf'].includes(ext)) return 'pdf';
-    if (['xlsx', 'xls', 'csv'].includes(ext)) return 'excel';
-    if (['docx', 'doc'].includes(ext)) return 'word';
-    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return 'image';
-    if (['mp4', 'avi', 'mov', 'wmv'].includes(ext)) return 'video';
-    if (['zip', 'rar', '7z'].includes(ext)) return 'archive';
-    return 'other';
-  };
 
   const handleAddFile = () => {
     if (newFile.name && newFile.url) {
@@ -81,6 +57,12 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
       setNewFile({ name: '', url: '' });
       setShowFileInput(false);
     }
+  };
+
+  const handleSaveNotes = () => {
+    // Save notes logic would go here
+    setIsEditingNotes(false);
+    // Update meeting notes in parent component
   };
 
   return (
@@ -109,11 +91,14 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
                 <Flag className="w-3 h-3 inline mr-1" />
                 {meeting.priority}
               </span>
-              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+              <span className={`px-2 py-1 text-xs rounded-full ${getMeetingTypeColor(meeting.meetingType)}`}>
                 {meeting.meetingType}
               </span>
+              <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(meeting.status)}`}>
+                {meeting.status}
+              </span>
             </div>
-            
+
             {meeting.description && (
               <p className="text-sm text-gray-600 line-clamp-2">{meeting.description}</p>
             )}
@@ -126,12 +111,15 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
               <span className="text-gray-300">•</span>
               <span className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                {meeting.dueTime} ({meeting.duration} {meeting.durationUnit})
+                {formatTime(meeting.dueTime)} ({getDurationText(meeting.duration, meeting.durationUnit)})
               </span>
               <span className="text-gray-300">•</span>
               <span className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
                 {meeting.location}
+                {isVirtualMeeting(meeting.location) && (
+                  <Video className="w-3 h-3 text-purple-500 ml-1" />
+                )}
               </span>
             </div>
           </div>
@@ -160,7 +148,9 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Paperclip className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Attachments ({meeting.files?.length || 0})</span>
+            <span className="text-sm font-medium text-gray-700">
+              Attachments ({meeting.files?.length || 0})
+            </span>
           </div>
           <button
             onClick={() => setShowFileInput(!showFileInput)}
@@ -213,14 +203,14 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
               <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white rounded-lg border">
-                    {getFileIcon(file.type)}
+                    {getFileIconComponent(getFileType(file.name))}
                   </div>
                   <div>
                     <div className="text-sm font-medium text-gray-800 truncate max-w-[150px]">
                       {file.name}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {file.size} • {file.type.toUpperCase()}
+                      {formatFileSize(file.size)} • {getFileType(file.name).toUpperCase()}
                     </div>
                   </div>
                 </div>
@@ -261,8 +251,9 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Users className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">Attendees</span>
-              <span className="text-xs text-gray-500">({meeting.attendees?.length || 0} people)</span>
+              <span className="text-sm font-medium text-gray-700">
+                Attendees ({meeting.attendees?.length || 0} people)
+              </span>
             </div>
             <div className="flex flex-wrap gap-2">
               {meeting.attendees?.map((attendee, idx) => (
@@ -322,23 +313,22 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
                   value={meetingNotes}
                   onChange={(e) => setMeetingNotes(e.target.value)}
                   placeholder="Add meeting notes, action items, decisions..."
-                  className="w-full p-3 text-sm border rounded-lg"
+                  className="w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   rows="4"
                 />
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={() => setIsEditingNotes(false)}
-                    className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50"
+                    className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50 flex items-center gap-1"
                   >
+                    <X className="w-3 h-3" />
                     Cancel
                   </button>
                   <button
-                    onClick={() => {
-                      // Save notes logic here
-                      setIsEditingNotes(false);
-                    }}
-                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                    onClick={handleSaveNotes}
+                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
                   >
+                    <Save className="w-3 h-3" />
                     Save Notes
                   </button>
                 </div>
@@ -360,6 +350,32 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
           </div>
         </div>
       )}
+
+      {/* Metadata Footer */}
+      <div className="flex items-center justify-between mt-4 pt-3 border-t text-xs text-gray-500">
+        <div className="flex items-center gap-2">
+          <span>Created: {new Date(meeting.createdAt).toLocaleDateString()}</span>
+          {meeting.status === 'completed' && meeting.completedAt && (
+            <>
+              <span className="text-gray-300">•</span>
+              <span>Completed: {new Date(meeting.completedAt).toLocaleDateString()}</span>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {isVirtualMeeting(meeting.location) ? (
+            <span className="flex items-center gap-1">
+              <Video className="w-3 h-3" />
+              Virtual Meeting
+            </span>
+          ) : (
+            <span className="flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              In-Person
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
