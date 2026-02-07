@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, Calculator } from 'lucide-react';
+import { SHIFTS } from './constants';
 
 const AddShortModal = ({ vendeurActif, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -18,13 +19,26 @@ const AddShortModal = ({ vendeurActif, onClose, onSave }) => {
     return Math.max(0, sales - given);
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: '2-digit' 
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
     const newErrors = {};
-    if (!formData.totalSales) newErrors.totalSales = 'Requis';
-    if (!formData.moneyGiven) newErrors.moneyGiven = 'Requis';
-    if (!formData.date) newErrors.date = 'Requis';
+    if (!formData.totalSales || parseFloat(formData.totalSales) <= 0) {
+      newErrors.totalSales = 'Ventes totales requises';
+    }
+    if (!formData.moneyGiven || parseFloat(formData.moneyGiven) < 0) {
+      newErrors.moneyGiven = 'Argent rendu requis';
+    }
+    if (!formData.date) newErrors.date = 'Date requise';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -33,19 +47,13 @@ const AddShortModal = ({ vendeurActif, onClose, onSave }) => {
 
     const shortAmount = calculateShortAmount();
     
+    // Format the date properly
+    const formattedDate = formatDate(formData.date);
+    
     const newShort = {
       id: Date.now(),
-      date: new Date(formData.date).toLocaleDateString('fr-FR', { 
-        day: '2-digit', 
-        month: 'short', 
-        year: '2-digit' 
-      }),
-      dueDate: new Date(new Date(formData.date).setDate(new Date(formData.date).getDate() + 5))
-        .toLocaleDateString('fr-FR', { 
-          day: '2-digit', 
-          month: 'short', 
-          year: '2-digit' 
-        }),
+      date: formattedDate,
+      dueDate: formatDate(new Date(new Date(formData.date).setDate(new Date(formData.date).getDate() + 5))),
       shift: formData.shift,
       totalSales: parseFloat(formData.totalSales),
       moneyGiven: parseFloat(formData.moneyGiven),
@@ -67,6 +75,7 @@ const AddShortModal = ({ vendeurActif, onClose, onSave }) => {
       partialPayments: []
     };
 
+    console.log('Adding new short:', newShort);
     onSave(newShort);
     onClose();
   };
@@ -111,6 +120,7 @@ const AddShortModal = ({ vendeurActif, onClose, onSave }) => {
               value={formData.date}
               onChange={handleChange}
               className={`w-full p-2 border rounded-lg ${errors.date ? 'border-red-500' : 'border-gray-300'}`}
+              max={new Date().toISOString().split('T')[0]}
             />
             {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}
           </div>
@@ -125,9 +135,9 @@ const AddShortModal = ({ vendeurActif, onClose, onSave }) => {
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-lg"
             >
-              <option value="Matin">Matin</option>
-              <option value="Soir">Soir</option>
-              <option value="Nuit">Nuit</option>
+              {SHIFTS.map(shift => (
+                <option key={shift} value={shift}>{shift}</option>
+              ))}
             </select>
           </div>
 
@@ -142,6 +152,7 @@ const AddShortModal = ({ vendeurActif, onClose, onSave }) => {
                 value={formData.totalSales}
                 onChange={handleChange}
                 step="0.001"
+                min="0"
                 className={`w-full p-2 border rounded-lg ${errors.totalSales ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="0.000"
               />
@@ -158,6 +169,7 @@ const AddShortModal = ({ vendeurActif, onClose, onSave }) => {
                 value={formData.moneyGiven}
                 onChange={handleChange}
                 step="0.001"
+                min="0"
                 className={`w-full p-2 border rounded-lg ${errors.moneyGiven ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="0.000"
               />
