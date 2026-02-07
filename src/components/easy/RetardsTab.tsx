@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Clock, AlertCircle, DollarSign, Calendar, X } from 'lucide-react';
+import { Plus, Clock, AlertCircle, DollarSign, Calendar, X, CheckCircle } from 'lucide-react';
 
 const RetardsTab = ({ currentSeller }) => {
   const [lateEntries, setLateEntries] = useState([
@@ -19,7 +19,7 @@ const RetardsTab = ({ currentSeller }) => {
     const day = date.getDate();
     const month = date.toLocaleDateString('fr-FR', { month: 'short' });
     const year = date.getFullYear().toString().slice(-2);
-    return `${dayName} ${day} ${month} '${year}`;
+    return `${dayName}. ${day} ${month}, ${year}`;
   };
 
   const calculateTotalPenalty = () => {
@@ -87,7 +87,7 @@ const RetardsTab = ({ currentSeller }) => {
                 />
                 {newEntry.date && (
                   <p className="text-xs text-gray-600 mt-1">
-                    {formatDate(newEntry.date)} • {new Date(newEntry.date).toLocaleDateString('fr-FR', { weekday: 'long' })}
+                    {formatDate(newEntry.date)}
                   </p>
                 )}
               </div>
@@ -144,19 +144,16 @@ const RetardsTab = ({ currentSeller }) => {
           <div key={entry.id} className="border border-gray-200 rounded-lg p-2.5 text-sm hover:border-gray-300 transition-colors">
             <div className="flex justify-between items-start">
               <div className="min-w-0 flex-1">
-                {/* Date Row - Explicit with day name */}
-                <div className="flex items-center gap-1.5 mb-1">
+                {/* Date Row */}
+                <div className="flex items-center gap-1.5 mb-2">
                   <Calendar className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
-                  <span className="font-bold text-gray-900 truncate">
+                  <span className="font-bold text-gray-900">
                     {formatDate(entry.date)}
-                  </span>
-                  <span className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">
-                    {new Date(entry.date).toLocaleDateString('fr-FR', { weekday: 'long' })}
                   </span>
                 </div>
                 
                 {/* Time & Penalty Row */}
-                <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-gray-500" />
                     <span className="font-medium text-gray-900">{entry.time}</span>
@@ -181,16 +178,26 @@ const RetardsTab = ({ currentSeller }) => {
                 </div>
               </div>
               
-              {/* Status Button */}
+              {/* Status Button with Lucide Icon */}
               <button
                 onClick={() => togglePaid(entry.id)}
-                className={`ml-2 px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+                className={`ml-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                   entry.status === 'paid' 
                     ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                     : 'bg-red-100 text-red-800 hover:bg-red-200'
                 }`}
               >
-                {entry.status === 'paid' ? '✓ Payé' : 'À payer'}
+                {entry.status === 'paid' ? (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Payé</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-4 h-4" />
+                    <span>À payer</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
