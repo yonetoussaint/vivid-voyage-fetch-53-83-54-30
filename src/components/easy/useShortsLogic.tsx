@@ -58,7 +58,17 @@ export const useShortsLogic = (vendeurActif) => {
         copiesPrinted: 0,
         partialPayments: [],
         remainingBalance: 13500.00,
-        photoEvidence: null
+        photoEvidence: null,
+        employeeId: "EMP-001",
+        tillNumber: "Caisse 1",
+        openingCash: 500000.00,
+        expectedCash: 1243526.25,
+        managerName: "Jean Pierre",
+        witnessName: null,
+        companyName: "Station Service Excellence",
+        companyAddress: "Rue Capois, Port-au-Prince",
+        companyPhone: "+509 44 44 4444",
+        companyTaxId: "RCS-PP-B-12345"
       },
       {
         id: 2,
@@ -83,82 +93,17 @@ export const useShortsLogic = (vendeurActif) => {
         copiesPrinted: 2,
         partialPayments: [],
         remainingBalance: 0,
-        photoEvidence: null
-      },
-      {
-        id: 3,
-        date: "12 Fév, 24",
-        dueDate: "17 Fév, 24",
-        shift: "Matin",
-        totalSales: 1894500.75,
-        moneyGiven: 1890500.75,
-        shortAmount: 4000.00,
-        status: STATUS.OVERDUE,
-        originalStatus: STATUS.PENDING,
-        wasOverdue: true,
-        notes: "Manquant gasoil",
-        paidFromPayroll: false,
-        daysOverdue: 12,
-        receiptPrinted: false,
-        receiptNumber: null,
-        printDate: null,
-        vendorSigned: false,
-        managerSigned: false,
-        receiptCopyArchived: false,
-        copiesPrinted: 0,
-        partialPayments: [],
-        remainingBalance: 4000.00,
-        photoEvidence: null
-      },
-      {
-        id: 4,
-        date: "10 Fév, 24",
-        dueDate: "15 Fév, 24",
-        shift: "Nuit",
-        totalSales: 1560000.00,
-        moneyGiven: 1560000.00,
-        shortAmount: 0.00,
-        status: STATUS.PAID,
-        originalStatus: STATUS.PAID,
-        wasOverdue: false,
-        notes: "Compte exact",
-        paidFromPayroll: false,
-        daysOverdue: 0,
-        receiptPrinted: false,
-        receiptNumber: null,
-        printDate: null,
-        vendorSigned: false,
-        managerSigned: false,
-        receiptCopyArchived: false,
-        copiesPrinted: 0,
-        partialPayments: [],
-        remainingBalance: 0,
-        photoEvidence: null
-      },
-      {
-        id: 5,
-        date: "8 Fév, 24",
-        dueDate: "13 Fév, 24",
-        shift: "Soir",
-        totalSales: 2783300.25,
-        moneyGiven: 2780000.25,
-        shortAmount: 3300.00,
-        status: STATUS.OVERDUE,
-        originalStatus: STATUS.PENDING,
-        wasOverdue: true,
-        notes: "À régulariser",
-        paidFromPayroll: false,
-        daysOverdue: 15,
-        receiptPrinted: false,
-        receiptNumber: null,
-        printDate: null,
-        vendorSigned: false,
-        managerSigned: false,
-        receiptCopyArchived: false,
-        copiesPrinted: 0,
-        partialPayments: [],
-        remainingBalance: 3300.00,
-        photoEvidence: null
+        photoEvidence: null,
+        employeeId: "EMP-001",
+        tillNumber: "Caisse 2",
+        openingCash: 750000.00,
+        expectedCash: 2112200.50,
+        managerName: "Marie Claude",
+        witnessName: "Paul Joseph",
+        companyName: "Station Service Excellence",
+        companyAddress: "Rue Capois, Port-au-Prince",
+        companyPhone: "+509 44 44 4444",
+        companyTaxId: "RCS-PP-B-12345"
       }
     ])
   );
@@ -190,6 +135,7 @@ export const useShortsLogic = (vendeurActif) => {
   const [printing, setPrinting] = useState(false);
   const [printError, setPrintError] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [managerName, setManagerName] = useState('Gérant Station');
 
   // Save to localStorage when data changes
   useEffect(() => {
@@ -340,159 +286,312 @@ export const useShortsLogic = (vendeurActif) => {
     }
   }, [pin, appSettings.managerPin, currentAction, currentShortId]);
 
+  // Professional Receipt Generation
   const generateReceiptHTML = useCallback((short, receiptNumber, copyNumber) => {
-    const currentDate = new Date().toLocaleString('fr-FR', {
+    const currentDate = new Date();
+    const printDate = currentDate.toLocaleString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     });
+
+    const getShiftTimes = (shift) => {
+      switch(shift) {
+        case 'Matin': return '06:00 - 14:00';
+        case 'Soir': return '14:00 - 22:00';
+        case 'Nuit': return '22:00 - 06:00';
+        default: return 'N/A';
+      }
+    };
+
+    // Generate barcode placeholder
+    const transactionId = `SHRT-${short.id.toString().padStart(6, '0')}-${currentDate.getFullYear()}`;
+    const barcodeSVG = generateBarcodeSVG(transactionId);
+
+    // Calculate denominations
+    const denominations = calculateDenominations(short.shortAmount);
+
+    // Payment schedule
+    const hasPartialPayments = short.partialPayments && short.partialPayments.length > 0;
+    const nextDueDate = short.dueDate || calculateDueDate(short.date, appSettings.dueDateDays);
 
     return `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Reçu de Paiement - ${receiptNumber}</title>
+        <title>Reçu de Déficit - ${receiptNumber}</title>
         <style>
           @page {
             size: 80mm auto;
-            margin: 5mm;
+            margin: 2mm;
           }
           
           @media print {
             body {
-              width: 80mm;
+              width: 76mm;
               margin: 0;
               padding: 0;
+              font-size: 8px !important;
             }
+            
+            .no-print { display: none !important; }
           }
           
           body {
             font-family: 'Courier New', monospace;
-            width: 80mm;
+            width: 76mm;
             margin: 0 auto;
-            padding: 10px;
-            font-size: 11px;
-            line-height: 1.3;
+            padding: 2mm;
+            font-size: 8px;
+            line-height: 1.1;
+            -webkit-print-color-adjust: exact;
           }
           
           .header {
             text-align: center;
-            border-bottom: 2px dashed #000;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2mm;
+            margin-bottom: 2mm;
           }
           
           .company-name {
-            font-size: 16px;
+            font-size: 10px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 1mm;
+            text-transform: uppercase;
+          }
+          
+          .company-info {
+            font-size: 6px;
+            color: #444;
+            margin-bottom: 1mm;
           }
           
           .receipt-title {
-            font-size: 14px;
+            font-size: 9px;
             font-weight: bold;
-            margin: 10px 0;
+            margin: 3mm 0;
+            text-align: center;
+            text-transform: uppercase;
           }
           
           .receipt-info {
-            margin-bottom: 10px;
+            margin-bottom: 2mm;
           }
           
           .row {
             display: flex;
             justify-content: space-between;
-            margin: 3px 0;
+            margin: 1mm 0;
+            padding: 0.5mm 0;
           }
           
           .label {
             font-weight: bold;
+            color: #333;
           }
           
           .section {
             border-top: 1px dashed #000;
-            padding-top: 8px;
-            margin-top: 8px;
+            padding-top: 2mm;
+            margin-top: 2mm;
+            page-break-inside: avoid;
           }
           
           .total-row {
-            font-size: 13px;
+            font-size: 9px;
             font-weight: bold;
-            padding: 5px 0;
+            padding: 1mm 0;
             border-top: 2px solid #000;
             border-bottom: 2px solid #000;
-            margin: 10px 0;
+            margin: 2mm 0;
+            background-color: #f0f0f0;
           }
           
           .signature-section {
-            margin-top: 20px;
-            padding-top: 10px;
+            margin-top: 3mm;
+            padding-top: 2mm;
             border-top: 1px dashed #000;
+            page-break-inside: avoid;
           }
           
           .signature-line {
-            margin-top: 30px;
+            margin-top: 15mm;
             border-top: 1px solid #000;
-            padding-top: 5px;
+            padding-top: 1mm;
+            font-size: 7px;
           }
           
           .footer {
             text-align: center;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 2px dashed #000;
-            font-size: 10px;
+            margin-top: 3mm;
+            padding-top: 2mm;
+            border-top: 1px dashed #000;
+            font-size: 6px;
+            color: #666;
           }
           
           .copy-indicator {
             text-align: center;
             font-weight: bold;
-            margin: 5px 0;
-            font-size: 12px;
+            margin: 1mm 0;
+            font-size: 8px;
+            background-color: #000;
+            color: white;
+            padding: 1mm;
+            border-radius: 2mm;
+          }
+          
+          .barcode {
+            text-align: center;
+            margin: 2mm 0;
+          }
+          
+          .barcode-text {
+            font-family: monospace;
+            font-size: 6px;
+            letter-spacing: 1px;
+          }
+          
+          .legal-text {
+            font-size: 6px;
+            color: #444;
+            text-align: justify;
+            margin: 2mm 0;
+            padding: 1mm;
+            background-color: #f9f9f9;
+            border-left: 2px solid #ccc;
+          }
+          
+          .highlight {
+            background-color: #fffacd;
+            padding: 0.5mm;
+            font-weight: bold;
+          }
+          
+          .denomination-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 7px;
+            padding: 0.3mm 0;
+            border-bottom: 0.5px dotted #ddd;
+          }
+          
+          .payment-schedule {
+            background-color: #f8f9fa;
+            padding: 1mm;
+            margin: 1mm 0;
+            border-left: 2px solid #007bff;
+          }
+          
+          .audit-trail {
+            font-size: 6px;
+            color: #666;
+            background-color: #f5f5f5;
+            padding: 1mm;
+            margin: 1mm 0;
+            border: 0.5px dashed #ccc;
+          }
+          
+          .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7px;
+          }
+          
+          .table th, .table td {
+            border: 0.5px solid #ddd;
+            padding: 0.5mm;
+            text-align: left;
+          }
+          
+          .table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+          }
+          
+          .stamp {
+            float: right;
+            border: 1px solid red;
+            padding: 1mm;
+            font-size: 6px;
+            color: red;
+            transform: rotate(5deg);
+            margin-left: 2mm;
           }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="company-name">STATION SERVICE</div>
-          <div>Reçu de Déficit</div>
-          <div class="copy-indicator">${copyNumber === 1 ? 'COPIE VENDEUR' : 'COPIE GÉRANT'}</div>
+          <div class="company-name">${short.companyName || 'STATION SERVICE EXCELLENCE'}</div>
+          <div class="company-info">
+            ${short.companyAddress || 'Rue Capois, Port-au-Prince'} • 
+            ${short.companyPhone || '+509 44 44 4444'}
+          </div>
+          <div class="company-info">
+            ID Fiscal: ${short.companyTaxId || 'RCS-PP-B-12345'} • 
+            Reçu de Déficit de Caisse
+          </div>
+        </div>
+        
+        <div class="copy-indicator">
+          ${copyNumber === 1 ? 'COPIE ORIGINALE - VENDEUR' : 'COPIE DUPLICATA - GÉRANT'}
+        </div>
+        
+        <div class="barcode">
+          <div style="margin-bottom: 1mm;">${barcodeSVG}</div>
+          <div class="barcode-text">${transactionId}</div>
         </div>
         
         <div class="receipt-info">
           <div class="row">
-            <span class="label">Numéro:</span>
+            <span class="label">Numéro du Reçu:</span>
             <span>${receiptNumber}</span>
           </div>
           <div class="row">
-            <span class="label">Date d'impression:</span>
-            <span>${currentDate}</span>
+            <span class="label">ID Transaction:</span>
+            <span>${transactionId}</span>
           </div>
           <div class="row">
-            <span class="label">Vendeur:</span>
-            <span>${vendeurActif?.nom || 'N/A'}</span>
+            <span class="label">Date d'impression:</span>
+            <span>${printDate}</span>
           </div>
         </div>
         
         <div class="section">
-          <div class="receipt-title">DÉTAILS DU DÉFICIT</div>
+          <div class="receipt-title">INFORMATIONS EMPLOYÉ</div>
           <div class="row">
-            <span class="label">Date vente:</span>
+            <span class="label">Nom du Vendeur:</span>
+            <span>${vendeurActif?.nom || 'N/A'}</span>
+          </div>
+          <div class="row">
+            <span class="label">ID Employé:</span>
+            <span>${short.employeeId || 'EMP-001'}</span>
+          </div>
+          <div class="row">
+            <span class="label">Caisse No:</span>
+            <span>${short.tillNumber || 'Caisse 1'}</span>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="receipt-title">DÉTAILS DU QUART</div>
+          <div class="row">
+            <span class="label">Date de vente:</span>
             <span>${short.date}</span>
           </div>
           <div class="row">
             <span class="label">Quart:</span>
-            <span>${short.shift}</span>
+            <span>${short.shift} (${getShiftTimes(short.shift)})</span>
           </div>
           <div class="row">
-            <span class="label">Raison:</span>
-            <span>${short.notes}</span>
+            <span class="label">Caisse d'ouverture:</span>
+            <span>${formatNumber(short.openingCash || 0)} HTG</span>
           </div>
-        </div>
-        
-        <div class="section">
           <div class="row">
             <span class="label">Ventes totales:</span>
             <span>${formatNumber(short.totalSales)} HTG</span>
@@ -501,43 +600,232 @@ export const useShortsLogic = (vendeurActif) => {
             <span class="label">Argent rendu:</span>
             <span>${formatNumber(short.moneyGiven)} HTG</span>
           </div>
-          <div class="total-row row">
-            <span class="label">DÉFICIT:</span>
-            <span>${formatNumber(short.shortAmount)} HTG</span>
-          </div>
         </div>
         
         <div class="section">
+          <div class="receipt-title">CALCUL DU DÉFICIT</div>
+          <table class="table">
+            <tr>
+              <th>Description</th>
+              <th>Montant (HTG)</th>
+            </tr>
+            <tr>
+              <td>Caisse d'ouverture</td>
+              <td>${formatNumber(short.openingCash || 0)}</td>
+            </tr>
+            <tr>
+              <td>+ Ventes totales</td>
+              <td>${formatNumber(short.totalSales)}</td>
+            </tr>
+            <tr>
+              <td>= Argent attendu en caisse</td>
+              <td>${formatNumber((short.openingCash || 0) + short.totalSales)}</td>
+            </tr>
+            <tr>
+              <td>- Argent effectivement compté</td>
+              <td>${formatNumber(short.moneyGiven)}</td>
+            </tr>
+            <tr style="background-color: #ffebee;">
+              <td><strong>DÉFICIT TOTAL</strong></td>
+              <td><strong>${formatNumber(short.shortAmount)} HTG</strong></td>
+            </tr>
+          </table>
+          
+          ${denominations.length > 0 ? `
+          <div style="margin-top: 2mm;">
+            <div class="label">Répartition par dénomination:</div>
+            ${denominations.map(d => `
+              <div class="denomination-row">
+                <span>${d.name}:</span>
+                <span>${d.count} × ${formatNumber(d.unit)} = ${formatNumber(d.amount)} HTG</span>
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+        </div>
+        
+        <div class="section">
+          <div class="receipt-title">PAIEMENT & ÉCHÉANCES</div>
           <div class="row">
             <span class="label">Mode de paiement:</span>
-            <span>${paymentMethod === 'cash' ? 'Espèces' : 'Déduction salariale'}</span>
+            <span class="highlight">${paymentMethod === 'cash' ? 'ESPÈCES' : 'DÉDUCTION SALARIALE'}</span>
           </div>
           <div class="row">
-            <span class="label">Date paiement:</span>
-            <span>${currentDate}</span>
+            <span class="label">Date de paiement:</span>
+            <span>${paymentDate}</span>
           </div>
+          <div class="row">
+            <span class="label">Date limite de paiement:</span>
+            <span class="highlight">${nextDueDate}</span>
+          </div>
+          
+          ${hasPartialPayments ? `
+          <div class="payment-schedule">
+            <div class="label">Historique des paiements:</div>
+            ${short.partialPayments.map(p => `
+              <div class="row" style="font-size: 7px;">
+                <span>${new Date(p.date).toLocaleDateString('fr-FR')}:</span>
+                <span>${formatNumber(p.amount)} HTG - ${p.notes || ''}</span>
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+          
+          ${short.remainingBalance > 0 ? `
+          <div class="payment-schedule">
+            <div class="label">RESTE À PAYER:</div>
+            <div class="row" style="font-size: 9px; font-weight: bold; color: #d32f2f;">
+              <span>Montant dû:</span>
+              <span>${formatNumber(short.remainingBalance)} HTG</span>
+            </div>
+            <div class="row">
+              <span>Prochain paiement dû:</span>
+              <span>${nextDueDate}</span>
+            </div>
+          </div>
+          ` : ''}
+        </div>
+        
+        <div class="legal-text">
+          <strong>DÉCLARATION DE RECONNAISSANCE:</strong> Je soussigné(e) reconnais le déficit de caisse ci-dessus mentionné et accepte ma responsabilité. Je m'engage à rembourser ce montant selon les termes convenus. Tout retard de paiement pourra entraîner des frais supplémentaires et/ou des mesures disciplinaires conformément au règlement interne.
+        </div>
+        
+        <div class="legal-text">
+          <strong>POLITIQUE DE DÉFICIT:</strong> Conformément à l'article 8.3 du règlement interne, tout déficit doit être remboursé dans les 5 jours ouvrables. Les retards de paiement sont soumis à un intérêt de 2% par mois. Le non-paiement peut entraîner une déduction salariale ou des poursuites disciplinaires.
         </div>
         
         <div class="signature-section">
           <div>
-            <div class="label">Signature Vendeur:</div>
-            <div class="signature-line">_______________________</div>
+            <div class="label">Signature et Nom du Vendeur:</div>
+            <div class="signature-line">
+              Signé: ________________________<br>
+              Nom: ${vendeurActif?.nom || 'N/A'}<br>
+              Date: ________________________
+            </div>
           </div>
           
-          <div style="margin-top: 20px;">
-            <div class="label">Signature Gérant:</div>
-            <div class="signature-line">_______________________</div>
+          <div style="margin-top: 10mm;">
+            <div class="label">Signature et Nom du Gérant:</div>
+            <div class="signature-line">
+              Signé: ________________________<br>
+              Nom: ${short.managerName || managerName}<br>
+              Date: ________________________
+            </div>
+          </div>
+          
+          ${short.witnessName ? `
+          <div style="margin-top: 10mm;">
+            <div class="label">Signature du Témoin:</div>
+            <div class="signature-line">
+              Signé: ________________________<br>
+              Nom: ${short.witnessName}<br>
+              Date: ________________________
+            </div>
+          </div>
+          ` : ''}
+          
+          <div class="stamp">
+            ${copyNumber === 1 ? 'ORIGINAL' : 'DUPLICATA'}<br>
+            ${short.status === 'paid' ? 'PAYÉ' : 'EN ATTENTE'}
+          </div>
+        </div>
+        
+        <div class="audit-trail">
+          <div class="row">
+            <span>Transaction créée par:</span>
+            <span>${short.managerName || managerName}</span>
+          </div>
+          <div class="row">
+            <span>Imprimé par:</span>
+            <span>${managerName}</span>
+          </div>
+          <div class="row">
+            <span>Date d'impression:</span>
+            <span>${printDate}</span>
+          </div>
+          <div class="row">
+            <span>Copie:</span>
+            <span>${copyNumber}/2 (${copyNumber === 1 ? 'Vendeur' : 'Gérant'})</span>
           </div>
         </div>
         
         <div class="footer">
-          <div>Merci de votre collaboration</div>
-          <div style="margin-top: 5px;">Copie ${copyNumber}/2</div>
+          <div>*** CONSERVEZ CE REÇU POUR VOS RECORDS ***</div>
+          <div style="margin-top: 1mm;">
+            Pour toute question, contactez la direction au ${short.companyPhone || '+509 44 44 4444'}
+          </div>
+          <div style="margin-top: 1mm; font-size: 5px; color: #999;">
+            Ce document est un reçu officiel. Toute falsification est punie par la loi.<br>
+            Validité: 1 an à partir de la date d'émission.<br>
+            Réimpression possible sur demande avec autorisation du gérant.
+          </div>
         </div>
       </body>
       </html>
     `;
-  }, [formatNumber, vendeurActif, paymentMethod]);
+  }, [formatNumber, vendeurActif, paymentMethod, managerName, appSettings.dueDateDays]);
+
+  // Helper functions for receipt
+  const generateBarcodeSVG = (text) => {
+    // Simple barcode representation (in production, use a proper barcode library)
+    const encodedText = encodeURIComponent(text);
+    return `
+      <svg width="200" height="40" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="40" fill="white" stroke="#000" stroke-width="0.5"/>
+        <text x="100" y="25" text-anchor="middle" font-family="monospace" font-size="8" fill="#000">
+          || ${text.replace(/-/g, ' | ')} ||
+        </text>
+        <line x1="10" y1="10" x2="190" y2="10" stroke="#000" stroke-width="1"/>
+        <line x1="10" y1="30" x2="190" y2="30" stroke="#000" stroke-width="1"/>
+      </svg>
+    `;
+  };
+
+  const calculateDenominations = (amount) => {
+    const denominations = [
+      { name: 'Billets de 1000', unit: 1000 },
+      { name: 'Billets de 500', unit: 500 },
+      { name: 'Billets de 250', unit: 250 },
+      { name: 'Billets de 100', unit: 100 },
+      { name: 'Billets de 50', unit: 50 },
+      { name: 'Billets de 25', unit: 25 },
+      { name: 'Pièces de 10', unit: 10 },
+      { name: 'Pièces de 5', unit: 5 },
+      { name: 'Pièces de 1', unit: 1 },
+      { name: 'Centimes', unit: 0.01 }
+    ];
+
+    let remaining = amount;
+    const result = [];
+
+    for (const denom of denominations) {
+      if (remaining >= denom.unit) {
+        const count = Math.floor(remaining / denom.unit);
+        const denomAmount = count * denom.unit;
+        if (count > 0) {
+          result.push({
+            name: denom.name,
+            unit: denom.unit,
+            count: count,
+            amount: denomAmount
+          });
+          remaining = Math.round((remaining - denomAmount) * 100) / 100;
+        }
+      }
+    }
+
+    // Add any remaining amount as "Reste"
+    if (remaining > 0) {
+      result.push({
+        name: 'Reste',
+        unit: remaining,
+        count: 1,
+        amount: remaining
+      });
+    }
+
+    return result;
+  };
 
   const printReceipt = useCallback(async (short, receiptNumber, copyNumber) => {
     return new Promise((resolve, reject) => {
@@ -599,7 +887,9 @@ export const useShortsLogic = (vendeurActif) => {
               receiptPrinted: true,
               receiptNumber: receiptNumber,
               printDate: new Date().toISOString(),
-              copiesPrinted: 1
+              copiesPrinted: 1,
+              paymentDate: new Date().toISOString(),
+              managerName: managerName
             }
           : s
       ));
@@ -628,7 +918,7 @@ export const useShortsLogic = (vendeurActif) => {
       setPrintError(error.message || 'Erreur lors de l\'impression');
       setPrinting(false);
     }
-  }, [currentReceipt, generateReceiptNumber, printReceipt]);
+  }, [currentReceipt, generateReceiptNumber, printReceipt, managerName]);
 
   const handleConfirmVendorSign = useCallback(() => {
     setShorts(prev => prev.map(s => 
@@ -693,11 +983,20 @@ export const useShortsLogic = (vendeurActif) => {
       copiesPrinted: 0,
       partialPayments: [],
       remainingBalance: newShort.shortAmount,
-      photoEvidence: null
+      photoEvidence: null,
+      employeeId: vendeurActif?.id || 'EMP-001',
+      tillNumber: 'Caisse 1',
+      openingCash: 500000.00,
+      expectedCash: newShort.totalSales,
+      managerName: managerName,
+      companyName: 'Station Service Excellence',
+      companyAddress: 'Rue Capois, Port-au-Prince',
+      companyPhone: '+509 44 44 4444',
+      companyTaxId: 'RCS-PP-B-12345'
     };
 
     setShorts(prev => [completeShort, ...prev]);
-  }, [appSettings.dueDateDays]);
+  }, [appSettings.dueDateDays, vendeurActif, managerName]);
 
   const updateShort = useCallback((updatedShort) => {
     setShorts(prev => prev.map(s => {
@@ -934,6 +1233,8 @@ export const useShortsLogic = (vendeurActif) => {
     setPrintError,
     paymentMethod,
     setPaymentMethod,
+    managerName,
+    setManagerName,
     
     // Methods
     formatNumber,
