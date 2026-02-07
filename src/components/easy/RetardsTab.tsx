@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { User, Clock, AlertCircle, DollarSign, Calendar, CheckCircle } from 'lucide-react';
+import { Clock, AlertCircle, DollarSign, Calendar, CheckCircle, FileText, Download, PlusCircle } from 'lucide-react';
 
-const RetardsTab = ({ vendeurActif, currentSeller, affectations }) => {
+const RetardsTab = ({ currentSeller }) => {
   const [lateEntries, setLateEntries] = useState([
     {
       id: 1,
@@ -10,10 +10,29 @@ const RetardsTab = ({ vendeurActif, currentSeller, affectations }) => {
       scheduledTime: '08:00',
       penaltyAmount: 500,
       dueDate: '2024-01-25',
-      status: 'pending', // pending, paid, deducted
+      status: 'pending',
       daysOverdue: 0
     },
-    // Add more entries as needed
+    {
+      id: 2,
+      date: '2024-01-10',
+      arrivalTime: '08:30',
+      scheduledTime: '08:00',
+      penaltyAmount: 500,
+      dueDate: '2024-01-20',
+      status: 'paid',
+      daysOverdue: 0
+    },
+    {
+      id: 3,
+      date: '2024-01-05',
+      arrivalTime: '08:15',
+      scheduledTime: '08:00',
+      penaltyAmount: 500,
+      dueDate: '2024-01-15',
+      status: 'deducted',
+      daysOverdue: 0
+    },
   ]);
 
   const calculateTotalPenalty = () => {
@@ -30,207 +49,254 @@ const RetardsTab = ({ vendeurActif, currentSeller, affectations }) => {
     );
   };
 
-  const formatCurrency = (amount) => {
-    return `${amount} GDS`;
+  const handleAddLateEntry = () => {
+    const newEntry = {
+      id: lateEntries.length + 1,
+      date: new Date().toISOString().split('T')[0],
+      arrivalTime: '08:00',
+      scheduledTime: '08:00',
+      penaltyAmount: 500,
+      dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'pending',
+      daysOverdue: 0
+    };
+    setLateEntries([newEntry, ...lateEntries]);
   };
 
-  const formatPayroll = (amount) => {
+  const formatCurrency = (amount) => {
     return `${amount.toLocaleString()} GDS`;
   };
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { color: 'bg-red-100 text-red-800', icon: AlertCircle },
-      paid: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      deducted: { color: 'bg-blue-100 text-blue-800', icon: DollarSign }
+      pending: { 
+        color: 'bg-red-100 text-red-800 border border-red-200',
+        icon: AlertCircle,
+        text: 'À payer'
+      },
+      paid: { 
+        color: 'bg-green-100 text-green-800 border border-green-200',
+        icon: CheckCircle,
+        text: 'Payé'
+      },
+      deducted: { 
+        color: 'bg-blue-100 text-blue-800 border border-blue-200',
+        icon: DollarSign,
+        text: 'Retenu sur salaire'
+      }
     };
     
     const config = statusConfig[status] || statusConfig.pending;
     const Icon = config.icon;
     
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
-        <Icon className="w-3 h-3" />
-        {status === 'pending' ? 'À payer' : status === 'paid' ? 'Payé' : 'Retenu sur salaire'}
+      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
+        <Icon className="w-4 h-4" />
+        {config.text}
       </span>
     );
   };
 
   const totalPendingPenalty = calculateTotalPenalty();
   const monthlySalary = 15000;
-  const willBeDeducted = totalPendingPenalty > 0;
+  const totalLateEntries = lateEntries.length;
+  const pendingEntries = lateEntries.filter(entry => entry.status === 'pending').length;
 
   return (
-    <div className="divide-y divide-gray-200">
-      <div className="p-4 hover:bg-gray-50 transition-colors">
-        <div className="flex gap-3">
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center">
-            <User className="w-5 h-5 text-gray-600" />
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Gestion des Retards</h2>
+            <p className="text-gray-600 mt-1">Suivi des retards et pénalités des vendeurs</p>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1 mb-1">
-              <span className="font-bold text-[15px] hover:underline">{vendeurActif}</span>
-              <span className="text-gray-500 text-[15px]">@{vendeurActif.toLowerCase().replace(/\s+/g, '_')}</span>
-              <span className="text-gray-500 text-[15px]">· Vendeur</span>
-            </div>
+          <button 
+            onClick={handleAddLateEntry}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+          >
+            <PlusCircle className="w-5 h-5" />
+            Ajouter un retard
+          </button>
+        </div>
 
-            {/* Stats Summary */}
-            <div className="mb-6 bg-gradient-to-r from-gray-50 to-blue-50 border border-gray-200 rounded-2xl p-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500 mb-1">Pompes affectées</p>
-                  <p className="font-semibold text-blue-600 text-lg">{affectations}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 mb-1">Retards ce mois</p>
-                  <p className="font-semibold text-amber-600 text-lg">{currentSeller.tardiness || 0}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 mb-1">Amendes impayées</p>
-                  <p className="font-semibold text-red-600 text-lg">{formatCurrency(totalPendingPenalty)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 mb-1">Salaire mensuel</p>
-                  <p className="font-semibold text-green-600 text-lg">{formatPayroll(monthlySalary)}</p>
-                </div>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm">Total des retards</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{totalLateEntries}</p>
               </div>
-
-              {/* Warning for pending penalties */}
-              {willBeDeducted && (
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-amber-800">
-                    <AlertCircle className="w-4 h-4" />
-                    <p className="text-sm font-medium">
-                      {totalPendingPenalty} GDS seront retenus sur le salaire de 15,000 GDS si non payés avant la date limite
-                    </p>
-                  </div>
-                </div>
-              )}
+              <Clock className="w-8 h-8 text-gray-400" />
             </div>
+          </div>
 
-            {/* Late Arrivals List */}
-            <div className="mb-4">
-              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Historique des retards
-              </h3>
-              
-              {lateEntries.length === 0 ? (
-                <div className="text-center py-6 text-gray-500 border border-dashed border-gray-300 rounded-lg">
-                  <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
-                  <p>Aucun retard enregistré</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {lateEntries.map((entry) => (
-                    <div key={entry.id} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {new Date(entry.date).toLocaleDateString('fr-FR')}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Arrivé à {entry.arrivalTime} (prévu: {entry.scheduledTime})
-                          </p>
-                        </div>
-                        {getStatusBadge(entry.status)}
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-red-600 text-sm">Pénalités impayées</p>
+                <p className="text-2xl font-bold text-red-700 mt-1">{formatCurrency(totalPendingPenalty)}</p>
+              </div>
+              <AlertCircle className="w-8 h-8 text-red-400" />
+            </div>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-amber-600 text-sm">Retards en attente</p>
+                <p className="text-2xl font-bold text-amber-700 mt-1">{pendingEntries}</p>
+              </div>
+              <FileText className="w-8 h-8 text-amber-400" />
+            </div>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-600 text-sm">Salaire mensuel</p>
+                <p className="text-2xl font-bold text-green-700 mt-1">{formatCurrency(monthlySalary)}</p>
+              </div>
+              <DollarSign className="w-8 h-8 text-green-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Penalty Warning */}
+        {totalPendingPenalty > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-amber-800 mb-1">Avertissement important</h3>
+                <p className="text-amber-700">
+                  {totalPendingPenalty.toLocaleString()} GDS en pénalités impayées. Si non réglés avant les dates limites, 
+                  ce montant sera automatiquement retenu sur le salaire mensuel de {monthlySalary.toLocaleString()} GDS.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Late Entries List */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-900">Historique des retards</h3>
+          <button className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+            <Download className="w-4 h-4" />
+            Exporter
+          </button>
+        </div>
+
+        {lateEntries.length === 0 ? (
+          <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-xl">
+            <Clock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <p className="text-lg">Aucun retard enregistré</p>
+            <p className="text-sm mt-1">Les retards ajoutés apparaîtront ici</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {lateEntries.map((entry) => (
+              <div key={entry.id} className="border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                  <div>
+                    <div className="flex items-center gap-4 mb-2">
+                      <div className="bg-gray-100 px-3 py-1 rounded-lg">
+                        <p className="font-semibold text-gray-900">
+                          {new Date(entry.date).toLocaleDateString('fr-FR', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short'
+                          })}
+                        </p>
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-500">Amende</p>
-                          <p className="font-semibold text-red-600">{formatCurrency(entry.penaltyAmount)}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500">Date limite</p>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            <span className={`font-medium ${entry.daysOverdue > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                              {new Date(entry.dueDate).toLocaleDateString('fr-FR')}
-                            </span>
-                            {entry.daysOverdue > 0 && (
-                              <span className="text-xs text-red-500">(+{entry.daysOverdue} jours)</span>
-                            )}
-                          </div>
-                        </div>
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Clock className="w-4 h-4" />
+                        <span>Arrivé à <span className="font-semibold">{entry.arrivalTime}</span></span>
+                        <span className="text-gray-400">•</span>
+                        <span>Prévu à <span className="font-semibold">{entry.scheduledTime}</span></span>
                       </div>
-                      
-                      {entry.status === 'pending' && (
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <button
-                            onClick={() => handleMarkAsPaid(entry.id)}
-                            className="w-full py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
-                          >
-                            Marquer comme payé
-                          </button>
-                        </div>
-                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Salary Calculation Preview */}
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                Calcul du salaire net
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Salaire de base</span>
-                  <span className="font-medium">{formatPayroll(monthlySalary)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Retenues pour retards</span>
-                  <span className="font-medium text-red-600">- {formatCurrency(totalPendingPenalty)}</span>
-                </div>
-                <div className="pt-2 border-t border-gray-300">
-                  <div className="flex justify-between font-semibold">
-                    <span className="text-gray-900">Salaire net estimé</span>
-                    <span className="text-green-700">
-                      {formatPayroll(monthlySalary - totalPendingPenalty)}
-                    </span>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-red-500" />
+                        <span className="font-bold text-red-600">{formatCurrency(entry.penaltyAmount)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-blue-500" />
+                        <span className={`font-medium ${entry.daysOverdue > 0 ? 'text-red-600' : 'text-gray-700'}`}>
+                          Date limite: {new Date(entry.dueDate).toLocaleDateString('fr-FR')}
+                        </span>
+                        {entry.daysOverdue > 0 && (
+                          <span className="text-sm text-red-500">(+{entry.daysOverdue} jours)</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    {getStatusBadge(entry.status)}
                   </div>
                 </div>
+                
+                {entry.status === 'pending' && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => handleMarkAsPaid(entry.id)}
+                        className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+                      >
+                        Marquer comme payé
+                      </button>
+                      <button className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg transition-colors">
+                        Générer facture
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-between mt-6 max-w-md text-gray-500">
-              <button className="flex items-center gap-2 hover:text-blue-600 transition-colors group">
-                <div className="p-2 rounded-full group-hover:bg-blue-50">
-                  <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 4v16m8-8H4"/>
-                  </svg>
-                </div>
-                <span className="text-sm">Ajouter un retard</span>
-              </button>
-              
-              <button className="flex items-center gap-2 hover:text-green-600 transition-colors group">
-                <div className="p-2 rounded-full group-hover:bg-green-50">
-                  <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M17 1l4 4-4 4"/>
-                    <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-                    <path d="M7 23l-4-4 4-4"/>
-                    <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-                  </svg>
-                </div>
-                <span className="text-sm">Générer facture</span>
-              </button>
-              
-              <button className="flex items-center gap-2 hover:text-amber-600 transition-colors group">
-                <div className="p-2 rounded-full group-hover:bg-amber-50">
-                  <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                    <polyline points="16 6 12 2 8 6"/>
-                    <line x1="12" y1="2" x2="12" y2="15"/>
-                  </svg>
-                </div>
-                <span className="text-sm">Exporter</span>
-              </button>
+      {/* Salary Calculation */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 className="text-xl font-bold text-gray-900 mb-6">Calcul du salaire net</h3>
+        
+        <div className="max-w-md space-y-4">
+          <div className="flex justify-between items-center py-3 border-b border-gray-200">
+            <span className="text-gray-700">Salaire de base</span>
+            <span className="font-semibold text-gray-900">{formatCurrency(monthlySalary)}</span>
+          </div>
+          
+          <div className="flex justify-between items-center py-3 border-b border-gray-200">
+            <div>
+              <span className="text-gray-700">Retenues pour retards</span>
+              <p className="text-sm text-gray-500">({pendingEntries} retards impayés)</p>
             </div>
+            <span className="font-semibold text-red-600">- {formatCurrency(totalPendingPenalty)}</span>
+          </div>
+          
+          <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4">
+            <span className="font-bold text-gray-900">Salaire net estimé</span>
+            <span className="text-2xl font-bold text-green-700">
+              {formatCurrency(monthlySalary - totalPendingPenalty)}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+              Générer bulletin de paie
+            </button>
+            <button className="flex-1 py-3 border border-gray-300 hover:bg-gray-50 text-gray-800 font-medium rounded-lg transition-colors">
+              Voir détails comptables
+            </button>
           </div>
         </div>
       </div>
