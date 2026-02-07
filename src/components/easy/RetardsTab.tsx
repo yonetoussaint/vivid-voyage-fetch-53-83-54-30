@@ -13,6 +13,15 @@ const RetardsTab = ({ currentSeller }) => {
     time: '08:45'
   });
 
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+    const day = date.getDate();
+    const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+    const year = date.getFullYear().toString().slice(-2);
+    return `${dayName} ${day} ${month} '${year}`;
+  };
+
   const calculateTotalPenalty = () => {
     return lateEntries
       .filter(entry => entry.status === 'pending')
@@ -47,7 +56,7 @@ const RetardsTab = ({ currentSeller }) => {
   const pendingCount = lateEntries.filter(e => e.status === 'pending').length;
 
   return (
-    <div className="p-3 space-y-3 relative">
+    <div className="p-3 space-y-3 relative min-h-screen">
       {/* Floating Add Button */}
       <button
         onClick={() => setShowAddForm(true)}
@@ -76,6 +85,11 @@ const RetardsTab = ({ currentSeller }) => {
                   onChange={(e) => setNewEntry({...newEntry, date: e.target.value})}
                   className="w-full p-2 border border-gray-300 rounded-lg text-sm"
                 />
+                {newEntry.date && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    {formatDate(newEntry.date)} • {new Date(newEntry.date).toLocaleDateString('fr-FR', { weekday: 'long' })}
+                  </p>
+                )}
               </div>
               
               <div>
@@ -86,10 +100,14 @@ const RetardsTab = ({ currentSeller }) => {
                   onChange={(e) => setNewEntry({...newEntry, time: e.target.value})}
                   className="w-full p-2 border border-gray-300 rounded-lg text-sm"
                 />
+                <p className="text-xs text-gray-500 mt-1">Heure prévue: 08:00</p>
               </div>
               
               <div className="pt-2">
-                <p className="text-sm text-gray-600 mb-2">Pénalité automatique: <span className="font-bold text-red-600">500 GDS</span></p>
+                <div className="flex items-center justify-between p-2 bg-red-50 rounded-lg mb-3">
+                  <span className="text-sm font-medium text-red-800">Pénalité fixe:</span>
+                  <span className="font-bold text-red-600">500 GDS</span>
+                </div>
                 <button
                   onClick={handleAddEntry}
                   className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
@@ -103,10 +121,16 @@ const RetardsTab = ({ currentSeller }) => {
       )}
 
       {/* Header Stats */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="font-bold text-gray-900">Retards</h3>
-          <p className="text-xs text-gray-500">{pendingCount} impayés • {totalPending} GDS</p>
+          <h3 className="font-bold text-gray-900 text-lg">Retards & Pénalités</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
+              {pendingCount} impayés
+            </span>
+            <span className="text-xs text-gray-500">•</span>
+            <span className="text-xs text-gray-700">{totalPending} GDS dus</span>
+          </div>
         </div>
         <div className="text-right">
           <p className="text-sm font-bold text-green-700">{15000 - totalPending} GDS</p>
@@ -115,86 +139,110 @@ const RetardsTab = ({ currentSeller }) => {
       </div>
 
       {/* Entries List */}
-      <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+      <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1 border-b border-gray-200 pb-3">
         {lateEntries.map((entry) => (
-          <div key={entry.id} className="border border-gray-200 rounded-lg p-2 text-sm">
+          <div key={entry.id} className="border border-gray-200 rounded-lg p-2.5 text-sm hover:border-gray-300 transition-colors">
             <div className="flex justify-between items-start">
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                  <span className="font-medium truncate">
-                    {new Date(entry.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+              <div className="min-w-0 flex-1">
+                {/* Date Row - Explicit with day name */}
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Calendar className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                  <span className="font-bold text-gray-900 truncate">
+                    {formatDate(entry.date)}
                   </span>
-                  <span className="text-gray-400">•</span>
-                  <span className="text-gray-700 truncate">{entry.time}</span>
+                  <span className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">
+                    {new Date(entry.date).toLocaleDateString('fr-FR', { weekday: 'long' })}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <DollarSign className="w-3 h-3 text-red-500 flex-shrink-0" />
-                  <span className="font-bold text-red-600">500 GDS</span>
+                
+                {/* Time & Penalty Row */}
+                <div className="flex items-center gap-2 mt-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-gray-500" />
+                    <span className="font-medium text-gray-900">{entry.time}</span>
+                    <span className="text-xs text-gray-500">(prévu 08:00)</span>
+                  </div>
+                  
+                  <span className="text-gray-300">|</span>
+                  
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-red-500" />
+                    <span className="font-bold text-red-600">500 GDS</span>
+                  </div>
+                </div>
+                
+                {/* Due Date Row */}
+                <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-600">
+                  <span>Échéance:</span>
+                  <span className="font-medium">{formatDate(entry.dueDate)}</span>
                   {entry.overdue > 0 && (
-                    <>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-red-500 text-xs">+{entry.overdue}j</span>
-                    </>
+                    <span className="text-red-500 font-bold">(+{entry.overdue} jours)</span>
                   )}
                 </div>
               </div>
               
-              <div className="flex flex-col items-end gap-1">
-                <button
-                  onClick={() => togglePaid(entry.id)}
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full transition-colors ${
-                    entry.status === 'paid' 
-                      ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                      : 'bg-red-100 text-red-800 hover:bg-red-200'
-                  }`}
-                >
-                  {entry.status === 'paid' ? '✓ Payé' : 'À payer'}
-                </button>
-                <div className="flex items-center gap-1 text-gray-500 text-xs">
-                  <Calendar className="w-2.5 h-2.5" />
-                  {new Date(entry.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                </div>
-              </div>
+              {/* Status Button */}
+              <button
+                onClick={() => togglePaid(entry.id)}
+                className={`ml-2 px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+                  entry.status === 'paid' 
+                    ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                    : 'bg-red-100 text-red-800 hover:bg-red-200'
+                }`}
+              >
+                {entry.status === 'paid' ? '✓ Payé' : 'À payer'}
+              </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Warning Bar */}
-      {totalPending > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-2">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-red-800 truncate">
-                {totalPending} GDS seront retenus sur salaire
-              </p>
-              <p className="text-xs text-red-700">
-                Si non payés: retenue auto sur 15,000 GDS
-              </p>
+      {/* Financial Summary */}
+      <div className="space-y-3">
+        {/* Warning Alert */}
+        {totalPending > 0 && (
+          <div className="bg-gradient-to-r from-red-50 to-amber-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-red-800 mb-0.5">
+                  RETENUE AUTOMATIQUE SUR SALAIRE
+                </p>
+                <p className="text-xs text-red-700">
+                  {totalPending} GDS seront retenus sur le salaire de 15,000 GDS
+                  {totalPending >= 5000 && ' • MONTANT IMPORTANT'}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Quick Summary */}
-      <div className="border-t border-gray-200 pt-2">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="bg-gray-50 p-2 rounded-lg">
-            <p className="text-xs text-gray-500">Salaire base</p>
-            <p className="font-bold">15,000 GDS</p>
+        {/* Salary Breakdown */}
+        <div className="border border-gray-200 rounded-lg p-3">
+          <div className="grid grid-cols-2 gap-3 mb-2">
+            <div className="bg-gray-50 p-2 rounded">
+              <p className="text-xs text-gray-500 mb-1">Salaire de base</p>
+              <p className="font-bold text-gray-900">15,000 GDS</p>
+            </div>
+            <div className="bg-red-50 p-2 rounded">
+              <p className="text-xs text-red-500 mb-1">Retenues retards</p>
+              <p className="font-bold text-red-700">-{totalPending} GDS</p>
+            </div>
           </div>
-          <div className="bg-red-50 p-2 rounded-lg">
-            <p className="text-xs text-red-500">Retenues</p>
-            <p className="font-bold text-red-700">-{totalPending} GDS</p>
-          </div>
-        </div>
-        
-        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex justify-between items-center">
-            <span className="font-bold text-green-900">Salaire net:</span>
-            <span className="text-lg font-bold text-green-800">{15000 - totalPending} GDS</span>
+          
+          <div className="border-t border-gray-200 pt-2">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="font-bold text-gray-900 text-sm">SALAIRE NET</p>
+                <p className="text-xs text-gray-500">À verser</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-green-700">{15000 - totalPending} GDS</p>
+                <p className="text-xs text-gray-500">
+                  {((15000 - totalPending) / 15000 * 100).toFixed(0)}% du salaire base
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
