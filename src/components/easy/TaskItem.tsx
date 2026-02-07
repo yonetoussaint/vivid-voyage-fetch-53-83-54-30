@@ -9,7 +9,11 @@ import {
   MessageSquare,
   ClipboardList,
   Video,
-  Phone,
+  FileText,
+  Image,
+  File,
+  Download,
+  ExternalLink,
   CheckCircle,
   Circle,
   Trash2,
@@ -19,462 +23,345 @@ import {
   ChevronDown,
   ChevronUp,
   MoreVertical,
-  PhoneCall,
-  Calendar as CalendarIcon,
-  Target,
+  Paperclip,
+  Plus,
   AlertCircle
 } from 'lucide-react';
 
-const TaskItem = ({ task, onDelete, onToggleComplete, vendeurs }) => {
+const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveFile }) => {
   const [expanded, setExpanded] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [meetingNotes, setMeetingNotes] = useState(task.notes || '');
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [meetingNotes, setMeetingNotes] = useState(meeting.notes || '');
+  const [showFileInput, setShowFileInput] = useState(false);
+  const [newFile, setNewFile] = useState({ name: '', url: '' });
 
   const getPriorityColor = (priority) => {
     switch(priority) {
-      case 'critical': return 'bg-red-500 text-white';
-      case 'high': return 'bg-orange-500 text-white';
-      case 'medium': return 'bg-yellow-500 text-white';
-      case 'low': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const getMeetingTypeColor = () => {
-    if (task.location?.includes('Virtual') || task.location?.includes('Zoom')) {
-      return 'bg-purple-100 text-purple-800 border-purple-200';
+  const getFileIcon = (type) => {
+    switch(type) {
+      case 'pdf': return <FileText className="w-4 h-4 text-red-500" />;
+      case 'excel': return <FileText className="w-4 h-4 text-green-500" />;
+      case 'word': return <FileText className="w-4 h-4 text-blue-500" />;
+      case 'image': return <Image className="w-4 h-4 text-purple-500" />;
+      case 'video': return <Video className="w-4 h-4 text-orange-500" />;
+      case 'archive': return <File className="w-4 h-4 text-gray-500" />;
+      default: return <File className="w-4 h-4 text-gray-500" />;
     }
-    return 'bg-blue-100 text-blue-800 border-blue-200';
   };
 
-  const handleSaveNotes = () => {
-    // Here you would typically update the task in your state
-    setIsEditing(false);
-    // Call parent function to update task notes
+  const getFileType = (fileName) => {
+    const ext = fileName.split('.').pop().toLowerCase();
+    if (['pdf'].includes(ext)) return 'pdf';
+    if (['xlsx', 'xls', 'csv'].includes(ext)) return 'excel';
+    if (['docx', 'doc'].includes(ext)) return 'word';
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return 'image';
+    if (['mp4', 'avi', 'mov', 'wmv'].includes(ext)) return 'video';
+    if (['zip', 'rar', '7z'].includes(ext)) return 'archive';
+    return 'other';
   };
 
-  if (task.type === 'meeting') {
-    return (
-      <div className={`p-3 mb-3 bg-white border rounded-lg shadow-sm ${task.status === 'completed' ? 'border-green-300 bg-green-50' : 'border-blue-100'}`}>
-        {/* Mobile-Friendly Header */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-start gap-2 flex-1 min-w-0">
-            <button 
-              onClick={() => onToggleComplete(task.id)}
-              className="mt-0.5 flex-shrink-0"
-              aria-label={task.status === 'completed' ? 'Mark as pending' : 'Mark as completed'}
-            >
-              {task.status === 'completed' ? (
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              ) : (
-                <Circle className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              )}
-            </button>
+  const handleAddFile = () => {
+    if (newFile.name && newFile.url) {
+      const fileType = getFileType(newFile.name);
+      onAddFile(meeting.id, {
+        id: Date.now(),
+        name: newFile.name,
+        url: newFile.url,
+        type: fileType,
+        size: 'N/A'
+      });
+      setNewFile({ name: '', url: '' });
+      setShowFileInput(false);
+    }
+  };
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <h3 className={`text-sm font-semibold truncate ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-                  {task.title}
-                </h3>
-                <div className="flex items-center gap-1">
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getPriorityColor(task.priority)} whitespace-nowrap`}>
-                    {task.priority}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Quick Info Row - Mobile Optimized */}
-              <div className="flex items-center gap-2 text-xs text-gray-600 mt-1 flex-wrap">
-                <span className="flex items-center gap-1 whitespace-nowrap">
-                  <CalendarIcon className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate">{task.dueDate}</span>
-                </span>
-                <span className="text-gray-300">•</span>
-                <span className="flex items-center gap-1 whitespace-nowrap">
-                  <Clock className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate">{task.dueTime || 'All day'}</span>
-                </span>
-                <span className="text-gray-300">•</span>
-                <span className="flex items-center gap-1 whitespace-nowrap">
-                  <MapPin className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate max-w-[100px]">{task.location || 'TBD'}</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="relative flex-shrink-0">
-            <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="p-1.5 hover:bg-gray-100 rounded-lg"
-              aria-label="More options"
-            >
-              <MoreVertical className="w-4 h-4 text-gray-500" />
-            </button>
-
-            {showMobileMenu && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-white border rounded-lg shadow-lg z-10 py-1">
-                <button
-                  onClick={() => {
-                    setIsEditing(true);
-                    setShowMobileMenu(false);
-                  }}
-                  className="w-full px-4 py-2 text-sm text-left hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <Edit2 className="w-4 h-4" />
-                  Edit Meeting
-                </button>
-                <button
-                  onClick={() => {
-                    onDelete(task.id);
-                    setShowMobileMenu(false);
-                  }}
-                  className="w-full px-4 py-2 text-sm text-left hover:bg-red-50 text-red-600 flex items-center gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-                <button
-                  onClick={() => {
-                    setExpanded(!expanded);
-                    setShowMobileMenu(false);
-                  }}
-                  className="w-full px-4 py-2 text-sm text-left hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  {expanded ? 'Hide Notes' : 'Show Notes'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile-Optimized Meeting Details */}
-        <div className="space-y-3 mb-4">
-          {/* Attendees - Mobile Scrollable */}
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-600" />
-                <span className="text-xs font-medium text-gray-700">Attendees ({task.attendees?.length || 0})</span>
-              </div>
-              {task.assignedTo && (
-                <span className="text-xs text-blue-600 font-medium">Host: {task.assignedTo}</span>
-              )}
-            </div>
-            
-            <div className="overflow-x-auto -mx-3 px-3">
-              <div className="flex gap-2 pb-2 min-w-max">
-                {task.attendees?.map((attendee, idx) => (
-                  <div key={idx} className="flex flex-col items-center min-w-[60px]">
-                    <div className="w-8 h-8 rounded-full bg-white border flex items-center justify-center mb-1">
-                      <User className="w-4 h-4 text-gray-400" />
-                    </div>
-                    <span className="text-xs text-gray-700 truncate max-w-[60px] text-center">
-                      {attendee}
-                    </span>
-                    {attendee === task.assignedTo && (
-                      <span className="text-[10px] px-1 py-0.5 bg-blue-100 text-blue-700 rounded mt-1">Host</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Agenda - Mobile Collapsible */}
-          {task.agenda && (
-            <div className="p-3 bg-gray-50 rounded-lg border">
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="flex items-center justify-between w-full mb-2"
-              >
-                <div className="flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4 text-gray-600" />
-                  <span className="text-xs font-medium text-gray-700">Agenda ({task.agenda.split('\n').filter(l => l.trim()).length} items)</span>
-                </div>
-                {expanded ? (
-                  <ChevronUp className="w-4 h-4 text-gray-500" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
-                )}
-              </button>
-
-              {expanded && (
-                <div className="space-y-2 mt-2 pt-2 border-t">
-                  {task.agenda.split('\n').map((item, idx) => (
-                    item.trim() && (
-                      <div key={idx} className="flex items-start gap-2 text-sm">
-                        <div className="w-6 h-6 flex-shrink-0 flex items-center justify-center bg-white border rounded-full text-xs font-medium">
-                          {idx + 1}
-                        </div>
-                        <span className="text-gray-700">{item}</span>
-                      </div>
-                    )
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Quick Actions Bar */}
-          <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-1">
-              <span className={`px-2 py-1 text-xs rounded-full ${getMeetingTypeColor()} border flex items-center gap-1`}>
-                {task.location?.includes('Virtual') ? (
-                  <>
-                    <Video className="w-3 h-3" />
-                    <span className="hidden xs:inline">Virtual</span>
-                  </>
-                ) : (
-                  <>
-                    <Users className="w-3 h-3" />
-                    <span className="hidden xs:inline">In-Person</span>
-                  </>
-                )}
-              </span>
-              
-              <span className={`px-2 py-1 text-xs rounded-full ${
-                task.status === 'completed' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-yellow-100 text-yellow-800'
-              } border`}>
-                {task.status === 'completed' ? 'Done' : 'Upcoming'}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              {task.location?.includes('Virtual') && (
-                <button className="p-1.5 hover:bg-purple-50 text-purple-600 rounded-lg">
-                  <Video className="w-4 h-4" />
-                </button>
-              )}
-              <button className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg">
-                <PhoneCall className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Notes Section - Mobile Optimized */}
-        <div className="border-t pt-3">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center justify-between w-full p-2 hover:bg-gray-50 rounded-lg"
-          >
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Notes</span>
-              {meetingNotes && (
-                <span className="text-xs text-gray-500 hidden xs:inline">• Has notes</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {isEditing && (
-                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Editing</span>
-              )}
-              {expanded ? (
-                <ChevronUp className="w-4 h-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              )}
-            </div>
-          </button>
-
-          {expanded && (
-            <div className="mt-2">
-              {isEditing ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={meetingNotes}
-                    onChange={(e) => setMeetingNotes(e.target.value)}
-                    placeholder="Add meeting notes, action items, or follow-ups..."
-                    className="w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    rows="3"
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => setIsEditing(false)}
-                      className="flex-1 min-w-[120px] px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 flex items-center justify-center gap-1"
-                    >
-                      <X className="w-3 h-3" />
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSaveNotes}
-                      className="flex-1 min-w-[120px] px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-1"
-                    >
-                      <Save className="w-3 h-3" />
-                      Save
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  {meetingNotes ? (
-                    <div className="text-sm text-gray-700 whitespace-pre-line">
-                      {meetingNotes}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500 italic flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4" />
-                      No notes yet. Add notes to track discussion points.
-                    </div>
-                  )}
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="mt-2 text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Add/Edit Notes
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Bottom Status Bar - Mobile Optimized */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-gray-500">
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline">Created: {new Date(task.createdAt).toLocaleDateString()}</span>
-            <span className="sm:hidden">Created: {new Date(task.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
-            {task.status === 'completed' && task.completedAt && (
-              <>
-                <span className="text-gray-300">•</span>
-                <span className="hidden sm:inline">Completed: {new Date(task.completedAt).toLocaleDateString()}</span>
-                <span className="sm:hidden">Done: {new Date(task.completedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
-              </>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-500">{task.shift} Shift</span>
-            {task.duration && (
-              <>
-                <span className="text-gray-300">•</span>
-                <span className="text-xs text-gray-500">{task.duration} min</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Regular Task Card - Mobile Optimized
   return (
-    <div className="p-3 mb-2 bg-white border rounded-lg">
-      <div className="flex items-start justify-between">
+    <div className={`p-4 bg-white border rounded-lg shadow-sm ${meeting.status === 'completed' ? 'border-green-300 bg-green-50' : 'border-blue-100'}`}>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <button 
-            onClick={() => onToggleComplete(task.id)}
+            onClick={() => onToggleComplete(meeting.id)}
             className="mt-0.5 flex-shrink-0"
-            aria-label={task.status === 'completed' ? 'Mark as pending' : 'Mark as completed'}
+            aria-label={meeting.status === 'completed' ? 'Mark as pending' : 'Mark as completed'}
           >
-            {task.status === 'completed' ? (
+            {meeting.status === 'completed' ? (
               <CheckCircle className="w-5 h-5 text-green-600" />
             ) : (
-              <Circle className="w-5 h-5 text-gray-400" />
+              <Circle className="w-5 h-5 text-gray-400 hover:text-gray-600" />
             )}
           </button>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h3 className={`text-sm font-medium truncate ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-                {task.title}
+              <h3 className={`text-base font-semibold truncate ${meeting.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                {meeting.title}
               </h3>
-              <span className={`px-2 py-0.5 text-xs rounded-full ${getPriorityColor(task.priority)} whitespace-nowrap flex-shrink-0`}>
-                {task.priority}
+              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(meeting.priority)} whitespace-nowrap`}>
+                <Flag className="w-3 h-3 inline mr-1" />
+                {meeting.priority}
+              </span>
+              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                {meeting.meetingType}
               </span>
             </div>
             
-            {task.description && (
-              <p className="text-xs text-gray-600 line-clamp-2">{task.description}</p>
+            {meeting.description && (
+              <p className="text-sm text-gray-600 line-clamp-2">{meeting.description}</p>
             )}
-            
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              {task.assignedTo && (
-                <span className="text-xs text-gray-600 flex items-center gap-1 whitespace-nowrap">
-                  <User className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate max-w-[80px]">{task.assignedTo}</span>
-                </span>
-              )}
-              
-              {task.dueDate && (
-                <span className="text-xs text-gray-600 flex items-center gap-1 whitespace-nowrap">
-                  <Calendar className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate">
-                    {window.innerWidth < 640 
-                      ? new Date(task.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })
-                      : task.dueDate
-                    }
-                    {task.dueTime && ` • ${task.dueTime}`}
-                  </span>
-                </span>
-              )}
+
+            <div className="flex items-center gap-3 mt-2 text-sm text-gray-700">
+              <span className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                {meeting.dueDate}
+              </span>
+              <span className="text-gray-300">•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {meeting.dueTime} ({meeting.duration} {meeting.durationUnit})
+              </span>
+              <span className="text-gray-300">•</span>
+              <span className="flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                {meeting.location}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Mobile Menu for Regular Tasks */}
-        <div className="relative flex-shrink-0">
+        <div className="flex items-center gap-1">
           <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="p-1.5 hover:bg-gray-100 rounded-lg"
-            aria-label="More options"
+            onClick={() => setExpanded(!expanded)}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+            aria-label={expanded ? 'Collapse details' : 'Expand details'}
           >
-            <MoreVertical className="w-4 h-4 text-gray-500" />
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
-
-          {showMobileMenu && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-white border rounded-lg shadow-lg z-10 py-1">
-              <button
-                onClick={() => {
-                  onToggleComplete(task.id);
-                  setShowMobileMenu(false);
-                }}
-                className="w-full px-4 py-2 text-sm text-left hover:bg-gray-50 flex items-center gap-2"
-              >
-                {task.status === 'completed' ? (
-                  <>
-                    <Circle className="w-4 h-4" />
-                    Mark Pending
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    Mark Complete
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  onDelete(task.id);
-                  setShowMobileMenu(false);
-                }}
-                className="w-full px-4 py-2 text-sm text-left hover:bg-red-50 text-red-600 flex items-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Task
-              </button>
-            </div>
-          )}
+          <button
+            onClick={() => onDelete(meeting.id)}
+            className="p-2 hover:bg-red-50 text-red-600 rounded-lg"
+            aria-label="Delete meeting"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       </div>
+
+      {/* Files Section - Always Visible */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Paperclip className="w-4 h-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Attachments ({meeting.files?.length || 0})</span>
+          </div>
+          <button
+            onClick={() => setShowFileInput(!showFileInput)}
+            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+          >
+            <Plus className="w-3 h-3" />
+            Add File Link
+          </button>
+        </div>
+
+        {showFileInput && (
+          <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+              <input
+                type="text"
+                placeholder="File name (e.g., report.pdf)"
+                value={newFile.name}
+                onChange={(e) => setNewFile(prev => ({...prev, name: e.target.value}))}
+                className="p-2 border rounded text-sm"
+              />
+              <input
+                type="url"
+                placeholder="File URL (https://...)"
+                value={newFile.url}
+                onChange={(e) => setNewFile(prev => ({...prev, url: e.target.value}))}
+                className="p-2 border rounded text-sm"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowFileInput(false)}
+                className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddFile}
+                disabled={!newFile.name || !newFile.url}
+                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add Link
+              </button>
+            </div>
+          </div>
+        )}
+
+        {meeting.files?.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {meeting.files.map((file) => (
+              <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white rounded-lg border">
+                    {getFileIcon(file.type)}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-800 truncate max-w-[150px]">
+                      {file.name}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {file.size} • {file.type.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 hover:bg-blue-50 text-blue-600 rounded"
+                    title="Open file"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                  <button
+                    onClick={() => onRemoveFile(meeting.id, file.id)}
+                    className="p-1.5 hover:bg-red-50 text-red-600 rounded"
+                    title="Remove file"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-4 text-center border-2 border-dashed border-gray-300 rounded-lg">
+            <Paperclip className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-500">No files attached yet</p>
+            <p className="text-xs text-gray-400 mt-1">Add links to relevant files</p>
+          </div>
+        )}
+      </div>
+
+      {/* Expandable Details */}
+      {expanded && (
+        <div className="border-t pt-4 space-y-4">
+          {/* Attendees */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Attendees</span>
+              <span className="text-xs text-gray-500">({meeting.attendees?.length || 0} people)</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {meeting.attendees?.map((attendee, idx) => (
+                <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
+                  <User className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm text-gray-700">{attendee}</span>
+                  {attendee === meeting.assignedTo && (
+                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Host</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Agenda */}
+          {meeting.agenda && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <ClipboardList className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Agenda</span>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="space-y-2">
+                  {meeting.agenda.split('\n').map((item, idx) => (
+                    item.trim() && (
+                      <div key={idx} className="flex items-start gap-3">
+                        <div className="w-6 h-6 flex-shrink-0 flex items-center justify-center bg-white border rounded-full text-xs font-medium">
+                          {idx + 1}
+                        </div>
+                        <span className="text-sm text-gray-700">{item}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Meeting Notes</span>
+              </div>
+              <button
+                onClick={() => setIsEditingNotes(!isEditingNotes)}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                {isEditingNotes ? 'Cancel Edit' : 'Edit Notes'}
+              </button>
+            </div>
+
+            {isEditingNotes ? (
+              <div className="space-y-2">
+                <textarea
+                  value={meetingNotes}
+                  onChange={(e) => setMeetingNotes(e.target.value)}
+                  placeholder="Add meeting notes, action items, decisions..."
+                  className="w-full p-3 text-sm border rounded-lg"
+                  rows="4"
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setIsEditingNotes(false)}
+                    className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Save notes logic here
+                      setIsEditingNotes(false);
+                    }}
+                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Save Notes
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                {meetingNotes ? (
+                  <div className="text-sm text-gray-700 whitespace-pre-line">
+                    {meetingNotes}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 italic flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    No notes added yet
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-// Utility component for touch-friendly interactions
-const TouchButton = ({ onClick, children, className = '' }) => (
-  <button
-    onClick={onClick}
-    className={`touch-manipulation active:scale-95 transition-transform ${className}`}
-  >
-    {children}
-  </button>
-);
-
-export default TaskItem;
+export default MeetingItem;
