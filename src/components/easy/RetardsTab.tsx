@@ -61,7 +61,7 @@ const RetardsTab = ({ currentSeller }) => {
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [pin, setPin] = useState('');
   const [newEntry, setNewEntry] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: '',
     time: ''
   });
 
@@ -99,24 +99,66 @@ const RetardsTab = ({ currentSeller }) => {
     checkOverdueEntries();
   }, []); // Run once on component mount
 
-  // Get current time in HH:mm format
-  const getCurrentTime = () => {
+  // Get current date in YYYY-MM-DD format
+  const getCurrentDate = () => {
     const now = new Date();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
-  // Quick add with current time
+  // Convert 24h to 12h AM/PM format
+  const formatTimeTo12Hour = (time24) => {
+    if (!time24) return '';
+    const [hours, minutes] = time24.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Get current time in 12-hour AM/PM format
+  const getCurrentTime12Hour = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const hour12 = hours % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Convert 12-hour AM/PM to 24-hour format for storage
+  const convert12To24Hour = (time12) => {
+    if (!time12) return '';
+    const [time, period] = time12.split(' ');
+    let [hours, minutes] = time.split(':');
+    
+    if (period === 'PM' && hours !== '12') {
+      hours = parseInt(hours) + 12;
+    } else if (period === 'AM' && hours === '12') {
+      hours = '00';
+    }
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+  };
+
+  // Quick add with current date and time
   const handleQuickAdd = () => {
     const today = new Date();
     const dueDate = new Date(today);
     dueDate.setDate(today.getDate() + 5); // 5 days deadline
     
+    // Get current time in 12-hour format for display
+    const displayTime = getCurrentTime12Hour();
+    // Convert to 24-hour format for storage
+    const storageTime = convert12To24Hour(displayTime);
+    
     const entry = {
       id: lateEntries.length + 1,
-      date: today.toISOString().split('T')[0],
-      time: getCurrentTime(),
+      date: getCurrentDate(), // Current date
+      time: storageTime, // Store in 24h format
+      displayTime: displayTime, // Keep 12h format for display
       penalty: 500,
       dueDate: dueDate.toISOString().split('T')[0],
       status: 'pending',
@@ -167,14 +209,31 @@ const RetardsTab = ({ currentSeller }) => {
   };
 
   const handleAddEntry = () => {
-    const today = new Date();
+    const today = new Date(newEntry.date || getCurrentDate());
     const dueDate = new Date(today);
     dueDate.setDate(today.getDate() + 5); // 5 days deadline
     
+    // Use entered time or current time
+    let timeToStore = newEntry.time;
+    let displayTime = newEntry.time;
+    
+    // If time is entered in 12h format, convert to 24h
+    if (newEntry.time && (newEntry.time.includes('AM') || newEntry.time.includes('PM'))) {
+      timeToStore = convert12To24Hour(newEntry.time);
+    } else if (!newEntry.time) {
+      // If no time entered, use current time
+      displayTime = getCurrentTime12Hour();
+      timeToStore = convert12To24Hour(displayTime);
+    } else {
+      // If time is in 24h format, convert to 12h for display
+      displayTime = formatTimeTo12Hour(newEntry.time);
+    }
+    
     const entry = {
       id: lateEntries.length + 1,
-      date: newEntry.date,
-      time: newEntry.time || getCurrentTime(),
+      date: newEntry.date || getCurrentDate(),
+      time: timeToStore,
+      displayTime: displayTime,
       penalty: 500,
       dueDate: dueDate.toISOString().split('T')[0],
       status: 'pending',
@@ -185,7 +244,7 @@ const RetardsTab = ({ currentSeller }) => {
     };
     setLateEntries([entry, ...lateEntries]);
     setShowAddForm(false);
-    setNewEntry({ date: new Date().toISOString().split('T')[0], time: '' });
+    setNewEntry({ date: '', time: '' });
   };
 
   const handleMarkAsPaid = (id) => {
@@ -267,6 +326,7 @@ const RetardsTab = ({ currentSeller }) => {
   };
 
   const generateReceiptData = (entry) => {
+    const displayTime = entry.displayTime || formatTimeTo12Hour(entry.time);
     return {
       header: "STATION ESSENCE PETROVILLE",
       subHeader: "Reçu de Paiement",
@@ -276,7 +336,7 @@ const RetardsTab = ({ currentSeller }) => {
       vendorName: "Vendeur: " + (currentSeller?.name || "N/A"),
       transactionType: entry.receiptId.startsWith('REC') ? "Paiement Direct" : "Retenue Salaire",
       amount: "500 GDS",
-      description: `Retard du ${formatDate(entry.date)} à ${entry.time}`,
+      description: `Retard du ${formatDate(entry.date)} à ${displayTime}`,
       footer: "Merci de votre visite",
       qrCode: `STATION-${entry.receiptId}-500GDS`,
       separator: "--------------------------------",
@@ -398,6 +458,11 @@ const RetardsTab = ({ currentSeller }) => {
     if (daysOverdue <= 2) return 'text-amber-600';
     if (daysOverdue <= 4) return 'text-orange-600';
     return 'text-red-600 font-bold';
+  };
+
+  // Format time for display (use displayTime if available, otherwise convert from 24h)
+  const getDisplayTime = (entry) => {
+    return entry.displayTime || formatTimeTo12Hour(entry.time);
   };
 
   return (
@@ -607,32 +672,44 @@ const RetardsTab = ({ currentSeller }) => {
                 <label className="block text-sm text-gray-700 mb-2">Date</label>
                 <input
                   type="date"
-                  value={newEntry.date}
+                  value={newEntry.date || getCurrentDate()}
                   onChange={(e) => setNewEntry({...newEntry, date: e.target.value})}
                   className="w-full p-3 border border-gray-300 rounded-lg text-base"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Date actuelle: {formatDate(getCurrentDate())}
+                </p>
               </div>
               
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-sm text-gray-700">Heure d'arrivée</label>
-                  <button
-                    type="button"
-                    onClick={() => setNewEntry({...newEntry, time: getCurrentTime()})}
-                    className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded"
-                  >
-                    Maintenant ({getCurrentTime()})
-                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setNewEntry({...newEntry, time: getCurrentTime12Hour()})}
+                      className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded"
+                    >
+                      Maintenant
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewEntry({...newEntry, time: '08:45 AM'})}
+                      className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded"
+                    >
+                      08:45
+                    </button>
+                  </div>
                 </div>
                 <input
-                  type="time"
+                  type="text"
                   value={newEntry.time}
                   onChange={(e) => setNewEntry({...newEntry, time: e.target.value})}
                   className="w-full p-3 border border-gray-300 rounded-lg text-base"
-                  placeholder="HH:mm"
+                  placeholder="Ex: 08:45 AM ou 2:30 PM"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Heure prévue: 08:00 • Heure actuelle: {getCurrentTime()}
+                  Format: HH:MM AM/PM • Heure actuelle: {getCurrentTime12Hour()}
                 </p>
               </div>
               
@@ -677,25 +754,6 @@ const RetardsTab = ({ currentSeller }) => {
           <p className="text-green-600 text-xs">Salaire net</p>
           <p className="font-bold text-green-700 text-lg">{netSalary} GDS</p>
           <p className="text-green-500 text-xs">{((netSalary / 15000) * 100).toFixed(0)}% du salaire</p>
-        </div>
-      </div>
-
-      {/* Quick Add Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5" />
-            <div>
-              <p className="font-bold text-sm">AJOUT RAPIDE</p>
-              <p className="text-xs opacity-90">
-                Cliquez sur le bouton rouge pour ajouter un retard avec l'heure actuelle
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-xs opacity-90">Heure: {getCurrentTime()}</p>
-            <p className="text-xs opacity-90">500 GDS</p>
-          </div>
         </div>
       </div>
 
@@ -752,8 +810,8 @@ const RetardsTab = ({ currentSeller }) => {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-gray-500" />
-                <span className="font-medium text-gray-900">{entry.time}</span>
-                <span className="text-gray-500 text-sm">(prévu 08:00)</span>
+                <span className="font-medium text-gray-900">{getDisplayTime(entry)}</span>
+                <span className="text-gray-500 text-sm">(prévu 8:00 AM)</span>
               </div>
               
               <div className="flex items-center gap-1">
