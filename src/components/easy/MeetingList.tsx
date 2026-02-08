@@ -1,4 +1,5 @@
 import React from 'react';
+import { Users } from 'lucide-react'; // ← ADD THIS LINE
 import MeetingItem from './MeetingItem';
 
 const MeetingList = ({ meetings, onDelete, onToggleComplete, onAddFile, onRemoveFile }) => {
