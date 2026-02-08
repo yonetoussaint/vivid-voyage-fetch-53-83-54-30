@@ -23,12 +23,6 @@ const sellerData = {
   }
 };
 
-const formatNumber = (num: number) => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-  return num.toString();
-};
-
 export default function XProfile() {
   const [activeTab, setActiveTab] = useState('products');
   const [isFollowing, setIsFollowing] = useState(false);
@@ -113,15 +107,6 @@ export default function XProfile() {
             </div>
           </div>
         </div>
-
-        {/* Last Activity Badge - Positioned on Banner */}
-        <div className="absolute bottom-4 right-4">
-          <div className="px-3 py-1.5 bg-black/70 backdrop-blur-sm rounded-full">
-            <span className="text-xs font-medium text-white">
-              {sellerData.last_activity}
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* Action Buttons */}
@@ -170,15 +155,22 @@ export default function XProfile() {
 
       {/* Profile Info */}
       <div className="px-4 pt-2">
-        {/* Name */}
-        <div className="mb-2">
-          <div className="flex items-center gap-1.5 mb-1">
+        {/* Name with Online Status in Same Line */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
             <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
             {sellerData.verified && (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
                 <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
               </svg>
             )}
+          </div>
+          
+          {/* Reduced Height Squircle Online Status */}
+          <div className="px-2.5 py-1 bg-gray-100 rounded-[10px]">
+            <span className="text-xs font-medium text-gray-600">
+              {sellerData.last_activity}
+            </span>
           </div>
         </div>
 
@@ -201,7 +193,7 @@ export default function XProfile() {
           </div>
         </div>
 
-        {/* Contact Section - Moved up since stats are removed */}
+        {/* Contact Section */}
         <div className="mb-6">
           <div className="flex flex-wrap gap-2">
             {contactMethods.map((contact) => {
