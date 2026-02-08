@@ -23,7 +23,13 @@ import {
   ChevronUp,
   Paperclip,
   Plus,
-  AlertCircle
+  AlertCircle,
+  Headphones,
+  Play,
+  Pause,
+  Mic,
+  CalendarClock,
+  CheckCheck
 } from 'lucide-react';
 import {
   getFileType,
@@ -37,12 +43,17 @@ import {
   isVirtualMeeting
 } from './taskUtils';
 
-const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveFile }) => {
+const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFile }) => {
   const [expanded, setExpanded] = useState(false);
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
-  const [meetingNotes, setMeetingNotes] = useState(meeting.notes || '');
+  const [isEditingPreNotes, setIsEditingPreNotes] = useState(false);
+  const [isEditingMeetingNotes, setIsEditingMeetingNotes] = useState(false);
+  const [preMeetingNotes, setPreMeetingNotes] = useState(meeting.preMeetingNotes || '');
+  const [meetingNotes, setMeetingNotes] = useState(meeting.meetingNotes || '');
   const [showFileInput, setShowFileInput] = useState(false);
   const [newFile, setNewFile] = useState({ name: '', url: '' });
+  const [showAudioInput, setShowAudioInput] = useState(false);
+  const [audioUrl, setAudioUrl] = useState(meeting.audioUrl || '');
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const handleAddFile = () => {
     if (newFile.name && newFile.url) {
@@ -59,10 +70,48 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
     }
   };
 
-  const handleSaveNotes = () => {
-    // Save notes logic would go here
-    setIsEditingNotes(false);
-    // Update meeting notes in parent component
+  const handleSavePreNotes = () => {
+    onUpdateMeeting(meeting.id, { preMeetingNotes });
+    setIsEditingPreNotes(false);
+  };
+
+  const handleSaveMeetingNotes = () => {
+    onUpdateMeeting(meeting.id, { meetingNotes });
+    setIsEditingMeetingNotes(false);
+  };
+
+  const handleCompleteMeeting = () => {
+    onUpdateMeeting(meeting.id, { 
+      status: 'completed',
+      completedAt: new Date().toISOString()
+    });
+  };
+
+  const handlePostponeMeeting = () => {
+    const newDate = prompt('Enter new date (YYYY-MM-DD):', meeting.dueDate);
+    const newTime = prompt('Enter new time (HH:MM):', meeting.dueTime);
+    
+    if (newDate && newTime) {
+      onUpdateMeeting(meeting.id, { 
+        dueDate: newDate,
+        dueTime: newTime,
+        status: 'postponed'
+      });
+    }
+  };
+
+  const handleSaveAudio = () => {
+    if (audioUrl) {
+      onUpdateMeeting(meeting.id, { audioUrl });
+      setShowAudioInput(false);
+    }
+  };
+
+  const toggleAudio = () => {
+    if (meeting.audioUrl) {
+      setIsPlaying(!isPlaying);
+      // Audio playback logic would go here
+    }
   };
 
   return (
@@ -71,7 +120,10 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <button 
-            onClick={() => onToggleComplete(meeting.id)}
+            onClick={() => onUpdateMeeting(meeting.id, { 
+              status: meeting.status === 'completed' ? 'pending' : 'completed',
+              completedAt: meeting.status === 'completed' ? null : new Date().toISOString()
+            })}
             className="mt-0.5 flex-shrink-0"
             aria-label={meeting.status === 'completed' ? 'Mark as pending' : 'Mark as completed'}
           >
@@ -142,6 +194,26 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
           </button>
         </div>
       </div>
+
+      {/* Action Buttons */}
+      {meeting.status !== 'completed' && (
+        <div className="flex flex-wrap gap-3 mb-4">
+          <button
+            onClick={handleCompleteMeeting}
+            className="flex-1 min-w-[140px] px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
+          >
+            <CheckCheck className="w-4 h-4" />
+            Complete Meeting
+          </button>
+          <button
+            onClick={handlePostponeMeeting}
+            className="flex-1 min-w-[140px] px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center justify-center gap-2"
+          >
+            <CalendarClock className="w-4 h-4" />
+            Postpone Meeting
+          </button>
+        </div>
+      )}
 
       {/* Files Section - Always Visible */}
       <div className="mb-4">
@@ -244,6 +316,99 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
         )}
       </div>
 
+      {/* Audio Recording Section */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Headphones className="w-4 h-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Meeting Recording</span>
+          </div>
+          {!meeting.audioUrl && (
+            <button
+              onClick={() => setShowAudioInput(!showAudioInput)}
+              className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1"
+            >
+              <Mic className="w-3 h-3" />
+              Add Audio Link
+            </button>
+          )}
+        </div>
+
+        {showAudioInput ? (
+          <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+            <div className="mb-2">
+              <p className="text-sm text-gray-700 mb-1">Upload audio to Terabox and paste link:</p>
+              <input
+                type="url"
+                placeholder="https://terabox.com/..."
+                value={audioUrl}
+                onChange={(e) => setAudioUrl(e.target.value)}
+                className="w-full p-2 border rounded text-sm"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowAudioInput(false)}
+                className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveAudio}
+                disabled={!audioUrl}
+                className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save Audio Link
+              </button>
+            </div>
+          </div>
+        ) : meeting.audioUrl ? (
+          <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="flex items-center gap-3">
+              <Headphones className="w-5 h-5 text-purple-600" />
+              <div>
+                <div className="text-sm font-medium text-gray-800">Meeting Recording</div>
+                <div className="text-xs text-gray-500">Audio file linked</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleAudio}
+                className="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-1"
+              >
+                {isPlaying ? (
+                  <>
+                    <Pause className="w-3 h-3" />
+                    Pause
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3 h-3" />
+                    Play
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setAudioUrl('');
+                  onUpdateMeeting(meeting.id, { audioUrl: null });
+                }}
+                className="p-1.5 hover:bg-red-50 text-red-600 rounded"
+                title="Remove audio"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 text-center border-2 border-dashed border-gray-300 rounded-lg">
+            <Mic className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-500">No recording attached</p>
+            <p className="text-xs text-gray-400 mt-1">Record meeting and upload to Terabox</p>
+          </div>
+        )}
+      </div>
+
       {/* Expandable Details */}
       {expanded && (
         <div className="border-t pt-4 space-y-4">
@@ -292,40 +457,40 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
             </div>
           )}
 
-          {/* Notes */}
+          {/* Pre-Meeting Notes */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Meeting Notes</span>
+                <span className="text-sm font-medium text-gray-700">Pre-Meeting Notes</span>
               </div>
               <button
-                onClick={() => setIsEditingNotes(!isEditingNotes)}
+                onClick={() => setIsEditingPreNotes(!isEditingPreNotes)}
                 className="text-xs text-blue-600 hover:text-blue-800"
               >
-                {isEditingNotes ? 'Cancel Edit' : 'Edit Notes'}
+                {isEditingPreNotes ? 'Cancel Edit' : 'Edit Notes'}
               </button>
             </div>
 
-            {isEditingNotes ? (
+            {isEditingPreNotes ? (
               <div className="space-y-2">
                 <textarea
-                  value={meetingNotes}
-                  onChange={(e) => setMeetingNotes(e.target.value)}
-                  placeholder="Add meeting notes, action items, decisions..."
+                  value={preMeetingNotes}
+                  onChange={(e) => setPreMeetingNotes(e.target.value)}
+                  placeholder="Add notes before meeting (objectives, questions to ask, preparation items)..."
                   className="w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows="4"
+                  rows="3"
                 />
                 <div className="flex justify-end gap-2">
                   <button
-                    onClick={() => setIsEditingNotes(false)}
+                    onClick={() => setIsEditingPreNotes(false)}
                     className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50 flex items-center gap-1"
                   >
                     <X className="w-3 h-3" />
                     Cancel
                   </button>
                   <button
-                    onClick={handleSaveNotes}
+                    onClick={handleSavePreNotes}
                     className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
                   >
                     <Save className="w-3 h-3" />
@@ -334,7 +499,64 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
                 </div>
               </div>
             ) : (
-              <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                {preMeetingNotes ? (
+                  <div className="text-sm text-gray-700 whitespace-pre-line">
+                    {preMeetingNotes}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 italic flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    No pre-meeting notes added
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Meeting Notes (During Meeting) */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Meeting Notes</span>
+              </div>
+              <button
+                onClick={() => setIsEditingMeetingNotes(!isEditingMeetingNotes)}
+                className="text-xs text-green-600 hover:text-green-800"
+              >
+                {isEditingMeetingNotes ? 'Cancel Edit' : 'Add/Edit Notes'}
+              </button>
+            </div>
+
+            {isEditingMeetingNotes ? (
+              <div className="space-y-2">
+                <textarea
+                  value={meetingNotes}
+                  onChange={(e) => setMeetingNotes(e.target.value)}
+                  placeholder="Take notes during the meeting (discussions, decisions, action items)..."
+                  className="w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  rows="4"
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setIsEditingMeetingNotes(false)}
+                    className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50 flex items-center gap-1"
+                  >
+                    <X className="w-3 h-3" />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveMeetingNotes}
+                    className="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
+                  >
+                    <Save className="w-3 h-3" />
+                    Save Notes
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 bg-green-50 rounded-lg">
                 {meetingNotes ? (
                   <div className="text-sm text-gray-700 whitespace-pre-line">
                     {meetingNotes}
@@ -342,7 +564,7 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
                 ) : (
                   <div className="text-sm text-gray-500 italic flex items-center gap-2">
                     <AlertCircle className="w-4 h-4" />
-                    No notes added yet
+                    No meeting notes taken yet
                   </div>
                 )}
               </div>
@@ -359,6 +581,15 @@ const MeetingItem = ({ meeting, onDelete, onToggleComplete, onAddFile, onRemoveF
             <>
               <span className="text-gray-300">•</span>
               <span>Completed: {new Date(meeting.completedAt).toLocaleDateString()}</span>
+            </>
+          )}
+          {meeting.audioUrl && (
+            <>
+              <span className="text-gray-300">•</span>
+              <span className="flex items-center gap-1">
+                <Headphones className="w-3 h-3" />
+                Audio available
+              </span>
             </>
           )}
         </div>
