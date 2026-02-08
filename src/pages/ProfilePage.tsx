@@ -11,7 +11,8 @@ const sellerData = {
   bio: "Living my best life 🌟 | Shop owner 🛍️ | Premium quality products at affordable prices",
   location: "Manila, Philippines",
   joined_date: "January 2020",
-  last_activity: "Active 5 min ago",
+  is_online: true,
+  last_seen_hours: 3, // hours ago if not online
   
   // Contact Information
   contacts: {
@@ -95,15 +96,36 @@ export default function XProfile() {
           className="w-full h-full object-cover"
         />
         
-        {/* Profile Picture */}
+        {/* Profile Picture with Status Indicator */}
         <div className="absolute -bottom-12 left-4">
-          <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
-            <div className="w-full h-full rounded-full bg-white p-0.5">
-              <img 
-                src={sellerData.image_url}
-                alt="Profile"
-                className="w-full h-full rounded-full object-cover"
-              />
+          <div className="relative">
+            <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
+              <div className="w-full h-full rounded-full bg-white p-0.5">
+                <img 
+                  src={sellerData.image_url}
+                  alt="Profile"
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </div>
+            </div>
+            
+            {/* Status Indicator - Bottom Right of Profile Pic */}
+            <div className="absolute -bottom-1 -right-1">
+              {sellerData.is_online ? (
+                <div className="relative">
+                  <div className="w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  </div>
+                </div>
+              ) : (
+                <div className="relative">
+                  <div className="w-6 h-6 bg-gray-400 rounded-full border-2 border-white flex items-center justify-center">
+                    <div className="absolute -bottom-5 -right-1 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap">
+                      {sellerData.last_seen_hours}h ago
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -155,8 +177,8 @@ export default function XProfile() {
 
       {/* Profile Info */}
       <div className="px-4 pt-2">
-        {/* Name with Online Status in Same Line */}
-        <div className="flex items-center justify-between mb-2">
+        {/* Name */}
+        <div className="mb-2">
           <div className="flex items-center gap-1.5">
             <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
             {sellerData.verified && (
@@ -164,13 +186,6 @@ export default function XProfile() {
                 <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
               </svg>
             )}
-          </div>
-          
-          {/* Reduced Height Squircle Online Status */}
-          <div className="px-2.5 py-1 bg-gray-100 rounded-[10px]">
-            <span className="text-xs font-medium text-gray-600">
-              {sellerData.last_activity}
-            </span>
           </div>
         </div>
 
