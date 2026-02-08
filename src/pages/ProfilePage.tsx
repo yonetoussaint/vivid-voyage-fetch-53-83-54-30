@@ -10,11 +10,6 @@ const sellerData = {
   verified: true,
   bio: "Living my best life 🌟 | Shop owner 🛍️ | Premium quality products at affordable prices",
   location: "Manila, Philippines",
-  rating: 4.8,
-  total_sales: 89200,
-  followers_count: 12800,
-  following_count: 342,
-  store_age_years: 4,
   joined_date: "January 2020",
   last_activity: "Active 5 min ago",
   
@@ -119,7 +114,7 @@ export default function XProfile() {
           </div>
         </div>
 
-        {/* Last Activity Badge - Positioned on Banner, NOT Behind Profile Pic */}
+        {/* Last Activity Badge - Positioned on Banner */}
         <div className="absolute bottom-4 right-4">
           <div className="px-3 py-1.5 bg-black/70 backdrop-blur-sm rounded-full">
             <span className="text-xs font-medium text-white">
@@ -133,14 +128,16 @@ export default function XProfile() {
       <div className="flex justify-end items-center px-4 pt-3">
         {/* Right side buttons */}
         <div className="flex gap-2">
-          {/* Clean Share Icon - Using Export/Forward Icon */}
+          {/* Custom Share Icon from Noun Project */}
           <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 8a3 3 0 100-6 3 3 0 000 6z"/>
-              <path d="M6 15a3 3 0 100-6 3 3 0 000 6z"/>
-              <path d="M18 22a3 3 0 100-6 3 3 0 000 6z"/>
-              <path d="M8.59 13.51l6.83 3.98"/>
-              <path d="M15.41 6.51l-6.82 3.98"/>
+            <svg 
+              width="20" 
+              height="20" 
+              viewBox="0 0 64 64"
+              fill="currentColor"
+              className="text-gray-700"
+            >
+              <path d="M34,21.54V8.64a.18.18,0,0,1,.3-.14L60.94,30.69a.18.18,0,0,1,0,.28L34.3,53.15A.18.18,0,0,1,34,53V40.86a1.14,1.14,0,0,0-.94-1.12c-3.57-.64-16.75-1.59-29.47,15.7a.26.26,0,0,1-.47-.12C2.7,50.31,1.67,21.54,34,21.54"/>
             </svg>
           </button>
           
@@ -204,39 +201,7 @@ export default function XProfile() {
           </div>
         </div>
 
-        {/* Follow Stats */}
-        <div className="flex gap-4 mb-4 text-sm">
-          <button className="hover:underline">
-            <span className="font-bold text-gray-900">{formatNumber(sellerData.following_count)}</span>
-            <span className="text-gray-600"> Following</span>
-          </button>
-          <button className="hover:underline">
-            <span className="font-bold text-gray-900">{formatNumber(sellerData.followers_count)}</span>
-            <span className="text-gray-600"> Followers</span>
-          </button>
-        </div>
-
-        {/* Seller Stats Grid */}
-        <div className="grid grid-cols-4 gap-2 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="text-center">
-            <div className="font-bold text-base text-gray-900">{formatNumber(sellerData.total_sales)}</div>
-            <div className="text-xs text-gray-600">Sales</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold text-base text-yellow-600">{sellerData.rating}★</div>
-            <div className="text-xs text-gray-600">Rating</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold text-base text-gray-900">{sellerData.store_age_years}y</div>
-            <div className="text-xs text-gray-600">Store Age</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold text-base text-green-600">98%</div>
-            <div className="text-xs text-gray-600">Success</div>
-          </div>
-        </div>
-
-        {/* Contact Section */}
+        {/* Contact Section - Moved up since stats are removed */}
         <div className="mb-6">
           <div className="flex flex-wrap gap-2">
             {contactMethods.map((contact) => {
