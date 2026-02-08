@@ -117,6 +117,7 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
 
     // Determine if we should show the header
     // Determine if we should show the header
+// Determine if we should show the header
 const shouldShowHeader = [
   '/', '/for-you', '/wallet', '/explore', '/wishlist', '/cart', '/notifications',
   '/addresses', '/help', '/products', '/mall', '/mall/', '/categories',
@@ -124,7 +125,6 @@ const shouldShowHeader = [
   '/categories/entertainment', '/categories/kids-hobbies', '/categories/sports-outdoors',
   '/categories/automotive', '/categories/women', '/categories/men', '/categories/books'
 ].includes(pathname) || 
-pathname.startsWith('/profile') || // Add this line to catch all profile routes
 isMessagesListPage || 
 isMallPage;
 
