@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserSquare2, ChevronDown, MoreHorizontal, MapPin, Link as LinkIcon, CalendarDays } from 'lucide-react';
+import { UserSquare2, MoreHorizontal, MapPin, Link as LinkIcon, CalendarDays } from 'lucide-react';
 import FlashDeals from "@/components/home/FlashDeals";
 import FavouriteChannels from "@/components/FavouriteChannels";
 import InfiniteContentGrid from "@/components/InfiniteContentGrid";
@@ -53,17 +53,17 @@ export default function XProfile() {
 
   return (
     <div className="bg-black text-white min-h-screen w-full max-w-[600px] mx-auto">
-      {/* Ultra Low Banner */}
-      <div className="relative h-20 bg-gradient-to-r from-blue-500/20 to-purple-500/20">
+      {/* Ultra Low Banner - Positioned Higher */}
+      <div className="relative h-16 bg-gradient-to-r from-blue-500/20 to-purple-500/20">
         <img 
           src={sellerData.banner_url}
           alt="Banner"
           className="w-full h-full object-cover"
         />
         
-        {/* Profile Picture Positioned Lower */}
-        <div className="absolute -bottom-12 left-4">
-          <div className="w-24 h-24 rounded-full border-4 border-black bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
+        {/* Profile Picture Positioned Higher */}
+        <div className="absolute -bottom-10 left-4">
+          <div className="w-20 h-20 rounded-full border-4 border-black bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
             <div className="w-full h-full rounded-full bg-black p-0.5">
               <img 
                 src={sellerData.image_url}
@@ -73,39 +73,39 @@ export default function XProfile() {
             </div>
           </div>
         </div>
+
+        {/* Edit Button Positioned on Banner (Top Right) */}
+        <div className="absolute top-2 right-2">
+          {isOwnProfile ? (
+            <button className="px-3 py-1 border border-gray-600 rounded-full text-sm bg-black/80 backdrop-blur-sm hover:bg-gray-900 transition-colors">
+              Edit profile
+            </button>
+          ) : (
+            <div className="flex gap-1">
+              <button className="p-1.5 border border-gray-600 rounded-full bg-black/80 backdrop-blur-sm hover:bg-gray-900">
+                <MoreHorizontal size={14} />
+              </button>
+              <button className="p-1.5 border border-gray-600 rounded-full bg-black/80 backdrop-blur-sm hover:bg-gray-900">
+                <UserSquare2 size={14} />
+              </button>
+              <button
+                onClick={() => setIsFollowing(!isFollowing)}
+                className={`px-3 py-1 rounded-full text-sm bg-black/80 backdrop-blur-sm ${
+                  isFollowing 
+                    ? 'border border-gray-600 hover:bg-red-500/20 hover:text-red-500' 
+                    : 'bg-white text-black hover:bg-gray-200'
+                }`}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Profile Actions - Compact */}
-      <div className="flex justify-end px-4 pt-12">
-        {isOwnProfile ? (
-          <button className="px-4 py-1.5 border border-gray-600 rounded-full text-sm hover:bg-gray-900 transition-colors">
-            Edit profile
-          </button>
-        ) : (
-          <div className="flex gap-2">
-            <button className="p-1.5 border border-gray-600 rounded-full hover:bg-gray-900">
-              <MoreHorizontal size={16} />
-            </button>
-            <button className="p-1.5 border border-gray-600 rounded-full hover:bg-gray-900">
-              <UserSquare2 size={16} />
-            </button>
-            <button
-              onClick={() => setIsFollowing(!isFollowing)}
-              className={`px-4 py-1.5 rounded-full text-sm ${
-                isFollowing 
-                  ? 'border border-gray-600 hover:bg-red-500/10 hover:text-red-500' 
-                  : 'bg-white text-black hover:bg-gray-200'
-              }`}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Profile Info - Compact */}
-      <div className="px-4 pt-2">
-        {/* Name and Username */}
+      {/* Profile Info - Adjusted for Higher Banner */}
+      <div className="px-4 pt-10">
+        {/* Name and Username - Positioned Correctly */}
         <div className="mb-3">
           <div className="flex items-center gap-1.5 mb-0.5">
             <span className="font-bold text-lg">{sellerData.name}</span>
