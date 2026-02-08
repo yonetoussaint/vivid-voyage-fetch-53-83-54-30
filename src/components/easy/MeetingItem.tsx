@@ -13,12 +13,8 @@ import {
   Image,
   File,
   ExternalLink,
-  CheckCircle,
-  Circle,
-  Trash2,
-  Edit2,
-  Save,
-  X,
+  CheckCheck,
+  CalendarClock,
   ChevronDown,
   ChevronUp,
   Paperclip,
@@ -28,8 +24,13 @@ import {
   Play,
   Pause,
   Mic,
-  CalendarClock,
-  CheckCheck
+  Trash2,
+  Edit2,
+  Save,
+  X,
+  UserCheck,
+  UserX,
+  Clock as ClockIcon
 } from 'lucide-react';
 import {
   getFileType,
@@ -54,6 +55,7 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
   const [showAudioInput, setShowAudioInput] = useState(false);
   const [audioUrl, setAudioUrl] = useState(meeting.audioUrl || '');
   const [isPlaying, setIsPlaying] = useState(false);
+  const [editingAttendance, setEditingAttendance] = useState(false);
 
   const handleAddFile = () => {
     if (newFile.name && newFile.url) {
@@ -114,31 +116,37 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
     }
   };
 
+  const handleAttendanceUpdate = (attendeeName, status, arrivalTime = null) => {
+    const updatedAttendees = meeting.attendees.map(attendee => {
+      if (attendee.name === attendeeName) {
+        return {
+          ...attendee,
+          status,
+          arrivalTime: arrivalTime || attendee.arrivalTime
+        };
+      }
+      return attendee;
+    });
+    
+    onUpdateMeeting(meeting.id, { attendees: updatedAttendees });
+  };
+
+  const updateArrivalTime = (attendeeName) => {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    handleAttendanceUpdate(attendeeName, 'present', timeString);
+  };
+
   return (
     <div className={`p-4 bg-white border rounded-lg shadow-sm ${meeting.status === 'completed' ? 'border-green-300 bg-green-50' : 'border-blue-100'}`}>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <button 
-            onClick={() => onUpdateMeeting(meeting.id, { 
-              status: meeting.status === 'completed' ? 'pending' : 'completed',
-              completedAt: meeting.status === 'completed' ? null : new Date().toISOString()
-            })}
-            className="mt-0.5 flex-shrink-0"
-            aria-label={meeting.status === 'completed' ? 'Mark as pending' : 'Mark as completed'}
-          >
-            {meeting.status === 'completed' ? (
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            ) : (
-              <Circle className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-            )}
-          </button>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h3 className={`text-base font-semibold truncate ${meeting.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-                {meeting.title}
-              </h3>
+      {/* Header - Mobile Optimized */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <h3 className="text-lg font-semibold text-gray-800 truncate">
+              {meeting.title}
+            </h3>
+            <div className="flex flex-wrap gap-1">
               <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(meeting.priority)} whitespace-nowrap`}>
                 <Flag className="w-3 h-3 inline mr-1" />
                 {meeting.priority}
@@ -146,38 +154,36 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
               <span className={`px-2 py-1 text-xs rounded-full ${getMeetingTypeColor(meeting.meetingType)}`}>
                 {meeting.meetingType}
               </span>
-              <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(meeting.status)}`}>
-                {meeting.status}
-              </span>
             </div>
+          </div>
 
-            {meeting.description && (
-              <p className="text-sm text-gray-600 line-clamp-2">{meeting.description}</p>
-            )}
+          {meeting.description && (
+            <p className="text-sm text-gray-600 line-clamp-2 mb-3">{meeting.description}</p>
+          )}
 
-            <div className="flex items-center gap-3 mt-2 text-sm text-gray-700">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                {meeting.dueDate}
-              </span>
-              <span className="text-gray-300">•</span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
+          {/* Meeting Info Grid - Mobile Responsive */}
+          <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 text-sm text-gray-700">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{meeting.dueDate}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">
                 {formatTime(meeting.dueTime)} ({getDurationText(meeting.duration, meeting.durationUnit)})
               </span>
-              <span className="text-gray-300">•</span>
-              <span className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                {meeting.location}
-                {isVirtualMeeting(meeting.location) && (
-                  <Video className="w-3 h-3 text-purple-500 ml-1" />
-                )}
-              </span>
+            </div>
+            <div className="flex items-center gap-2 xs:col-span-2">
+              <MapPin className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{meeting.location}</span>
+              {isVirtualMeeting(meeting.location) && (
+                <Video className="w-3 h-3 text-purple-500 ml-1" />
+              )}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 self-end sm:self-start">
           <button
             onClick={() => setExpanded(!expanded)}
             className="p-2 hover:bg-gray-100 rounded-lg"
@@ -195,244 +201,142 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
         </div>
       </div>
 
-      {/* Action Buttons */}
-      {meeting.status !== 'completed' && (
-        <div className="flex flex-wrap gap-3 mb-4">
-          <button
-            onClick={handleCompleteMeeting}
-            className="flex-1 min-w-[140px] px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
-          >
-            <CheckCheck className="w-4 h-4" />
-            Complete Meeting
-          </button>
-          <button
-            onClick={handlePostponeMeeting}
-            className="flex-1 min-w-[140px] px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center justify-center gap-2"
-          >
-            <CalendarClock className="w-4 h-4" />
-            Postpone Meeting
-          </button>
-        </div>
-      )}
+      {/* Mobile-Friendly Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <button
+          onClick={handleCompleteMeeting}
+          className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 text-sm sm:text-base"
+        >
+          <CheckCheck className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="truncate">Complete Meeting</span>
+        </button>
+        <button
+          onClick={handlePostponeMeeting}
+          className="flex-1 px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center justify-center gap-2 text-sm sm:text-base"
+        >
+          <CalendarClock className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="truncate">Postpone Meeting</span>
+        </button>
+      </div>
 
-      {/* Files Section - Always Visible */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
+      {/* Attendance Section */}
+      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Paperclip className="w-4 h-4 text-gray-600" />
+            <Users className="w-4 h-4 text-gray-600" />
             <span className="text-sm font-medium text-gray-700">
-              Attachments ({meeting.files?.length || 0})
+              Attendance ({meeting.attendees?.length || 0})
             </span>
           </div>
           <button
-            onClick={() => setShowFileInput(!showFileInput)}
+            onClick={() => setEditingAttendance(!editingAttendance)}
             className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
           >
-            <Plus className="w-3 h-3" />
-            Add File Link
+            <Edit2 className="w-3 h-3" />
+            {editingAttendance ? 'Done' : 'Edit'}
           </button>
         </div>
 
-        {showFileInput && (
-          <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-              <input
-                type="text"
-                placeholder="File name (e.g., report.pdf)"
-                value={newFile.name}
-                onChange={(e) => setNewFile(prev => ({...prev, name: e.target.value}))}
-                className="p-2 border rounded text-sm"
-              />
-              <input
-                type="url"
-                placeholder="File URL (https://...)"
-                value={newFile.url}
-                onChange={(e) => setNewFile(prev => ({...prev, url: e.target.value}))}
-                className="p-2 border rounded text-sm"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowFileInput(false)}
-                className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddFile}
-                disabled={!newFile.name || !newFile.url}
-                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add Link
-              </button>
-            </div>
-          </div>
-        )}
-
-        {meeting.files?.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {meeting.files.map((file) => (
-              <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg border">
-                    {getFileIconComponent(getFileType(file.name))}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-800 truncate max-w-[150px]">
-                      {file.name}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {formatFileSize(file.size)} • {getFileType(file.name).toUpperCase()}
-                    </div>
-                  </div>
+        <div className="space-y-2">
+          {meeting.attendees?.map((attendee, idx) => (
+            <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`p-2 rounded-full ${attendee.status === 'present' ? 'bg-green-100 text-green-600' : 
+                  attendee.status === 'late' ? 'bg-yellow-100 text-yellow-600' : 
+                  attendee.status === 'absent' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
+                  {attendee.status === 'present' ? <UserCheck className="w-4 h-4" /> : 
+                   attendee.status === 'absent' ? <UserX className="w-4 h-4" /> : 
+                   <User className="w-4 h-4" />}
                 </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 hover:bg-blue-50 text-blue-600 rounded"
-                    title="Open file"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-gray-800 truncate">
+                    {attendee.name}
+                    {attendee.isHost && (
+                      <span className="ml-2 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">Host</span>
+                    )}
+                  </div>
+                  {attendee.arrivalTime && (
+                    <div className="text-xs text-gray-500 flex items-center gap-1">
+                      <ClockIcon className="w-3 h-3" />
+                      Arrived at {attendee.arrivalTime}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {editingAttendance && (
+                <div className="flex items-center gap-1">
                   <button
-                    onClick={() => onRemoveFile(meeting.id, file.id)}
-                    className="p-1.5 hover:bg-red-50 text-red-600 rounded"
-                    title="Remove file"
+                    onClick={() => updateArrivalTime(attendee.name)}
+                    className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
                   >
-                    <X className="w-4 h-4" />
+                    Present
+                  </button>
+                  <button
+                    onClick={() => handleAttendanceUpdate(attendee.name, 'absent')}
+                    className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                  >
+                    Absent
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-4 text-center border-2 border-dashed border-gray-300 rounded-lg">
-            <Paperclip className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No files attached yet</p>
-            <p className="text-xs text-gray-400 mt-1">Add links to relevant files</p>
-          </div>
-        )}
-      </div>
-
-      {/* Audio Recording Section */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Headphones className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Meeting Recording</span>
-          </div>
-          {!meeting.audioUrl && (
-            <button
-              onClick={() => setShowAudioInput(!showAudioInput)}
-              className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1"
-            >
-              <Mic className="w-3 h-3" />
-              Add Audio Link
-            </button>
-          )}
+              )}
+            </div>
+          ))}
         </div>
 
-        {showAudioInput ? (
-          <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-            <div className="mb-2">
-              <p className="text-sm text-gray-700 mb-1">Upload audio to Terabox and paste link:</p>
-              <input
-                type="url"
-                placeholder="https://terabox.com/..."
-                value={audioUrl}
-                onChange={(e) => setAudioUrl(e.target.value)}
-                className="w-full p-2 border rounded text-sm"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowAudioInput(false)}
-                className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveAudio}
-                disabled={!audioUrl}
-                className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Save Audio Link
-              </button>
-            </div>
-          </div>
-        ) : meeting.audioUrl ? (
-          <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
-            <div className="flex items-center gap-3">
-              <Headphones className="w-5 h-5 text-purple-600" />
-              <div>
-                <div className="text-sm font-medium text-gray-800">Meeting Recording</div>
-                <div className="text-xs text-gray-500">Audio file linked</div>
+        {/* Attendance Summary */}
+        <div className="mt-3 pt-3 border-t border-gray-200">
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="text-center">
+              <div className="text-green-600 font-medium">Present</div>
+              <div className="text-lg font-bold">
+                {meeting.attendees?.filter(a => a.status === 'present').length || 0}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleAudio}
-                className="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-1"
-              >
-                {isPlaying ? (
-                  <>
-                    <Pause className="w-3 h-3" />
-                    Pause
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3 h-3" />
-                    Play
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  setAudioUrl('');
-                  onUpdateMeeting(meeting.id, { audioUrl: null });
-                }}
-                className="p-1.5 hover:bg-red-50 text-red-600 rounded"
-                title="Remove audio"
-              >
-                <X className="w-4 h-4" />
-              </button>
+            <div className="text-center">
+              <div className="text-yellow-600 font-medium">Late</div>
+              <div className="text-lg font-bold">
+                {meeting.attendees?.filter(a => a.status === 'late').length || 0}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-red-600 font-medium">Absent</div>
+              <div className="text-lg font-bold">
+                {meeting.attendees?.filter(a => a.status === 'absent').length || 0}
+              </div>
             </div>
           </div>
-        ) : (
-          <div className="p-4 text-center border-2 border-dashed border-gray-300 rounded-lg">
-            <Mic className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No recording attached</p>
-            <p className="text-xs text-gray-400 mt-1">Record meeting and upload to Terabox</p>
-          </div>
-        )}
+        </div>
+      </div>
+
+      {/* Quick Actions Row */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button
+          onClick={() => setShowAudioInput(true)}
+          className="flex-1 min-w-[120px] px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 flex items-center justify-center gap-2 text-sm"
+        >
+          <Mic className="w-4 h-4" />
+          <span className="truncate">Add Recording</span>
+        </button>
+        <button
+          onClick={() => setIsEditingPreNotes(true)}
+          className="flex-1 min-w-[120px] px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 flex items-center justify-center gap-2 text-sm"
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span className="truncate">Pre-Meeting</span>
+        </button>
+        <button
+          onClick={() => setIsEditingMeetingNotes(true)}
+          className="flex-1 min-w-[120px] px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 flex items-center justify-center gap-2 text-sm"
+        >
+          <ClipboardList className="w-4 h-4" />
+          <span className="truncate">Take Notes</span>
+        </button>
       </div>
 
       {/* Expandable Details */}
       {expanded && (
         <div className="border-t pt-4 space-y-4">
-          {/* Attendees */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
-                Attendees ({meeting.attendees?.length || 0} people)
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {meeting.attendees?.map((attendee, idx) => (
-                <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
-                  <User className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm text-gray-700">{attendee}</span>
-                  {attendee === meeting.assignedTo && (
-                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Host</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Agenda */}
           {meeting.agenda && (
             <div>
@@ -457,125 +361,289 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
             </div>
           )}
 
-          {/* Pre-Meeting Notes */}
+          {/* Audio Recording Section */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Pre-Meeting Notes</span>
-              </div>
-              <button
-                onClick={() => setIsEditingPreNotes(!isEditingPreNotes)}
-                className="text-xs text-blue-600 hover:text-blue-800"
-              >
-                {isEditingPreNotes ? 'Cancel Edit' : 'Edit Notes'}
-              </button>
+            <div className="flex items-center gap-2 mb-3">
+              <Headphones className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Meeting Recording</span>
             </div>
 
-            {isEditingPreNotes ? (
-              <div className="space-y-2">
-                <textarea
-                  value={preMeetingNotes}
-                  onChange={(e) => setPreMeetingNotes(e.target.value)}
-                  placeholder="Add notes before meeting (objectives, questions to ask, preparation items)..."
-                  className="w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows="3"
-                />
-                <div className="flex justify-end gap-2">
+            {showAudioInput ? (
+              <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                <div className="mb-2">
+                  <p className="text-sm text-gray-700 mb-1">Upload audio to Terabox and paste link:</p>
+                  <input
+                    type="url"
+                    placeholder="https://terabox.com/..."
+                    value={audioUrl}
+                    onChange={(e) => setAudioUrl(e.target.value)}
+                    className="w-full p-2 border rounded text-sm"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => setIsEditingPreNotes(false)}
-                    className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50 flex items-center gap-1"
+                    onClick={() => setShowAudioInput(false)}
+                    className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50"
                   >
-                    <X className="w-3 h-3" />
                     Cancel
                   </button>
                   <button
-                    onClick={handleSavePreNotes}
-                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+                    onClick={handleSaveAudio}
+                    disabled={!audioUrl}
+                    className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Save className="w-3 h-3" />
-                    Save Notes
+                    Save Audio
+                  </button>
+                </div>
+              </div>
+            ) : meeting.audioUrl ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200 gap-3">
+                <div className="flex items-center gap-3">
+                  <Headphones className="w-5 h-5 text-purple-600" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-800">Meeting Recording</div>
+                    <div className="text-xs text-gray-500">Audio file available</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={toggleAudio}
+                    className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+                  >
+                    {isPlaying ? (
+                      <>
+                        <Pause className="w-4 h-4" />
+                        <span className="text-sm">Pause</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4" />
+                        <span className="text-sm">Play</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAudioUrl('');
+                      onUpdateMeeting(meeting.id, { audioUrl: null });
+                    }}
+                    className="p-2 hover:bg-red-50 text-red-600 rounded"
+                    title="Remove audio"
+                  >
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="p-4 bg-blue-50 rounded-lg">
-                {preMeetingNotes ? (
-                  <div className="text-sm text-gray-700 whitespace-pre-line">
-                    {preMeetingNotes}
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-500 italic flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    No pre-meeting notes added
-                  </div>
-                )}
+              <div className="p-4 text-center border-2 border-dashed border-gray-300 rounded-lg">
+                <Mic className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">No recording attached</p>
+                <button
+                  onClick={() => setShowAudioInput(true)}
+                  className="mt-2 text-xs text-purple-600 hover:text-purple-800"
+                >
+                  + Add recording link
+                </button>
               </div>
             )}
           </div>
 
-          {/* Meeting Notes (During Meeting) */}
+          {/* Files Section */}
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Meeting Notes</span>
+                <Paperclip className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  Files ({meeting.files?.length || 0})
+                </span>
               </div>
               <button
-                onClick={() => setIsEditingMeetingNotes(!isEditingMeetingNotes)}
-                className="text-xs text-green-600 hover:text-green-800"
+                onClick={() => setShowFileInput(!showFileInput)}
+                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
               >
-                {isEditingMeetingNotes ? 'Cancel Edit' : 'Add/Edit Notes'}
+                <Plus className="w-3 h-3" />
+                Add File
               </button>
             </div>
 
-            {isEditingMeetingNotes ? (
-              <div className="space-y-2">
-                <textarea
-                  value={meetingNotes}
-                  onChange={(e) => setMeetingNotes(e.target.value)}
-                  placeholder="Take notes during the meeting (discussions, decisions, action items)..."
-                  className="w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  rows="4"
-                />
-                <div className="flex justify-end gap-2">
+            {showFileInput && (
+              <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                <div className="space-y-2 mb-2">
+                  <input
+                    type="text"
+                    placeholder="File name (e.g., report.pdf)"
+                    value={newFile.name}
+                    onChange={(e) => setNewFile(prev => ({...prev, name: e.target.value}))}
+                    className="w-full p-2 border rounded text-sm"
+                  />
+                  <input
+                    type="url"
+                    placeholder="File URL (https://...)"
+                    value={newFile.url}
+                    onChange={(e) => setNewFile(prev => ({...prev, url: e.target.value}))}
+                    className="w-full p-2 border rounded text-sm"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => setIsEditingMeetingNotes(false)}
-                    className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50 flex items-center gap-1"
+                    onClick={() => setShowFileInput(false)}
+                    className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50"
                   >
-                    <X className="w-3 h-3" />
                     Cancel
                   </button>
                   <button
-                    onClick={handleSaveMeetingNotes}
-                    className="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
+                    onClick={handleAddFile}
+                    disabled={!newFile.name || !newFile.url}
+                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Save className="w-3 h-3" />
-                    Save Notes
+                    Add Link
                   </button>
                 </div>
               </div>
+            )}
+
+            {meeting.files?.length > 0 ? (
+              <div className="grid grid-cols-1 gap-2">
+                {meeting.files.map((file) => (
+                  <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 bg-white rounded-lg border">
+                        {getFileIconComponent(getFileType(file.name))}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-gray-800 truncate">
+                          {file.name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {formatFileSize(file.size)} • {getFileType(file.name).toUpperCase()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 hover:bg-blue-50 text-blue-600 rounded"
+                        title="Open file"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                      <button
+                        onClick={() => onRemoveFile(meeting.id, file.id)}
+                        className="p-1.5 hover:bg-red-50 text-red-600 rounded"
+                        title="Remove file"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <div className="p-4 bg-green-50 rounded-lg">
-                {meetingNotes ? (
-                  <div className="text-sm text-gray-700 whitespace-pre-line">
-                    {meetingNotes}
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-500 italic flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    No meeting notes taken yet
-                  </div>
-                )}
+              <div className="p-4 text-center border-2 border-dashed border-gray-300 rounded-lg">
+                <Paperclip className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">No files attached yet</p>
               </div>
             )}
+          </div>
+
+          {/* Notes Sections */}
+          <div className="space-y-4">
+            {/* Pre-Meeting Notes */}
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-700">Pre-Meeting Notes</span>
+                </div>
+                <button
+                  onClick={() => setIsEditingPreNotes(!isEditingPreNotes)}
+                  className="text-xs text-blue-600 hover:text-blue-800"
+                >
+                  {isEditingPreNotes ? 'Cancel' : 'Edit'}
+                </button>
+              </div>
+
+              {isEditingPreNotes ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={preMeetingNotes}
+                    onChange={(e) => setPreMeetingNotes(e.target.value)}
+                    placeholder="Add notes before meeting (objectives, questions to ask, preparation items)..."
+                    className="w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows="3"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={handleSavePreNotes}
+                      className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-700 whitespace-pre-line">
+                  {preMeetingNotes || (
+                    <div className="text-gray-500 italic">
+                      No pre-meeting notes added
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Meeting Notes */}
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-gray-700">Meeting Notes</span>
+                </div>
+                <button
+                  onClick={() => setIsEditingMeetingNotes(!isEditingMeetingNotes)}
+                  className="text-xs text-green-600 hover:text-green-800"
+                >
+                  {isEditingMeetingNotes ? 'Cancel' : 'Edit'}
+                </button>
+              </div>
+
+              {isEditingMeetingNotes ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={meetingNotes}
+                    onChange={(e) => setMeetingNotes(e.target.value)}
+                    placeholder="Take notes during the meeting (discussions, decisions, action items)..."
+                    className="w-full p-3 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    rows="4"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={handleSaveMeetingNotes}
+                      className="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-700 whitespace-pre-line">
+                  {meetingNotes || (
+                    <div className="text-gray-500 italic">
+                      No meeting notes taken yet
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Metadata Footer */}
-      <div className="flex items-center justify-between mt-4 pt-3 border-t text-xs text-gray-500">
-        <div className="flex items-center gap-2">
+      {/* Status Footer */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 pt-3 border-t text-xs text-gray-500 gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span>Created: {new Date(meeting.createdAt).toLocaleDateString()}</span>
           {meeting.status === 'completed' && meeting.completedAt && (
             <>
@@ -583,26 +651,15 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
               <span>Completed: {new Date(meeting.completedAt).toLocaleDateString()}</span>
             </>
           )}
-          {meeting.audioUrl && (
-            <>
-              <span className="text-gray-300">•</span>
-              <span className="flex items-center gap-1">
-                <Headphones className="w-3 h-3" />
-                Audio available
-              </span>
-            </>
-          )}
         </div>
-        <div className="flex items-center gap-1">
-          {isVirtualMeeting(meeting.location) ? (
-            <span className="flex items-center gap-1">
-              <Video className="w-3 h-3" />
-              Virtual Meeting
-            </span>
-          ) : (
-            <span className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              In-Person
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-1 rounded-full ${getStatusColor(meeting.status)}`}>
+            {meeting.status}
+          </span>
+          {meeting.audioUrl && (
+            <span className="flex items-center gap-1 text-purple-600">
+              <Headphones className="w-3 h-3" />
+              Recorded
             </span>
           )}
         </div>
