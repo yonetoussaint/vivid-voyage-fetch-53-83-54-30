@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import { UserSquare2, MoreHorizontal, MapPin, Link as LinkIcon, CalendarDays } from 'lucide-react';
-import FlashDeals from "@/components/home/FlashDeals";
-import FavouriteChannels from "@/components/FavouriteChannels";
-import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 
 // Seller data
 const sellerData = {
@@ -34,26 +31,9 @@ export default function XProfile() {
   const [isFollowing, setIsFollowing] = useState(false);
   const isOwnProfile = true;
 
-  // Dummy data for components
-  const channelsData = [
-    { id: 'all', name: 'All Products', icon: '📱' },
-    { id: 'phones', name: 'Phones', icon: '📲' },
-    { id: 'laptops', name: 'Laptops', icon: '💻' },
-    { id: 'accessories', name: 'Accessories', icon: '🎧' },
-    { id: 'gadgets', name: 'Gadgets', icon: '⌚' }
-  ];
-
-  const filters = {
-    priceRange: [0, 1000000],
-    tags: [],
-    searchQuery: '',
-    rating: 0,
-    userId: sellerData.id
-  };
-
   return (
     <div className="bg-black text-white min-h-screen w-full max-w-[600px] mx-auto">
-      {/* Taller Banner - More Height */}
+      {/* Banner */}
       <div className="relative h-32 bg-gradient-to-r from-blue-500/20 to-purple-500/20">
         <img 
           src={sellerData.banner_url}
@@ -61,9 +41,9 @@ export default function XProfile() {
           className="w-full h-full object-cover"
         />
         
-        {/* Profile Picture Positioned Lower on Taller Banner */}
-        <div className="absolute -bottom-16 left-4">
-          <div className="w-28 h-28 rounded-full border-4 border-black bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
+        {/* Profile Picture - Reduced size and positioned like X */}
+        <div className="absolute -bottom-12 left-4">
+          <div className="w-24 h-24 rounded-full border-4 border-black bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
             <div className="w-full h-full rounded-full bg-black p-0.5">
               <img 
                 src={sellerData.image_url}
@@ -73,41 +53,41 @@ export default function XProfile() {
             </div>
           </div>
         </div>
-
-        {/* Edit Button Positioned on Banner (Top Right) */}
-        <div className="absolute top-4 right-4">
-          {isOwnProfile ? (
-            <button className="px-4 py-2 border border-gray-600 rounded-full text-sm bg-black/80 backdrop-blur-sm hover:bg-gray-900 transition-colors">
-              Edit profile
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button className="p-2 border border-gray-600 rounded-full bg-black/80 backdrop-blur-sm hover:bg-gray-900">
-                <MoreHorizontal size={16} />
-              </button>
-              <button className="p-2 border border-gray-600 rounded-full bg-black/80 backdrop-blur-sm hover:bg-gray-900">
-                <UserSquare2 size={16} />
-              </button>
-              <button
-                onClick={() => setIsFollowing(!isFollowing)}
-                className={`px-4 py-2 rounded-full text-sm bg-black/80 backdrop-blur-sm ${
-                  isFollowing 
-                    ? 'border border-gray-600 hover:bg-red-500/20 hover:text-red-500' 
-                    : 'bg-white text-black hover:bg-gray-200'
-                }`}
-              >
-                {isFollowing ? 'Following' : 'Follow'}
-              </button>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* Profile Info - Adjusted for Taller Banner */}
-      <div className="px-4 pt-16">
-        {/* Name and Username - Positioned Correctly */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-1">
+      {/* Edit/Follow Button - BELOW BANNER */}
+      <div className="flex justify-end px-4 pt-3">
+        {isOwnProfile ? (
+          <button className="px-4 py-2 border border-gray-600 rounded-full text-sm font-semibold hover:bg-gray-900 transition-colors">
+            Edit profile
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button className="p-2 border border-gray-600 rounded-full hover:bg-gray-900">
+              <MoreHorizontal size={18} />
+            </button>
+            <button className="p-2 border border-gray-600 rounded-full hover:bg-gray-900">
+              <UserSquare2 size={18} />
+            </button>
+            <button
+              onClick={() => setIsFollowing(!isFollowing)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                isFollowing 
+                  ? 'border border-gray-600 hover:bg-red-500/10 hover:text-red-500' 
+                  : 'bg-white text-black hover:bg-gray-200'
+              }`}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Profile Info */}
+      <div className="px-4 pt-2">
+        {/* Name and Username */}
+        <div className="mb-3">
+          <div className="flex items-center gap-1.5 mb-0.5">
             <span className="font-bold text-xl">{sellerData.name}</span>
             {sellerData.verified && (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
@@ -119,14 +99,14 @@ export default function XProfile() {
         </div>
 
         {/* Bio */}
-        <div className="mb-4">
+        <div className="mb-3">
           <p className="text-sm leading-relaxed text-gray-100">
             {sellerData.bio}
           </p>
         </div>
 
         {/* Info Links */}
-        <div className="flex flex-col gap-2 mb-4 text-sm text-gray-500">
+        <div className="flex flex-col gap-1.5 mb-3 text-sm text-gray-500">
           <div className="flex items-center gap-2">
             <MapPin size={16} />
             <span>{sellerData.location}</span>
@@ -144,7 +124,7 @@ export default function XProfile() {
         </div>
 
         {/* Follow Stats */}
-        <div className="flex gap-4 mb-4">
+        <div className="flex gap-4 mb-3">
           <button className="hover:underline">
             <span className="font-bold">{formatNumber(sellerData.following_count)}</span>
             <span className="text-gray-500"> Following</span>
@@ -155,7 +135,7 @@ export default function XProfile() {
           </button>
         </div>
 
-        {/* Seller Stats - Grid */}
+        {/* Seller Stats Grid */}
         <div className="grid grid-cols-2 gap-3 mb-6 p-3 bg-gray-900/50 rounded-xl">
           <div className="text-center">
             <div className="font-bold text-lg text-white">{formatNumber(sellerData.total_sales)}</div>
@@ -183,7 +163,7 @@ export default function XProfile() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab.toLowerCase())}
-              className={`flex-1 py-3 text-sm relative ${
+              className={`flex-1 py-3 text-sm font-medium relative ${
                 activeTab === tab.toLowerCase() 
                   ? 'text-white' 
                   : 'text-gray-500 hover:text-gray-300'
@@ -191,7 +171,7 @@ export default function XProfile() {
             >
               {tab}
               {activeTab === tab.toLowerCase() && (
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-[#1D9BF0] rounded-full"></div>
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-[#1D9BF0] rounded-full"></div>
               )}
             </button>
           ))}
@@ -227,44 +207,12 @@ export default function XProfile() {
         ))}
       </div>
 
-      {/* Components Section */}
-      <div className="px-4">
-
-        {/* Favourite Channels Component */}
-        <div className="pt-2">
-          <FavouriteChannels 
-            channels={channelsData}
-            activeChannel={'all'}
-            onChannelSelect={(channelId) => console.log('Selected channel:', channelId)}
-            variant="dark"
-          />
+      {/* Content Placeholder */}
+      <div className="px-4 py-6">
+        <div className="text-center text-gray-500">
+          <p className="mb-2">Your content will appear here</p>
+          <p className="text-sm">Select a tab above to view different content types</p>
         </div>
-
-        {/* Separator */}
-        <div className="w-full bg-gray-800 h-px my-4"></div>
-
-        {/* Flash Deals Component */}
-        <div className="pt-2">
-          <FlashDeals
-            showCountdown={true}
-            showTitleChevron={true}
-            category="electronics"
-            variant="dark"
-          />
-        </div>
-
-        {/* Separator */}
-        <div className="w-full bg-gray-800 h-px my-4"></div>
-
-        {/* Infinite Content Grid Component */}
-        <div className="pt-2">
-          <InfiniteContentGrid 
-            category="user-products"
-            filters={filters}
-            variant="dark"
-          />
-        </div>
-
       </div>
 
       {/* Bottom Spacing */}
