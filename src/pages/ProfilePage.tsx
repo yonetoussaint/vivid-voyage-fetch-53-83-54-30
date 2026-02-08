@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserSquare2, MoreHorizontal, MapPin, CalendarDays, Phone, Mail, Share2 } from 'lucide-react';
+import { UserSquare2, MoreHorizontal, MapPin, CalendarDays, Phone, Mail, Share2, Circle } from 'lucide-react';
 
 // Seller data
 const sellerData = {
@@ -16,6 +16,8 @@ const sellerData = {
   following_count: 342,
   store_age_years: 4,
   joined_date: "January 2020",
+  last_seen: "5 minutes ago", // or "Online"
+  is_online: true,
   
   // Contact Information
   contacts: {
@@ -119,15 +121,29 @@ export default function XProfile() {
         </div>
       </div>
 
-      {/* Edit/Follow Button WITH SHARE BUTTON */}
+      {/* Action Buttons */}
       <div className="flex justify-between items-center px-4 pt-3">
-        {/* Left side empty for balance */}
-        <div></div>
+        {/* Online Status */}
+        <div className="flex items-center gap-2">
+          {sellerData.is_online ? (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 rounded-full">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs font-medium text-green-700">Online</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full">
+              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+              <span className="text-xs font-medium text-gray-600">
+                Seen {sellerData.last_seen}
+              </span>
+            </div>
+          )}
+        </div>
         
         {/* Right side buttons */}
         <div className="flex gap-2">
-          {/* Share Button - Always Visible */}
-          <button className="p-2 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+          {/* Circular Share Button */}
+          <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
             <Share2 size={18} className="text-gray-700" />
           </button>
           
@@ -137,10 +153,10 @@ export default function XProfile() {
             </button>
           ) : (
             <div className="flex gap-2">
-              <button className="p-2 border border-gray-300 rounded-full hover:bg-gray-50">
+              <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-50">
                 <MoreHorizontal size={18} className="text-gray-700" />
               </button>
-              <button className="p-2 border border-gray-300 rounded-full hover:bg-gray-50">
+              <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-50">
                 <UserSquare2 size={18} className="text-gray-700" />
               </button>
               <button
@@ -158,11 +174,11 @@ export default function XProfile() {
         </div>
       </div>
 
-      {/* Profile Info - CLEAN & COMPACT */}
+      {/* Profile Info */}
       <div className="px-4 pt-2">
-        {/* Name Only */}
+        {/* Name and Online Status */}
         <div className="mb-2">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 mb-1">
             <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
             {sellerData.verified && (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
@@ -179,7 +195,7 @@ export default function XProfile() {
           </p>
         </div>
 
-        {/* Info Links - COMPACT ROW */}
+        {/* Info Links */}
         <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-gray-600">
           <div className="flex items-center gap-1">
             <MapPin size={12} className="text-gray-500" />
@@ -191,7 +207,7 @@ export default function XProfile() {
           </div>
         </div>
 
-        {/* Follow Stats - COMPACT */}
+        {/* Follow Stats */}
         <div className="flex gap-4 mb-4 text-sm">
           <button className="hover:underline">
             <span className="font-bold text-gray-900">{formatNumber(sellerData.following_count)}</span>
@@ -203,7 +219,7 @@ export default function XProfile() {
           </button>
         </div>
 
-        {/* Seller Stats Grid - COMPACT */}
+        {/* Seller Stats Grid */}
         <div className="grid grid-cols-4 gap-2 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
           <div className="text-center">
             <div className="font-bold text-base text-gray-900">{formatNumber(sellerData.total_sales)}</div>
@@ -223,7 +239,7 @@ export default function XProfile() {
           </div>
         </div>
 
-        {/* Contact Section - CLEAN */}
+        {/* Contact Section */}
         <div className="mb-6">
           <div className="flex flex-wrap gap-2">
             {contactMethods.map((contact) => {
