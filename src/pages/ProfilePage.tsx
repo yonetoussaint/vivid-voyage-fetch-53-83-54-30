@@ -20,7 +20,10 @@ const sellerData = {
     email: "john@doestore.com",
     facebook: "johndoestore",
     instagram: "@johndoe.store",
-    whatsapp: "+63 912 345 6789"
+    whatsapp: "+63 912 345 6789",
+    telegram: "@johndoe_store",
+    twitter: "@johndoe",
+    tiktok: "@johndoe"
   }
 };
 
@@ -92,7 +95,7 @@ export default function XProfile() {
           <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.509l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.022c.242-.213-.054-.333-.373-.121l-6.869 4.326-2.96-.924c-.643-.204-.656-.643.136-.953l11.57-4.461c.537-.196 1.006.128.832.941z"/>
         </svg>
       ),
-      action: `https://t.me/${sellerData.contacts.telegram}`,
+      action: `https://t.me/${sellerData.contacts.telegram.replace('@', '')}`,
       color: 'bg-blue-100 hover:bg-blue-200 text-blue-700'
     },
     { 
@@ -103,7 +106,7 @@ export default function XProfile() {
           <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
         </svg>
       ),
-      action: `https://twitter.com/${sellerData.contacts.twitter}`,
+      action: `https://twitter.com/${sellerData.contacts.twitter.replace('@', '')}`,
       color: 'bg-blue-100 hover:bg-blue-200 text-blue-700'
     },
     { 
@@ -114,7 +117,7 @@ export default function XProfile() {
           <path d="M19.589 6.686a4.793 4.793 0 01-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 01-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 013.183-4.51v-3.5a6.329 6.329 0 00-5.394 10.692 6.33 6.33 0 0010.857-4.424V8.687a8.182 8.182 0 004.773 1.526V6.79a4.831 4.831 0 01-3.77-1.905"/>
         </svg>
       ),
-      action: `https://tiktok.com/@${sellerData.contacts.tiktok}`,
+      action: `https://tiktok.com/@${sellerData.contacts.tiktok.replace('@', '')}`,
       color: 'bg-gray-100 hover:bg-gray-200 text-gray-700'
     },
   ];
@@ -239,7 +242,7 @@ export default function XProfile() {
           </div>
         </div>
 
-        {/* Horizontally Scrollable Contact Section */}
+        {/* Horizontally Scrollable Contact Section - Icons & Labels Horizontal */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-sm font-medium text-gray-900">Contact Seller</span>
@@ -257,12 +260,12 @@ export default function XProfile() {
                     href={contact.action}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex-shrink-0 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl transition-all active:scale-95 min-w-[80px] ${contact.color}`}
+                    className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl transition-all active:scale-95 whitespace-nowrap ${contact.color}`}
                   >
                     <div className="flex-shrink-0">
-                      {typeof Icon === 'function' ? <Icon /> : <Icon size={20} />}
+                      {typeof Icon === 'function' ? <Icon /> : <Icon size={18} />}
                     </div>
-                    <span className="text-xs font-medium whitespace-nowrap">{contact.label}</span>
+                    <span className="text-xs font-medium">{contact.label}</span>
                   </a>
                 );
               })}
