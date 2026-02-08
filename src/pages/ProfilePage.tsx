@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserSquare2, MoreHorizontal, MapPin, CalendarDays, Phone, Mail, Star, TrendingUp, Package, Shield } from 'lucide-react';
+import { UserSquare2, MoreHorizontal, MapPin, CalendarDays, Phone, Mail, Share2 } from 'lucide-react';
 
 // Seller data
 const sellerData = {
@@ -24,16 +24,6 @@ const sellerData = {
     facebook: "johndoestore",
     instagram: "@johndoe.store",
     whatsapp: "+63 912 345 6789"
-  },
-
-  // Additional stats for masonry grid
-  stats: {
-    products_listed: 156,
-    positive_reviews: 245,
-    avg_response_time: "15 min",
-    repeat_customers: 67,
-    shipping_time: "2-3 days",
-    satisfaction_rate: 96
   }
 };
 
@@ -105,102 +95,6 @@ export default function XProfile() {
     },
   ];
 
-  // Masonry Grid Items
-  const masonryItems = [
-    { 
-      id: 1, 
-      title: 'Seller Rating', 
-      value: `${sellerData.rating}/5`, 
-      icon: Star,
-      color: 'bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200',
-      textColor: 'text-yellow-700',
-      height: 'h-24',
-      iconColor: 'text-yellow-500'
-    },
-    { 
-      id: 2, 
-      title: 'Total Sales', 
-      value: formatNumber(sellerData.total_sales), 
-      icon: TrendingUp,
-      color: 'bg-gradient-to-br from-green-50 to-green-100 border border-green-200',
-      textColor: 'text-green-700',
-      height: 'h-32',
-      iconColor: 'text-green-500'
-    },
-    { 
-      id: 3, 
-      title: 'Products Listed', 
-      value: sellerData.stats.products_listed, 
-      icon: Package,
-      color: 'bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200',
-      textColor: 'text-blue-700',
-      height: 'h-24',
-      iconColor: 'text-blue-500'
-    },
-    { 
-      id: 4, 
-      title: 'Positive Reviews', 
-      value: sellerData.stats.positive_reviews, 
-      icon: Star,
-      color: 'bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200',
-      textColor: 'text-purple-700',
-      height: 'h-28',
-      iconColor: 'text-purple-500'
-    },
-    { 
-      id: 5, 
-      title: 'Avg Response Time', 
-      value: sellerData.stats.avg_response_time, 
-      icon: () => (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-        </svg>
-      ),
-      color: 'bg-gradient-to-br from-cyan-50 to-cyan-100 border border-cyan-200',
-      textColor: 'text-cyan-700',
-      height: 'h-24',
-      iconColor: 'text-cyan-500'
-    },
-    { 
-      id: 6, 
-      title: 'Satisfaction Rate', 
-      value: `${sellerData.stats.satisfaction_rate}%`, 
-      icon: Shield,
-      color: 'bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200',
-      textColor: 'text-emerald-700',
-      height: 'h-28',
-      iconColor: 'text-emerald-500'
-    },
-    { 
-      id: 7, 
-      title: 'Repeat Customers', 
-      value: `${sellerData.stats.repeat_customers}%`, 
-      icon: () => (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-        </svg>
-      ),
-      color: 'bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200',
-      textColor: 'text-orange-700',
-      height: 'h-24',
-      iconColor: 'text-orange-500'
-    },
-    { 
-      id: 8, 
-      title: 'Shipping Time', 
-      value: sellerData.stats.shipping_time, 
-      icon: () => (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-        </svg>
-      ),
-      color: 'bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200',
-      textColor: 'text-indigo-700',
-      height: 'h-32',
-      iconColor: 'text-indigo-500'
-    },
-  ];
-
   return (
     <div className="bg-white text-gray-900 min-h-screen w-full max-w-[600px] mx-auto">
       {/* Banner */}
@@ -225,35 +119,46 @@ export default function XProfile() {
         </div>
       </div>
 
-      {/* Edit/Follow Button */}
-      <div className="flex justify-end px-4 pt-3">
-        {isOwnProfile ? (
-          <button className="px-4 py-2 border border-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">
-            Edit profile
+      {/* Edit/Follow Button WITH SHARE BUTTON */}
+      <div className="flex justify-between items-center px-4 pt-3">
+        {/* Left side empty for balance */}
+        <div></div>
+        
+        {/* Right side buttons */}
+        <div className="flex gap-2">
+          {/* Share Button - Always Visible */}
+          <button className="p-2 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+            <Share2 size={18} className="text-gray-700" />
           </button>
-        ) : (
-          <div className="flex gap-2">
-            <button className="p-2 border border-gray-300 rounded-full hover:bg-gray-50">
-              <MoreHorizontal size={18} className="text-gray-700" />
+          
+          {isOwnProfile ? (
+            <button className="px-4 py-2 border border-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">
+              Edit profile
             </button>
-            <button className="p-2 border border-gray-300 rounded-full hover:bg-gray-50">
-              <UserSquare2 size={18} className="text-gray-700" />
-            </button>
-            <button
-              onClick={() => setIsFollowing(!isFollowing)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                isFollowing 
-                  ? 'border border-gray-300 hover:bg-gray-50 text-gray-900' 
-                  : 'bg-gray-900 text-white hover:bg-gray-800'
-              }`}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="flex gap-2">
+              <button className="p-2 border border-gray-300 rounded-full hover:bg-gray-50">
+                <MoreHorizontal size={18} className="text-gray-700" />
+              </button>
+              <button className="p-2 border border-gray-300 rounded-full hover:bg-gray-50">
+                <UserSquare2 size={18} className="text-gray-700" />
+              </button>
+              <button
+                onClick={() => setIsFollowing(!isFollowing)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                  isFollowing 
+                    ? 'border border-gray-300 hover:bg-gray-50 text-gray-900' 
+                    : 'bg-gray-900 text-white hover:bg-gray-800'
+                }`}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Profile Info - COMPACT with Masonry Grid */}
+      {/* Profile Info - CLEAN & COMPACT */}
       <div className="px-4 pt-2">
         {/* Name Only */}
         <div className="mb-2">
@@ -268,14 +173,14 @@ export default function XProfile() {
         </div>
 
         {/* Bio */}
-        <div className="mb-2">
+        <div className="mb-3">
           <p className="text-sm leading-relaxed text-gray-700">
             {sellerData.bio}
           </p>
         </div>
 
         {/* Info Links - COMPACT ROW */}
-        <div className="flex flex-wrap items-center gap-3 mb-2 text-xs text-gray-600">
+        <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-gray-600">
           <div className="flex items-center gap-1">
             <MapPin size={12} className="text-gray-500" />
             <span>{sellerData.location}</span>
@@ -287,7 +192,7 @@ export default function XProfile() {
         </div>
 
         {/* Follow Stats - COMPACT */}
-        <div className="flex gap-4 mb-3 text-sm">
+        <div className="flex gap-4 mb-4 text-sm">
           <button className="hover:underline">
             <span className="font-bold text-gray-900">{formatNumber(sellerData.following_count)}</span>
             <span className="text-gray-600"> Following</span>
@@ -298,10 +203,29 @@ export default function XProfile() {
           </button>
         </div>
 
-        {/* COMPACT Contact Section */}
-        <div className="mb-4">
-          {/* Contact Buttons Row */}
-          <div className="flex flex-wrap gap-2 mb-3">
+        {/* Seller Stats Grid - COMPACT */}
+        <div className="grid grid-cols-4 gap-2 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="text-center">
+            <div className="font-bold text-base text-gray-900">{formatNumber(sellerData.total_sales)}</div>
+            <div className="text-xs text-gray-600">Sales</div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-base text-yellow-600">{sellerData.rating}★</div>
+            <div className="text-xs text-gray-600">Rating</div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-base text-gray-900">{sellerData.store_age_years}y</div>
+            <div className="text-xs text-gray-600">Store Age</div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-base text-green-600">98%</div>
+            <div className="text-xs text-gray-600">Success</div>
+          </div>
+        </div>
+
+        {/* Contact Section - CLEAN */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
             {contactMethods.map((contact) => {
               const Icon = contact.icon;
               return (
@@ -317,44 +241,6 @@ export default function XProfile() {
                   </div>
                   <span>{contact.label}</span>
                 </a>
-              );
-            })}
-          </div>
-
-          {/* Response Time */}
-          <div className="px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
-            <div className="flex items-center gap-1.5">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-              </svg>
-              <span className="text-xs text-yellow-800">Responds within 30 minutes</span>
-            </div>
-          </div>
-        </div>
-
-        {/* MASONRY GRID - Utilizes All White Space */}
-        <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Seller Performance</h3>
-          <div className="grid grid-cols-2 gap-3 auto-rows-auto">
-            {masonryItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.id}
-                  className={`${item.height} ${item.color} rounded-xl p-3 flex flex-col justify-between`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className={`text-xs font-medium ${item.textColor}`}>
-                      {item.title}
-                    </div>
-                    <div className={`${item.iconColor}`}>
-                      {typeof Icon === 'function' ? <Icon /> : <Icon size={16} />}
-                    </div>
-                  </div>
-                  <div className={`text-xl font-bold ${item.textColor}`}>
-                    {item.value}
-                  </div>
-                </div>
               );
             })}
           </div>
@@ -383,7 +269,7 @@ export default function XProfile() {
         </div>
       </div>
 
-      {/* Content Placeholder */}
+      {/* Content Section */}
       <div className="px-4 py-6">
         <div className="text-center text-gray-500 text-sm">
           <p>Seller's products and reviews appear here</p>
