@@ -210,7 +210,7 @@ export default function XProfile() {
       </div>
 
       {/* Profile Info */}
-      <div className="px-4 pt-2">
+      <div className="px-2 pt-2">
         {/* Name */}
         <div className="mb-2">
           <div className="flex items-center gap-1.5">
