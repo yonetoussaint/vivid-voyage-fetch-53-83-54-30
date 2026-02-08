@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserSquare2, MoreHorizontal, MapPin, Link as LinkIcon, CalendarDays, Phone, Mail } from 'lucide-react';
+import { UserSquare2, MoreHorizontal, MapPin, CalendarDays, Phone, Mail } from 'lucide-react';
 
 // Seller data
 const sellerData = {
@@ -10,7 +10,6 @@ const sellerData = {
   verified: true,
   bio: "Living my best life 🌟 | Shop owner 🛍️ | Premium quality products at affordable prices",
   location: "Manila, Philippines",
-  website: "https://johndoe.store",
   rating: 4.8,
   total_sales: 89200,
   followers_count: 12800,
@@ -49,21 +48,21 @@ export default function XProfile() {
         </svg>
       ),
       action: `https://wa.me/${sellerData.contacts.whatsapp.replace(/\D/g, '')}`,
-      color: 'bg-green-100 hover:bg-green-200 text-green-700'
+      color: 'bg-green-50 hover:bg-green-100 text-green-700'
     },
     { 
       type: 'phone', 
       label: 'Call',
       icon: Phone,
       action: `tel:${sellerData.contacts.phone}`,
-      color: 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+      color: 'bg-blue-50 hover:bg-blue-100 text-blue-700'
     },
     { 
       type: 'email', 
       label: 'Email',
       icon: Mail,
       action: `mailto:${sellerData.contacts.email}`,
-      color: 'bg-red-100 hover:bg-red-200 text-red-700'
+      color: 'bg-red-50 hover:bg-red-100 text-red-700'
     },
     { 
       type: 'facebook', 
@@ -74,7 +73,7 @@ export default function XProfile() {
         </svg>
       ),
       action: `https://facebook.com/${sellerData.contacts.facebook}`,
-      color: 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+      color: 'bg-blue-50 hover:bg-blue-100 text-blue-700'
     },
     { 
       type: 'instagram', 
@@ -92,21 +91,21 @@ export default function XProfile() {
         </svg>
       ),
       action: `https://instagram.com/${sellerData.contacts.instagram.replace('@', '')}`,
-      color: 'bg-gradient-to-r from-pink-100 to-purple-100 hover:from-pink-200 hover:to-purple-200 text-purple-700'
+      color: 'bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 text-purple-700'
     },
   ];
 
   return (
     <div className="bg-white text-gray-900 min-h-screen w-full max-w-[600px] mx-auto">
-      {/* Banner */}
-      <div className="relative h-32 bg-gradient-to-r from-blue-100 to-purple-100">
+      {/* Banner - p-2: h-32 = 8 * 4px */}
+      <div className="relative h-32 bg-gradient-to-r from-blue-50 to-purple-50">
         <img 
           src={sellerData.banner_url}
           alt="Banner"
           className="w-full h-full object-cover"
         />
         
-        {/* Profile Picture */}
+        {/* Profile Picture - p-2 positioning */}
         <div className="absolute -bottom-12 left-4">
           <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
             <div className="w-full h-full rounded-full bg-white p-0.5">
@@ -120,25 +119,25 @@ export default function XProfile() {
         </div>
       </div>
 
-      {/* Edit/Follow Button */}
-      <div className="flex justify-end px-4 pt-3">
+      {/* Edit/Follow Button - p-2 spacing */}
+      <div className="flex justify-end p-4 pt-3">
         {isOwnProfile ? (
-          <button className="px-4 py-2 border border-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">
+          <button className="px-4 py-2 border border-gray-200 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">
             Edit profile
           </button>
         ) : (
           <div className="flex gap-2">
-            <button className="p-2 border border-gray-300 rounded-full hover:bg-gray-50">
-              <MoreHorizontal size={18} className="text-gray-700" />
+            <button className="p-2 border border-gray-200 rounded-full hover:bg-gray-50">
+              <MoreHorizontal size={18} className="text-gray-600" />
             </button>
-            <button className="p-2 border border-gray-300 rounded-full hover:bg-gray-50">
-              <UserSquare2 size={18} className="text-gray-700" />
+            <button className="p-2 border border-gray-200 rounded-full hover:bg-gray-50">
+              <UserSquare2 size={18} className="text-gray-600" />
             </button>
             <button
               onClick={() => setIsFollowing(!isFollowing)}
               className={`px-4 py-2 rounded-full text-sm font-semibold ${
                 isFollowing 
-                  ? 'border border-gray-300 hover:bg-gray-50 text-gray-900' 
+                  ? 'border border-gray-200 hover:bg-gray-50 text-gray-900' 
                   : 'bg-gray-900 text-white hover:bg-gray-800'
               }`}
             >
@@ -148,11 +147,11 @@ export default function XProfile() {
         )}
       </div>
 
-      {/* Profile Info - COMPACT */}
-      <div className="px-4 pt-2">
+      {/* Profile Info - COMPACT with p-2 system */}
+      <div className="p-4 pt-2">
         {/* Name Only */}
         <div className="mb-2">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
             {sellerData.verified && (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
@@ -163,23 +162,17 @@ export default function XProfile() {
         </div>
 
         {/* Bio */}
-        <div className="mb-2">
+        <div className="mb-3">
           <p className="text-sm leading-relaxed text-gray-700">
             {sellerData.bio}
           </p>
         </div>
 
-        {/* Info Links - COMPACT ROW */}
-        <div className="flex flex-wrap items-center gap-3 mb-2 text-xs text-gray-600">
+        {/* Info Links - COMPACT ROW (No website) */}
+        <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-gray-600">
           <div className="flex items-center gap-1">
             <MapPin size={12} className="text-gray-500" />
             <span>{sellerData.location}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <LinkIcon size={12} className="text-gray-500" />
-            <a href={sellerData.website} className="text-blue-600 hover:underline">
-              {sellerData.website.replace('https://', '')}
-            </a>
           </div>
           <div className="flex items-center gap-1">
             <CalendarDays size={12} className="text-gray-500" />
@@ -189,39 +182,41 @@ export default function XProfile() {
 
         {/* Follow Stats - COMPACT */}
         <div className="flex gap-4 mb-3 text-sm">
-          <button className="hover:underline">
+          <div className="hover:underline cursor-pointer">
             <span className="font-bold text-gray-900">{formatNumber(sellerData.following_count)}</span>
             <span className="text-gray-600"> Following</span>
-          </button>
-          <button className="hover:underline">
+          </div>
+          <div className="hover:underline cursor-pointer">
             <span className="font-bold text-gray-900">{formatNumber(sellerData.followers_count)}</span>
             <span className="text-gray-600"> Followers</span>
-          </button>
+          </div>
         </div>
 
-        {/* Seller Stats Grid - COMPACT */}
-        <div className="grid grid-cols-4 gap-2 mb-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="text-center">
+        {/* Seller Stats Grid - COMPACT with p-2 spacing */}
+        <div className="grid grid-cols-4 gap-2 mb-4 p-2 bg-gray-50 rounded-lg border border-gray-100">
+          <div className="text-center p-1">
             <div className="font-bold text-base text-gray-900">{formatNumber(sellerData.total_sales)}</div>
-            <div className="text-xs text-gray-600">Sales</div>
+            <div className="text-xs text-gray-600 mt-0.5">Sales</div>
           </div>
-          <div className="text-center">
+          <div className="text-center p-1">
             <div className="font-bold text-base text-yellow-600">{sellerData.rating}★</div>
-            <div className="text-xs text-gray-600">Rating</div>
+            <div className="text-xs text-gray-600 mt-0.5">Rating</div>
           </div>
-          <div className="text-center">
+          <div className="text-center p-1">
             <div className="font-bold text-base text-gray-900">{sellerData.store_age_years}y</div>
-            <div className="text-xs text-gray-600">Store Age</div>
+            <div className="text-xs text-gray-600 mt-0.5">Store Age</div>
           </div>
-          <div className="text-center">
+          <div className="text-center p-1">
             <div className="font-bold text-base text-green-600">98%</div>
-            <div className="text-xs text-gray-600">Success</div>
+            <div className="text-xs text-gray-600 mt-0.5">Success</div>
           </div>
         </div>
 
-        {/* COMPACT Contact Section - WhatsApp Icon Added */}
+        {/* COMPACT Contact Section - p-2 spacing */}
         <div className="mb-4">
-          {/* Contact Buttons Row - 5 Contacts Only */}
+          <h3 className="font-semibold text-gray-900 mb-2 text-sm">Contact Seller</h3>
+          
+          {/* Contact Buttons Row - p-2 spacing */}
           <div className="flex flex-wrap gap-2 mb-3">
             {contactMethods.map((contact) => {
               const Icon = contact.icon;
@@ -231,7 +226,7 @@ export default function XProfile() {
                   href={contact.action}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors active:scale-95 ${contact.color}`}
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors active:scale-95 ${contact.color}`}
                 >
                   <div className="flex-shrink-0">
                     {typeof Icon === 'function' ? <Icon /> : <Icon size={14} />}
@@ -243,8 +238,8 @@ export default function XProfile() {
           </div>
 
           {/* Response Time - COMPACT */}
-          <div className="px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-center gap-1.5">
+          <div className="p-2 bg-yellow-50 border border-yellow-100 rounded-lg">
+            <div className="flex items-center gap-2">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
               </svg>
@@ -254,14 +249,14 @@ export default function XProfile() {
         </div>
       </div>
 
-      {/* Tabs - COMPACT */}
-      <div className="border-b border-gray-200">
-        <div className="flex px-4">
+      {/* Tabs - COMPACT with p-2 spacing */}
+      <div className="border-b border-gray-100">
+        <div className="flex p-4">
           {['Products', 'Reviews', 'Media', 'Likes'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab.toLowerCase())}
-              className={`flex-1 py-2.5 text-xs font-medium relative ${
+              className={`flex-1 py-2 text-xs font-medium relative ${
                 activeTab === tab.toLowerCase() 
                   ? 'text-gray-900' 
                   : 'text-gray-500 hover:text-gray-700'
@@ -277,7 +272,7 @@ export default function XProfile() {
       </div>
 
       {/* Content Section - COMPACT */}
-      <div className="px-4 py-4">
+      <div className="p-4">
         <div className="text-center text-gray-500 text-sm">
           <p>Seller's products and reviews appear here</p>
           <p className="text-xs mt-1">Select a tab above to view different content</p>
