@@ -26,7 +26,12 @@ import {
   Clock as ClockIcon,
   Download,
   Upload,
-  Headphones
+  Headphones,
+  CheckCircle,
+  XCircle,
+  Clock4,
+  MoreVertical,
+  Filter
 } from 'lucide-react';
 import {
   getFileType,
@@ -55,10 +60,12 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
       [attendee]: meeting.attendance?.[attendee] || {
         status: 'invited',
         joinTime: null,
-        leaveTime: null
+        leaveTime: null,
+        notes: ''
       }
     }), {}) || {}
   );
+  const [attendeeFilter, setAttendeeFilter] = useState('all');
 
   const handleAddFile = () => {
     if (newFile.name && newFile.url) {
@@ -125,8 +132,8 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
     const updatedStatus = {
       ...attendeeStatus[attendeeName],
       status,
-      ...(status === 'present' && { joinTime: now.toISOString() }),
-      ...(status === 'absent' && { leaveTime: null })
+      joinTime: status === 'present' ? now.toISOString() : attendeeStatus[attendeeName]?.joinTime,
+      leaveTime: status === 'absent' ? null : attendeeStatus[attendeeName]?.leaveTime
     };
 
     const newAttendeeStatus = {
@@ -138,19 +145,21 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
   };
 
   const markAttendeeLeave = (attendeeName) => {
-    const now = new Date();
-    const updatedStatus = {
-      ...attendeeStatus[attendeeName],
-      status: 'left',
-      leaveTime: now.toISOString()
-    };
+    if (attendeeStatus[attendeeName]?.status === 'present') {
+      const now = new Date();
+      const updatedStatus = {
+        ...attendeeStatus[attendeeName],
+        status: 'left',
+        leaveTime: now.toISOString()
+      };
 
-    const newAttendeeStatus = {
-      ...attendeeStatus,
-      [attendeeName]: updatedStatus
-    };
-    
-    setAttendeeStatus(newAttendeeStatus);
+      const newAttendeeStatus = {
+        ...attendeeStatus,
+        [attendeeName]: updatedStatus
+      };
+      
+      setAttendeeStatus(newAttendeeStatus);
+    }
   };
 
   const getAttendeeCounts = () => {
@@ -158,21 +167,64 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
       present: 0,
       absent: 0,
       invited: 0,
-      left: 0
+      left: 0,
+      total: meeting.attendees?.length || 0
     };
     
     Object.values(attendeeStatus).forEach(status => {
-      counts[status.status] = (counts[status.status] || 0) + 1;
+      if (status.status in counts) {
+        counts[status.status]++;
+      }
     });
     
     return counts;
   };
 
+  const getStatusIcon = (status) => {
+    switch(status) {
+      case 'present':
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'absent':
+        return <XCircle className="w-4 h-4 text-red-600" />;
+      case 'left':
+        return <Clock4 className="w-4 h-4 text-amber-600" />;
+      default:
+        return <ClockIcon className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'present':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'absent':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'left':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch(status) {
+      case 'present': return 'Present';
+      case 'absent': return 'Absent';
+      case 'left': return 'Left Early';
+      default: return 'Invited';
+    }
+  };
+
+  const filteredAttendees = meeting.attendees?.filter(attendee => {
+    if (attendeeFilter === 'all') return true;
+    return attendeeStatus[attendee]?.status === attendeeFilter;
+  }) || [];
+
   const counts = getAttendeeCounts();
 
   return (
     <div className={`p-4 bg-white border rounded-lg shadow-sm ${meeting.status === 'completed' ? 'border-green-200 bg-green-50' : 'border-blue-100'}`}>
-      {/* Header - Mobile Optimized */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -232,7 +284,7 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
         </div>
       </div>
 
-      {/* Action Buttons - Mobile Optimized */}
+      {/* Action Buttons */}
       {meeting.status !== 'completed' && (
         <div className="grid grid-cols-2 gap-2 mb-4">
           <button
@@ -252,39 +304,54 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
         </div>
       )}
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-        <div className="bg-blue-50 p-3 rounded-lg text-center">
-          <div className="text-lg font-semibold text-blue-700">{counts.present || 0}</div>
-          <div className="text-xs text-blue-600 flex items-center justify-center gap-1">
-            <UserCheck className="w-3 h-3" />
-            Present
+      {/* Attendance Summary Cards */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Attendance</span>
+          </div>
+          <div className="text-xs text-gray-500">
+            {counts.present || 0} of {counts.total} present
           </div>
         </div>
-        <div className="bg-red-50 p-3 rounded-lg text-center">
-          <div className="text-lg font-semibold text-red-700">{counts.absent || 0}</div>
-          <div className="text-xs text-red-600 flex items-center justify-center gap-1">
-            <UserX className="w-3 h-3" />
-            Absent
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+          <div className={`p-3 rounded-lg border ${getStatusColor('present')}`}>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{counts.present || 0}</div>
+              <CheckCircle className="w-5 h-5 text-green-600" />
+            </div>
+            <div className="text-xs mt-1">Present</div>
           </div>
-        </div>
-        <div className="bg-gray-50 p-3 rounded-lg text-center">
-          <div className="text-lg font-semibold text-gray-700">{counts.invited || 0}</div>
-          <div className="text-xs text-gray-600 flex items-center justify-center gap-1">
-            <Users className="w-3 h-3" />
-            Invited
+          
+          <div className={`p-3 rounded-lg border ${getStatusColor('absent')}`}>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{counts.absent || 0}</div>
+              <XCircle className="w-5 h-5 text-red-600" />
+            </div>
+            <div className="text-xs mt-1">Absent</div>
           </div>
-        </div>
-        <div className="bg-amber-50 p-3 rounded-lg text-center">
-          <div className="text-lg font-semibold text-amber-700">{counts.left || 0}</div>
-          <div className="text-xs text-amber-600 flex items-center justify-center gap-1">
-            <ClockIcon className="w-3 h-3" />
-            Left Early
+          
+          <div className={`p-3 rounded-lg border ${getStatusColor('left')}`}>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{counts.left || 0}</div>
+              <Clock4 className="w-5 h-5 text-amber-600" />
+            </div>
+            <div className="text-xs mt-1">Left Early</div>
+          </div>
+          
+          <div className={`p-3 rounded-lg border ${getStatusColor('invited')}`}>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{counts.invited || 0}</div>
+              <ClockIcon className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="text-xs mt-1">Invited</div>
           </div>
         </div>
       </div>
 
-      {/* Audio Recording - Mobile Optimized */}
+      {/* Audio Recording */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -298,7 +365,6 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
             >
               <Upload className="w-3 h-3" />
               <span className="hidden sm:inline">Add Audio</span>
-              <span className="sm:hidden">Add</span>
             </button>
           )}
         </div>
@@ -379,88 +445,179 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
       {/* Expandable Details */}
       {expanded && (
         <div className="border-t pt-4 space-y-4">
-          {/* Attendee Management */}
+          {/* Enhanced Attendee Management */}
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-3">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-gray-600" />
                 <span className="text-sm font-medium text-gray-700">
-                  Attendance ({meeting.attendees?.length || 0} people)
+                  Attendees ({counts.total} people)
                 </span>
               </div>
-              <div className="text-xs text-gray-500">
-                {counts.present} present • {counts.absent} absent
+              
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Filter className="w-3 h-3 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <select
+                    value={attendeeFilter}
+                    onChange={(e) => setAttendeeFilter(e.target.value)}
+                    className="pl-9 pr-4 py-1.5 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Attendees</option>
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                    <option value="left">Left Early</option>
+                    <option value="invited">Invited</option>
+                  </select>
+                </div>
+                
+                {meeting.status !== 'completed' && (
+                  <button
+                    onClick={() => {
+                      // Mark all as present
+                      const newStatus = {};
+                      meeting.attendees?.forEach(attendee => {
+                        newStatus[attendee] = {
+                          ...attendeeStatus[attendee],
+                          status: 'present',
+                          joinTime: attendeeStatus[attendee]?.status !== 'present' ? 
+                                   new Date().toISOString() : attendeeStatus[attendee]?.joinTime
+                        };
+                      });
+                      setAttendeeStatus(newStatus);
+                    }}
+                    className="px-3 py-1.5 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+                  >
+                    Mark All Present
+                  </button>
+                )}
               </div>
             </div>
             
             <div className="space-y-2">
-              {meeting.attendees?.map((attendee, idx) => {
-                const status = attendeeStatus[attendee]?.status || 'invited';
-                const joinTime = attendeeStatus[attendee]?.joinTime;
-                const leaveTime = attendeeStatus[attendee]?.leaveTime;
-                
-                return (
-                  <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg border gap-2">
-                    <div className="flex items-center gap-3">
-                      <User className={`w-4 h-4 ${
-                        status === 'present' ? 'text-green-600' :
-                        status === 'absent' ? 'text-red-600' :
-                        status === 'left' ? 'text-amber-600' : 'text-gray-400'
-                      }`} />
-                      <span className="text-sm font-medium text-gray-700">{attendee}</span>
-                      {attendee === meeting.assignedTo && (
-                        <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Host</span>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <div className="text-xs text-gray-500 space-y-0.5">
-                        {joinTime && (
-                          <div className="flex items-center gap-1">
-                            <ClockIcon className="w-3 h-3" />
-                            Joined: {new Date(joinTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              {filteredAttendees.length > 0 ? (
+                filteredAttendees.map((attendee, idx) => {
+                  const status = attendeeStatus[attendee]?.status || 'invited';
+                  const joinTime = attendeeStatus[attendee]?.joinTime;
+                  const leaveTime = attendeeStatus[attendee]?.leaveTime;
+                  
+                  return (
+                    <div key={idx} className="p-3 bg-white border rounded-lg hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start gap-3">
+                        {/* Status Icon */}
+                        <div className="mt-1">
+                          {getStatusIcon(status)}
+                        </div>
+                        
+                        {/* Attendee Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-800">{attendee}</span>
+                                {attendee === meeting.assignedTo && (
+                                  <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">Host</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(status)}`}>
+                                  {getStatusText(status)}
+                                </span>
+                                {(joinTime || leaveTime) && (
+                                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                                    <ClockIcon className="w-3 h-3" />
+                                    {joinTime && new Date(joinTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    {leaveTime && ` - ${new Date(leaveTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {meeting.status !== 'completed' && (
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <div className="hidden sm:flex gap-1">
+                                  <button
+                                    onClick={() => updateAttendeeStatus(attendee, 'present')}
+                                    className={`px-2 py-1 text-xs rounded ${
+                                      status === 'present' 
+                                        ? 'bg-green-600 text-white' 
+                                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                    }`}
+                                  >
+                                    Present
+                                  </button>
+                                  <button
+                                    onClick={() => updateAttendeeStatus(attendee, 'absent')}
+                                    className={`px-2 py-1 text-xs rounded ${
+                                      status === 'absent' 
+                                        ? 'bg-red-600 text-white' 
+                                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                    }`}
+                                  >
+                                    Absent
+                                  </button>
+                                  {status === 'present' && (
+                                    <button
+                                      onClick={() => markAttendeeLeave(attendee)}
+                                      className="px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200"
+                                    >
+                                      Mark Left
+                                    </button>
+                                  )}
+                                </div>
+                                <div className="sm:hidden relative">
+                                  <button className="p-1 hover:bg-gray-200 rounded">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {leaveTime && (
-                          <div className="flex items-center gap-1">
-                            <ClockIcon className="w-3 h-3" />
-                            Left: {new Date(leaveTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </div>
-                        )}
-                      </div>
-                      
-                      {meeting.status !== 'completed' && (
-                        <div className="flex gap-1">
-                          {status !== 'present' && (
-                            <button
-                              onClick={() => updateAttendeeStatus(attendee, 'present')}
-                              className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
-                            >
-                              Present
-                            </button>
-                          )}
-                          {status !== 'absent' && (
-                            <button
-                              onClick={() => updateAttendeeStatus(attendee, 'absent')}
-                              className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
-                            >
-                              Absent
-                            </button>
-                          )}
-                          {status === 'present' && (
-                            <button
-                              onClick={() => markAttendeeLeave(attendee)}
-                              className="px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200"
-                            >
-                              Mark Left
-                            </button>
+                          
+                          {/* Quick Status Toggle - Mobile */}
+                          {meeting.status !== 'completed' && (
+                            <div className="sm:hidden flex flex-wrap gap-1 mt-2 pt-2 border-t">
+                              <button
+                                onClick={() => updateAttendeeStatus(attendee, 'present')}
+                                className={`px-2 py-1 text-xs rounded flex-1 min-w-[80px] ${
+                                  status === 'present' 
+                                    ? 'bg-green-600 text-white' 
+                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                }`}
+                              >
+                                Present
+                              </button>
+                              <button
+                                onClick={() => updateAttendeeStatus(attendee, 'absent')}
+                                className={`px-2 py-1 text-xs rounded flex-1 min-w-[80px] ${
+                                  status === 'absent' 
+                                    ? 'bg-red-600 text-white' 
+                                    : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                }`}
+                              >
+                                Absent
+                              </button>
+                              {status === 'present' && (
+                                <button
+                                  onClick={() => markAttendeeLeave(attendee)}
+                                  className="px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200 flex-1 min-w-[80px]"
+                                >
+                                  Left Early
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="p-4 text-center border-2 border-dashed border-gray-300 rounded-lg">
+                  <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">No attendees match the filter</p>
+                </div>
+              )}
             </div>
           </div>
 
