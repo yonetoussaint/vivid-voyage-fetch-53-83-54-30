@@ -243,7 +243,7 @@ export default function XProfile() {
         </div>
 
         {/* Horizontally Scrollable Contact Section - Reduced Height */}
-        <div className="mb-2">
+        <div className="">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-sm font-medium text-gray-900">Contact Seller</span>
             <div className="flex-1 h-px bg-gray-200"></div>
