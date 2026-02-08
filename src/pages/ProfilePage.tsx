@@ -224,20 +224,20 @@ export default function XProfile() {
         </div>
 
         {/* Bio */}
-        <div className="mb-3">
+        <div className="mb-2">
           <p className="text-sm leading-relaxed text-gray-700">
             {sellerData.bio}
           </p>
         </div>
 
         {/* Info Links */}
-        <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-gray-600">
+        <div className="flex flex-wrap items-center gap-3 mb-2 text-xs text-gray-600">
           <div className="flex items-center gap-1">
-            <MapPin size={12} className="text-gray-500" />
+            <MapPin size={14} className="text-gray-500" />
             <span>{sellerData.location}</span>
           </div>
           <div className="flex items-center gap-1">
-            <CalendarDays size={12} className="text-gray-500" />
+            <CalendarDays size={14} className="text-gray-500" />
             <span>Joined {sellerData.joined_date}</span>
           </div>
         </div>
