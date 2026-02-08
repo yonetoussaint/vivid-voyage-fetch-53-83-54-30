@@ -11,8 +11,8 @@ const sellerData = {
   bio: "Living my best life 🌟 | Shop owner 🛍️ | Premium quality products at affordable prices",
   location: "Manila, Philippines",
   joined_date: "January 2020",
-  is_online: true,
-  last_seen_hours: 3, // hours ago if not online
+  is_online: false,
+  last_seen_hours: 3,
   
   // Contact Information
   contacts: {
@@ -109,24 +109,22 @@ export default function XProfile() {
               </div>
             </div>
             
-            {/* Status Indicator - Bottom Right of Profile Pic */}
-            <div className="absolute -bottom-1 -right-1">
-              {sellerData.is_online ? (
-                <div className="relative">
-                  <div className="w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  </div>
+            {/* Simple Green Dot for Online - Positioned exactly like Facebook */}
+            {sellerData.is_online && (
+              <div className="absolute bottom-1 right-1">
+                <div className="w-4 h-4 bg-green-500 rounded-full border-[3px] border-white"></div>
+              </div>
+            )}
+            
+            {/* Time Indicator for Offline - Appears on hover */}
+            {!sellerData.is_online && sellerData.last_seen_hours && (
+              <div className="absolute bottom-1 right-1 group">
+                <div className="w-4 h-4 bg-gray-300 rounded-full border-[3px] border-white"></div>
+                <div className="absolute -bottom-6 -right-2 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  {sellerData.last_seen_hours}h ago
                 </div>
-              ) : (
-                <div className="relative">
-                  <div className="w-6 h-6 bg-gray-400 rounded-full border-2 border-white flex items-center justify-center">
-                    <div className="absolute -bottom-5 -right-1 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap">
-                      {sellerData.last_seen_hours}h ago
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
