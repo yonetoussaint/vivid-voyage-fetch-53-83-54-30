@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserSquare2, MoreHorizontal, MapPin, CalendarDays, Phone, Mail, Share2, Circle } from 'lucide-react';
+import { UserSquare2, MoreHorizontal, MapPin, CalendarDays, Phone, Mail } from 'lucide-react';
 
 // Seller data
 const sellerData = {
@@ -16,8 +16,7 @@ const sellerData = {
   following_count: 342,
   store_age_years: 4,
   joined_date: "January 2020",
-  last_seen: "5 minutes ago", // or "Online"
-  is_online: true,
+  last_activity: "Active 5 min ago", // More reliable than online status
   
   // Contact Information
   contacts: {
@@ -123,28 +122,24 @@ export default function XProfile() {
 
       {/* Action Buttons */}
       <div className="flex justify-between items-center px-4 pt-3">
-        {/* Online Status */}
+        {/* Last Activity - More Reliable */}
         <div className="flex items-center gap-2">
-          {sellerData.is_online ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs font-medium text-green-700">Online</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full">
-              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-              <span className="text-xs font-medium text-gray-600">
-                Seen {sellerData.last_seen}
-              </span>
-            </div>
-          )}
+          <div className="px-2.5 py-1 bg-gray-100 rounded-full">
+            <span className="text-xs font-medium text-gray-600">
+              {sellerData.last_activity}
+            </span>
+          </div>
         </div>
         
         {/* Right side buttons */}
         <div className="flex gap-2">
-          {/* Circular Share Button */}
+          {/* Custom SVG Share Button - Circular */}
           <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
-            <Share2 size={18} className="text-gray-700" />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+              <polyline points="16 6 12 2 8 6"/>
+              <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
           </button>
           
           {isOwnProfile ? (
@@ -176,7 +171,7 @@ export default function XProfile() {
 
       {/* Profile Info */}
       <div className="px-4 pt-2">
-        {/* Name and Online Status */}
+        {/* Name */}
         <div className="mb-2">
           <div className="flex items-center gap-1.5 mb-1">
             <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
