@@ -16,7 +16,7 @@ const sellerData = {
   following_count: 342,
   store_age_years: 4,
   joined_date: "January 2020",
-  last_activity: "Active 5 min ago", // More reliable than online status
+  last_activity: "Active 5 min ago",
   
   // Contact Information
   contacts: {
@@ -118,27 +118,29 @@ export default function XProfile() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-between items-center px-4 pt-3">
-        {/* Last Activity - More Reliable */}
-        <div className="flex items-center gap-2">
-          <div className="px-2.5 py-1 bg-gray-100 rounded-full">
-            <span className="text-xs font-medium text-gray-600">
+        {/* Last Activity Badge - Positioned on Banner, NOT Behind Profile Pic */}
+        <div className="absolute bottom-4 right-4">
+          <div className="px-3 py-1.5 bg-black/70 backdrop-blur-sm rounded-full">
+            <span className="text-xs font-medium text-white">
               {sellerData.last_activity}
             </span>
           </div>
         </div>
-        
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end items-center px-4 pt-3">
         {/* Right side buttons */}
         <div className="flex gap-2">
-          {/* Custom SVG Share Button - Circular */}
+          {/* Clean Share Icon - Using Export/Forward Icon */}
           <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-              <polyline points="16 6 12 2 8 6"/>
-              <line x1="12" y1="2" x2="12" y2="15"/>
+              <path d="M18 8a3 3 0 100-6 3 3 0 000 6z"/>
+              <path d="M6 15a3 3 0 100-6 3 3 0 000 6z"/>
+              <path d="M18 22a3 3 0 100-6 3 3 0 000 6z"/>
+              <path d="M8.59 13.51l6.83 3.98"/>
+              <path d="M15.41 6.51l-6.82 3.98"/>
             </svg>
           </button>
           
