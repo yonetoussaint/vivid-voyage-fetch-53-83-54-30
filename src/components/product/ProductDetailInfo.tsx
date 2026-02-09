@@ -1,6 +1,6 @@
 // src/components/product/ProductDetailInfo.tsx
 import React, { useState } from 'react';
-import { ChevronDown, Star, Shield, CreditCard, ShoppingCart, Heart, BarChart2, Truck, Package, AlertCircle } from 'lucide-react';
+import { ChevronDown, Star, Shield, CreditCard, Package } from 'lucide-react';
 
 interface ProductDetailInfoProps {
   product?: {
@@ -61,7 +61,6 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   
   const [currentCurrency, setCurrentCurrency] = useState('HTG');
-  const [isFavorite, setIsFavorite] = useState(false);
 
   const toggleCurrency = () => {
     const currencyKeys = Object.keys(currencies);
@@ -173,35 +172,6 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
         </div>
       </div>
 
-      {/* Quick Actions Bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50">
-        <button
-          onClick={() => setIsFavorite(!isFavorite)}
-          className="p-2 active:scale-95 transition-transform"
-          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          <Heart
-            className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-500'}`}
-          />
-        </button>
-        
-        <button
-          className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg active:bg-gray-50"
-          aria-label="Compare with other products"
-        >
-          <BarChart2 className="w-4 h-4 text-gray-600" />
-          <span className="text-sm font-medium text-gray-700">Compare</span>
-        </button>
-
-        <button
-          className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg active:bg-red-700 active:scale-[0.98] transition-all"
-          aria-label="Add to cart"
-        >
-          <ShoppingCart className="w-4 h-4" />
-          <span className="text-sm font-semibold">Add to Cart</span>
-        </button>
-      </div>
-
       {/* Product Highlights */}
       <div className="px-4 py-3 space-y-3 border-b border-gray-100">
         <h3 className="text-sm font-semibold text-gray-900">Product Highlights</h3>
@@ -276,20 +246,6 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
             Watch product video
           </button>
         )}
-      </div>
-
-      {/* Shipping Estimate */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-        <div className="flex items-start gap-2">
-          <Truck className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
-          <div className="flex-1">
-            <div className="text-sm font-medium text-gray-900">Shipping estimate</div>
-            <div className="text-sm text-gray-600">Calculated at checkout</div>
-          </div>
-          <button className="text-sm text-blue-600 font-medium active:text-blue-800">
-            Calculate
-          </button>
-        </div>
       </div>
     </div>
   );
