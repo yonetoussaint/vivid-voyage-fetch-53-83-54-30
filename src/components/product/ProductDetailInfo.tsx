@@ -32,8 +32,8 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
   const mergedProduct = { ...mockB2BData, ...product };
 
   const displayDescription = mergedProduct?.short_description || mergedProduct?.description || 'Product description not available.';
-  const needsTruncation = displayDescription.length > 120;
-  const truncatedDescription = displayDescription.slice(0, 120) + (displayDescription.length > 120 ? '...' : '');
+  const needsTruncation = displayDescription.length > 100;
+  const truncatedDescription = displayDescription.slice(0, 100) + (displayDescription.length > 100 ? '...' : '');
 
   const [currentCurrency, setCurrentCurrency] = useState('HTG');
 
@@ -58,42 +58,42 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
       <button
         onClick={toggleCurrency}
-        className="p-1 rounded flex items-center gap-1 bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors text-[10px]"
+        className="p-0.5 rounded flex items-center gap-0.5 bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors text-xs"
         aria-label="Change currency"
       >
-        <span className={`fi fi-${currencyToCountry[currentCurrency]}`}></span>
+        <span className={`fi fi-${currencyToCountry[currentCurrency]} scale-90`}></span>
         <span className="text-gray-700">{currentCurrency}</span>
-        <ChevronDown className="w-2.5 h-2.5 text-gray-500" />
+        <ChevronDown className="w-3 h-3 text-gray-500" />
       </button>
     </>
   );
 
   return (
-    <div className="w-full px-1.5 bg-white font-sans space-y-1.5">
+    <div className="w-full px-1 bg-white font-sans space-y-1">
       {mergedProduct?.name && (
-        <h2 className="text-xs text-gray-700 leading-tight">
+        <h2 className="text-sm text-gray-700 leading-tight line-clamp-2">
           {mergedProduct.name}
         </h2>
       )}
 
       <div className="flex justify-between items-center">
-        <div className="flex items-baseline gap-1">
-          <span className="text-lg font-bold text-orange-500">
+        <div className="flex items-center gap-1">
+          <span className="text-2xl font-bold text-orange-500 leading-none">
             {formatPrice(currentPrice)}
           </span>
-          <span className="text-[10px] text-gray-500">/unit</span>
+          <span className="text-sm text-gray-500">/ unit</span>
         </div>
         <CurrencySwitcher />
       </div>
 
       <div className="space-y-0.5">
-        <p className="text-[11px] text-gray-600 leading-relaxed">
+        <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
           {truncatedDescription}
         </p>
         {needsTruncation && onReadMore && (
           <button 
             onClick={onReadMore}
-            className="text-[11px] text-blue-600 hover:text-blue-800 font-medium"
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium py-0.5"
           >
             Read more
           </button>
