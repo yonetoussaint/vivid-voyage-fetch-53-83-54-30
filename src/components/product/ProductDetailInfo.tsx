@@ -1,6 +1,6 @@
 // src/components/product/ProductDetailInfo.tsx
 import React, { useState } from 'react';
-import { ChevronDown, Star, CreditCard, Package } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 interface ProductDetailInfoProps {
   product?: {
@@ -126,28 +126,6 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
             <span className="text-sm font-medium text-gray-700">{currentCurrency}</span>
             <ChevronDown className="w-3 h-3 text-gray-500" />
           </button>
-        </div>
-
-        {/* Rating and Reviews - Compact */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`w-4 h-4 ${
-                  i < Math.floor(mergedProduct.rating || 0)
-                    ? 'text-yellow-400 fill-yellow-400'
-                    : 'text-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-          <span className="text-sm text-gray-700 font-medium">
-            {mergedProduct.rating?.toFixed(1) || '4.5'}
-          </span>
-          <span className="text-sm text-gray-500">
-            ({mergedProduct.reviewCount || 0} reviews)
-          </span>
         </div>
       </div>
 
