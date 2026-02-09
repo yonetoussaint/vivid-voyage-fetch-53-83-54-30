@@ -98,7 +98,7 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
   return (
     <div className="w-full bg-white font-sans">
       {/* Main Product Info */}
-      <div className="px-2 py-3 space-y-3 border-b border-gray-100">
+      <div className="px-2 py-2 space-y-3 border-b border-gray-100">
         {/* Product Name */}
         <h1 className="text-lg font-bold text-gray-900 leading-tight">
           {mergedProduct?.name || 'Product Name'}
