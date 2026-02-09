@@ -56,7 +56,7 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
     mergedProduct?.short_description || mergedProduct?.description || 'Product description not available.';
   const needsTruncation = displayDescription.length > 120;
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  
+
   const [currentCurrency, setCurrentCurrency] = useState('HTG');
 
   const toggleCurrency = () => {
@@ -151,45 +151,17 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
         </div>
       </div>
 
-      {/* Product Highlights */}
-      <div className="px-2 py-3 space-y-3 border-b border-gray-100">
-        <h3 className="text-sm font-semibold text-gray-900">Product Highlights</h3>
-        
-        {/* Quick Specs */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-            <Package className="w-4 h-4 text-gray-600" />
-            <div>
-              <div className="text-xs text-gray-500">Min. Order</div>
-              <div className="text-sm font-medium text-gray-900">
-                {mergedProduct.minOrderQty?.toLocaleString() || 50} units
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-            <CreditCard className="w-4 h-4 text-gray-600" />
-            <div>
-              <div className="text-xs text-gray-500">Payment</div>
-              <div className="text-sm font-medium text-gray-900">
-                {mergedProduct.paymentTerms || 'Flexible'}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Product Description */}
       <div className="px-2 py-3 space-y-3">
         <h3 className="text-sm font-semibold text-gray-900">Product Description</h3>
-        
+
         <div className="relative">
           <p className={`text-sm text-gray-700 leading-relaxed ${
             !isDescriptionExpanded && needsTruncation ? 'line-clamp-3' : ''
           }`}>
             {displayDescription}
           </p>
-          
+
           {needsTruncation && (
             <button
               onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
