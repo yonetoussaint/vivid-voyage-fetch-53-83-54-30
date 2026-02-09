@@ -25,34 +25,27 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
   product, 
   onReadMore 
 }) => {
-  const CURRENCIES = {
-    HTG: { code: 'HTG', flag: 'ht', rate: 132.50 },
-    USD: { code: 'USD', flag: 'us', rate: 1 }
-  };
-
+  const currencies = { HTG: 'HTG', USD: 'USD' };
+  const currencyToCountry = { HTG: 'ht', USD: 'us' };
+  const exchangeRates = { HTG: 132.50, USD: 1 };
   const mockB2BData = { unitPrice: 189.99 };
   const mergedProduct = { ...mockB2BData, ...product };
-  
-  const displayDescription = mergedProduct?.short_description || 
-    mergedProduct?.description || 
-    'Product description not available.';
-  
-  const needsTruncation = displayDescription.length > 120;
-  const truncatedDescription = needsTruncation 
-    ? `${displayDescription.slice(0, 120)}...` 
-    : displayDescription;
 
-  const [currentCurrency, setCurrentCurrency] = useState<'HTG' | 'USD'>('HTG');
+  const displayDescription = mergedProduct?.short_description || mergedProduct?.description || 'Product description not available.';
+  const needsTruncation = displayDescription.length > 120;
+  const truncatedDescription = displayDescription.slice(0, 120) + (displayDescription.length > 120 ? '...' : '');
+
+  const [currentCurrency, setCurrentCurrency] = useState('HTG');
 
   const toggleCurrency = () => {
-    setCurrentCurrency(currentCurrency === 'HTG' ? 'USD' : 'HTG');
+    setCurrentCurrency(prev => prev === 'HTG' ? 'USD' : 'HTG');
   };
 
-  const formatPrice = (price: number) => {
-    const convertedPrice = price * CURRENCIES[currentCurrency].rate;
+  const formatPrice = (price: number, currency = currentCurrency) => {
+    const convertedPrice = price * exchangeRates[currency];
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currentCurrency,
+      currency: currency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(convertedPrice);
@@ -60,55 +53,52 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
 
   const currentPrice = mergedProduct.unitPrice || 25;
 
+  const CurrencySwitcher = () => (
+    <>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
+      <button
+        onClick={toggleCurrency}
+        className="p-1 rounded flex items-center gap-1 bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors text-[10px]"
+        aria-label="Change currency"
+      >
+        <span className={`fi fi-${currencyToCountry[currentCurrency]}`}></span>
+        <span className="text-gray-700">{currentCurrency}</span>
+        <ChevronDown className="w-2.5 h-2.5 text-gray-500" />
+      </button>
+    </>
+  );
+
   return (
-    <div className="w-full px-3 py-2 bg-white font-sans">
-      {/* Product Name */}
+    <div className="w-full px-1.5 bg-white font-sans space-y-1.5">
       {mergedProduct?.name && (
-        <h2 className="text-sm font-medium text-gray-800 mb-2 line-clamp-2">
+        <h2 className="text-xs text-gray-700 leading-tight">
           {mergedProduct.name}
         </h2>
       )}
 
-      {/* Price & Currency Switcher */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex justify-between items-center">
         <div className="flex items-baseline gap-1">
-          <span className="text-xl font-bold text-orange-600">
+          <span className="text-lg font-bold text-orange-500">
             {formatPrice(currentPrice)}
           </span>
-          <span className="text-xs text-gray-500">/unit</span>
+          <span className="text-[10px] text-gray-500">/unit</span>
         </div>
-        
-        <button
-          onClick={toggleCurrency}
-          className="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors text-xs border border-gray-200"
-          aria-label={`Change currency to ${currentCurrency === 'HTG' ? 'USD' : 'HTG'}`}
-        >
-          <span className={`fi fi-${CURRENCIES[currentCurrency].flag}`}></span>
-          <span className="font-medium text-gray-700">{currentCurrency}</span>
-          <ChevronDown className="w-3 h-3 text-gray-500 ml-0.5" />
-        </button>
+        <CurrencySwitcher />
       </div>
 
-      {/* Description */}
-      <div className="space-y-1">
-        <p className="text-xs text-gray-600 leading-relaxed">
+      <div className="space-y-0.5">
+        <p className="text-[11px] text-gray-600 leading-relaxed">
           {truncatedDescription}
         </p>
         {needsTruncation && onReadMore && (
           <button 
             onClick={onReadMore}
-            className="text-xs font-medium text-blue-600 hover:text-blue-800 active:text-blue-900 transition-colors"
+            className="text-[11px] text-blue-600 hover:text-blue-800 font-medium"
           >
             Read more
           </button>
         )}
       </div>
-
-      {/* Flag icon CSS - load once */}
-      <link 
-        rel="stylesheet" 
-        href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" 
-      />
     </div>
   );
 };
