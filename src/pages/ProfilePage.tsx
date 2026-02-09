@@ -279,7 +279,7 @@ export default function XProfile() {
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
-        <div className="flex px-4">
+        <div className="flex px-2">
           {['Products', 'Reviews', 'Media', 'Likes'].map((tab) => (
             <button
               key={tab}
