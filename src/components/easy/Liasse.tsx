@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Plus, Minus, Users, Trash2, ChevronLeft, Eye, Check, SkipForward, Calculator } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, Eye, Check, SkipForward, Calculator, RotateCcw, X } from 'lucide-react';
 
 const Liasse = ({ shift, date, vendeurs }) => {
   const denominations = [1000, 500, 250, 100, 50, 25, 10, 5];
@@ -33,58 +33,133 @@ const Liasse = ({ shift, date, vendeurs }) => {
     }, {})
   );
 
-  // Calculate total bills from ALL vendors
-  const totalBillsByDenomination = useMemo(() => {
-    const totals = {};
+  // Get all sequences for liasse calculation - EXACTLY like LiasseCounter
+  const getAllSequencesByDenomination = useMemo(() => {
+    const sequencesByDenom = {};
     
     // Initialize all denominations
     denominations.forEach(denom => {
-      totals[denom] = 0;
+      sequencesByDenom[denom] = [];
     });
-
-    // Add current deposit (not yet saved)
-    denominations.forEach(denom => {
-      const { liasses, loose } = currentDeposit[denom];
-      totals[denom] += liasses * BILLS_PER_LIASSE + loose;
-    });
-
-    // Add all saved deposits from all vendors
+    
+    // Get all deposits from all vendors
     availableVendors.forEach(vendor => {
-      vendorDeposits[vendor]?.forEach(deposit => {
+      vendorDeposits[vendor]?.forEach((deposit, depositIndex) => {
         denominations.forEach(denom => {
           const { liasses, loose } = deposit.amounts[denom];
-          totals[denom] += liasses * BILLS_PER_LIASSE + loose;
+          const bills = liasses * BILLS_PER_LIASSE + loose;
+          if (bills > 0) {
+            sequencesByDenom[denom].push({
+              vendor,
+              depositIndex: depositIndex + 1,
+              count: bills,
+              originalCount: bills,
+              totalValue: bills * denom
+            });
+          }
         });
       });
     });
 
-    return totals;
-  }, [vendorDeposits, currentDeposit, availableVendors]);
-
-  // Calculate simple liasse results
-  const liasseResults = useMemo(() => {
-    const results = [];
-    
+    // Add current deposit
     denominations.forEach(denom => {
-      const totalBills = totalBillsByDenomination[denom];
-      if (totalBills > 0) {
-        const liasses = Math.floor(totalBills / BILLS_PER_LIASSE);
-        const rest = totalBills % BILLS_PER_LIASSE;
-        
-        results.push({
-          denomination: denom,
-          totalBills,
-          liasses,
-          rest,
-          liasseValue: liasses * denom * BILLS_PER_LIASSE,
-          restValue: rest * denom
+      const { liasses, loose } = currentDeposit[denom];
+      const bills = liasses * BILLS_PER_LIASSE + loose;
+      if (bills > 0) {
+        sequencesByDenom[denom].push({
+          vendor: selectedVendor,
+          depositIndex: 'En cours',
+          count: bills,
+          originalCount: bills,
+          totalValue: bills * denom
         });
       }
     });
 
-    // Sort by denomination value (highest first)
-    return results.sort((a, b) => b.denomination - a.denomination);
-  }, [totalBillsByDenomination]);
+    return sequencesByDenom;
+  }, [vendorDeposits, currentDeposit, selectedVendor, availableVendors]);
+
+  // EXACT COPY of getDepartageInstructions from LiasseCounter
+  const getDepartageInstructionsForDenomination = (sequences) => {
+    if (sequences.length === 0) return [];
+
+    const instructions = [];
+    let remaining = sequences.map(seq => ({ ...seq, remaining: seq.count }));
+    let liasseNum = 1;
+
+    while (remaining.some(val => val.remaining > 0)) {
+      const instruction = {
+        liasseNum,
+        steps: []
+      };
+
+      let currentTotal = 0;
+
+      for (let i = 0; i < remaining.length; i++) {
+        if (remaining[i].remaining === 0) continue;
+
+        const needed = BILLS_PER_LIASSE - currentTotal;
+        if (needed === 0) break;
+
+        const toTake = Math.min(remaining[i].remaining, needed);
+        const originalAmount = remaining[i].originalCount;
+
+        instruction.steps.push({
+          sequenceNum: i + 1,
+          vendor: remaining[i].vendor,
+          depositIndex: remaining[i].depositIndex,
+          take: toTake,
+          from: originalAmount,
+          remaining: remaining[i].remaining - toTake
+        });
+
+        remaining[i].remaining -= toTake;
+        currentTotal += toTake;
+        
+        if (currentTotal === BILLS_PER_LIASSE) break;
+      }
+
+      if (currentTotal > 0) {
+        instruction.total = currentTotal;
+        instruction.isComplete = currentTotal === BILLS_PER_LIASSE;
+        instructions.push(instruction);
+        liasseNum++;
+      } else {
+        break;
+      }
+    }
+
+    return instructions;
+  };
+
+  // Calculate totals for each denomination
+  const getDenominationStats = useMemo(() => {
+    const stats = {};
+    
+    Object.entries(getAllSequencesByDenomination).forEach(([denom, sequences]) => {
+      const denomination = parseInt(denom);
+      const totalBills = sequences.reduce((sum, seq) => sum + seq.count, 0);
+      
+      if (totalBills === 0) return;
+      
+      const completeLiasses = Math.floor(totalBills / BILLS_PER_LIASSE);
+      const remainingBills = totalBills % BILLS_PER_LIASSE;
+      
+      stats[denom] = {
+        denomination,
+        sequences,
+        totalBills,
+        completeLiasses,
+        remainingBills,
+        totalValue: totalBills * denomination,
+        liasseValue: completeLiasses * denomination * BILLS_PER_LIASSE,
+        remainingValue: remainingBills * denomination,
+        instructions: getDepartageInstructionsForDenomination(sequences)
+      };
+    });
+    
+    return stats;
+  }, [getAllSequencesByDenomination]);
 
   // Sync with localStorage for persistence
   useEffect(() => {
@@ -101,7 +176,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
   // Update available vendors when vendeurs prop changes
   useEffect(() => {
     if (vendeurs && vendeurs.length > 0) {
-      // Add new vendors to vendorDeposits if they don't exist
       const updatedVendorDeposits = { ...vendorDeposits };
       vendeurs.forEach(vendor => {
         if (!updatedVendorDeposits[vendor]) {
@@ -109,7 +183,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
         }
       });
 
-      // Remove vendors that no longer exist
       Object.keys(updatedVendorDeposits).forEach(vendor => {
         if (!vendeurs.includes(vendor)) {
           delete updatedVendorDeposits[vendor];
@@ -118,7 +191,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
 
       setVendorDeposits(updatedVendorDeposits);
 
-      // Update selected vendor if current one doesn't exist
       if (!vendeurs.includes(selectedVendor) && vendeurs.length > 0) {
         setSelectedVendor(vendeurs[0]);
       }
@@ -139,25 +211,21 @@ const Liasse = ({ shift, date, vendeurs }) => {
   const getNextDenomination = (currentDenom) => {
     const currentIndex = denominations.indexOf(currentDenom);
     
-    // Start searching from the next denomination
     for (let i = currentIndex + 1; i < denominations.length; i++) {
       const nextDenom = denominations[i];
       const { liasses, loose } = currentDeposit[nextDenom];
       
-      // If this denomination hasn't been touched yet (both are 0), it's available
       if (liasses === 0 && loose === 0) {
         return nextDenom;
       }
     }
     
-    // If we've reached the end, return null to indicate we're done
     return null;
   };
 
   const handleQuickEntry = () => {
     const count = parseInt(quickCount);
     
-    // If count is 0 or empty, just skip to next denomination
     if (!count || count <= 0) {
       skipToNextDenomination();
       return;
@@ -186,7 +254,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
       setQuickCount('');
       setTimeout(() => quickInputRef.current?.focus(), 100);
     } else {
-      // We've gone through all denominations
       setQuickCount('');
       setTimeout(() => quickInputRef.current?.focus(), 100);
     }
@@ -276,7 +343,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
       }, {})
     );
 
-    // Reset to first denomination
     setCurrentDenom(denominations[0]);
     setQuickCount('');
     
@@ -334,6 +400,23 @@ const Liasse = ({ shift, date, vendeurs }) => {
   const getRemainingDenominations = () => {
     const currentIndex = denominations.indexOf(currentDenom);
     return denominations.slice(currentIndex);
+  };
+
+  // Calculate total stats
+  const getTotalStats = () => {
+    let totalBills = 0;
+    let totalLiasses = 0;
+    let totalRemaining = 0;
+    let totalValue = 0;
+    
+    Object.values(getDenominationStats).forEach(stats => {
+      totalBills += stats.totalBills;
+      totalLiasses += stats.completeLiasses;
+      totalRemaining += stats.remainingBills;
+      totalValue += stats.totalValue;
+    });
+    
+    return { totalBills, totalLiasses, totalRemaining, totalValue };
   };
 
   return (
@@ -446,21 +529,21 @@ const Liasse = ({ shift, date, vendeurs }) => {
         </div>
       )}
 
-      {/* Simple Liasse Calculation Modal */}
+      {/* Liasse Instructions Modal - EXACTLY like LiasseCounter */}
       {showLiasse && (
         <div className="fixed inset-0 bg-black/80 z-50 flex flex-col">
           <div className="bg-slate-800 text-white p-3 flex items-center justify-between">
             <button onClick={() => setShowLiasse(false)} className="p-2">
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <h2 className="font-bold text-lg">Calcul Liasses</h2>
+            <h2 className="font-bold text-lg">Instructions de Départage</h2>
             <div className="text-xs bg-blue-600 px-2 py-1 rounded">
               {availableVendors.length} vendeurs
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto bg-slate-900 p-3">
-            {/* Totals */}
+            {/* Total Stats - Like LiasseCounter header */}
             <div className="bg-slate-800 rounded-lg p-4 mb-4">
               <div className="text-center mb-3">
                 <div className="text-slate-400 text-sm">TOTAL DE TOUS LES VENDEURS</div>
@@ -468,116 +551,167 @@ const Liasse = ({ shift, date, vendeurs }) => {
                   {formatCurrency(getAllVendorsTotal() + getCurrentDepositTotal())}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              
+              <div className="grid grid-cols-3 gap-2 text-sm">
                 <div className="bg-slate-700/50 rounded p-2 text-center">
-                  <div className="text-slate-400">Total billets</div>
-                  <div className="font-bold">
-                    {Object.values(totalBillsByDenomination).reduce((a, b) => a + b, 0)}
-                  </div>
+                  <div className="text-slate-400 text-xs">Total Billets</div>
+                  <div className="font-bold text-lg">{getTotalStats().totalBills}</div>
                 </div>
-                <div className="bg-green-900/30 rounded p-2 text-center">
-                  <div className="text-green-300">Liasses possibles</div>
-                  <div className="font-bold text-green-400">
-                    {liasseResults.reduce((sum, r) => sum + r.liasses, 0)}
-                  </div>
+                <div className="bg-emerald-900/30 rounded p-2 text-center">
+                  <div className="text-emerald-300 text-xs">Liasses</div>
+                  <div className="font-bold text-emerald-400 text-lg">{getTotalStats().totalLiasses}</div>
+                </div>
+                <div className="bg-amber-900/30 rounded p-2 text-center">
+                  <div className="text-amber-300 text-xs">Reste</div>
+                  <div className="font-bold text-amber-400 text-lg">{getTotalStats().totalRemaining}</div>
                 </div>
               </div>
             </div>
 
-            {/* Liasse Results */}
-            <div className="space-y-3">
-              {liasseResults.length === 0 ? (
-                <div className="text-center text-slate-500 py-8">
-                  Aucun dépôt enregistré
-                </div>
-              ) : (
-                liasseResults.map(result => (
-                  <div key={result.denomination} className="bg-slate-800 rounded-lg p-4">
+            {/* Instructions by Denomination */}
+            {Object.values(getDenominationStats).length === 0 ? (
+              <div className="text-center text-slate-500 py-8">
+                Aucun dépôt enregistré
+              </div>
+            ) : (
+              Object.values(getDenominationStats)
+                .sort((a, b) => b.denomination - a.denomination)
+                .map(stats => (
+                  <div key={stats.denomination} className="bg-slate-800 rounded-lg p-4 mb-4">
+                    {/* Denomination Header */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-lg">
-                          {result.denomination} HTG
+                          {stats.denomination} HTG
                         </div>
                         <div className="text-white font-bold text-lg">
-                          {result.totalBills} billets
+                          {stats.totalBills} billets
                         </div>
                       </div>
                       <div className="text-green-400 font-bold text-lg">
-                        {formatCurrency(result.totalBills * result.denomination)}
+                        {formatCurrency(stats.totalValue)}
                       </div>
                     </div>
-                    
-                    <div className="bg-slate-900/50 rounded-lg p-3">
+
+                    {/* Simple Calculation - Like LiasseCounter */}
+                    <div className="bg-slate-900/50 rounded-lg p-3 mb-3">
                       <div className="text-center">
                         <div className="text-slate-400 text-sm mb-1">CALCUL LIASSE</div>
                         <div className="text-2xl font-bold text-white">
-                          {result.totalBills} ÷ 100 = {result.liasses} L + {result.rest}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3 mt-3">
-                        <div className="bg-green-900/30 rounded p-2">
-                          <div className="text-green-300 text-sm">Liasses</div>
-                          <div className="font-bold text-green-400 text-lg">
-                            {result.liasses} × 100
-                          </div>
-                          <div className="text-slate-400 text-xs">
-                            = {result.liasses * 100} billets
-                          </div>
-                          <div className="text-green-400 font-bold mt-1">
-                            {formatCurrency(result.liasseValue)}
-                          </div>
-                        </div>
-                        
-                        <div className="bg-blue-900/30 rounded p-2">
-                          <div className="text-blue-300 text-sm">Reste</div>
-                          <div className="font-bold text-blue-400 text-lg">
-                            {result.rest} billets
-                          </div>
-                          <div className="text-slate-400 text-xs">
-                            Non regroupés
-                          </div>
-                          <div className="text-blue-400 font-bold mt-1">
-                            {formatCurrency(result.restValue)}
-                          </div>
+                          {stats.totalBills} ÷ 100 = {stats.completeLiasses} L + {stats.remainingBills}
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="mt-3 text-sm text-slate-400 text-center">
-                      {result.liasses > 0 && (
-                        <span className="text-green-400">
-                          {result.liasses} liasse{result.liasses > 1 ? 's' : ''} de {formatCurrency(result.denomination * BILLS_PER_LIASSE)}
-                        </span>
-                      )}
-                      {result.liasses > 0 && result.rest > 0 && ' + '}
-                      {result.rest > 0 && (
-                        <span className="text-blue-400">
-                          {result.rest} billet{result.rest > 1 ? 's' : ''} lâche{result.rest > 1 ? 's' : ''}
-                        </span>
-                      )}
+
+                    {/* Sequences - Like LiasseCounter */}
+                    {stats.sequences.length > 0 && (
+                      <div className="mb-3">
+                        <div className="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wide">
+                          Séquences ({stats.sequences.length})
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {stats.sequences.map((seq, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-slate-700 border border-slate-600 px-2 py-1.5 rounded flex items-center gap-1.5 hover:bg-slate-600 transition-colors group"
+                            >
+                              <span className="text-xs font-medium text-slate-300">
+                                {seq.vendor} #{seq.depositIndex}
+                              </span>
+                              <span className="text-sm font-bold text-white">
+                                {seq.count}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Departage Instructions - EXACTLY like LiasseCounter */}
+                    {stats.instructions.length > 0 && (
+                      <div>
+                        <div className="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wide">
+                          Instructions de départage
+                        </div>
+                        <div className="space-y-2">
+                          {stats.instructions.map((inst) => (
+                            <div
+                              key={inst.liasseNum}
+                              className={`p-3 rounded border-2 ${
+                                inst.isComplete 
+                                  ? 'bg-emerald-900/20 border-emerald-700' 
+                                  : 'bg-amber-900/20 border-amber-700'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-sm font-bold text-white">
+                                    Liasse {inst.liasseNum}
+                                  </span>
+                                  {inst.isComplete && (
+                                    <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded font-medium">
+                                      Complète
+                                    </span>
+                                  )}
+                                  {!inst.isComplete && (
+                                    <span className="text-xs bg-amber-600 text-white px-2 py-0.5 rounded font-medium">
+                                      Incomplète
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-sm font-bold text-white">
+                                  {inst.total}/100
+                                </span>
+                              </div>
+
+                              <div className="space-y-1.5">
+                                {inst.steps.map((step, idx) => (
+                                  <div key={idx} className="text-sm bg-slate-900/60 rounded p-2 border border-slate-700">
+                                    <span className="font-semibold text-slate-300">
+                                      {step.vendor} #{step.depositIndex}:
+                                    </span>{' '}
+                                    Prenez{' '}
+                                    <span className="font-bold text-emerald-400">
+                                      {step.take}
+                                    </span>
+                                    {' '}sur {step.from}
+                                    {step.remaining > 0 && (
+                                      <span className="text-amber-400 font-semibold">
+                                        {' '}→ reste {step.remaining}
+                                      </span>
+                                    )}
+                                    {step.remaining === 0 && (
+                                      <span className="text-slate-500">
+                                        {' '}✓
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Summary - Like LiasseCounter */}
+                    <div className="mt-3 p-3 bg-slate-700/30 rounded text-center">
+                      <div className="text-sm text-slate-300">
+                        {stats.completeLiasses > 0 && (
+                          <span className="text-emerald-400">
+                            {stats.completeLiasses} liasse{stats.completeLiasses > 1 ? 's' : ''} de {formatCurrency(stats.denomination * BILLS_PER_LIASSE)}
+                          </span>
+                        )}
+                        {stats.completeLiasses > 0 && stats.remainingBills > 0 && ' + '}
+                        {stats.remainingBills > 0 && (
+                          <span className="text-amber-400">
+                            {stats.remainingBills} billet{stats.remainingBills > 1 ? 's' : ''} lâche{stats.remainingBills > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
-              )}
-            </div>
-
-            {/* Summary */}
-            {liasseResults.length > 0 && (
-              <div className="bg-gradient-to-r from-green-900/50 to-emerald-900/50 rounded-lg p-4 mt-4">
-                <div className="text-center">
-                  <div className="text-slate-300 text-sm">RÉSULTAT FINAL</div>
-                  <div className="text-2xl font-bold text-white mt-1">
-                    {liasseResults.reduce((sum, r) => sum + r.liasses, 0)} liasses
-                  </div>
-                  <div className="text-slate-300 text-sm mt-1">
-                    + {liasseResults.reduce((sum, r) => sum + r.rest, 0)} billets lâches
-                  </div>
-                  <div className="text-green-400 font-bold text-xl mt-2">
-                    Total: {formatCurrency(liasseResults.reduce((sum, r) => sum + r.liasseValue + r.restValue, 0))}
-                  </div>
-                </div>
-              </div>
             )}
           </div>
         </div>
@@ -604,9 +738,10 @@ const Liasse = ({ shift, date, vendeurs }) => {
               <button
                 onClick={() => setShowLiasse(true)}
                 className="px-3 py-2 bg-amber-600 rounded-lg active:bg-amber-700 font-bold text-sm flex items-center gap-1"
+                disabled={Object.values(getDenominationStats).length === 0}
               >
                 <Calculator className="w-4 h-4" />
-                Calcul Liasses
+                Départage
               </button>
               <button
                 onClick={() => setShowHistory(true)}
@@ -762,12 +897,22 @@ const Liasse = ({ shift, date, vendeurs }) => {
           <div className="px-3 pb-3">
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs text-slate-400 font-semibold">DÉPÔT EN COURS</div>
-              <button
-                onClick={clearCurrentDeposit}
-                className="text-xs text-red-400 font-semibold px-2 py-1"
-              >
-                Effacer tout
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowLiasse(true)}
+                  className="text-xs bg-amber-600 text-white px-3 py-1 rounded font-bold active:bg-amber-700 flex items-center gap-1"
+                  disabled={Object.values(getDenominationStats).length === 0}
+                >
+                  <Calculator className="w-3 h-3" />
+                  Départage
+                </button>
+                <button
+                  onClick={clearCurrentDeposit}
+                  className="text-xs text-red-400 font-semibold px-2 py-1"
+                >
+                  Effacer tout
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1">
