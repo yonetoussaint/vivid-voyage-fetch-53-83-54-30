@@ -539,22 +539,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
               </div>
             </div>
 
-            {/* Quick Add Buttons */}
-            <div className="grid grid-cols-4 gap-2">
-              {[1, 5, 10, 20].map(num => (
-                <button
-                  key={num}
-                  onClick={() => {
-                    const count = parseInt(quickCount || '0') + num;
-                    setQuickCount(count.toString());
-                  }}
-                  className="py-3 bg-slate-700 text-white rounded-lg font-bold active:bg-slate-600 text-sm"
-                >
-                  +{num}
-                </button>
-              ))}
-            </div>
-
             {/* Progress Indicator */}
             <div className="pt-2">
               <div className="text-xs text-slate-400 mb-1 font-semibold">PROGRESSION</div>
