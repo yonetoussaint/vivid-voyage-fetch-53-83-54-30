@@ -4,7 +4,7 @@ import { Plus, Minus, Users, Trash2, ChevronLeft, Eye, Check } from 'lucide-reac
 const Liasse = ({ shift, date, vendeurs }) => {
   const denominations = [1000, 500, 250, 100, 50, 25, 10, 5];
   const BILLS_PER_LIASSE = 100;
-  
+
   // Use vendeurs from props or fallback to defaults
   const availableVendors = vendeurs && vendeurs.length > 0 ? vendeurs : 
     ['Juny', 'Santho', 'Jamesly', 'Stanley', 'Taïcha', 'Nerlande', 'Darline', 'Florence'];
@@ -13,18 +13,18 @@ const Liasse = ({ shift, date, vendeurs }) => {
   const [showSummary, setShowSummary] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [entryMode, setEntryMode] = useState('quick');
-  
+
   const [currentDenom, setCurrentDenom] = useState(denominations[0]);
   const [quickCount, setQuickCount] = useState('');
   const quickInputRef = useRef(null);
-  
+
   const [currentDeposit, setCurrentDeposit] = useState(
     denominations.reduce((acc, denom) => {
       acc[denom] = { liasses: 0, loose: 0 };
       return acc;
     }, {})
   );
-  
+
   const [vendorDeposits, setVendorDeposits] = useState(
     availableVendors.reduce((acc, vendor) => {
       acc[vendor] = [];
@@ -54,16 +54,16 @@ const Liasse = ({ shift, date, vendeurs }) => {
           updatedVendorDeposits[vendor] = [];
         }
       });
-      
+
       // Remove vendors that no longer exist
       Object.keys(updatedVendorDeposits).forEach(vendor => {
         if (!vendeurs.includes(vendor)) {
           delete updatedVendorDeposits[vendor];
         }
       });
-      
+
       setVendorDeposits(updatedVendorDeposits);
-      
+
       // Update selected vendor if current one doesn't exist
       if (!vendeurs.includes(selectedVendor) && vendeurs.length > 0) {
         setSelectedVendor(vendeurs[0]);
@@ -89,7 +89,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
   const handleQuickEntry = () => {
     const count = parseInt(quickCount);
     if (!count || count <= 0) return;
-    
+
     if (count >= 100) {
       const liasses = Math.floor(count / 100);
       const loose = count % 100;
@@ -100,14 +100,14 @@ const Liasse = ({ shift, date, vendeurs }) => {
     } else {
       updateDeposit(currentDenom, 'loose', currentDeposit[currentDenom].loose + count);
     }
-    
+
     setQuickCount('');
-    
+
     const currentIndex = denominations.indexOf(currentDenom);
     if (currentIndex < denominations.length - 1) {
       setCurrentDenom(denominations[currentIndex + 1]);
     }
-    
+
     setTimeout(() => quickInputRef.current?.focus(), 100);
   };
 
@@ -239,7 +239,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
             <h2 className="font-bold text-lg">{selectedVendor} - Historique</h2>
             <div className="w-10" />
           </div>
-          
+
           <div className="flex-1 overflow-y-auto bg-slate-900 p-3 space-y-2">
             {(vendorDeposits[selectedVendor] || []).length === 0 ? (
               <div className="text-center text-slate-400 mt-8">Aucun dépôt enregistré</div>
@@ -280,7 +280,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
               ))
             )}
           </div>
-          
+
           <div className="bg-slate-800 p-3 text-center text-white border-t border-slate-700">
             <div className="text-sm text-slate-400">Total {selectedVendor}</div>
             <div className="text-2xl font-bold text-green-400">{formatCurrency(getVendorTotal(selectedVendor))}</div>
@@ -301,12 +301,12 @@ const Liasse = ({ shift, date, vendeurs }) => {
               <Trash2 className="w-5 h-5" />
             </button>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto bg-slate-900 p-3 space-y-2">
             {availableVendors.map(vendor => {
               const total = getVendorTotal(vendor);
               const count = getVendorDepositCount(vendor);
-              
+
               return (
                 <div
                   key={vendor}
@@ -329,7 +329,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
               );
             })}
           </div>
-          
+
           <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-4 text-center text-white">
             <div className="text-sm opacity-90">TOTAL GÉNÉRAL</div>
             <div className="text-3xl font-bold">{formatCurrency(getAllVendorsTotal())}</div>
@@ -364,7 +364,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
               </button>
             </div>
           </div>
-          
+
           {/* Vendor Pills */}
           <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
             {availableVendors.map(vendor => (
@@ -385,14 +385,18 @@ const Liasse = ({ shift, date, vendeurs }) => {
 
         {/* Quick Entry Mode */}
         <div className="flex-1 overflow-y-auto bg-slate-900">
-          <div className="p-3 space-y-3">
-            {/* Denomination Selector */}
+          <div className="p-3 space-y-4">
+            {/* Denomination Selector - Fixed for mobile */}
             <div>
               <div className="text-xs text-slate-400 mb-2 font-semibold">COUPURE</div>
               <select
                 value={currentDenom}
                 onChange={(e) => setCurrentDenom(parseInt(e.target.value))}
-                className="w-full bg-slate-800 text-white border-2 border-blue-500 rounded-xl px-4 py-4 text-2xl font-bold focus:outline-none focus:border-blue-400"
+                className="w-full bg-slate-800 text-white border-2 border-blue-500 rounded-xl px-4 py-3 text-lg font-bold focus:outline-none focus:border-blue-400 appearance-none"
+                style={{ 
+                  fontSize: 'clamp(16px, 4vw, 24px)',
+                  height: '56px'
+                }}
               >
                 {denominations.map(denom => (
                   <option key={denom} value={denom}>
@@ -402,7 +406,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
               </select>
             </div>
 
-            {/* Count Input */}
+            {/* Count Input - Fixed for mobile */}
             <div>
               <div className="text-xs text-slate-400 mb-2 font-semibold">NOMBRE DE BILLETS</div>
               <div className="flex gap-2">
@@ -415,22 +419,30 @@ const Liasse = ({ shift, date, vendeurs }) => {
                   onChange={(e) => setQuickCount(e.target.value)}
                   onKeyPress={handleQuickKeyPress}
                   placeholder="0"
-                  className="flex-1 bg-slate-800 text-white border-2 border-slate-600 rounded-xl px-4 py-4 text-3xl font-bold text-center focus:outline-none focus:border-green-500"
+                  className="flex-1 min-w-0 bg-slate-800 text-white border-2 border-slate-600 rounded-xl px-4 py-3 text-2xl font-bold text-center focus:outline-none focus:border-green-500"
+                  style={{ 
+                    fontSize: 'clamp(20px, 6vw, 32px)',
+                    height: '56px',
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'textfield'
+                  }}
                   autoFocus
+                  onFocus={(e) => e.target.select()}
                 />
                 <button
                   onClick={handleQuickEntry}
-                  className="w-20 bg-green-600 text-white rounded-xl font-bold active:bg-green-700 flex items-center justify-center"
+                  className="w-16 bg-green-600 text-white rounded-xl font-bold active:bg-green-700 flex items-center justify-center flex-shrink-0"
+                  style={{ height: '56px' }}
                 >
-                  <Check className="w-8 h-8" />
+                  <Check className="w-7 h-7" />
                 </button>
               </div>
-              <div className="text-xs text-slate-400 mt-2 text-center">
+              <div className="text-xs text-slate-400 mt-2 text-center px-2">
                 Appuyez Enter ou ✓ pour ajouter et passer à la coupure suivante
               </div>
             </div>
 
-            {/* Quick Add Buttons */}
+            {/* Quick Add Buttons - Adjusted for mobile */}
             <div className="grid grid-cols-4 gap-2">
               {[1, 5, 10, 20].map(num => (
                 <button
@@ -439,7 +451,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
                     const count = parseInt(quickCount || '0') + num;
                     setQuickCount(count.toString());
                   }}
-                  className="py-3 bg-slate-700 text-white rounded-lg font-bold active:bg-slate-600"
+                  className="py-3 bg-slate-700 text-white rounded-lg font-bold active:bg-slate-600 text-sm"
                 >
                   +{num}
                 </button>
@@ -453,35 +465,35 @@ const Liasse = ({ shift, date, vendeurs }) => {
               <div className="text-xs text-slate-400 font-semibold">DÉPÔT EN COURS</div>
               <button
                 onClick={clearCurrentDeposit}
-                className="text-xs text-red-400 font-semibold"
+                className="text-xs text-red-400 font-semibold px-2 py-1"
               >
                 Effacer tout
               </button>
             </div>
-            
+
             <div className="space-y-1">
               {denominations.map(denom => {
                 const { liasses, loose } = currentDeposit[denom];
                 const totalBills = getTotalBills(currentDeposit, denom);
                 const totalValue = getTotalValue(currentDeposit, denom);
-                
+
                 if (totalBills === 0) return null;
-                
+
                 return (
-                  <div key={denom} className="bg-slate-800 rounded-lg p-2 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold">
+                  <div key={denom} className="bg-slate-800 rounded-lg p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-sm flex-shrink-0">
                         {denom}
                       </div>
-                      <div className="text-slate-300 text-sm">
+                      <div className="text-slate-300 text-sm truncate">
                         {liasses > 0 && <span className="text-green-400">{liasses}L</span>}
                         {liasses > 0 && loose > 0 && <span className="text-slate-500"> + </span>}
                         {loose > 0 && <span>{loose}</span>}
                         <span className="text-slate-500 ml-1">= {totalBills}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-green-400 font-bold">
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="text-green-400 font-bold text-sm">
                         {formatCurrency(totalValue)}
                       </div>
                       <button
@@ -489,7 +501,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
                           updateDeposit(denom, 'liasses', 0);
                           updateDeposit(denom, 'loose', 0);
                         }}
-                        className="w-7 h-7 bg-red-600/20 text-red-400 rounded flex items-center justify-center active:bg-red-600/40"
+                        className="w-6 h-6 bg-red-600/20 text-red-400 rounded flex items-center justify-center active:bg-red-600/40 text-sm"
                       >
                         ×
                       </button>
@@ -497,7 +509,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
                   </div>
                 );
               })}
-              
+
               {getCurrentDepositBillsCount() === 0 && (
                 <div className="text-center text-slate-500 py-4 text-sm">
                   Aucune coupure ajoutée
@@ -507,28 +519,28 @@ const Liasse = ({ shift, date, vendeurs }) => {
           </div>
         </div>
 
-        {/* Fixed Bottom Action Bar */}
+        {/* Fixed Bottom Action Bar - Adjusted for mobile */}
         <div className="bg-slate-800 border-t-2 border-slate-700">
           <div className="p-3 text-center bg-gradient-to-r from-green-900/50 to-emerald-900/50">
             <div className="text-xs text-green-300 font-semibold">DÉPÔT EN COURS - {selectedVendor}</div>
-            <div className="text-3xl font-bold text-white mt-1">{formatCurrency(getCurrentDepositTotal())}</div>
+            <div className="text-2xl font-bold text-white mt-1">{formatCurrency(getCurrentDepositTotal())}</div>
             <div className="text-xs text-slate-300 mt-1">
               {getCurrentDepositBillsCount()} billets • {Object.values(currentDeposit).reduce((sum, d) => sum + d.liasses, 0)} liasses
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 p-2">
+          <div className="grid grid-cols-2 gap-2 p-3">
             <button
               onClick={clearCurrentDeposit}
-              className="py-4 bg-red-600 text-white rounded-lg font-bold text-lg active:bg-red-700 flex items-center justify-center gap-2"
+              className="py-3 bg-red-600 text-white rounded-lg font-bold text-base active:bg-red-700 flex items-center justify-center gap-2"
             >
-              <Trash2 className="w-5 h-5" />
+              <Trash2 className="w-4 h-4" />
               Annuler
             </button>
             <button
               onClick={saveDeposit}
-              className="py-4 bg-green-600 text-white rounded-lg font-bold text-lg active:bg-green-700 flex items-center justify-center gap-2"
+              className="py-3 bg-green-600 text-white rounded-lg font-bold text-base active:bg-green-700 flex items-center justify-center gap-2"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
               Enregistrer
             </button>
           </div>
