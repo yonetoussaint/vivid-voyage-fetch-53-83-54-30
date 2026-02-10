@@ -20,32 +20,22 @@ export interface Review {
   media?: MediaItem[];
   likeCount?: number;
   commentCount?: number;
-  rating?: number; // Optional rating from 1-5
+  rating?: number;
 }
 
 interface ReviewItemProps {
   review: Review;
   expandedReviews: Set<string>;
-  expandedReplies?: Set<string>;
   onToggleReadMore: (reviewId: string) => void;
-  onToggleShowReplies?: (reviewId: string) => void;
   onCommentClick?: (reviewId: string) => void;
-  onShareClick?: (reviewId: string) => void;
-  onLikeReply?: (replyId: string, reviewId: string) => void;
-  onReplyToReply?: (replyId: string, reviewId: string, userName: string) => void;
   onMenuAction?: (reviewId: string, action: 'report' | 'edit' | 'delete' | 'share') => void;
 }
 
 const ReviewItem = ({
   review,
   expandedReviews,
-  expandedReplies,
   onToggleReadMore,
-  onToggleShowReplies,
   onCommentClick,
-  onShareClick,
-  onLikeReply,
-  onReplyToReply,
   onMenuAction,
 }: ReviewItemProps) => {
   const navigate = useNavigate();
@@ -95,7 +85,7 @@ const ReviewItem = ({
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
-            className="w-4 h-4"
+            className="w-3.5 h-3.5"
             fill={star <= rating ? '#FBBF24' : 'none'}
             stroke={star <= rating ? '#FBBF24' : '#D1D5DB'}
             strokeWidth="1.5"
@@ -105,7 +95,6 @@ const ReviewItem = ({
     );
   };
 
-  // Close menu when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -127,167 +116,177 @@ const ReviewItem = ({
     setShowMenu(false);
   };
 
-  const handleCommentClick = (reviewId: string) => {
-    navigate(`/reviews/${reviewId}`);
-    onCommentClick?.(reviewId);
+  const handleCommentClick = () => {
+    navigate(`/reviews/${id}`);
+    onCommentClick?.(id);
   };
 
   return (
-    <div className="bg-white border-b border-gray-100 p-2 transition-colors">
-      {/* Review Header */}
-      <div className="flex gap-2 mb-2">
+    <div className="bg-white border-b border-gray-100 p-3 sm:p-4">
+      {/* Compact Header */}
+      <div className="flex gap-3 mb-3">
+        {/* Avatar */}
         <div 
-          className={`w-10 h-10 flex items-center justify-center text-white text-sm font-semibold rounded-full flex-shrink-0 ${getAvatarColor(user_name)}`}
+          className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-white text-xs sm:text-sm font-semibold rounded-full flex-shrink-0 ${getAvatarColor(user_name)}`}
         >
           {getInitials(user_name)}
         </div>
 
-        <div className="flex-1 min-w-0 flex items-center justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900 text-[15px] truncate block">
+        <div className="flex-1 min-w-0">
+          {/* Top Row: Name, Verification, Date, Menu */}
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <span className="font-semibold text-gray-900 text-sm sm:text-[15px] truncate">
                 {user_name || 'Anonymous'}
               </span>
               {verified_purchase && (
-                <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 flex-shrink-0" />
               )}
+              <span className="text-xs text-gray-500 flex-shrink-0">
+                {formatDate(created_at)}
+              </span>
             </div>
-            <div className="text-xs text-gray-500 mt-0.5">
-              {formatDate(created_at)}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-            <button className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-              Follow
-            </button>
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <MoreHorizontal className="w-5 h-5" />
-              </button>
-
-              {showMenu && (
-                <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                  <button
-                    onClick={() => handleMenuAction('share')}
-                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Share review
-                  </button>
-                  <button
-                    onClick={() => handleMenuAction('edit')}
-                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Edit review
-                  </button>
-                  <div className="border-t border-gray-100 my-1"></div>
-                  <button
-                    onClick={() => handleMenuAction('report')}
-                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Report review
-                  </button>
-                  <button
-                    onClick={() => handleMenuAction('delete')}
-                    className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Delete review
-                  </button>
+            
+            {/* Rating & Menu */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {rating && (
+                <div className="hidden xs:block">
+                  {renderStars(rating)}
                 </div>
               )}
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+
+                {showMenu && (
+                  <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 text-xs sm:text-sm">
+                    <button
+                      onClick={() => handleMenuAction('share')}
+                      className="w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50"
+                    >
+                      Share
+                    </button>
+                    <button
+                      onClick={() => handleMenuAction('edit')}
+                      className="w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50"
+                    >
+                      Edit
+                    </button>
+                    <div className="border-t border-gray-100 my-1"></div>
+                    <button
+                      onClick={() => handleMenuAction('report')}
+                      className="w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50"
+                    >
+                      Report
+                    </button>
+                    <button
+                      onClick={() => handleMenuAction('delete')}
+                      className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Rating (mobile only) */}
+          {rating && (
+            <div className="xs:hidden mb-2">
+              {renderStars(rating)}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Review Comment */}
-      <div className="text-gray-800 leading-relaxed mb-2 text-[15px]">
+      <div className="text-gray-800 leading-relaxed mb-3 text-sm sm:text-[15px]">
         <span>
-          {expandedReviews.has(id) ? comment : truncateText(comment)}
-          {comment.length > 120 && (
+          {expandedReviews.has(id) ? comment : truncateText(comment, 100)}
+          {comment.length > 100 && (
             <button
               onClick={() => onToggleReadMore(id)}
-              className="text-gray-500 hover:text-gray-700 font-medium ml-1.5 transition-colors"
+              className="text-blue-600 hover:text-blue-800 font-medium ml-1.5 transition-colors"
             >
-              {expandedReviews.has(id) ? 'less' : 'more'}
+              {expandedReviews.has(id) ? 'Show less' : 'Read more'}
             </button>
           )}
         </span>
       </div>
 
-      {/* Media Section */}
+      {/* Media Grid - Responsive */}
       {media.length > 0 && (
-        <div className="mb-2">
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {media.map((item, index) => (
-              <div key={index} className="flex-shrink-0 relative">
+        <div className="mb-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
+            {media.slice(0, 4).map((item, index) => (
+              <div 
+                key={index} 
+                className={`aspect-square ${media.length === 1 ? 'col-span-3 sm:col-span-2' : ''}`}
+              >
                 {item.type === 'image' ? (
                   <img
                     src={item.url}
                     alt={item.alt}
-                    className="w-32 h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
+                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity rounded"
                     onClick={() => window.open(item.url, '_blank')}
                   />
-                ) : item.type === 'video' ? (
+                ) : (
                   <div
-                    className="w-32 h-32 relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden rounded-lg"
+                    className="w-full h-full relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden rounded bg-black"
                     onClick={() => window.open(item.url, '_blank')}
                   >
                     <img
                       src={item.thumbnail}
                       alt={item.alt}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover opacity-70"
                     />
-                    <div 
-                      className="absolute inset-0 flex items-center justify-center"
-                      style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-                    >
-                      <div className="bg-white rounded-full p-2">
-                        <Play className="w-5 h-5 text-gray-900 fill-gray-900" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="bg-white rounded-full p-1.5 sm:p-2">
+                        <Play className="w-4 h-4 sm:w-5 sm:h-5 text-gray-900" />
                       </div>
                     </div>
                   </div>
-                ) : null}
+                )}
               </div>
             ))}
+            {media.length > 4 && (
+              <div className="aspect-square bg-gray-100 rounded flex items-center justify-center text-gray-600 text-sm font-medium">
+                +{media.length - 4}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Engagement Section */}
-      <div className="flex items-center justify-between pt-2">
-        <div className="flex items-center gap-8">
+      {/* Engagement Footer */}
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <div className="flex items-center gap-6">
           <button
             onClick={() => console.log('Like clicked for review:', id)}
-            className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium"
+            className="text-gray-500 hover:text-red-600 transition-colors flex items-center gap-1.5 text-sm"
           >
-            <Heart
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
+            <Heart className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" strokeWidth="2" />
             {likeCount > 0 && <span>{likeCount}</span>}
           </button>
 
           <button
-            onClick={() => handleCommentClick(id)}
-            className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium"
+            onClick={handleCommentClick}
+            className="text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-1.5 text-sm"
           >
-            <MessageCircle className="w-5 h-5" />
+            <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             {commentCount > 0 && <span>{commentCount}</span>}
           </button>
         </div>
 
-        {/* Rating on the right */}
-        {rating && (
-          <div className="flex-shrink-0">
-            {renderStars(rating)}
-          </div>
-        )}
+        {/* Follow Button */}
+        <button className="px-3 py-1.5 text-xs sm:text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+          Follow
+        </button>
       </div>
     </div>
   );
