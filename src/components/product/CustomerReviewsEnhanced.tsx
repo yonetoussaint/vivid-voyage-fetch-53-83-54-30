@@ -2,7 +2,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import ErrorBoundary from './ErrorBoundary';
-import CustomerReviewsSkeleton from './CustomerReviewsSkeleton';
 import { useMockReviews } from "@/hooks/useMockReviews";
 import ReviewsSummary from '@/components/product/ReviewsSummary';
 import ReviewItem, { Review } from '@/components/product/ReviewItem';
@@ -67,8 +66,43 @@ const CustomerReviews = React.memo(({ productId, limit }: CustomerReviewsProps) 
     window.location.href = `/product/${productId}/reviews`;
   }, [productId]);
 
+  // Show loading state
   if (isLoading) {
-    return <CustomerReviewsSkeleton />;
+    return (
+      <div className="w-full bg-white">
+        <div className="animate-pulse">
+          <div className="p-4">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+          <div className="p-4 border-t">
+            {[1, 2].map((i) => (
+              <div key={i} className="mb-4 p-3 border rounded">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/6"></div>
+                  </div>
+                </div>
+                <div className="space-y-2 mb-3">
+                  <div className="h-3 bg-gray-200 rounded w-full"></div>
+                  <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="h-4 bg-gray-200 rounded w-10"></div>
+                  <div className="h-4 bg-gray-200 rounded w-10"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
