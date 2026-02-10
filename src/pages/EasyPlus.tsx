@@ -10,6 +10,7 @@ import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
+import Liasse from '@/components/easy/Liasse'; // ADD THIS IMPORT
 import { useStationData } from '@/hooks/useStationData';
 
 // Import the layout components
@@ -160,19 +161,19 @@ const SystemeStationService = () => {
           </div>
         );
       case 'vendeurs':
-  return (
-    
-      <VendeursManager
-        vendeurs={vendeurs}
-        nouveauVendeur={nouveauVendeur}
-        setNouveauVendeur={setNouveauVendeur}
-        ajouterVendeur={ajouterVendeur}
-        supprimerVendeur={supprimerVendeur}
-        getNombreAffectations={getNombreAffectations}
-        vendeurActif={vendeurActif} // Make sure to pass this!
-      />
-    
-  );
+        return (
+          <div className="p-2 sm:p-4">
+            <VendeursManager
+              vendeurs={vendeurs}
+              nouveauVendeur={nouveauVendeur}
+              setNouveauVendeur={setNouveauVendeur}
+              ajouterVendeur={ajouterVendeur}
+              supprimerVendeur={supprimerVendeur}
+              getNombreAffectations={getNombreAffectations}
+              vendeurActif={vendeurActif}
+            />
+          </div>
+        );
       case 'conditionnement':
         return (
           <div className="p-2 sm:p-6">
@@ -257,6 +258,16 @@ const SystemeStationService = () => {
             />
           </div>
         );
+      case 'liasse': // ADD THIS NEW CASE
+        return (
+          <div className="p-2 sm:p-4">
+            <Liasse
+              shift={shift}
+              date={date}
+              vendeurs={vendeurs}
+            />
+          </div>
+        );
       default:
         return (
           <div className="p-2 sm:p-6">
@@ -274,32 +285,31 @@ const SystemeStationService = () => {
       </SidePanel>
 
       {/* Main Layout */}
-      
-<MainLayout
-  date={date}
-  shift={shift}
-  activeTab={activeTab}
-  onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
-  onDateChange={(newDate) => setDate(newDate)}
-  onShiftChange={(newShift) => setShift(newShift)}
-  // Pump props
-  pompes={pompes}
-  pompeEtendue={pompeEtendue}
-  setPompeEtendue={setPompeEtendue}
-  showPropane={true}
-  // Task props
-  taskType={taskType}
-  setTaskType={setTaskType}
-  // Vendor props - CRITICAL: Make sure these are passed!
-  vendeurs={vendeurs}
-  vendeurActif={vendeurActif}
-  setVendeurActif={setVendeurActif}
-  // Reset functions
-  onResetShift={handleReinitialiserShift}
-  onResetDay={handleReinitialiserJour}
-  // Tasks stats
-  tasksStats={tasksStats}
->
+      <MainLayout
+        date={date}
+        shift={shift}
+        activeTab={activeTab}
+        onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
+        onDateChange={(newDate) => setDate(newDate)}
+        onShiftChange={(newShift) => setShift(newShift)}
+        // Pump props
+        pompes={pompes}
+        pompeEtendue={pompeEtendue}
+        setPompeEtendue={setPompeEtendue}
+        showPropane={true}
+        // Task props
+        taskType={taskType}
+        setTaskType={setTaskType}
+        // Vendor props
+        vendeurs={vendeurs}
+        vendeurActif={vendeurActif}
+        setVendeurActif={setVendeurActif}
+        // Reset functions
+        onResetShift={handleReinitialiserShift}
+        onResetDay={handleReinitialiserJour}
+        // Tasks stats
+        tasksStats={tasksStats}
+      >
         {renderActiveTabContent()}
       </MainLayout>
 
