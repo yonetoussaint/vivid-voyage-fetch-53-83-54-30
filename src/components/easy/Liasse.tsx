@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Plus, Trash2, ChevronLeft, Eye, Check, SkipForward, Calculator, RotateCcw, X } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, Eye, Check,Users, SkipForward, Calculator, RotateCcw, X } from 'lucide-react';
 
 const Liasse = ({ shift, date, vendeurs }) => {
   const denominations = [1000, 500, 250, 100, 50, 25, 10, 5];
