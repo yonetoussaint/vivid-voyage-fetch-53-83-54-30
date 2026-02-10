@@ -161,6 +161,24 @@ const Liasse = ({ shift, date, vendeurs }) => {
     return stats;
   }, [getAllSequencesByDenomination]);
 
+  // Get denominations that have sequences (for tabs)
+  const denominationsWithData = useMemo(() => {
+    return denominations.filter(denom => {
+      const stats = getDenominationStats[denom];
+      return stats && stats.totalBills > 0;
+    }).sort((a, b) => b - a); // Sort highest to lowest
+  }, [getDenominationStats]);
+
+  // State for selected denomination tab in liasse modal
+  const [selectedLiasseDenom, setSelectedLiasseDenom] = useState(null);
+
+  // Set initial selected denomination when modal opens
+  useEffect(() => {
+    if (showLiasse && denominationsWithData.length > 0) {
+      setSelectedLiasseDenom(denominationsWithData[0]);
+    }
+  }, [showLiasse, denominationsWithData]);
+
   // Sync with localStorage for persistence
   useEffect(() => {
     const savedDeposits = localStorage.getItem(`liasseDeposits_${date}_${shift}`);
@@ -529,7 +547,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
         </div>
       )}
 
-      {/* Liasse Instructions Modal - EXACTLY like LiasseCounter */}
+      {/* Liasse Instructions Modal with Denomination Tabs */}
       {showLiasse && (
         <div className="fixed inset-0 bg-black/80 z-50 flex flex-col">
           <div className="bg-slate-800 text-white p-3 flex items-center justify-between">
@@ -542,176 +560,80 @@ const Liasse = ({ shift, date, vendeurs }) => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto bg-slate-900 p-3">
-            {/* Total Stats - Like LiasseCounter header */}
-            <div className="bg-slate-800 rounded-lg p-4 mb-4">
-              <div className="text-center mb-3">
-                <div className="text-slate-400 text-sm">TOTAL DE TOUS LES VENDEURS</div>
-                <div className="text-green-400 font-bold text-2xl mt-1">
-                  {formatCurrency(getAllVendorsTotal() + getCurrentDepositTotal())}
-                </div>
+          {/* Total Stats - Fixed at top */}
+          <div className="bg-slate-800/90 border-b border-slate-700 p-3">
+            <div className="grid grid-cols-3 gap-2 text-sm">
+              <div className="bg-slate-700/50 rounded p-2 text-center">
+                <div className="text-slate-400 text-xs">Total Billets</div>
+                <div className="font-bold text-lg">{getTotalStats().totalBills}</div>
               </div>
-              
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <div className="bg-slate-700/50 rounded p-2 text-center">
-                  <div className="text-slate-400 text-xs">Total Billets</div>
-                  <div className="font-bold text-lg">{getTotalStats().totalBills}</div>
-                </div>
-                <div className="bg-emerald-900/30 rounded p-2 text-center">
-                  <div className="text-emerald-300 text-xs">Liasses</div>
-                  <div className="font-bold text-emerald-400 text-lg">{getTotalStats().totalLiasses}</div>
-                </div>
-                <div className="bg-amber-900/30 rounded p-2 text-center">
-                  <div className="text-amber-300 text-xs">Reste</div>
-                  <div className="font-bold text-amber-400 text-lg">{getTotalStats().totalRemaining}</div>
-                </div>
+              <div className="bg-emerald-900/30 rounded p-2 text-center">
+                <div className="text-emerald-300 text-xs">Liasses</div>
+                <div className="font-bold text-emerald-400 text-lg">{getTotalStats().totalLiasses}</div>
+              </div>
+              <div className="bg-amber-900/30 rounded p-2 text-center">
+                <div className="text-amber-300 text-xs">Reste</div>
+                <div className="font-bold text-amber-400 text-lg">{getTotalStats().totalRemaining}</div>
               </div>
             </div>
+            <div className="text-center mt-2">
+              <div className="text-green-400 font-bold text-sm">
+                {formatCurrency(getAllVendorsTotal() + getCurrentDepositTotal())}
+              </div>
+            </div>
+          </div>
 
-            {/* Instructions by Denomination */}
-            {Object.values(getDenominationStats).length === 0 ? (
+          {/* Denomination Tabs */}
+          {denominationsWithData.length > 0 && (
+            <div className="bg-slate-800 border-b border-slate-700">
+              <div className="flex overflow-x-auto px-2 py-1 gap-1 scrollbar-hide">
+                {denominationsWithData.map(denom => {
+                  const stats = getDenominationStats[denom];
+                  const isSelected = selectedLiasseDenom === denom;
+                  const hasLiasses = stats.completeLiasses > 0;
+                  
+                  return (
+                    <button
+                      key={denom}
+                      onClick={() => setSelectedLiasseDenom(denom)}
+                      className={`px-3 py-2 rounded-lg font-bold text-sm whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 transition-colors ${
+                        isSelected
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      <div className="flex flex-col items-start">
+                        <div className="text-xs font-bold">{denom} HTG</div>
+                        <div className="text-xs opacity-80">
+                          {stats.totalBills} billets
+                          {hasLiasses && (
+                            <span className="ml-1 text-emerald-400">
+                              • {stats.completeLiasses}L
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Content Area */}
+          <div className="flex-1 overflow-y-auto bg-slate-900">
+            {denominationsWithData.length === 0 ? (
               <div className="text-center text-slate-500 py-8">
                 Aucun dépôt enregistré
               </div>
+            ) : selectedLiasseDenom && getDenominationStats[selectedLiasseDenom] ? (
+              <div className="p-3">
+                <StatsContent stats={getDenominationStats[selectedLiasseDenom]} />
+              </div>
             ) : (
-              Object.values(getDenominationStats)
-                .sort((a, b) => b.denomination - a.denomination)
-                .map(stats => (
-                  <div key={stats.denomination} className="bg-slate-800 rounded-lg p-4 mb-4">
-                    {/* Denomination Header */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-lg">
-                          {stats.denomination} HTG
-                        </div>
-                        <div className="text-white font-bold text-lg">
-                          {stats.totalBills} billets
-                        </div>
-                      </div>
-                      <div className="text-green-400 font-bold text-lg">
-                        {formatCurrency(stats.totalValue)}
-                      </div>
-                    </div>
-
-                    {/* Simple Calculation - Like LiasseCounter */}
-                    <div className="bg-slate-900/50 rounded-lg p-3 mb-3">
-                      <div className="text-center">
-                        <div className="text-slate-400 text-sm mb-1">CALCUL LIASSE</div>
-                        <div className="text-2xl font-bold text-white">
-                          {stats.totalBills} ÷ 100 = {stats.completeLiasses} L + {stats.remainingBills}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Sequences - Like LiasseCounter */}
-                    {stats.sequences.length > 0 && (
-                      <div className="mb-3">
-                        <div className="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wide">
-                          Séquences ({stats.sequences.length})
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {stats.sequences.map((seq, idx) => (
-                            <div
-                              key={idx}
-                              className="bg-slate-700 border border-slate-600 px-2 py-1.5 rounded flex items-center gap-1.5 hover:bg-slate-600 transition-colors group"
-                            >
-                              <span className="text-xs font-medium text-slate-300">
-                                {seq.vendor} #{seq.depositIndex}
-                              </span>
-                              <span className="text-sm font-bold text-white">
-                                {seq.count}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Departage Instructions - EXACTLY like LiasseCounter */}
-                    {stats.instructions.length > 0 && (
-                      <div>
-                        <div className="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wide">
-                          Instructions de départage
-                        </div>
-                        <div className="space-y-2">
-                          {stats.instructions.map((inst) => (
-                            <div
-                              key={inst.liasseNum}
-                              className={`p-3 rounded border-2 ${
-                                inst.isComplete 
-                                  ? 'bg-emerald-900/20 border-emerald-700' 
-                                  : 'bg-amber-900/20 border-amber-700'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-sm font-bold text-white">
-                                    Liasse {inst.liasseNum}
-                                  </span>
-                                  {inst.isComplete && (
-                                    <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded font-medium">
-                                      Complète
-                                    </span>
-                                  )}
-                                  {!inst.isComplete && (
-                                    <span className="text-xs bg-amber-600 text-white px-2 py-0.5 rounded font-medium">
-                                      Incomplète
-                                    </span>
-                                  )}
-                                </div>
-                                <span className="text-sm font-bold text-white">
-                                  {inst.total}/100
-                                </span>
-                              </div>
-
-                              <div className="space-y-1.5">
-                                {inst.steps.map((step, idx) => (
-                                  <div key={idx} className="text-sm bg-slate-900/60 rounded p-2 border border-slate-700">
-                                    <span className="font-semibold text-slate-300">
-                                      {step.vendor} #{step.depositIndex}:
-                                    </span>{' '}
-                                    Prenez{' '}
-                                    <span className="font-bold text-emerald-400">
-                                      {step.take}
-                                    </span>
-                                    {' '}sur {step.from}
-                                    {step.remaining > 0 && (
-                                      <span className="text-amber-400 font-semibold">
-                                        {' '}→ reste {step.remaining}
-                                      </span>
-                                    )}
-                                    {step.remaining === 0 && (
-                                      <span className="text-slate-500">
-                                        {' '}✓
-                                      </span>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Summary - Like LiasseCounter */}
-                    <div className="mt-3 p-3 bg-slate-700/30 rounded text-center">
-                      <div className="text-sm text-slate-300">
-                        {stats.completeLiasses > 0 && (
-                          <span className="text-emerald-400">
-                            {stats.completeLiasses} liasse{stats.completeLiasses > 1 ? 's' : ''} de {formatCurrency(stats.denomination * BILLS_PER_LIASSE)}
-                          </span>
-                        )}
-                        {stats.completeLiasses > 0 && stats.remainingBills > 0 && ' + '}
-                        {stats.remainingBills > 0 && (
-                          <span className="text-amber-400">
-                            {stats.remainingBills} billet{stats.remainingBills > 1 ? 's' : ''} lâche{stats.remainingBills > 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))
+              <div className="text-center text-slate-500 py-8">
+                Sélectionnez une coupure
+              </div>
             )}
           </div>
         </div>
@@ -738,7 +660,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
               <button
                 onClick={() => setShowLiasse(true)}
                 className="px-3 py-2 bg-amber-600 rounded-lg active:bg-amber-700 font-bold text-sm flex items-center gap-1"
-                disabled={Object.values(getDenominationStats).length === 0}
+                disabled={denominationsWithData.length === 0}
               >
                 <Calculator className="w-4 h-4" />
                 Départage
@@ -901,7 +823,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
                 <button
                   onClick={() => setShowLiasse(true)}
                   className="text-xs bg-amber-600 text-white px-3 py-1 rounded font-bold active:bg-amber-700 flex items-center gap-1"
-                  disabled={Object.values(getDenominationStats).length === 0}
+                  disabled={denominationsWithData.length === 0}
                 >
                   <Calculator className="w-3 h-3" />
                   Départage
@@ -995,5 +917,153 @@ const Liasse = ({ shift, date, vendeurs }) => {
     </div>
   );
 };
+
+// Separate component for the stats content
+function StatsContent({ stats }) {
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('fr-HT', {
+      style: 'currency',
+      currency: 'HTG',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
+  return (
+    <div className="bg-slate-800 rounded-lg p-4">
+      {/* Denomination Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-lg">
+            {stats.denomination} HTG
+          </div>
+          <div className="text-white font-bold text-lg">
+            {stats.totalBills} billets
+          </div>
+        </div>
+        <div className="text-green-400 font-bold text-lg">
+          {formatCurrency(stats.totalValue)}
+        </div>
+      </div>
+
+      {/* Simple Calculation - Like LiasseCounter */}
+      <div className="bg-slate-900/50 rounded-lg p-3 mb-3">
+        <div className="text-center">
+          <div className="text-slate-400 text-sm mb-1">CALCUL LIASSE</div>
+          <div className="text-2xl font-bold text-white">
+            {stats.totalBills} ÷ 100 = {stats.completeLiasses} L + {stats.remainingBills}
+          </div>
+        </div>
+      </div>
+
+      {/* Sequences - Like LiasseCounter */}
+      {stats.sequences.length > 0 && (
+        <div className="mb-3">
+          <div className="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wide">
+            Séquences ({stats.sequences.length})
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {stats.sequences.map((seq, idx) => (
+              <div
+                key={idx}
+                className="bg-slate-700 border border-slate-600 px-2 py-1.5 rounded flex items-center gap-1.5 hover:bg-slate-600 transition-colors group"
+              >
+                <span className="text-xs font-medium text-slate-300">
+                  {seq.vendor} #{seq.depositIndex}
+                </span>
+                <span className="text-sm font-bold text-white">
+                  {seq.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Departage Instructions - EXACTLY like LiasseCounter */}
+      {stats.instructions.length > 0 && (
+        <div>
+          <div className="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wide">
+            Instructions de départage
+          </div>
+          <div className="space-y-2">
+            {stats.instructions.map((inst) => (
+              <div
+                key={inst.liasseNum}
+                className={`p-3 rounded border-2 ${
+                  inst.isComplete 
+                    ? 'bg-emerald-900/20 border-emerald-700' 
+                    : 'bg-amber-900/20 border-amber-700'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-white">
+                      Liasse {inst.liasseNum}
+                    </span>
+                    {inst.isComplete && (
+                      <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded font-medium">
+                        Complète
+                      </span>
+                    )}
+                    {!inst.isComplete && (
+                      <span className="text-xs bg-amber-600 text-white px-2 py-0.5 rounded font-medium">
+                        Incomplète
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-white">
+                    {inst.total}/100
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  {inst.steps.map((step, idx) => (
+                    <div key={idx} className="text-sm bg-slate-900/60 rounded p-2 border border-slate-700">
+                      <span className="font-semibold text-slate-300">
+                        {step.vendor} #{step.depositIndex}:
+                      </span>{' '}
+                      Prenez{' '}
+                      <span className="font-bold text-emerald-400">
+                        {step.take}
+                      </span>
+                      {' '}sur {step.from}
+                      {step.remaining > 0 && (
+                        <span className="text-amber-400 font-semibold">
+                          {' '}→ reste {step.remaining}
+                        </span>
+                      )}
+                      {step.remaining === 0 && (
+                        <span className="text-slate-500">
+                          {' '}✓
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Summary - Like LiasseCounter */}
+      <div className="mt-3 p-3 bg-slate-700/30 rounded text-center">
+        <div className="text-sm text-slate-300">
+          {stats.completeLiasses > 0 && (
+            <span className="text-emerald-400">
+              {stats.completeLiasses} liasse{stats.completeLiasses > 1 ? 's' : ''} de {formatCurrency(stats.denomination * 100)}
+            </span>
+          )}
+          {stats.completeLiasses > 0 && stats.remainingBills > 0 && ' + '}
+          {stats.remainingBills > 0 && (
+            <span className="text-amber-400">
+              {stats.remainingBills} billet{stats.remainingBills > 1 ? 's' : ''} lâche{stats.remainingBills > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default Liasse;
