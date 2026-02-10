@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Plus, Minus, Users, Trash2, ChevronLeft, Eye, Check, SkipForward, Package, ListChecks, Calculator, Layers, Database, Filter, PieChart } from 'lucide-react';
+import { Plus, Minus, Users, Trash2, ChevronLeft, Eye, Check, SkipForward, Calculator } from 'lucide-react';
 
 const Liasse = ({ shift, date, vendeurs }) => {
   const denominations = [1000, 500, 250, 100, 50, 25, 10, 5];
@@ -12,7 +12,7 @@ const Liasse = ({ shift, date, vendeurs }) => {
   const [selectedVendor, setSelectedVendor] = useState(availableVendors[0]);
   const [showSummary, setShowSummary] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [showLiasseRecommendations, setShowLiasseRecommendations] = useState(false);
+  const [showLiasse, setShowLiasse] = useState(false);
   const [entryMode, setEntryMode] = useState('quick');
 
   const [currentDenom, setCurrentDenom] = useState(denominations[0]);
@@ -33,53 +33,58 @@ const Liasse = ({ shift, date, vendeurs }) => {
     }, {})
   );
 
-  // Calculate total bills from ALL vendors for liasse analysis
-  const totalPool = useMemo(() => {
-    const pool = denominations.reduce((acc, denom) => {
-      acc[denom] = { totalBills: 0, totalValue: 0, deposits: [] };
-      return acc;
-    }, {});
+  // Calculate total bills from ALL vendors
+  const totalBillsByDenomination = useMemo(() => {
+    const totals = {};
+    
+    // Initialize all denominations
+    denominations.forEach(denom => {
+      totals[denom] = 0;
+    });
 
     // Add current deposit (not yet saved)
     denominations.forEach(denom => {
       const { liasses, loose } = currentDeposit[denom];
-      const billsFromCurrent = liasses * BILLS_PER_LIASSE + loose;
-      if (billsFromCurrent > 0) {
-        pool[denom].totalBills += billsFromCurrent;
-        pool[denom].totalValue += billsFromCurrent * denom;
-        pool[denom].deposits.push({
-          vendor: selectedVendor,
-          type: 'current',
-          bills: billsFromCurrent,
-          value: billsFromCurrent * denom
-        });
-      }
+      totals[denom] += liasses * BILLS_PER_LIASSE + loose;
     });
 
     // Add all saved deposits from all vendors
     availableVendors.forEach(vendor => {
-      vendorDeposits[vendor]?.forEach((deposit, depositIndex) => {
+      vendorDeposits[vendor]?.forEach(deposit => {
         denominations.forEach(denom => {
           const { liasses, loose } = deposit.amounts[denom];
-          const bills = liasses * BILLS_PER_LIASSE + loose;
-          if (bills > 0) {
-            pool[denom].totalBills += bills;
-            pool[denom].totalValue += bills * denom;
-            pool[denom].deposits.push({
-              vendor: vendor,
-              type: 'saved',
-              depositIndex: depositIndex + 1,
-              bills: bills,
-              value: bills * denom,
-              timestamp: deposit.timestamp
-            });
-          }
+          totals[denom] += liasses * BILLS_PER_LIASSE + loose;
         });
       });
     });
 
-    return pool;
-  }, [vendorDeposits, currentDeposit, selectedVendor, availableVendors]);
+    return totals;
+  }, [vendorDeposits, currentDeposit, availableVendors]);
+
+  // Calculate simple liasse results
+  const liasseResults = useMemo(() => {
+    const results = [];
+    
+    denominations.forEach(denom => {
+      const totalBills = totalBillsByDenomination[denom];
+      if (totalBills > 0) {
+        const liasses = Math.floor(totalBills / BILLS_PER_LIASSE);
+        const rest = totalBills % BILLS_PER_LIASSE;
+        
+        results.push({
+          denomination: denom,
+          totalBills,
+          liasses,
+          rest,
+          liasseValue: liasses * denom * BILLS_PER_LIASSE,
+          restValue: rest * denom
+        });
+      }
+    });
+
+    // Sort by denomination value (highest first)
+    return results.sort((a, b) => b.denomination - a.denomination);
+  }, [totalBillsByDenomination]);
 
   // Sync with localStorage for persistence
   useEffect(() => {
@@ -128,11 +133,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
         [field]: Math.max(0, value)
       }
     }));
-  };
-
-  const adjustValue = (denom, field, change) => {
-    const current = currentDeposit[denom][field];
-    updateDeposit(denom, field, current + change);
   };
 
   // Get next denomination that hasn't been completed yet
@@ -188,7 +188,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
     } else {
       // We've gone through all denominations
       setQuickCount('');
-      // Optionally, you could focus the "Enregistrer" button or show a message
       setTimeout(() => quickInputRef.current?.focus(), 100);
     }
   };
@@ -200,8 +199,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
       setCurrentDenom(nextDenom);
       setTimeout(() => quickInputRef.current?.focus(), 100);
     } else {
-      // We've gone through all denominations
-      // Optionally, you could focus the "Enregistrer" button or show a message
       setTimeout(() => quickInputRef.current?.focus(), 100);
     }
   };
@@ -251,164 +248,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
   const getAllVendorsTotal = () => {
     return availableVendors.reduce((sum, vendor) => sum + getVendorTotal(vendor), 0);
   };
-
-  // Calculate liasse recommendations from TOTAL POOL
-  const liasseRecommendations = useMemo(() => {
-    const byDenomination = [];
-    const totalBillsAll = { total: 0, value: 0 };
-    let totalPossibleLiasses = 0;
-    
-    // Analyze each denomination in the total pool
-    denominations.forEach(denom => {
-      const poolData = totalPool[denom];
-      if (poolData.totalBills > 0) {
-        const totalBills = poolData.totalBills;
-        const totalValue = poolData.totalValue;
-        const maxLiasses = Math.floor(totalBills / BILLS_PER_LIASSE);
-        const remainingBills = totalBills % BILLS_PER_LIASSE;
-        const liasseValue = BILLS_PER_LIASSE * denom;
-        
-        totalBillsAll.total += totalBills;
-        totalBillsAll.value += totalValue;
-        totalPossibleLiasses += maxLiasses;
-        
-        byDenomination.push({
-          denomination: denom,
-          totalBills,
-          totalValue,
-          maxLiasses,
-          remainingBills,
-          liasseValue,
-          deposits: poolData.deposits,
-          sources: {
-            vendors: [...new Set(poolData.deposits.map(d => d.vendor))],
-            depositCount: poolData.deposits.length
-          }
-        });
-      }
-    });
-
-    // Analyze combinations across denominations
-    const combinations = [];
-    
-    // Strategy 1: Pure denomination liasses (highest value first)
-    const pureLiasses = byDenomination
-      .filter(d => d.maxLiasses > 0)
-      .sort((a, b) => b.denomination - a.denomination);
-    
-    pureLiasses.forEach(denom => {
-      combinations.push({
-        type: 'pure',
-        denomination: denom.denomination,
-        description: `Liasses pures de ${denom.denomination} HTG`,
-        possibleLiasses: denom.maxLiasses,
-        remainingBills: denom.remainingBills,
-        totalValue: denom.maxLiasses * denom.liasseValue,
-        sources: denom.sources,
-        priority: denom.denomination >= 500 ? 'Haute' : 'Moyenne'
-      });
-    });
-
-    // Strategy 2: Mixed liasses from small denominations
-    const smallDenoms = byDenomination.filter(d => d.denomination <= 100);
-    if (smallDenoms.length > 0) {
-      const totalSmallBills = smallDenoms.reduce((sum, d) => sum + d.totalBills, 0);
-      const totalSmallValue = smallDenoms.reduce((sum, d) => sum + d.totalValue, 0);
-      
-      if (totalSmallBills >= BILLS_PER_LIASSE) {
-        const mixedLiasses = Math.floor(totalSmallBills / BILLS_PER_LIASSE);
-        const remainingBills = totalSmallBills % BILLS_PER_LIASSE;
-        const avgValue = totalSmallValue / totalSmallBills;
-        const estimatedValue = Math.round(avgValue * BILLS_PER_LIASSE);
-        
-        combinations.push({
-          type: 'mixed',
-          description: 'Liasses mixtes (petites coupures ≤100 HTG)',
-          denominations: smallDenoms.map(d => d.denomination),
-          possibleLiasses: mixedLiasses,
-          remainingBills: remainingBills,
-          estimatedValue: estimatedValue,
-          sources: {
-            vendors: [...new Set(smallDenoms.flatMap(d => d.sources.vendors))],
-            depositCount: smallDenoms.reduce((sum, d) => sum + d.sources.depositCount, 0)
-          },
-          priority: 'Moyenne'
-        });
-      }
-    }
-
-    // Strategy 3: Fill gaps by breaking higher denominations
-    byDenomination.forEach(denom => {
-      if (denom.remainingBills > 0 && denom.remainingBills < 20) {
-        // Find higher denomination that could be broken to complete a liasse
-        const higherDenoms = byDenomination.filter(d => 
-          d.denomination > denom.denomination && 
-          d.maxLiasses > 0
-        );
-        
-        higherDenoms.forEach(higher => {
-          const billsNeeded = BILLS_PER_LIASSE - denom.remainingBills;
-          const valueNeeded = billsNeeded * denom.denomination;
-          const higherBillsNeeded = Math.ceil(valueNeeded / higher.denomination);
-          
-          if (higher.totalBills >= higherBillsNeeded) {
-            combinations.push({
-              type: 'completion',
-              description: `Compléter ${denom.remainingBills}×${denom.denomination} avec ${higherBillsNeeded}×${higher.denomination} pour une liasse`,
-              fromDenomination: higher.denomination,
-              toDenomination: denom.denomination,
-              billsNeeded: billsNeeded,
-              higherBillsNeeded: higherBillsNeeded,
-              valueCreated: denom.liasseValue,
-              efficiency: 'Modérée'
-            });
-          }
-        });
-      }
-    });
-
-    // Strategy 4: Optimal distribution for bank deposit
-    const bankOptimal = [];
-    const bankDenominations = [1000, 500, 250, 100];
-    let remainingBillsAfterOptimal = { ...totalPool };
-    
-    bankDenominations.forEach(targetDenom => {
-      if (remainingBillsAfterOptimal[targetDenom]?.totalBills >= BILLS_PER_LIASSE) {
-        const liasses = Math.floor(remainingBillsAfterOptimal[targetDenom].totalBills / BILLS_PER_LIASSE);
-        bankOptimal.push({
-          denomination: targetDenom,
-          liasses: liasses,
-          value: liasses * targetDenom * BILLS_PER_LIASSE
-        });
-        // Remove used bills
-        remainingBillsAfterOptimal[targetDenom].totalBills -= liasses * BILLS_PER_LIASSE;
-      }
-    });
-
-    if (bankOptimal.length > 0) {
-      combinations.push({
-        type: 'bank',
-        description: 'Distribution optimale pour dépôt bancaire',
-        optimalDistribution: bankOptimal,
-        totalValue: bankOptimal.reduce((sum, d) => sum + d.value, 0),
-        priority: 'Très Haute'
-      });
-    }
-
-    return {
-      byDenomination: byDenomination.sort((a, b) => b.denomination - a.denomination),
-      combinations: combinations,
-      summary: {
-        totalBills: totalBillsAll.total,
-        totalValue: totalBillsAll.value,
-        totalPossibleLiasses: totalPossibleLiasses,
-        denominationsWithBills: byDenomination.length,
-        vendorCount: [...new Set(byDenomination.flatMap(d => d.sources.vendors))].length,
-        depositCount: byDenomination.reduce((sum, d) => sum + d.sources.depositCount, 0)
-      },
-      poolAnalysis: totalPool
-    };
-  }, [totalPool]);
 
   const saveDeposit = () => {
     const total = getCurrentDepositTotal();
@@ -495,17 +334,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
   const getRemainingDenominations = () => {
     const currentIndex = denominations.indexOf(currentDenom);
     return denominations.slice(currentIndex);
-  };
-
-  // Apply liasse recommendation to current deposit
-  const applyLiasseToCurrentDeposit = (denomination, liassesCount) => {
-    const totalBills = getTotalBills(currentDeposit, denomination);
-    const maxPossible = Math.floor(totalBills / BILLS_PER_LIASSE);
-    const liassesToSet = Math.min(liassesCount, maxPossible);
-    const looseToSet = totalBills - (liassesToSet * BILLS_PER_LIASSE);
-    
-    updateDeposit(denomination, 'liasses', liassesToSet);
-    updateDeposit(denomination, 'loose', looseToSet);
   };
 
   return (
@@ -618,290 +446,139 @@ const Liasse = ({ shift, date, vendeurs }) => {
         </div>
       )}
 
-      {/* Liasse Recommendations Modal - FROM TOTAL POOL */}
-      {showLiasseRecommendations && (
+      {/* Simple Liasse Calculation Modal */}
+      {showLiasse && (
         <div className="fixed inset-0 bg-black/80 z-50 flex flex-col">
           <div className="bg-slate-800 text-white p-3 flex items-center justify-between">
-            <button onClick={() => setShowLiasseRecommendations(false)} className="p-2">
+            <button onClick={() => setShowLiasse(false)} className="p-2">
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <h2 className="font-bold text-lg">Analyse Liasses - Tous les Dépôts</h2>
-            <div className="flex gap-2">
-              <div className="text-xs bg-blue-600 px-2 py-1 rounded">
-                {liasseRecommendations.summary.vendorCount} vendeurs
-              </div>
+            <h2 className="font-bold text-lg">Calcul Liasses</h2>
+            <div className="text-xs bg-blue-600 px-2 py-1 rounded">
+              {availableVendors.length} vendeurs
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto bg-slate-900 p-3 space-y-4">
-            {/* Global Summary */}
-            <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Database className="w-5 h-5 text-blue-400" />
-                  <h3 className="font-bold text-lg">Résumé Global</h3>
-                </div>
-                <div className="text-green-400 font-bold text-xl">
-                  {formatCurrency(liasseRecommendations.summary.totalValue)}
+          <div className="flex-1 overflow-y-auto bg-slate-900 p-3">
+            {/* Totals */}
+            <div className="bg-slate-800 rounded-lg p-4 mb-4">
+              <div className="text-center mb-3">
+                <div className="text-slate-400 text-sm">TOTAL DE TOUS LES VENDEURS</div>
+                <div className="text-green-400 font-bold text-2xl mt-1">
+                  {formatCurrency(getAllVendorsTotal() + getCurrentDepositTotal())}
                 </div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                <div className="bg-slate-800/50 rounded p-2">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-slate-700/50 rounded p-2 text-center">
                   <div className="text-slate-400">Total billets</div>
-                  <div className="font-bold text-xl">{liasseRecommendations.summary.totalBills}</div>
+                  <div className="font-bold">
+                    {Object.values(totalBillsByDenomination).reduce((a, b) => a + b, 0)}
+                  </div>
                 </div>
-                <div className="bg-green-900/30 rounded p-2">
+                <div className="bg-green-900/30 rounded p-2 text-center">
                   <div className="text-green-300">Liasses possibles</div>
-                  <div className="font-bold text-xl text-green-400">{liasseRecommendations.summary.totalPossibleLiasses}</div>
+                  <div className="font-bold text-green-400">
+                    {liasseResults.reduce((sum, r) => sum + r.liasses, 0)}
+                  </div>
                 </div>
-                <div className="bg-slate-800/50 rounded p-2">
-                  <div className="text-slate-400">Dépôts analysés</div>
-                  <div className="font-bold text-xl">{liasseRecommendations.summary.depositCount}</div>
-                </div>
-                <div className="bg-blue-900/30 rounded p-2">
-                  <div className="text-blue-300">Coupures utilisées</div>
-                  <div className="font-bold text-xl text-blue-400">{liasseRecommendations.summary.denominationsWithBills}</div>
-                </div>
-              </div>
-              <div className="mt-3 text-xs text-slate-400">
-                Analyse basée sur tous les dépôts enregistrés + dépôt en cours
               </div>
             </div>
 
-            {/* Pool Analysis by Denomination */}
-            <div>
-              <h3 className="font-bold text-white mb-3 flex items-center gap-2">
-                <PieChart className="w-4 h-4" />
-                Répartition par Coupure
-              </h3>
-              <div className="space-y-3">
-                {liasseRecommendations.byDenomination.map(denom => (
-                  <div key={denom.denomination} className="bg-slate-800 rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-2">
+            {/* Liasse Results */}
+            <div className="space-y-3">
+              {liasseResults.length === 0 ? (
+                <div className="text-center text-slate-500 py-8">
+                  Aucun dépôt enregistré
+                </div>
+              ) : (
+                liasseResults.map(result => (
+                  <div key={result.denomination} className="bg-slate-800 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold">
-                          {denom.denomination} HTG
+                        <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-lg">
+                          {result.denomination} HTG
                         </div>
-                        <div className="text-white font-bold">
-                          {denom.totalBills} billets
+                        <div className="text-white font-bold text-lg">
+                          {result.totalBills} billets
                         </div>
                       </div>
-                      <div className="text-green-400 font-bold">
-                        {formatCurrency(denom.totalValue)}
+                      <div className="text-green-400 font-bold text-lg">
+                        {formatCurrency(result.totalBills * result.denomination)}
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-2 mb-2">
-                      <div className="bg-slate-700/30 rounded p-2">
-                        <div className="text-xs text-slate-400">Liasses max</div>
-                        <div className="font-bold text-green-400">{denom.maxLiasses}</div>
+                    <div className="bg-slate-900/50 rounded-lg p-3">
+                      <div className="text-center">
+                        <div className="text-slate-400 text-sm mb-1">CALCUL LIASSE</div>
+                        <div className="text-2xl font-bold text-white">
+                          {result.totalBills} ÷ 100 = {result.liasses} L + {result.rest}
+                        </div>
                       </div>
-                      <div className="bg-slate-700/30 rounded p-2">
-                        <div className="text-xs text-slate-400">Billets restants</div>
-                        <div className="font-bold">{denom.remainingBills}</div>
+                      
+                      <div className="grid grid-cols-2 gap-3 mt-3">
+                        <div className="bg-green-900/30 rounded p-2">
+                          <div className="text-green-300 text-sm">Liasses</div>
+                          <div className="font-bold text-green-400 text-lg">
+                            {result.liasses} × 100
+                          </div>
+                          <div className="text-slate-400 text-xs">
+                            = {result.liasses * 100} billets
+                          </div>
+                          <div className="text-green-400 font-bold mt-1">
+                            {formatCurrency(result.liasseValue)}
+                          </div>
+                        </div>
+                        
+                        <div className="bg-blue-900/30 rounded p-2">
+                          <div className="text-blue-300 text-sm">Reste</div>
+                          <div className="font-bold text-blue-400 text-lg">
+                            {result.rest} billets
+                          </div>
+                          <div className="text-slate-400 text-xs">
+                            Non regroupés
+                          </div>
+                          <div className="text-blue-400 font-bold mt-1">
+                            {formatCurrency(result.restValue)}
+                          </div>
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="text-xs text-slate-400 mb-1">Provenance:</div>
-                    <div className="flex flex-wrap gap-1">
-                      {denom.sources.vendors.slice(0, 3).map(vendor => (
-                        <span key={vendor} className="bg-slate-700 px-2 py-1 rounded text-xs">
-                          {vendor}
-                        </span>
-                      ))}
-                      {denom.sources.vendors.length > 3 && (
-                        <span className="bg-slate-700 px-2 py-1 rounded text-xs">
-                          +{denom.sources.vendors.length - 3}
+                    <div className="mt-3 text-sm text-slate-400 text-center">
+                      {result.liasses > 0 && (
+                        <span className="text-green-400">
+                          {result.liasses} liasse{result.liasses > 1 ? 's' : ''} de {formatCurrency(result.denomination * BILLS_PER_LIASSE)}
                         </span>
                       )}
-                      <span className="bg-blue-600 px-2 py-1 rounded text-xs ml-auto">
-                        {denom.sources.depositCount} dépôt(s)
-                      </span>
-                    </div>
-                    
-                    {denom.maxLiasses > 0 && (
-                      <div className="mt-2">
-                        <div className="text-xs text-slate-400 mb-1">Recommandation:</div>
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm">
-                            Créer <span className="text-green-400 font-bold">{denom.maxLiasses} liasses</span> de {formatCurrency(denom.liasseValue)}
-                          </div>
-                          <button
-                            onClick={() => {
-                              applyLiasseToCurrentDeposit(denom.denomination, denom.maxLiasses);
-                              alert(`${denom.maxLiasses} liasses configurées pour ${denom.denomination} HTG dans le dépôt en cours`);
-                            }}
-                            className="text-xs bg-blue-600 text-white px-3 py-1 rounded active:bg-blue-700"
-                          >
-                            Configurer
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Liasse Strategies */}
-            <div>
-              <h3 className="font-bold text-white mb-3 flex items-center gap-2">
-                <ListChecks className="w-4 h-4" />
-                Stratégies de Formation de Liasses
-              </h3>
-              <div className="space-y-3">
-                {liasseRecommendations.combinations.map((strategy, idx) => (
-                  <div key={idx} className={`bg-slate-800 rounded-lg p-3 border ${
-                    strategy.priority === 'Très Haute' ? 'border-red-500/30' :
-                    strategy.priority === 'Haute' ? 'border-orange-500/30' :
-                    strategy.priority === 'Moyenne' ? 'border-blue-500/30' :
-                    'border-slate-700'
-                  }`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-bold text-white">{strategy.description}</div>
-                      {strategy.priority && (
-                        <div className={`text-xs px-2 py-1 rounded ${
-                          strategy.priority === 'Très Haute' ? 'bg-red-500/20 text-red-400' :
-                          strategy.priority === 'Haute' ? 'bg-orange-500/20 text-orange-400' :
-                          strategy.priority === 'Moyenne' ? 'bg-blue-500/20 text-blue-400' :
-                          'bg-slate-700 text-slate-400'
-                        }`}>
-                          {strategy.priority}
-                        </div>
+                      {result.liasses > 0 && result.rest > 0 && ' + '}
+                      {result.rest > 0 && (
+                        <span className="text-blue-400">
+                          {result.rest} billet{result.rest > 1 ? 's' : ''} lâche{result.rest > 1 ? 's' : ''}
+                        </span>
                       )}
                     </div>
-                    
-                    {strategy.type === 'pure' && (
-                      <>
-                        <div className="text-sm text-slate-300 mb-2">
-                          {strategy.possibleLiasses} liasses de {formatCurrency(strategy.possibleLiasses * (strategy.denomination * BILLS_PER_LIASSE) / strategy.possibleLiasses)}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs text-slate-400">
-                            Source: {strategy.sources.vendors.join(', ')}
-                          </div>
-                          <div className="text-green-400 font-bold">
-                            {formatCurrency(strategy.totalValue)}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                    
-                    {strategy.type === 'mixed' && (
-                      <>
-                        <div className="text-sm text-slate-300 mb-2">
-                          Combiner {strategy.denominations.map(d => `${d}`).join(', ')} HTG
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-slate-700/30 rounded p-2">
-                            <div className="text-xs text-slate-400">Liasses</div>
-                            <div className="font-bold text-green-400">{strategy.possibleLiasses}</div>
-                          </div>
-                          <div className="bg-blue-500/20 rounded p-2">
-                            <div className="text-xs text-blue-300">Valeur estimée</div>
-                            <div className="font-bold">{formatCurrency(strategy.estimatedValue)}</div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                    
-                    {strategy.type === 'completion' && (
-                      <>
-                        <div className="text-sm text-slate-300 mb-2">
-                          Utiliser {strategy.higherBillsNeeded}×{strategy.fromDenomination} pour compléter {strategy.billsNeeded}×{strategy.toDenomination}
-                        </div>
-                        <div className="text-xs text-blue-300">
-                          Valeur créée: {formatCurrency(strategy.valueCreated)}
-                        </div>
-                      </>
-                    )}
-                    
-                    {strategy.type === 'bank' && (
-                      <>
-                        <div className="text-sm text-slate-300 mb-2">
-                          Distribution optimale pour le dépôt bancaire
-                        </div>
-                        <div className="space-y-1">
-                          {strategy.optimalDistribution.map((dist, i) => (
-                            <div key={i} className="flex items-center justify-between text-sm">
-                              <span>{dist.liasses} liasses de {dist.denomination} HTG</span>
-                              <span className="text-green-400">{formatCurrency(dist.value)}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-2 text-right font-bold text-green-400">
-                          Total: {formatCurrency(strategy.totalValue)}
-                        </div>
-                      </>
-                    )}
                   </div>
-                ))}
-              </div>
+                ))
+              )}
             </div>
 
-            {/* Action Plan */}
-            <div className="bg-slate-800 rounded-lg p-4">
-              <h3 className="font-bold text-white mb-3 flex items-center gap-2">
-                <Calculator className="w-4 h-4" />
-                Plan d'Action Recommandé
-              </h3>
-              
-              <div className="space-y-3">
-                {/* Step 1: Create high-value liasses */}
-                <div className="border-l-4 border-green-500 pl-3">
-                  <div className="font-bold text-white">1. Créer les liasses de haute valeur</div>
-                  <div className="text-sm text-slate-300 mt-1">
-                    {liasseRecommendations.byDenomination
-                      .filter(d => d.denomination >= 500 && d.maxLiasses > 0)
-                      .map(d => `${d.maxLiasses}×${d.denomination}`)
-                      .join(' + ') || 'Aucune liasse haute valeur possible'}
+            {/* Summary */}
+            {liasseResults.length > 0 && (
+              <div className="bg-gradient-to-r from-green-900/50 to-emerald-900/50 rounded-lg p-4 mt-4">
+                <div className="text-center">
+                  <div className="text-slate-300 text-sm">RÉSULTAT FINAL</div>
+                  <div className="text-2xl font-bold text-white mt-1">
+                    {liasseResults.reduce((sum, r) => sum + r.liasses, 0)} liasses
                   </div>
-                </div>
-                
-                {/* Step 2: Create medium-value liasses */}
-                <div className="border-l-4 border-blue-500 pl-3">
-                  <div className="font-bold text-white">2. Créer les liasses moyennes</div>
-                  <div className="text-sm text-slate-300 mt-1">
-                    {liasseRecommendations.byDenomination
-                      .filter(d => d.denomination >= 100 && d.denomination < 500 && d.maxLiasses > 0)
-                      .map(d => `${d.maxLiasses}×${d.denomination}`)
-                      .join(' + ') || 'Aucune liasse moyenne valeur possible'}
+                  <div className="text-slate-300 text-sm mt-1">
+                    + {liasseResults.reduce((sum, r) => sum + r.rest, 0)} billets lâches
                   </div>
-                </div>
-                
-                {/* Step 3: Consider mixed liasses */}
-                {liasseRecommendations.combinations.find(s => s.type === 'mixed' && s.possibleLiasses > 0) && (
-                  <div className="border-l-4 border-purple-500 pl-3">
-                    <div className="font-bold text-white">3. Combiner petites coupures</div>
-                    <div className="text-sm text-slate-300 mt-1">
-                      Former des liasses mixtes avec les petites coupures
-                    </div>
-                  </div>
-                )}
-                
-                {/* Step 4: Handle remaining bills */}
-                <div className="border-l-4 border-amber-500 pl-3">
-                  <div className="font-bold text-white">4. Gérer les billets restants</div>
-                  <div className="text-sm text-slate-300 mt-1">
-                    {liasseRecommendations.byDenomination
-                      .filter(d => d.remainingBills > 0)
-                      .map(d => `${d.remainingBills}×${d.denomination}`)
-                      .join(' + ') || 'Tous les billets sont en liasses'}
+                  <div className="text-green-400 font-bold text-xl mt-2">
+                    Total: {formatCurrency(liasseResults.reduce((sum, r) => sum + r.liasseValue + r.restValue, 0))}
                   </div>
                 </div>
               </div>
-              
-              <div className="mt-4 p-3 bg-slate-700/30 rounded">
-                <div className="text-sm text-slate-400 mb-1">Résultat final:</div>
-                <div className="font-bold text-green-400 text-lg">
-                  {liasseRecommendations.summary.totalPossibleLiasses} liasses +{' '}
-                  {liasseRecommendations.byDenomination.reduce((sum, d) => sum + d.remainingBills, 0)} billets lâches
-                </div>
-                <div className="text-sm text-slate-400 mt-1">
-                  Valeur totale: {formatCurrency(liasseRecommendations.summary.totalValue)}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -925,12 +602,11 @@ const Liasse = ({ shift, date, vendeurs }) => {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setShowLiasseRecommendations(true)}
+                onClick={() => setShowLiasse(true)}
                 className="px-3 py-2 bg-amber-600 rounded-lg active:bg-amber-700 font-bold text-sm flex items-center gap-1"
-                disabled={getAllVendorsTotal() === 0 && getCurrentDepositTotal() === 0}
               >
                 <Calculator className="w-4 h-4" />
-                Liasse Globale
+                Calcul Liasses
               </button>
               <button
                 onClick={() => setShowHistory(true)}
@@ -1086,23 +762,12 @@ const Liasse = ({ shift, date, vendeurs }) => {
           <div className="px-3 pb-3">
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs text-slate-400 font-semibold">DÉPÔT EN COURS</div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowLiasseRecommendations(true)}
-                  className="text-xs bg-amber-600 text-white px-3 py-1 rounded font-bold active:bg-amber-700 flex items-center gap-1"
-                  disabled={getAllVendorsTotal() === 0 && getCurrentDepositTotal() === 0}
-                  title="Analyse globale de tous les dépôts"
-                >
-                  <Calculator className="w-3 h-3" />
-                  Globale
-                </button>
-                <button
-                  onClick={clearCurrentDeposit}
-                  className="text-xs text-red-400 font-semibold px-2 py-1"
-                >
-                  Effacer tout
-                </button>
-              </div>
+              <button
+                onClick={clearCurrentDeposit}
+                className="text-xs text-red-400 font-semibold px-2 py-1"
+              >
+                Effacer tout
+              </button>
             </div>
 
             <div className="space-y-1">
@@ -1112,10 +777,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
                 const totalValue = getTotalValue(currentDeposit, denom);
 
                 if (totalBills === 0) return null;
-
-                const maxLiasses = Math.floor(totalBills / BILLS_PER_LIASSE);
-                const remainingBills = totalBills % BILLS_PER_LIASSE;
-                const canMakeMoreLiasses = maxLiasses > liasses;
 
                 return (
                   <div key={denom} className="bg-slate-800 rounded-lg p-3 flex items-center justify-between">
@@ -1130,12 +791,6 @@ const Liasse = ({ shift, date, vendeurs }) => {
                         {liasses > 0 && loose > 0 && <span className="text-slate-500"> + </span>}
                         {loose > 0 && <span>{loose}</span>}
                         <span className="text-slate-500 ml-1">= {totalBills}</span>
-                        
-                        {canMakeMoreLiasses && (
-                          <span className="ml-2 text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">
-                            +{maxLiasses - liasses}L possible
-                          </span>
-                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
