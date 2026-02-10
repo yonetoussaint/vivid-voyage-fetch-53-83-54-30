@@ -8,7 +8,8 @@ import {
   BarChart3, 
   DollarSign, 
   FileText,
-  Flame
+  Flame,
+  Layers // ADD THIS IMPORT for Liasse icon
 } from 'lucide-react';
 
 const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
@@ -42,6 +43,12 @@ const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
       label: 'Dépôts', 
       icon: <Store className="w-5 h-5" />, 
       color: 'bg-orange-100 text-orange-700'
+    },
+    { 
+      id: 'liasse', // ADD THIS NEW TAB
+      label: 'Liasse', 
+      icon: <Layers className="w-5 h-5" />, 
+      color: 'bg-emerald-100 text-emerald-700'
     },
     { 
       id: 'stock', 
@@ -98,6 +105,7 @@ const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
                      tab.color.includes('green') ? 'border-green-500' :
                      tab.color.includes('yellow') ? 'border-yellow-500' :
                      tab.color.includes('orange') ? 'border-orange-500' :
+                     tab.color.includes('emerald') ? 'border-emerald-500' : // ADD THIS LINE
                      tab.color.includes('red') ? 'border-red-500' :
                      tab.color.includes('teal') ? 'border-teal-500' :
                      tab.color.includes('indigo') ? 'border-indigo-500' : 'border-pink-500'}`
@@ -113,6 +121,7 @@ const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
                     tab.color.includes('green') ? 'bg-green-500' :
                     tab.color.includes('yellow') ? 'bg-yellow-500' :
                     tab.color.includes('orange') ? 'bg-orange-500' :
+                    tab.color.includes('emerald') ? 'bg-emerald-500' : // ADD THIS LINE
                     tab.color.includes('red') ? 'bg-red-500' :
                     tab.color.includes('teal') ? 'bg-teal-500' :
                     tab.color.includes('indigo') ? 'bg-indigo-500' : 'bg-pink-500'
