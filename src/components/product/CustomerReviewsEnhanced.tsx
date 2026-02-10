@@ -1,19 +1,19 @@
 // components/product/CustomerReviews.tsx
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import ErrorBoundary from './ErrorBoundary';
 import CustomerReviewsSkeleton from './CustomerReviewsSkeleton';
-import { useMockReviews } from "@/hooks/useMockReviews"; // Changed to useMockReviews
+import { useMockReviews } from "@/hooks/useMockReviews";
 import ReviewsSummary from '@/components/product/ReviewsSummary';
 import ReviewItem, { Review } from '@/components/product/ReviewItem';
 import ReplyBar from '@/components/product/ReplyBar';
 
 interface CustomerReviewsProps {
-  productId?: string; // Make optional since we're using mock data
+  productId?: string;
   limit?: number;
 }
 
-const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
+const CustomerReviews = React.memo(({ productId, limit }: CustomerReviewsProps) => {
   const {
     expandedReviews,
     expandedReplies,
@@ -22,7 +22,6 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
     replyingTo,
     replyText,
     itemBeingReplied,
-
     setReplyText,
     handleLikeReply,
     toggleReadMore,
@@ -33,13 +32,40 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
     handleSubmitReply,
     handleCancelReply,
     fetchReviews,
-
     finalReviews,
     summaryStats
-  } = useMockReviews({ productId, limit }); // Use the mock hook
+  } = useMockReviews({ productId, limit });
 
-  // Get only the first 2 reviews to display
-  const displayedReviews = finalReviews.slice(0, 2);
+  // Memoize the displayed reviews
+  const displayedReviews = useMemo(() => 
+    finalReviews.slice(0, 2), 
+    [finalReviews]
+  );
+
+  // Memoize event handlers
+  const memoizedHandleLikeReply = useCallback((replyId: string, reviewId: string) => {
+    handleLikeReply(replyId, reviewId);
+  }, [handleLikeReply]);
+
+  const memoizedToggleReadMore = useCallback((reviewId: string) => {
+    toggleReadMore(reviewId);
+  }, [toggleReadMore]);
+
+  const memoizedToggleShowMoreReplies = useCallback((reviewId: string) => {
+    toggleShowMoreReplies(reviewId);
+  }, [toggleShowMoreReplies]);
+
+  const memoizedHandleCommentClick = useCallback((reviewId: string) => {
+    handleCommentClick(reviewId);
+  }, [handleCommentClick]);
+
+  const memoizedHandleReplyToReply = useCallback((replyId: string, reviewId: string, userName: string) => {
+    handleReplyToReply(replyId, reviewId, userName);
+  }, [handleReplyToReply]);
+
+  const handleViewAllReviews = useCallback(() => {
+    window.location.href = `/product/${productId}/reviews`;
+  }, [productId]);
 
   if (isLoading) {
     return <CustomerReviewsSkeleton />;
@@ -65,11 +91,9 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
   return (
     <ErrorBoundary>
       <div className="w-full bg-white">
-        {/* Pass summaryStats to ReviewsSummary if it uses them */}
         <ReviewsSummary />
 
         <div className="py-2">
-          {/* Container with 1px gap between cards */}
           <div className="space-y-2">
             {finalReviews.length === 0 ? (
               <div className="text-center py-8">
@@ -87,12 +111,12 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
                     review={review}
                     expandedReviews={expandedReviews}
                     expandedReplies={expandedReplies}
-                    onToggleReadMore={toggleReadMore}
-                    onToggleShowMoreReplies={toggleShowMoreReplies}
-                    onCommentClick={handleCommentClick}
+                    onToggleReadMore={memoizedToggleReadMore}
+                    onToggleShowMoreReplies={memoizedToggleShowMoreReplies}
+                    onCommentClick={memoizedHandleCommentClick}
                     onShareClick={handleShareClick}
-                    onLikeReply={handleLikeReply}
-                    onReplyToReply={handleReplyToReply}
+                    onLikeReply={memoizedHandleLikeReply}
+                    onReplyToReply={memoizedHandleReplyToReply}
                   />
                 </div>
               ))
@@ -100,13 +124,12 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
           </div>
         </div>
 
-        {/* Show "View All" button if there are more than 2 reviews */}
         {finalReviews.length > 2 && (
           <div className="px-2 pb-2">
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => window.location.href = `/product/${productId}/reviews`}
+              onClick={handleViewAllReviews}
             >
               View All {finalReviews.length} Reviews
             </Button>
@@ -123,6 +146,8 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
       </div>
     </ErrorBoundary>
   );
-};
+});
+
+CustomerReviews.displayName = 'CustomerReviews';
 
 export default CustomerReviews;
