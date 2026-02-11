@@ -1,13 +1,10 @@
-// components/product/CustomerReviews.tsx
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import ErrorBoundary from './ErrorBoundary';
 import { useMockProductReviews } from "@/hooks/useMockProductReviews";
 import ReviewsSummary from '@/components/product/ReviewsSummary';
-import ReviewItem, { Review } from '@/components/product/ReviewItem';
+import { ReviewItem } from '@/components/product/ReviewItem';
 import ReplyBar from '@/components/product/ReplyBar';
-// Comment out unused imports
-// import Lightbox from '@/components/shared/Lightbox';
 import { toast } from "@/components/ui/use-toast";
 import {
   Dialog,
@@ -30,13 +27,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from 'lucide-react';
-
-// Comment out unused hooks and libs
-// import { useLocalStorage } from "@/hooks/useLocalStorage";
-// import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
-// import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
-// import { trackEvent } from "@/lib/analytics";
-// import { generateReviewStructuredData } from "@/lib/seo";
+import type { Review } from '@/types/reviews';
 
 interface CustomerReviewsProps {
   productId?: string;
@@ -45,10 +36,8 @@ interface CustomerReviewsProps {
 }
 
 const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: CustomerReviewsProps) => {
-  // Initialize hook with defaults
   const hookResult = useMockProductReviews({ productId, currentUserId });
   
-  // Destructure with safe defaults
   const {
     expandedReviews = new Set(),
     expandedReplies = new Set(),
@@ -85,26 +74,32 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
     handleReportReply = () => {},
     loadMoreReplies = () => {},
     replyPagination = {},
-    page = 1,
-    hasMore = true,
+    hasMore = false,
   } = hookResult;
 
-  // Comment out localStorage
-  // const [replyDraft, setReplyDraft] = useLocalStorage(`reply_draft_${productId}`, '');
-  // const [reviewDraft, setReviewDraft] = useLocalStorage(`review_draft_${productId}`, '');
-  
-  // Replace with regular useState
   const [replyDraft, setReplyDraft] = useState('');
-  const [reviewDraft, setReviewDraft] = useState('');
-
-  // Comment out Lightbox state
-  // const [lightboxOpen, setLightboxOpen] = useState(false);
-  // const [lightboxImages, setLightboxImages] = useState<Array<{ url: string; alt?: string }>>([]);
-  // const [lightboxIndex, setLightboxIndex] = useState(0);
-
-  // Simple scroll handler instead of useIntersectionObserver
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [showAll, setShowAll] = useState(false);
+  const [sortBy, setSortBy] = useState<'recent' | 'rating' | 'likes'>('recent');
+  const [filterRating, setFilterRating] = useState<number | null>(null);
+  const [filterVerified, setFilterVerified] = useState(false);
+  const [filterWithMedia, setFilterWithMedia] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Modal states
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [editComment, setEditComment] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState('inappropriate');
+  const [reportDetails, setReportDetails] = useState('');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [editingReply, setEditingReply] = useState<{ id: string; reviewId: string; comment: string } | null>(null);
+  const [isEditReplyModalOpen, setIsEditReplyModalOpen] = useState(false);
+  const [moderationQueue, setModerationQueue] = useState<Array<{ id: string; type: 'review' | 'reply'; reason: string }>>([]);
+
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Simple scroll handler
   useEffect(() => {
@@ -131,9 +126,6 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
       }
     };
   }, [hasMore, isLoading, fetchReviews, currentPage]);
-
-  // Comment out keyboard shortcuts
-  // useKeyboardShortcut('Escape', () => {...});
 
   // Simple Escape key handler
   useEffect(() => {
@@ -162,7 +154,7 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
     return () => window.removeEventListener('keydown', handleCmdEnter);
   }, [replyText, editComment, editingReply, handleSubmitReply, handleEditSubmit, handleEditReplySubmit]);
 
-  // Auto-save drafts (simplified)
+  // Auto-save drafts
   useEffect(() => {
     if (replyText) {
       const timer = setTimeout(() => {
@@ -183,51 +175,17 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
     }
   }, []);
 
-  // Comment out media lightbox handler
   const handleMediaClick = useCallback((media: Array<{ url: string; alt?: string }>, index: number) => {
-    // Open in new tab instead of lightbox
     window.open(media[index].url, '_blank');
-    // Comment out tracking
-    // trackEvent('review_lightbox_opened', { productId, mediaCount: media.length });
-  }, [productId]);
+  }, []);
 
-  // Comment out SEO structured data
-  // useEffect(() => {...}, [finalReviews, productId]);
-
-  // Comment out analytics tracking
-  const handleReviewView = useCallback((reviewId: string) => {
-    // trackEvent('review_viewed', { reviewId, productId });
-    // No-op
-  }, [productId]);
-
+  const handleReviewView = useCallback(() => {}, []);
   const handleReviewHelpful = useCallback((reviewId: string) => {
-    // trackEvent('review_helpful_marked', { reviewId, productId });
     toast({
       description: "Marked as helpful",
       duration: 2000,
     });
-  }, [productId]);
-
-  // UI state
-  const [showAll, setShowAll] = useState(false);
-  const [sortBy, setSortBy] = useState<'recent' | 'rating' | 'likes'>('recent');
-  const [filterRating, setFilterRating] = useState<number | null>(null);
-  const [filterVerified, setFilterVerified] = useState(false);
-  const [filterWithMedia, setFilterWithMedia] = useState(false);
-
-  // Modal states
-  const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [editComment, setEditComment] = useState('');
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
-  const [reportReason, setReportReason] = useState('inappropriate');
-  const [reportDetails, setReportDetails] = useState('');
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingReply, setEditingReply] = useState<{ id: string; reviewId: string; comment: string } | null>(null);
-  const [isEditReplyModalOpen, setIsEditReplyModalOpen] = useState(false);
-  const [moderationQueue, setModerationQueue] = useState<Array<{ id: string; type: 'review' | 'reply'; reason: string }>>([]);
+  }, []);
 
   // Filter and sort reviews
   const filteredAndSortedReviews = useMemo(() => {
@@ -306,32 +264,27 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
 
   const memoizedHandleLikeReview = useCallback((reviewId: string) => {
     handleLikeReview(reviewId);
-    // trackEvent('review_liked', { reviewId, productId });
-  }, [handleLikeReview, productId]);
+  }, [handleLikeReview]);
 
   const memoizedHandleFollowUser = useCallback((userId: string, userName: string) => {
     handleFollowUser(userId);
-    // trackEvent('user_followed', { userId, productId });
     toast({
       description: `Following ${userName}`,
       duration: 2000,
     });
-  }, [handleFollowUser, productId]);
+  }, [handleFollowUser]);
 
   const memoizedHandleUnfollowUser = useCallback((userId: string, userName: string) => {
     handleUnfollowUser(userId);
-    // trackEvent('user_unfollowed', { userId, productId });
     toast({
       description: `Unfollowed ${userName}`,
       duration: 2000,
     });
-  }, [handleUnfollowUser, productId]);
+  }, [handleUnfollowUser]);
 
   const handleMenuAction = useCallback((reviewId: string, action: 'report' | 'edit' | 'delete' | 'share') => {
     const review = finalReviews.find(r => r.id === reviewId);
     if (!review) return;
-
-    // trackEvent('review_menu_action', { reviewId, action, productId });
 
     switch(action) {
       case 'edit':
@@ -371,9 +324,8 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
         description: "Your review has been successfully updated",
         duration: 3000,
       });
-      // trackEvent('review_updated', { reviewId: editingReview.id, productId });
     }
-  }, [editingReview, editComment, handleEditReview, productId]);
+  }, [editingReview, editComment, handleEditReview]);
 
   const handleDeleteConfirm = useCallback(() => {
     if (deletingReviewId) {
@@ -386,9 +338,8 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
         duration: 3000,
         variant: "destructive",
       });
-      // trackEvent('review_deleted', { reviewId: deletingReviewId, productId });
     }
-  }, [deletingReviewId, handleDeleteReview, productId]);
+  }, [deletingReviewId, handleDeleteReview]);
 
   const handleReportSubmit = useCallback(() => {
     if (reportingReviewId) {
@@ -403,17 +354,15 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
         description: "Thank you for helping keep our community safe",
         duration: 3000,
       });
-      // trackEvent('review_reported', { reviewId: reportingReviewId, reason: reportReason, productId });
     }
-  }, [reportingReviewId, reportReason, reportDetails, handleReportReview, productId]);
+  }, [reportingReviewId, reportReason, reportDetails, handleReportReview]);
 
   const handleClearFilters = useCallback(() => {
     setFilterRating(null);
     setFilterVerified(false);
     setFilterWithMedia(false);
     setSortBy('recent');
-    // trackEvent('reviews_filters_cleared', { productId });
-  }, [productId]);
+  }, []);
 
   // Loading state
   if (isLoading && currentPage === 1) {
@@ -458,9 +407,6 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
   return (
     <ErrorBoundary>
       <div className="w-full bg-white">
-        {/* Remove structured data script */}
-        {/* <script type="application/ld+json">...</script> */}
-
         <ReviewsSummary stats={summaryStats} />
 
         {/* Moderation queue indicator (admin only) */}
@@ -616,24 +562,141 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
           draftExists={!!replyDraft}
         />
 
-        {/* Remove Lightbox Gallery */}
-        {/* <Lightbox ... /> */}
-
-        {/* Modals remain unchanged */}
+        {/* Edit Review Modal */}
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          {/* ... */}
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Review</DialogTitle>
+              <DialogDescription>
+                Make changes to your review here. Press ⌘+Enter to save.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-comment">Review</Label>
+                <Textarea
+                  id="edit-comment"
+                  value={editComment}
+                  onChange={(e) => setEditComment(e.target.value)}
+                  rows={5}
+                  autoFocus
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEditSubmit}>
+                Save changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
 
+        {/* Edit Reply Modal */}
         <Dialog open={isEditReplyModalOpen} onOpenChange={setIsEditReplyModalOpen}>
-          {/* ... */}
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Reply</DialogTitle>
+              <DialogDescription>
+                Make changes to your reply. Press ⌘+Enter to save.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-reply">Reply</Label>
+                <Textarea
+                  id="edit-reply"
+                  value={editingReply?.comment || ''}
+                  onChange={(e) => setEditingReply(prev => prev ? { ...prev, comment: e.target.value } : null)}
+                  rows={3}
+                  autoFocus
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditReplyModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEditReplySubmit}>
+                Save changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
 
+        {/* Delete Confirmation Modal */}
         <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-          {/* ... */}
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Delete Review</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this review? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteConfirm}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
 
+        {/* Report Review Modal */}
         <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
-          {/* ... */}
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Report Review</DialogTitle>
+              <DialogDescription>
+                Help us understand the issue. Your report will be reviewed by our team.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label>Reason for reporting</Label>
+                <RadioGroup value={reportReason} onValueChange={setReportReason}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="inappropriate" id="inappropriate" />
+                    <Label htmlFor="inappropriate">Inappropriate content</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="spam" id="spam" />
+                    <Label htmlFor="spam">Spam or misleading</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="harassment" id="harassment" />
+                    <Label htmlFor="harassment">Harassment or bullying</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="fake" id="fake" />
+                    <Label htmlFor="fake">Fake review</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="report-details">Additional details (optional)</Label>
+                <Textarea
+                  id="report-details"
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="Provide more context about this issue..."
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsReportModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleReportSubmit}>
+                Submit Report
+              </Button>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
       </div>
     </ErrorBoundary>
