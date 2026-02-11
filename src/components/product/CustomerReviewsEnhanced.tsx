@@ -42,39 +42,49 @@ interface CustomerReviewsProps {
 }
 
 const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: CustomerReviewsProps) => {
+  // Initialize hook with defaults
+  const hookResult = useMockReviews({ productId, currentUserId });
+  
+  // Destructure with safe defaults
   const {
-    expandedReviews,
-    expandedReplies,
-    isLoading,
-    error,
-    replyingTo,
-    replyText,
-    itemBeingReplied,
-    setReplyText,
-    handleLikeReply,
-    toggleReadMore,
-    toggleShowMoreReplies,
-    handleCommentClick,
-    handleReplyToReply,
-    handleShareClick,
-    handleSubmitReply,
-    handleCancelReply,
-    fetchReviews,
-    finalReviews,
-    summaryStats,
-    handleLikeReview,
-    handleFollowUser,
-    handleUnfollowUser,
-    followedUsers,
-    handleEditReview,
-    handleDeleteReview,
-    handleReportReview,
-    handleEditReply,
-    handleDeleteReply,
-    handleReportReply,
-    loadMoreReplies,
-    replyPagination,
-  } = useMockReviews({ productId, currentUserId });
+    expandedReviews = new Set(),
+    expandedReplies = new Set(),
+    isLoading = false,
+    error = null,
+    replyingTo = null,
+    replyText = '',
+    itemBeingReplied = null,
+    setReplyText = () => {},
+    handleLikeReply = () => {},
+    toggleReadMore = () => {},
+    toggleShowMoreReplies = () => {},
+    handleCommentClick = () => {},
+    handleReplyToReply = () => {},
+    handleShareClick = () => {},
+    handleSubmitReply = () => {},
+    handleCancelReply = () => {},
+    fetchReviews = () => {},
+    finalReviews = [],
+    summaryStats = {
+      averageRating: 0,
+      totalReviews: 0,
+      ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    },
+    handleLikeReview = () => {},
+    handleFollowUser = () => {},
+    handleUnfollowUser = () => {},
+    followedUsers = new Set(),
+    handleEditReview = () => {},
+    handleDeleteReview = () => {},
+    handleReportReview = () => {},
+    handleEditReply = () => {},
+    handleDeleteReply = () => {},
+    handleReportReply = () => {},
+    loadMoreReplies = () => {},
+    replyPagination = {},
+    page = 1,
+    hasMore = true,
+  } = hookResult;
 
   // Local storage for drafts
   const [replyDraft, setReplyDraft] = useLocalStorage(`reply_draft_${productId}`, '');
@@ -87,15 +97,14 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useIntersectionObserver({
     target: loadMoreRef,
     onIntersect: () => {
       if (hasMore && !isLoading) {
-        setPage(p => p + 1);
-        fetchReviews(page + 1);
+        setCurrentPage(p => p + 1);
+        fetchReviews(currentPage + 1);
       }
     },
     enabled: !isLoading && hasMore,
@@ -173,30 +182,25 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
     });
   }, [productId]);
 
-  // Rest of existing state and handlers
+  // UI state
   const [showAll, setShowAll] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'rating' | 'likes'>('recent');
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [filterVerified, setFilterVerified] = useState(false);
   const [filterWithMedia, setFilterWithMedia] = useState(false);
 
+  // Modal states
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [editComment, setEditComment] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
   const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState('inappropriate');
   const [reportDetails, setReportDetails] = useState('');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  // Reply edit state
   const [editingReply, setEditingReply] = useState<{ id: string; reviewId: string; comment: string } | null>(null);
   const [isEditReplyModalOpen, setIsEditReplyModalOpen] = useState(false);
-
-  // Moderation queue (simplified - would connect to admin API)
   const [moderationQueue, setModerationQueue] = useState<Array<{ id: string; type: 'review' | 'reply'; reason: string }>>([]);
 
   // Filter and sort reviews
@@ -386,7 +390,7 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
   }, [productId]);
 
   // Loading state
-  if (isLoading && page === 1) {
+  if (isLoading && currentPage === 1) {
     return (
       <div className="w-full bg-white">
         <div className="animate-pulse p-4">
