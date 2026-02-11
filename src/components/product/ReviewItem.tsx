@@ -1,4 +1,5 @@
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
+import VerificationBadge from "@/components/shared/VerificationBadge";
 import { Play, Heart, MessageCircle, CheckCircle, MoreHorizontal, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/hooks/customer-reviews.hooks";
@@ -262,8 +263,8 @@ const ReviewItem = memo(({
                 {user_name || 'Anonymous'}
               </span>
               {verified_purchase && (
-                <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
-              )}
+  <VerificationBadge />
+)}
             </div>
             <div className="text-xs text-gray-500 mt-0.5">
               {formattedDate}
