@@ -27,18 +27,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreVertical, Image as ImageIcon, X, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
@@ -79,11 +69,11 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
     handleEditReview,
     handleDeleteReview,
     handleReportReview,
-    handleEditReply,      // Add to hook
-    handleDeleteReply,    // Add to hook
-    handleReportReply,    // Add to hook
-    loadMoreReplies,      // Add to hook
-    replyPagination,      // Add to hook
+    handleEditReply,
+    handleDeleteReply,
+    handleReportReply,
+    loadMoreReplies,
+    replyPagination,
   } = useMockReviews({ productId, currentUserId });
 
   // Local storage for drafts
@@ -99,7 +89,7 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  
+
   useIntersectionObserver({
     target: loadMoreRef,
     onIntersect: () => {
@@ -117,11 +107,13 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
     setIsEditModalOpen(false);
     setIsDeleteModalOpen(false);
     setIsReportModalOpen(false);
+    setIsEditReplyModalOpen(false);
   });
 
   useKeyboardShortcut('Mod+Enter', () => {
     if (replyText) handleSubmitReply();
     if (editComment) handleEditSubmit();
+    if (editingReply?.comment) handleEditReplySubmit();
   });
 
   // Auto-save drafts
@@ -181,22 +173,22 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
     });
   }, [productId]);
 
-  // Rest of existing state and handlers...
+  // Rest of existing state and handlers
   const [showAll, setShowAll] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'rating' | 'likes'>('recent');
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [filterVerified, setFilterVerified] = useState(false);
   const [filterWithMedia, setFilterWithMedia] = useState(false);
-  
+
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [editComment, setEditComment] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState('inappropriate');
   const [reportDetails, setReportDetails] = useState('');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  
+
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -296,6 +288,15 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
     });
   }, [handleFollowUser, productId]);
 
+  const memoizedHandleUnfollowUser = useCallback((userId: string, userName: string) => {
+    handleUnfollowUser(userId);
+    trackEvent('user_unfollowed', { userId, productId });
+    toast({
+      description: `Unfollowed ${userName}`,
+      duration: 2000,
+    });
+  }, [handleUnfollowUser, productId]);
+
   const handleMenuAction = useCallback((reviewId: string, action: 'report' | 'edit' | 'delete' | 'share') => {
     const review = finalReviews.find(r => r.id === reviewId);
     if (!review) return;
@@ -384,12 +385,11 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
     trackEvent('reviews_filters_cleared', { productId });
   }, [productId]);
 
-  // Loading state remains same...
+  // Loading state
   if (isLoading && page === 1) {
     return (
       <div className="w-full bg-white">
         <div className="animate-pulse p-4">
-          {/* Loading skeleton */}
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
@@ -534,8 +534,8 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
                       onShareClick={handleShareClick}
                       onLikeReview={memoizedHandleLikeReview}
                       onFollowUser={memoizedHandleFollowUser}
-                      onUnfollowUser={handleUnfollowUser}
-                      isFollowing={followedUsers.has(review.user_name || '')}
+                      onUnfollowUser={memoizedHandleUnfollowUser}
+                      isFollowing={followedUsers?.has(review.user_name || '') ?? false}
                       onLikeReply={memoizedHandleLikeReply}
                       onEditReply={memoizedHandleEditReply}
                       onDeleteReply={memoizedHandleDeleteReply}
@@ -548,7 +548,7 @@ const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: Cus
                       currentUserId={currentUserId}
                       isOwner={review.user_id === currentUserId}
                       loadMoreReplies={(reviewId) => loadMoreReplies(reviewId)}
-                      replyPagination={replyPagination[review.id]}
+                      replyPagination={replyPagination?.[review.id] ?? { page: 1, hasMore: false }}
                     />
                   </div>
                 ))}
