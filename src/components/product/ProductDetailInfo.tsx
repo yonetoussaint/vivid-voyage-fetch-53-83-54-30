@@ -7,16 +7,8 @@ interface ProductDetailInfoProps {
     name?: string;
     short_description?: string;
     description?: string;
-    rating?: number;
-    reviewCount?: number;
-    inventory?: number;
-    sold_count?: number;
-    change?: number;
     unitPrice?: number;
     demoVideoUrl?: string;
-    minOrderQty?: number;
-    paymentTerms?: string;
-    tradeAssurance?: boolean;
   };
   onReadMore?: () => void;
   isLoading?: boolean;
@@ -29,28 +21,26 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
 }) => {
   const currencies = {
     HTG: 'HTG',
-    USD: 'USD'
+    USD: 'USD',
+    HTD: 'HTD'
   };
 
   const currencyToCountry = {
     HTG: 'ht',
-    USD: 'us'
+    USD: 'us',
+    HTD: 'ht'
   };
 
   const exchangeRates = {
     HTG: 132.50,
-    USD: 1
+    USD: 1,
+    HTD: 662.50 // 5 * 132.50
   };
 
-  const mockB2BData = {
+  const mergedProduct = { 
     unitPrice: 189.99,
-    rating: 4.5,
-    reviewCount: 128,
-    minOrderQty: 50,
-    paymentTerms: '30 days credit'
+    ...product 
   };
-
-  const mergedProduct = { ...mockB2BData, ...product };
 
   const displayDescription =
     mergedProduct?.short_description || mergedProduct?.description || 'Product description not available.';
@@ -78,28 +68,11 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
 
   const currentPrice = mergedProduct.unitPrice || 25;
 
-  // Loading skeleton
-  if (isLoading) {
-    return (
-      <div className="w-full px-2 py-3 bg-white animate-pulse">
-        <div className="space-y-3">
-          <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-          <div className="space-y-2">
-            <div className="h-3 bg-gray-200 rounded"></div>
-            <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-            <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full bg-white font-sans">
       {/* Main Product Info */}
       <div className="px-2 py-2 space-y-2 border-b border-gray-100">
-        {/* Product Name - reduced size */}
+        {/* Product Name */}
         <h1 className="text-base font-bold text-gray-900 leading-tight">
           {mergedProduct?.name || 'Product Name'}
         </h1>
@@ -108,22 +81,22 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
         <div className="flex justify-between items-start">
           <div className="flex flex-col">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-red-600">
+              <span className="text-xl font-bold text-red-600">
                 {formatPrice(currentPrice)}
               </span>
               <span className="text-sm text-gray-500">/ unit</span>
             </div>
           </div>
 
-          {/* Compact Currency Switcher */}
+          {/* Currency Switcher - no wrapper, gray bg, reduced height */}
           <button
             onClick={toggleCurrency}
-            className="flex items-center gap-1.5 px-2 py-1.5 border border-gray-300 rounded-lg active:bg-gray-50"
+            className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-md active:bg-gray-200"
             aria-label={`Change currency, current: ${currentCurrency}`}
           >
-            <span className={`fi fi-${currencyToCountry[currentCurrency]} text-sm`}></span>
-            <span className="text-sm font-medium text-gray-700">{currentCurrency}</span>
-            <ChevronDown className="w-3 h-3 text-gray-500" />
+            <span className={`fi fi-${currencyToCountry[currentCurrency]} fis rounded-full text-sm`}></span>
+            <span className="text-xs font-medium text-gray-700">{currentCurrency}</span>
+            <ChevronDown className="w-2.5 h-2.5 text-gray-500" />
           </button>
         </div>
       </div>
