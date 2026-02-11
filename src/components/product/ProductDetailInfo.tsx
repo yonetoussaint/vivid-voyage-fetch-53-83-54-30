@@ -28,7 +28,7 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
   const exchangeRates = {
     HTG: 1,
     USD: 1/132.50,
-    HTD: 5
+    HTD: 1/5 // 1 HTD = 5 HTG, so price in HTD = price in HTG ÷ 5
   };
 
   const mergedProduct = { 
@@ -51,12 +51,14 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
   };
 
   const formatPrice = (price: number, currency = currentCurrency) => {
+    // Convert USD price to HTG first
     const priceInHTG = price * 132.50;
+    // Then convert to target currency using exchange rates
     const convertedPrice = priceInHTG * exchangeRates[currency];
     
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency === 'HTD' ? 'HTG' : currency,
+      currency: currency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(convertedPrice);
@@ -69,7 +71,7 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
       case 'USD':
         return 'https://flagcdn.com/w20/us.png';
       case 'HTD':
-        return 'https://flagcdn.com/w20/ht.png'; // Using Haiti flag for HTD
+        return 'https://flagcdn.com/w20/ht.png';
       default:
         return '';
     }
