@@ -2,9 +2,10 @@ import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from '
 import VerificationBadge from "@/components/shared/VerificationBadge";
 import { Play, Heart, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
 import { formatDate } from './DateUtils';
-import { truncateText } from "@/hooks/customer-reviews.hooks";
+import { truncateText } from "@/utils/textUtils"; // CHANGED THIS IMPORT
 import { useNavigate } from 'react-router-dom';
 
+// Rest of the file remains exactly the same...
 export interface MediaItem {
   type: 'image' | 'video';
   url: string;
@@ -163,7 +164,7 @@ const ReviewItem = memo(({
   // Memoize date formatting
   const formattedDate = useMemo(() => formatDate(created_at), [created_at]);
 
-  // Memoize truncated comment
+  // Memoize truncated comment - NOW USING IMPORTED UTILITY
   const truncatedComment = useMemo(() => truncateText(comment), [comment]);
   const shouldShowReadMore = useMemo(() => comment.length > 120, [comment.length]);
 
@@ -350,8 +351,7 @@ const ReviewItem = memo(({
             >
               {isFollowing ? 'Following' : 'Follow'}
             </button>
-            
-            {/* Only show menu for owner or always show? Usually show for everyone with different options */}
+
             <div className="relative" ref={menuRef}>
               <button
                 onClick={toggleMenu}
@@ -369,7 +369,7 @@ const ReviewItem = memo(({
                   >
                     Share review
                   </button>
-                  
+
                   {isOwner && (
                     <button
                       onClick={() => handleMenuAction('edit')}
@@ -378,9 +378,9 @@ const ReviewItem = memo(({
                       Edit review
                     </button>
                   )}
-                  
+
                   <div className="border-t border-gray-100 my-1"></div>
-                  
+
                   {!isOwner && (
                     <button
                       onClick={() => handleMenuAction('report')}
@@ -389,7 +389,7 @@ const ReviewItem = memo(({
                       Report review
                     </button>
                   )}
-                  
+
                   {isOwner && (
                     <button
                       onClick={() => handleMenuAction('delete')}
@@ -490,7 +490,7 @@ const ReviewItem = memo(({
           {isRepliesExpanded && renderedReplies && (
             <div className="space-y-3">
               {renderedReplies}
-              
+
               {/* Load more replies button */}
               {hasMoreReplies && (
                 <button
@@ -658,7 +658,7 @@ const ReplyItem = memo(({
                         </button>
                       </>
                     )}
-                    
+
                     {!isOwner && (
                       <button
                         onClick={handleReportClick}
