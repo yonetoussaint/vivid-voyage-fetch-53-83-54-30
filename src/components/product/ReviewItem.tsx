@@ -271,12 +271,12 @@ const ReviewItem = memo(({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-            <button 
-              onClick={handleFollowClick}
-              className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-            >
-              Follow
-            </button>
+           <button 
+  onClick={handleFollowClick}
+  className="px-4 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+>
+  Follow
+</button>
             <div className="relative" ref={menuRef}>
               <button
   onClick={toggleMenu}
