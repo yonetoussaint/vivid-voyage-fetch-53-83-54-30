@@ -117,7 +117,7 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
       </div>
 
       {/* Product Description */}
-      <div className="px-2 py-3 space-y-3">
+      <div className="px-2 py-2 space-y-3">
         <div className="relative">
           <p className={`text-sm text-gray-700 leading-relaxed ${
             !isDescriptionExpanded && needsTruncation ? 'line-clamp-3' : ''
