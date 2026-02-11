@@ -246,7 +246,7 @@ const ReviewItem = memo(({
   const hasMedia = useMemo(() => media.length > 0, [media.length]);
 
   return (
-    <div className="bg-white border-b border-gray-100 p-2 transition-colors">
+    <div className="bg-white border-b border-gray-100 transition-colors">
       {/* Review Header */}
       <div className="flex gap-2 mb-2">
         <div 
