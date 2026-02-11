@@ -52,9 +52,9 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
     userName?: string;
   } | null>(null);
 
-  // New state for added features
+  // Initialize with default values
   const [reviews, setReviews] = useState<Review[]>(mockReviews);
-  const [followedUsers, setFollowedUsers] = useState<Set<string>>(new Set(['user_2'])); // Default following one user
+  const [followedUsers, setFollowedUsers] = useState<Set<string>>(new Set(['user_2']));
   const [likedReviews, setLikedReviews] = useState<Set<string>>(new Set());
   const [likedReplies, setLikedReplies] = useState<Set<string>>(new Set());
   const [helpfulReviews, setHelpfulReviews] = useState<Set<string>>(new Set());
@@ -65,16 +65,14 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
   // Load more reviews (infinite scroll)
   const fetchReviews = useCallback((pageNum: number = 1) => {
     setIsLoading(true);
-    // Simulate API delay
     setTimeout(() => {
       setIsLoading(false);
       if (pageNum === 1) {
         setReviews(mockReviews);
       } else {
-        // Simulate pagination - add more mock reviews
         setReviews(prev => [...prev, ...mockReviews.slice(0, 2)]);
       }
-      setHasMore(pageNum < 3); // Only 3 pages of mock data
+      setHasMore(pageNum < 3);
     }, 800);
   }, []);
 
@@ -83,8 +81,7 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
     setReplyPagination(prev => {
       const current = prev[reviewId] || { page: 1, hasMore: true };
       const newPage = current.page + 1;
-      
-      // Simulate loading more replies
+
       setTimeout(() => {
         setReviews(prevReviews => 
           prevReviews.map(review => {
@@ -108,7 +105,7 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
         ...prev,
         [reviewId]: {
           page: newPage,
-          hasMore: newPage < 3 // Only 3 pages of replies
+          hasMore: newPage < 3
         }
       };
     });
@@ -120,7 +117,6 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
       const newLiked = new Set(prev);
       if (newLiked.has(reviewId)) {
         newLiked.delete(reviewId);
-        // Decrement like count
         setReviews(prevReviews =>
           prevReviews.map(review =>
             review.id === reviewId
@@ -130,7 +126,6 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
         );
       } else {
         newLiked.add(reviewId);
-        // Increment like count
         setReviews(prevReviews =>
           prevReviews.map(review =>
             review.id === reviewId
@@ -192,7 +187,6 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
   // Report review
   const handleReportReview = useCallback((reviewId: string, reason: string, details?: string) => {
     console.log('Reported review:', reviewId, 'Reason:', reason, 'Details:', details);
-    // In real app, send to API
   }, []);
 
   // Like reply
@@ -201,7 +195,6 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
       const newLiked = new Set(prev);
       if (newLiked.has(replyId)) {
         newLiked.delete(replyId);
-        // Decrement reply like count
         setReviews(prevReviews =>
           prevReviews.map(review => {
             if (review.id === reviewId) {
@@ -219,7 +212,6 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
         );
       } else {
         newLiked.add(replyId);
-        // Increment reply like count
         setReviews(prevReviews =>
           prevReviews.map(review => {
             if (review.id === reviewId) {
@@ -277,7 +269,6 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
   // Report reply
   const handleReportReply = useCallback((replyId: string, reviewId: string, reason: string) => {
     console.log('Reported reply:', replyId, 'for review:', reviewId, 'Reason:', reason);
-    // In real app, send to API
   }, []);
 
   const toggleReadMore = (reviewId: string) => {
@@ -318,7 +309,6 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
   const handleSubmitReply = () => {
     if (!replyText.trim() || !replyingTo) return;
 
-    // Add reply to review
     if (itemBeingReplied?.type === 'review') {
       setReviews(prevReviews =>
         prevReviews.map(review => {
@@ -343,7 +333,6 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
       );
     }
 
-    // Clear reply state
     setReplyText('');
     setReplyingTo(null);
     setItemBeingReplied(null);
@@ -369,14 +358,9 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
   };
 
   // Filter reviews by product ID (mock)
-  const finalReviews = productId 
-    ? reviews // In real app, filter by productId
-    : reviews;
-
-  // Apply limit if provided
+  const finalReviews = productId ? reviews : reviews;
   const limitedReviews = limit ? finalReviews.slice(0, limit) : finalReviews;
 
-  // Simulate loading on mount
   useEffect(() => {
     if (reviews.length === 0) {
       setIsLoading(true);
@@ -399,7 +383,7 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
     replyText,
     itemBeingReplied,
     setReplyText,
-    
+
     // Existing handlers
     handleLikeReply,
     toggleReadMore,
@@ -410,20 +394,20 @@ export const useMockReviews = ({ productId, limit, currentUserId = 'user_1' }: U
     handleSubmitReply,
     handleCancelReply,
     fetchReviews,
-    
+
     // Data
     finalReviews: limitedReviews,
     summaryStats,
-    
-    // New state
-    followedUsers: followedUsers || new Set(),
+
+    // New state - NO FALLBACKS
+    followedUsers,
     likedReviews,
     helpfulReviews,
     likedReplies,
-    replyPagination: replyPagination || {},
+    replyPagination,
     page,
     hasMore,
-    
+
     // New handlers
     handleLikeReview,
     handleMarkHelpful,
