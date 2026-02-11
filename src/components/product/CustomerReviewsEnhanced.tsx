@@ -2,7 +2,7 @@
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import ErrorBoundary from './ErrorBoundary';
-import { useMockReviews } from "@/hooks/useMockReviews";
+import { useMockProductReviews } from "@/hooks/useMockProductReviews";
 import ReviewsSummary from '@/components/product/ReviewsSummary';
 import ReviewItem, { Review } from '@/components/product/ReviewItem';
 import ReplyBar from '@/components/product/ReplyBar';
