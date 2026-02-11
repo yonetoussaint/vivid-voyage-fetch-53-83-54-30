@@ -27,12 +27,12 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
 
   const exchangeRates = {
     HTG: 1,
-    USD: 1/132.50, // 1 USD = 132.50 HTG
-    HTD: 5 // 1 HTD = 5 HTG
+    USD: 1/132.50,
+    HTD: 5
   };
 
   const mergedProduct = { 
-    unitPrice: 189.99, // Price in USD
+    unitPrice: 189.99,
     ...product 
   };
 
@@ -51,13 +51,12 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
   };
 
   const formatPrice = (price: number, currency = currentCurrency) => {
-    // Convert USD price to HTG first, then to target currency
     const priceInHTG = price * 132.50;
     const convertedPrice = priceInHTG * exchangeRates[currency];
     
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency === 'HTD' ? 'HTG' : currency, // HTD uses HTG format
+      currency: currency === 'HTD' ? 'HTG' : currency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(convertedPrice);
@@ -68,37 +67,43 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
       case 'HTG':
         return (
           <svg className="w-3.5 h-3.5 rounded-full" viewBox="0 0 24 24">
-            <rect width="24" height="24" fill="#00209F"/>
-            <rect width="24" height="12" y="12" fill="#D21034"/>
-            <rect width="12" height="24" x="6" fill="#FFFFFF"/>
+            <rect width="24" height="12" y="0" fill="#00209F" />
+            <rect width="24" height="12" y="12" fill="#D21034" />
+            <rect x="6" y="6" width="12" height="12" fill="#FFFFFF" />
           </svg>
         );
       case 'USD':
         return (
           <svg className="w-3.5 h-3.5 rounded-full" viewBox="0 0 24 24">
-            <rect width="24" height="24" fill="#B22234"/>
-            <rect width="24" height="2.4" y="0" fill="#FFFFFF"/>
-            <rect width="24" height="2.4" y="4.8" fill="#FFFFFF"/>
-            <rect width="24" height="2.4" y="9.6" fill="#FFFFFF"/>
-            <rect width="24" height="2.4" y="14.4" fill="#FFFFFF"/>
-            <rect width="24" height="2.4" y="19.2" fill="#FFFFFF"/>
-            <rect width="9.6" height="12" fill="#3C3B6E"/>
-            <circle cx="4.8" cy="6" r="1.2" fill="#FFFFFF"/>
-            <circle cx="4.8" cy="9" r="1.2" fill="#FFFFFF"/>
-            <circle cx="7.2" cy="4.8" r="1.2" fill="#FFFFFF"/>
-            <circle cx="7.2" cy="7.8" r="1.2" fill="#FFFFFF"/>
-            <circle cx="2.4" cy="4.8" r="1.2" fill="#FFFFFF"/>
-            <circle cx="2.4" cy="7.8" r="1.2" fill="#FFFFFF"/>
+            <rect width="24" height="24" fill="#B22234" />
+            <rect y="1" width="24" height="1.8" fill="#FFFFFF" />
+            <rect y="4.6" width="24" height="1.8" fill="#FFFFFF" />
+            <rect y="8.2" width="24" height="1.8" fill="#FFFFFF" />
+            <rect y="11.8" width="24" height="1.8" fill="#FFFFFF" />
+            <rect y="15.4" width="24" height="1.8" fill="#FFFFFF" />
+            <rect y="19" width="24" height="1.8" fill="#FFFFFF" />
+            <rect width="9.6" height="12" fill="#3C3B6E" />
+            <circle cx="2.4" cy="2.4" r="0.8" fill="#FFFFFF" />
+            <circle cx="4.8" cy="2.4" r="0.8" fill="#FFFFFF" />
+            <circle cx="7.2" cy="2.4" r="0.8" fill="#FFFFFF" />
+            <circle cx="2.4" cy="4.8" r="0.8" fill="#FFFFFF" />
+            <circle cx="4.8" cy="4.8" r="0.8" fill="#FFFFFF" />
+            <circle cx="7.2" cy="4.8" r="0.8" fill="#FFFFFF" />
+            <circle cx="2.4" cy="7.2" r="0.8" fill="#FFFFFF" />
+            <circle cx="4.8" cy="7.2" r="0.8" fill="#FFFFFF" />
+            <circle cx="7.2" cy="7.2" r="0.8" fill="#FFFFFF" />
+            <circle cx="2.4" cy="9.6" r="0.8" fill="#FFFFFF" />
+            <circle cx="4.8" cy="9.6" r="0.8" fill="#FFFFFF" />
+            <circle cx="7.2" cy="9.6" r="0.8" fill="#FFFFFF" />
           </svg>
         );
       case 'HTD':
         return (
           <svg className="w-3.5 h-3.5 rounded-full" viewBox="0 0 24 24">
-            <rect width="24" height="24" fill="#FFD700"/>
-            <rect width="24" height="12" y="12" fill="#00209F"/>
-            <rect width="12" height="24" x="6" fill="#D21034"/>
-            <circle cx="12" cy="12" r="4" fill="#FFFFFF"/>
-            <text x="12" y="16" fontSize="8" textAnchor="middle" fill="#000000" fontWeight="bold">D</text>
+            <rect width="24" height="8" y="0" fill="#FFD700" />
+            <rect width="24" height="8" y="8" fill="#00209F" />
+            <rect width="24" height="8" y="16" fill="#D21034" />
+            <circle cx="12" cy="12" r="4" fill="#FFFFFF" />
           </svg>
         );
       default:
@@ -128,7 +133,7 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
             </div>
           </div>
 
-          {/* Currency Switcher - no wrapper, gray bg, reduced height */}
+          {/* Currency Switcher */}
           <button
             onClick={toggleCurrency}
             className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-md active:bg-gray-200"
