@@ -2,40 +2,9 @@ import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from '
 import VerificationBadge from "@/components/shared/VerificationBadge";
 import { Play, Heart, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
 import { formatDate } from './DateUtils';
-import { truncateText } from "@/utils/textUtils"; // CHANGED THIS IMPORT
+import { truncateText } from "@/utils/textUtils";
 import { useNavigate } from 'react-router-dom';
-
-// Rest of the file remains exactly the same...
-export interface MediaItem {
-  type: 'image' | 'video';
-  url: string;
-  thumbnail?: string;
-  alt?: string;
-}
-
-export interface Reply {
-  id: string;
-  user_id?: string;
-  user_name?: string;
-  comment?: string;
-  created_at: string;
-  likeCount?: number;
-  isLiked?: boolean;
-}
-
-export interface Review {
-  id: string;
-  user_id?: string;
-  user_name?: string;
-  comment?: string;
-  created_at: string;
-  verified_purchase?: boolean;
-  media?: MediaItem[];
-  likeCount?: number;
-  commentCount?: number;
-  rating?: number;
-  replies?: Reply[];
-}
+import type { MediaItem, Reply, Review } from '@/types/reviews';
 
 interface ReviewItemProps {
   review: Review;
@@ -112,12 +81,10 @@ const ReviewItem = memo(({
     replies = [],
   } = review;
 
-  // Track review view on mount
   useEffect(() => {
     onReviewView?.(id);
   }, [id, onReviewView]);
 
-  // Memoize avatar functions
   const getInitials = useCallback((name?: string) => {
     if (!name) return 'U';
     return name
@@ -146,7 +113,6 @@ const ReviewItem = memo(({
   const avatarColor = useMemo(() => getAvatarColor(user_name), [user_name, getAvatarColor]);
   const initials = useMemo(() => getInitials(user_name), [user_name, getInitials]);
 
-  // Memoize stars rendering
   const renderStars = useCallback((ratingNum: number) => (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -161,14 +127,10 @@ const ReviewItem = memo(({
     </div>
   ), []);
 
-  // Memoize date formatting
   const formattedDate = useMemo(() => formatDate(created_at), [created_at]);
-
-  // Memoize truncated comment - NOW USING IMPORTED UTILITY
   const truncatedComment = useMemo(() => truncateText(comment), [comment]);
   const shouldShowReadMore = useMemo(() => comment.length > 120, [comment.length]);
 
-  // Media click handler
   const handleMediaItemClick = useCallback((item: MediaItem, index: number) => {
     if (onMediaClick) {
       onMediaClick(media, index);
@@ -177,7 +139,6 @@ const ReviewItem = memo(({
     }
   }, [media, onMediaClick]);
 
-  // Memoize media rendering
   const renderedMedia = useMemo(() => 
     media.map((item, index) => (
       <div key={`${id}-media-${index}`} className="flex-shrink-0 relative">
@@ -221,7 +182,6 @@ const ReviewItem = memo(({
     [media, id, isMediaLoaded, handleMediaItemClick]
   );
 
-  // Memoize replies rendering with edit/delete/report
   const renderedReplies = useMemo(() => {
     if (!replies.length || !expandedReplies?.has(id)) return null;
 
@@ -243,7 +203,6 @@ const ReviewItem = memo(({
     ));
   }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onReplyToReply, onEditReply, onDeleteReply, onReportReply, currentUserId]);
 
-  // Event handlers
   const handleLikeClick = useCallback(() => {
     onLikeReview?.(id);
   }, [id, onLikeReview]);
@@ -290,7 +249,6 @@ const ReviewItem = memo(({
     loadMoreReplies?.(id);
   }, [id, loadMoreReplies]);
 
-  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -465,7 +423,6 @@ const ReviewItem = memo(({
           </button>
         </div>
 
-        {/* Rating on the right */}
         {rating && renderStars(rating)}
       </div>
 
@@ -490,8 +447,6 @@ const ReviewItem = memo(({
           {isRepliesExpanded && renderedReplies && (
             <div className="space-y-3">
               {renderedReplies}
-
-              {/* Load more replies button */}
               {hasMoreReplies && (
                 <button
                   onClick={handleLoadMoreReplies}
@@ -508,7 +463,6 @@ const ReviewItem = memo(({
   );
 });
 
-// Updated ReplyItem component with edit/delete/report
 interface ReplyItemProps {
   reply: Reply;
   reviewId: string;
@@ -566,7 +520,6 @@ const ReplyItem = memo(({
     setShowReplyMenu(prev => !prev);
   }, []);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (replyMenuRef.current && !replyMenuRef.current.contains(event.target as Node)) {
@@ -630,7 +583,6 @@ const ReplyItem = memo(({
                 Reply
               </button>
 
-              {/* Reply menu */}
               <div className="relative" ref={replyMenuRef}>
                 <button
                   onClick={toggleReplyMenu}
@@ -682,7 +634,7 @@ const ReplyItem = memo(({
 
 ReplyItem.displayName = 'ReplyItem';
 const MemoizedReplyItem = memo(ReplyItem);
-
 ReviewItem.displayName = 'ReviewItem';
 
+export { ReviewItem };
 export default ReviewItem;
