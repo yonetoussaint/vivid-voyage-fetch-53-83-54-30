@@ -62,52 +62,16 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
     }).format(convertedPrice);
   };
 
-  const getFlagSvg = (currency: string) => {
+  const getFlagUrl = (currency: string) => {
     switch(currency) {
       case 'HTG':
-        return (
-          <svg className="w-3.5 h-3.5 rounded-full" viewBox="0 0 24 24">
-            <rect width="24" height="12" y="0" fill="#00209F" />
-            <rect width="24" height="12" y="12" fill="#D21034" />
-            <rect x="6" y="6" width="12" height="12" fill="#FFFFFF" />
-          </svg>
-        );
+        return 'https://flagcdn.com/w20/ht.png';
       case 'USD':
-        return (
-          <svg className="w-3.5 h-3.5 rounded-full" viewBox="0 0 24 24">
-            <rect width="24" height="24" fill="#B22234" />
-            <rect y="1" width="24" height="1.8" fill="#FFFFFF" />
-            <rect y="4.6" width="24" height="1.8" fill="#FFFFFF" />
-            <rect y="8.2" width="24" height="1.8" fill="#FFFFFF" />
-            <rect y="11.8" width="24" height="1.8" fill="#FFFFFF" />
-            <rect y="15.4" width="24" height="1.8" fill="#FFFFFF" />
-            <rect y="19" width="24" height="1.8" fill="#FFFFFF" />
-            <rect width="9.6" height="12" fill="#3C3B6E" />
-            <circle cx="2.4" cy="2.4" r="0.8" fill="#FFFFFF" />
-            <circle cx="4.8" cy="2.4" r="0.8" fill="#FFFFFF" />
-            <circle cx="7.2" cy="2.4" r="0.8" fill="#FFFFFF" />
-            <circle cx="2.4" cy="4.8" r="0.8" fill="#FFFFFF" />
-            <circle cx="4.8" cy="4.8" r="0.8" fill="#FFFFFF" />
-            <circle cx="7.2" cy="4.8" r="0.8" fill="#FFFFFF" />
-            <circle cx="2.4" cy="7.2" r="0.8" fill="#FFFFFF" />
-            <circle cx="4.8" cy="7.2" r="0.8" fill="#FFFFFF" />
-            <circle cx="7.2" cy="7.2" r="0.8" fill="#FFFFFF" />
-            <circle cx="2.4" cy="9.6" r="0.8" fill="#FFFFFF" />
-            <circle cx="4.8" cy="9.6" r="0.8" fill="#FFFFFF" />
-            <circle cx="7.2" cy="9.6" r="0.8" fill="#FFFFFF" />
-          </svg>
-        );
+        return 'https://flagcdn.com/w20/us.png';
       case 'HTD':
-        return (
-          <svg className="w-3.5 h-3.5 rounded-full" viewBox="0 0 24 24">
-            <rect width="24" height="8" y="0" fill="#FFD700" />
-            <rect width="24" height="8" y="8" fill="#00209F" />
-            <rect width="24" height="8" y="16" fill="#D21034" />
-            <circle cx="12" cy="12" r="4" fill="#FFFFFF" />
-          </svg>
-        );
+        return 'https://flagcdn.com/w20/ht.png'; // Using Haiti flag for HTD
       default:
-        return null;
+        return '';
     }
   };
 
@@ -139,7 +103,11 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
             className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-md active:bg-gray-200"
             aria-label={`Change currency, current: ${currentCurrency}`}
           >
-            {getFlagSvg(currentCurrency)}
+            <img 
+              src={getFlagUrl(currentCurrency)} 
+              alt={`${currentCurrency} flag`}
+              className="w-3.5 h-3.5 rounded-full object-cover"
+            />
             <span className="text-xs font-medium text-gray-700">{currentCurrency}</span>
             <ChevronDown className="w-2.5 h-2.5 text-gray-500" />
           </button>
