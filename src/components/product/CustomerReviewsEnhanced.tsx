@@ -46,7 +46,7 @@ interface CustomerReviewsProps {
 
 const CustomerReviews = React.memo(({ productId, currentUserId = 'user_1' }: CustomerReviewsProps) => {
   // Initialize hook with defaults
-  const hookResult = useMockReviews({ productId, currentUserId });
+  const hookResult = useMockProductReviews({ productId, currentUserId });
   
   // Destructure with safe defaults
   const {
