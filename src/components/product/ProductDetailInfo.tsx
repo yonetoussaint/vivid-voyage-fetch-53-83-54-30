@@ -25,20 +25,14 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
     HTD: 'HTD'
   };
 
-  const currencyToCountry = {
-    HTG: 'ht',
-    USD: 'us',
-    HTD: 'ht'
-  };
-
   const exchangeRates = {
-    HTG: 132.50,
-    USD: 1,
-    HTD: 662.50 // 5 * 132.50
+    HTG: 1,
+    USD: 1/132.50, // 1 USD = 132.50 HTG
+    HTD: 5 // 1 HTD = 5 HTG
   };
 
   const mergedProduct = { 
-    unitPrice: 189.99,
+    unitPrice: 189.99, // Price in USD
     ...product 
   };
 
@@ -57,13 +51,59 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
   };
 
   const formatPrice = (price: number, currency = currentCurrency) => {
-    const convertedPrice = price * exchangeRates[currency];
+    // Convert USD price to HTG first, then to target currency
+    const priceInHTG = price * 132.50;
+    const convertedPrice = priceInHTG * exchangeRates[currency];
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
+      currency: currency === 'HTD' ? 'HTG' : currency, // HTD uses HTG format
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(convertedPrice);
+  };
+
+  const getFlagSvg = (currency: string) => {
+    switch(currency) {
+      case 'HTG':
+        return (
+          <svg className="w-3.5 h-3.5 rounded-full" viewBox="0 0 24 24">
+            <rect width="24" height="24" fill="#00209F"/>
+            <rect width="24" height="12" y="12" fill="#D21034"/>
+            <rect width="12" height="24" x="6" fill="#FFFFFF"/>
+          </svg>
+        );
+      case 'USD':
+        return (
+          <svg className="w-3.5 h-3.5 rounded-full" viewBox="0 0 24 24">
+            <rect width="24" height="24" fill="#B22234"/>
+            <rect width="24" height="2.4" y="0" fill="#FFFFFF"/>
+            <rect width="24" height="2.4" y="4.8" fill="#FFFFFF"/>
+            <rect width="24" height="2.4" y="9.6" fill="#FFFFFF"/>
+            <rect width="24" height="2.4" y="14.4" fill="#FFFFFF"/>
+            <rect width="24" height="2.4" y="19.2" fill="#FFFFFF"/>
+            <rect width="9.6" height="12" fill="#3C3B6E"/>
+            <circle cx="4.8" cy="6" r="1.2" fill="#FFFFFF"/>
+            <circle cx="4.8" cy="9" r="1.2" fill="#FFFFFF"/>
+            <circle cx="7.2" cy="4.8" r="1.2" fill="#FFFFFF"/>
+            <circle cx="7.2" cy="7.8" r="1.2" fill="#FFFFFF"/>
+            <circle cx="2.4" cy="4.8" r="1.2" fill="#FFFFFF"/>
+            <circle cx="2.4" cy="7.8" r="1.2" fill="#FFFFFF"/>
+          </svg>
+        );
+      case 'HTD':
+        return (
+          <svg className="w-3.5 h-3.5 rounded-full" viewBox="0 0 24 24">
+            <rect width="24" height="24" fill="#FFD700"/>
+            <rect width="24" height="12" y="12" fill="#00209F"/>
+            <rect width="12" height="24" x="6" fill="#D21034"/>
+            <circle cx="12" cy="12" r="4" fill="#FFFFFF"/>
+            <text x="12" y="16" fontSize="8" textAnchor="middle" fill="#000000" fontWeight="bold">D</text>
+          </svg>
+        );
+      default:
+        return null;
+    }
   };
 
   const currentPrice = mergedProduct.unitPrice || 25;
@@ -94,7 +134,7 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
             className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-md active:bg-gray-200"
             aria-label={`Change currency, current: ${currentCurrency}`}
           >
-            <span className={`fi fi-${currencyToCountry[currentCurrency]} fis rounded-full text-sm`}></span>
+            {getFlagSvg(currentCurrency)}
             <span className="text-xs font-medium text-gray-700">{currentCurrency}</span>
             <ChevronDown className="w-2.5 h-2.5 text-gray-500" />
           </button>
