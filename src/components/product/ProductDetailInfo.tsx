@@ -113,7 +113,6 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
               </span>
               <span className="text-sm text-gray-500">/ unit</span>
             </div>
-            <span className="text-xs text-gray-400 mt-1">EXW (Ex Works)</span>
           </div>
 
           {/* Compact Currency Switcher */}
@@ -131,8 +130,6 @@ const ProductDetailInfo: React.FC<ProductDetailInfoProps> = ({
 
       {/* Product Description */}
       <div className="px-2 py-3 space-y-3">
-        <h3 className="text-sm font-semibold text-gray-900">Product Description</h3>
-
         <div className="relative">
           <p className={`text-sm text-gray-700 leading-relaxed ${
             !isDescriptionExpanded && needsTruncation ? 'line-clamp-3' : ''
