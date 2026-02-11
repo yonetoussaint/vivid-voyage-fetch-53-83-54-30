@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
-import { Play, Heart, MessageCircle, CheckCircle, MoreHorizontal, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, Heart, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/hooks/customer-reviews.hooks";
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ export interface MediaItem {
 
 export interface Reply {
   id: string;
+  user_id?: string;
   user_name?: string;
   comment?: string;
   created_at: string;
@@ -23,6 +24,7 @@ export interface Reply {
 
 export interface Review {
   id: string;
+  user_id?: string;
   user_name?: string;
   comment?: string;
   created_at: string;
@@ -42,9 +44,23 @@ interface ReviewItemProps {
   onToggleShowReplies?: (reviewId: string) => void;
   onCommentClick?: (reviewId: string) => void;
   onShareClick?: (reviewId: string) => void;
+  onLikeReview?: (reviewId: string) => void;
+  onFollowUser?: (userId: string, userName: string) => void;
+  onUnfollowUser?: (userId: string, userName: string) => void;
+  isFollowing?: boolean;
   onLikeReply?: (replyId: string, reviewId: string) => void;
   onReplyToReply?: (replyId: string, reviewId: string, userName: string) => void;
   onMenuAction?: (reviewId: string, action: 'report' | 'edit' | 'delete' | 'share') => void;
+  currentUserId?: string;
+  isOwner?: boolean;
+  onMediaClick?: (media: MediaItem[], index: number) => void;
+  onReviewView?: (reviewId: string) => void;
+  onMarkHelpful?: (reviewId: string) => void;
+  onEditReply?: (replyId: string, reviewId: string, comment: string) => void;
+  onDeleteReply?: (replyId: string, reviewId: string) => void;
+  onReportReply?: (replyId: string, reviewId: string, reason: string) => void;
+  loadMoreReplies?: (reviewId: string) => void;
+  replyPagination?: { page: number; hasMore: boolean };
 }
 
 const ReviewItem = memo(({
@@ -55,18 +71,35 @@ const ReviewItem = memo(({
   onToggleShowReplies,
   onCommentClick,
   onShareClick,
+  onLikeReview,
+  onFollowUser,
+  onUnfollowUser,
+  isFollowing = false,
   onLikeReply,
   onReplyToReply,
   onMenuAction,
+  currentUserId,
+  isOwner = false,
+  onMediaClick,
+  onReviewView,
+  onMarkHelpful,
+  onEditReply,
+  onDeleteReply,
+  onReportReply,
+  loadMoreReplies,
+  replyPagination,
 }: ReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
+  const [showReplyMenu, setShowReplyMenu] = useState<string | null>(null);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const replyMenuRef = useRef<HTMLDivElement>(null);
   const mediaContainerRef = useRef<HTMLDivElement>(null);
 
   const {
     id,
+    user_id,
     user_name,
     comment = '',
     created_at,
@@ -77,6 +110,11 @@ const ReviewItem = memo(({
     rating,
     replies = [],
   } = review;
+
+  // Track review view on mount
+  useEffect(() => {
+    onReviewView?.(id);
+  }, [id, onReviewView]);
 
   // Memoize avatar functions
   const getInitials = useCallback((name?: string) => {
@@ -129,6 +167,15 @@ const ReviewItem = memo(({
   const truncatedComment = useMemo(() => truncateText(comment), [comment]);
   const shouldShowReadMore = useMemo(() => comment.length > 120, [comment.length]);
 
+  // Media click handler
+  const handleMediaItemClick = useCallback((item: MediaItem, index: number) => {
+    if (onMediaClick) {
+      onMediaClick(media, index);
+    } else {
+      window.open(item.url, '_blank');
+    }
+  }, [media, onMediaClick]);
+
   // Memoize media rendering
   const renderedMedia = useMemo(() => 
     media.map((item, index) => (
@@ -138,7 +185,7 @@ const ReviewItem = memo(({
             src={item.url}
             alt={item.alt || `Review media ${index + 1}`}
             className="w-32 h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
-            onClick={() => window.open(item.url, '_blank')}
+            onClick={() => handleMediaItemClick(item, index)}
             loading="lazy"
             decoding="async"
             onLoad={() => setIsMediaLoaded(true)}
@@ -147,7 +194,7 @@ const ReviewItem = memo(({
         ) : item.type === 'video' ? (
           <div
             className="w-32 h-32 relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden rounded-lg"
-            onClick={() => window.open(item.url, '_blank')}
+            onClick={() => handleMediaItemClick(item, index)}
           >
             <img
               src={item.thumbnail || item.url}
@@ -170,13 +217,13 @@ const ReviewItem = memo(({
         ) : null}
       </div>
     )),
-    [media, id, isMediaLoaded]
+    [media, id, isMediaLoaded, handleMediaItemClick]
   );
 
-  // Memoize replies rendering
+  // Memoize replies rendering with edit/delete/report
   const renderedReplies = useMemo(() => {
     if (!replies.length || !expandedReplies?.has(id)) return null;
-    
+
     return replies.map((reply) => (
       <MemoizedReplyItem
         key={reply.id}
@@ -186,11 +233,32 @@ const ReviewItem = memo(({
         getInitials={getInitials}
         onLikeReply={onLikeReply}
         onReplyToReply={onReplyToReply}
+        onEditReply={onEditReply}
+        onDeleteReply={onDeleteReply}
+        onReportReply={onReportReply}
+        currentUserId={currentUserId}
+        isOwner={reply.user_id === currentUserId}
       />
     ));
-  }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onReplyToReply]);
+  }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onReplyToReply, onEditReply, onDeleteReply, onReportReply, currentUserId]);
 
   // Event handlers
+  const handleLikeClick = useCallback(() => {
+    onLikeReview?.(id);
+  }, [id, onLikeReview]);
+
+  const handleFollowClick = useCallback(() => {
+    if (isFollowing) {
+      onUnfollowUser?.(user_id || id, user_name || '');
+    } else {
+      onFollowUser?.(user_id || id, user_name || '');
+    }
+  }, [id, user_id, user_name, isFollowing, onFollowUser, onUnfollowUser]);
+
+  const handleHelpfulClick = useCallback(() => {
+    onMarkHelpful?.(id);
+  }, [id, onMarkHelpful]);
+
   const handleCommentClick = useCallback(() => {
     if (onToggleShowReplies) {
       onToggleShowReplies(id);
@@ -209,10 +277,6 @@ const ReviewItem = memo(({
     setShowMenu(prev => !prev);
   }, []);
 
-  const handleLikeClick = useCallback(() => {
-    console.log('Like clicked for review:', id);
-  }, [id]);
-
   const handleReadMoreClick = useCallback(() => {
     onToggleReadMore(id);
   }, [id, onToggleReadMore]);
@@ -221,30 +285,34 @@ const ReviewItem = memo(({
     onToggleShowReplies?.(id);
   }, [id, onToggleShowReplies]);
 
-  const handleFollowClick = useCallback(() => {
-    console.log('Follow clicked for user:', user_name);
-  }, [user_name]);
+  const handleLoadMoreReplies = useCallback(() => {
+    loadMoreReplies?.(id);
+  }, [id, loadMoreReplies]);
 
-  // Close menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
       }
+      if (replyMenuRef.current && !replyMenuRef.current.contains(event.target as Node)) {
+        setShowReplyMenu(null);
+      }
     };
 
-    if (showMenu) {
+    if (showMenu || showReplyMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showMenu]);
+  }, [showMenu, showReplyMenu]);
 
   const isRepliesExpanded = useMemo(() => expandedReplies?.has(id), [expandedReplies, id]);
   const hasReplies = useMemo(() => replies.length > 0, [replies.length]);
   const hasMedia = useMemo(() => media.length > 0, [media.length]);
+  const hasMoreReplies = useMemo(() => replyPagination?.hasMore, [replyPagination?.hasMore]);
 
   return (
     <div className="bg-white border-b border-gray-100 py-2 transition-colors">
@@ -263,8 +331,8 @@ const ReviewItem = memo(({
                 {user_name || 'Anonymous'}
               </span>
               {verified_purchase && (
-  <VerificationBadge />
-)}
+                <VerificationBadge />
+              )}
             </div>
             <div className="text-xs text-gray-500 mt-0.5">
               {formattedDate}
@@ -272,18 +340,24 @@ const ReviewItem = memo(({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-           <button 
-  onClick={handleFollowClick}
-  className="px-4 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
->
-  Follow
-</button>
+            <button 
+              onClick={handleFollowClick}
+              className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                isFollowing 
+                  ? 'text-gray-700 bg-gray-200 hover:bg-gray-300' 
+                  : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+              }`}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+            
+            {/* Only show menu for owner or always show? Usually show for everyone with different options */}
             <div className="relative" ref={menuRef}>
               <button
-  onClick={toggleMenu}
-  className="p-1.5 text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-  aria-label="More options"
->
+                onClick={toggleMenu}
+                className="p-1.5 text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                aria-label="More options"
+              >
                 <MoreHorizontal className="w-5 h-5" />
               </button>
 
@@ -295,25 +369,35 @@ const ReviewItem = memo(({
                   >
                     Share review
                   </button>
-                  <button
-                    onClick={() => handleMenuAction('edit')}
-                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Edit review
-                  </button>
+                  
+                  {isOwner && (
+                    <button
+                      onClick={() => handleMenuAction('edit')}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Edit review
+                    </button>
+                  )}
+                  
                   <div className="border-t border-gray-100 my-1"></div>
-                  <button
-                    onClick={() => handleMenuAction('report')}
-                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Report review
-                  </button>
-                  <button
-                    onClick={() => handleMenuAction('delete')}
-                    className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Delete review
-                  </button>
+                  
+                  {!isOwner && (
+                    <button
+                      onClick={() => handleMenuAction('report')}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Report review
+                    </button>
+                  )}
+                  
+                  {isOwner && (
+                    <button
+                      onClick={() => handleMenuAction('delete')}
+                      className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Delete review
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -347,7 +431,7 @@ const ReviewItem = memo(({
 
       {/* Engagement Section */}
       <div className="flex items-center justify-between pt-2">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-6">
           <button
             onClick={handleLikeClick}
             className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium"
@@ -369,6 +453,15 @@ const ReviewItem = memo(({
           >
             <MessageCircle className="w-5 h-5" />
             {commentCount > 0 && <span>{commentCount}</span>}
+          </button>
+
+          <button
+            onClick={handleHelpfulClick}
+            className="text-sm text-gray-500 hover:text-green-600 transition-colors flex items-center gap-2 font-medium"
+            aria-label="Mark this review as helpful"
+          >
+            <ThumbsUp className="w-5 h-5" />
+            <span>Helpful</span>
           </button>
         </div>
 
@@ -393,10 +486,20 @@ const ReviewItem = memo(({
               {isRepliesExpanded ? 'Hide' : 'Show'} {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
             </button>
           )}
-          
+
           {isRepliesExpanded && renderedReplies && (
             <div className="space-y-3">
               {renderedReplies}
+              
+              {/* Load more replies button */}
+              {hasMoreReplies && (
+                <button
+                  onClick={handleLoadMoreReplies}
+                  className="ml-12 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Load more replies
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -405,7 +508,7 @@ const ReviewItem = memo(({
   );
 });
 
-// Separate memoized component for replies to optimize rendering
+// Updated ReplyItem component with edit/delete/report
 interface ReplyItemProps {
   reply: Reply;
   reviewId: string;
@@ -413,6 +516,11 @@ interface ReplyItemProps {
   getInitials: (name?: string) => string;
   onLikeReply?: (replyId: string, reviewId: string) => void;
   onReplyToReply?: (replyId: string, reviewId: string, userName: string) => void;
+  onEditReply?: (replyId: string, reviewId: string, comment: string) => void;
+  onDeleteReply?: (replyId: string, reviewId: string) => void;
+  onReportReply?: (replyId: string, reviewId: string, reason: string) => void;
+  currentUserId?: string;
+  isOwner?: boolean;
 }
 
 const ReplyItem = memo(({
@@ -422,7 +530,15 @@ const ReplyItem = memo(({
   getInitials,
   onLikeReply,
   onReplyToReply,
+  onEditReply,
+  onDeleteReply,
+  onReportReply,
+  currentUserId,
+  isOwner = false,
 }: ReplyItemProps) => {
+  const [showReplyMenu, setShowReplyMenu] = useState(false);
+  const replyMenuRef = useRef<HTMLDivElement>(null);
+
   const handleLikeClick = useCallback(() => {
     onLikeReply?.(reply.id, reviewId);
   }, [reply.id, reviewId, onLikeReply]);
@@ -430,6 +546,42 @@ const ReplyItem = memo(({
   const handleReplyClick = useCallback(() => {
     onReplyToReply?.(reply.id, reviewId, reply.user_name || '');
   }, [reply.id, reviewId, reply.user_name, onReplyToReply]);
+
+  const handleEditClick = useCallback(() => {
+    onEditReply?.(reply.id, reviewId, reply.comment || '');
+    setShowReplyMenu(false);
+  }, [reply.id, reviewId, reply.comment, onEditReply]);
+
+  const handleDeleteClick = useCallback(() => {
+    onDeleteReply?.(reply.id, reviewId);
+    setShowReplyMenu(false);
+  }, [reply.id, reviewId, onDeleteReply]);
+
+  const handleReportClick = useCallback(() => {
+    onReportReply?.(reply.id, reviewId, 'inappropriate');
+    setShowReplyMenu(false);
+  }, [reply.id, reviewId, onReportReply]);
+
+  const toggleReplyMenu = useCallback(() => {
+    setShowReplyMenu(prev => !prev);
+  }, []);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (replyMenuRef.current && !replyMenuRef.current.contains(event.target as Node)) {
+        setShowReplyMenu(false);
+      }
+    };
+
+    if (showReplyMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showReplyMenu]);
 
   const formattedDate = useMemo(() => formatDate(reply.created_at), [reply.created_at]);
   const avatarColor = useMemo(() => getAvatarColor(reply.user_name), [reply.user_name, getAvatarColor]);
@@ -443,7 +595,7 @@ const ReplyItem = memo(({
         >
           {initials}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -454,7 +606,7 @@ const ReplyItem = memo(({
                 {formattedDate}
               </span>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={handleLikeClick}
@@ -469,7 +621,7 @@ const ReplyItem = memo(({
                 />
                 {(reply.likeCount || 0) > 0 && <span>{reply.likeCount}</span>}
               </button>
-              
+
               <button
                 onClick={handleReplyClick}
                 className="text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded"
@@ -477,9 +629,50 @@ const ReplyItem = memo(({
               >
                 Reply
               </button>
+
+              {/* Reply menu */}
+              <div className="relative" ref={replyMenuRef}>
+                <button
+                  onClick={toggleReplyMenu}
+                  className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Reply options"
+                >
+                  <MoreHorizontal className="w-3.5 h-3.5" />
+                </button>
+
+                {showReplyMenu && (
+                  <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                    {isOwner && (
+                      <>
+                        <button
+                          onClick={handleEditClick}
+                          className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Edit reply
+                        </button>
+                        <button
+                          onClick={handleDeleteClick}
+                          className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          Delete reply
+                        </button>
+                      </>
+                    )}
+                    
+                    {!isOwner && (
+                      <button
+                        onClick={handleReportClick}
+                        className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Report reply
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          
+
           <p className="text-gray-700 text-sm mt-1">{reply.comment}</p>
         </div>
       </div>
