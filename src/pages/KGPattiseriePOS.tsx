@@ -79,12 +79,58 @@ const KGPattisseriePOS = () => {
     import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
       .then(() => import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'))
       .then(() => {
-        const element = invoiceRef.current;
-        window.html2canvas(element, { scale: 2 }).then(canvas => {
+        // Créer un élément temporaire pour la facture en taille réelle
+        const invoiceElement = invoiceRef.current.cloneNode(true);
+        invoiceElement.style.width = '1200px';
+        invoiceElement.style.maxWidth = '1200px';
+        invoiceElement.style.margin = '0';
+        invoiceElement.style.padding = '40px';
+        invoiceElement.style.backgroundColor = 'white';
+        invoiceElement.style.position = 'absolute';
+        invoiceElement.style.left = '-9999px';
+        invoiceElement.style.top = '0';
+        
+        // Appliquer les styles de police en taille réelle
+        const style = document.createElement('style');
+        style.textContent = `
+          .invoice-pc-mode {
+            font-size: 16px !important;
+          }
+          .invoice-pc-mode h1 { font-size: 32px !important; }
+          .invoice-pc-mode h2 { font-size: 28px !important; }
+          .invoice-pc-mode h3 { font-size: 24px !important; }
+          .invoice-pc-mode h4 { font-size: 20px !important; }
+          .invoice-pc-mode table { font-size: 16px !important; }
+          .invoice-pc-mode .text-sm { font-size: 14px !important; }
+          .invoice-pc-mode .text-xs { font-size: 12px !important; }
+          .invoice-pc-mode .text-xl { font-size: 24px !important; }
+          .invoice-pc-mode .text-2xl { font-size: 28px !important; }
+          .invoice-pc-mode .text-3xl { font-size: 32px !important; }
+          .invoice-pc-mode .text-4xl { font-size: 36px !important; }
+          .invoice-pc-mode .text-5xl { font-size: 40px !important; }
+        `;
+        invoiceElement.classList.add('invoice-pc-mode');
+        
+        document.body.appendChild(style);
+        document.body.appendChild(invoiceElement);
+        
+        window.html2canvas(invoiceElement, { 
+          scale: 2,
+          backgroundColor: '#ffffff',
+          logging: false,
+          allowTaint: true,
+          useCORS: true,
+          windowWidth: 1200,
+          windowHeight: invoiceElement.scrollHeight
+        }).then(canvas => {
+          // Nettoyer
+          document.body.removeChild(invoiceElement);
+          document.body.removeChild(style);
+          
           const imgData = canvas.toDataURL('image/png');
           const { jsPDF } = window.jspdf;
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const imgWidth = 210;
+          const pdf = new jsPDF('l', 'mm', 'a4'); // 'l' pour paysage
+          const imgWidth = 297; // Largeur A4 paysage
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
           pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
           pdf.save(`facture-${currentInvoice.number}.pdf`);
@@ -95,11 +141,57 @@ const KGPattisseriePOS = () => {
   const downloadInvoiceAsImage = () => {
     import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
       .then(() => {
-        const element = invoiceRef.current;
-        window.html2canvas(element, { scale: 2 }).then(canvas => {
+        // Créer un élément temporaire pour la facture en taille réelle
+        const invoiceElement = invoiceRef.current.cloneNode(true);
+        invoiceElement.style.width = '1200px';
+        invoiceElement.style.maxWidth = '1200px';
+        invoiceElement.style.margin = '0';
+        invoiceElement.style.padding = '40px';
+        invoiceElement.style.backgroundColor = 'white';
+        invoiceElement.style.position = 'absolute';
+        invoiceElement.style.left = '-9999px';
+        invoiceElement.style.top = '0';
+        
+        // Appliquer les styles de police en taille réelle
+        const style = document.createElement('style');
+        style.textContent = `
+          .invoice-pc-mode {
+            font-size: 16px !important;
+          }
+          .invoice-pc-mode h1 { font-size: 32px !important; }
+          .invoice-pc-mode h2 { font-size: 28px !important; }
+          .invoice-pc-mode h3 { font-size: 24px !important; }
+          .invoice-pc-mode h4 { font-size: 20px !important; }
+          .invoice-pc-mode table { font-size: 16px !important; }
+          .invoice-pc-mode .text-sm { font-size: 14px !important; }
+          .invoice-pc-mode .text-xs { font-size: 12px !important; }
+          .invoice-pc-mode .text-xl { font-size: 24px !important; }
+          .invoice-pc-mode .text-2xl { font-size: 28px !important; }
+          .invoice-pc-mode .text-3xl { font-size: 32px !important; }
+          .invoice-pc-mode .text-4xl { font-size: 36px !important; }
+          .invoice-pc-mode .text-5xl { font-size: 40px !important; }
+        `;
+        invoiceElement.classList.add('invoice-pc-mode');
+        
+        document.body.appendChild(style);
+        document.body.appendChild(invoiceElement);
+        
+        window.html2canvas(invoiceElement, { 
+          scale: 2,
+          backgroundColor: '#ffffff',
+          logging: false,
+          allowTaint: true,
+          useCORS: true,
+          windowWidth: 1200,
+          windowHeight: invoiceElement.scrollHeight
+        }).then(canvas => {
+          // Nettoyer
+          document.body.removeChild(invoiceElement);
+          document.body.removeChild(style);
+          
           const link = document.createElement('a');
           link.download = `facture-${currentInvoice.number}.png`;
-          link.href = canvas.toDataURL();
+          link.href = canvas.toDataURL('image/png');
           link.click();
         });
       });
@@ -376,10 +468,10 @@ const KGPattisseriePOS = () => {
         )}
       </div>
 
-      {/* Invoice Modal - Style PC Professionnel */}
+      {/* Invoice Modal - Style PC */}
       {showInvoice && currentInvoice && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-x-auto">
+          <div className="bg-white rounded-lg shadow-2xl inline-block min-w-[1200px] max-w-[1400px] mx-auto">
             <div className="p-8">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800">Facture</h2>
@@ -391,30 +483,40 @@ const KGPattisseriePOS = () => {
                 </button>
               </div>
 
-              {/* Invoice Content */}
-              <div ref={invoiceRef} className="bg-white p-8 border border-gray-200 shadow-sm">
+              {/* Invoice Content - Taille PC fixe */}
+              <div 
+                ref={invoiceRef} 
+                className="bg-white border border-gray-200 shadow-sm"
+                style={{ 
+                  width: '1200px', 
+                  maxWidth: '1200px',
+                  padding: '40px',
+                  margin: '0 auto',
+                  fontSize: '16px'
+                }}
+              >
                 {/* En-tête avec logo et informations société */}
                 <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-300">
                   <div>
-                    <div className="w-20 h-20 bg-pink-600 rounded-lg flex items-center justify-center mb-2">
-                      <span className="text-white font-bold text-2xl">KG</span>
+                    <div className="w-24 h-24 bg-pink-600 rounded-lg flex items-center justify-center mb-4">
+                      <span className="text-white font-bold text-3xl">KG</span>
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-800">KG Pâtisserie</h1>
-                    <p className="text-gray-600 mt-1">Saint-Marc, Ruelle Désir</p>
-                    <p className="text-gray-600">Haïti</p>
-                    <p className="text-gray-600">kentiagede@gmail.com</p>
-                    <p className="text-gray-600">Tél: +509 1234 5678</p>
+                    <h1 className="text-4xl font-bold text-gray-800">KG Pâtisserie</h1>
+                    <p className="text-gray-600 mt-2 text-lg">Saint-Marc, Ruelle Désir</p>
+                    <p className="text-gray-600 text-lg">Haïti</p>
+                    <p className="text-gray-600 text-lg">kentiagede@gmail.com</p>
+                    <p className="text-gray-600 text-lg">Tél: +509 1234 5678</p>
                   </div>
                   <div className="text-right">
-                    <h2 className="text-4xl font-bold text-pink-600 mb-4">FACTURE</h2>
-                    <div className="bg-pink-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">
+                    <h2 className="text-5xl font-bold text-pink-600 mb-6">FACTURE</h2>
+                    <div className="bg-pink-50 p-6 rounded-lg">
+                      <p className="text-gray-600 mb-2 text-lg">
                         <span className="font-semibold">N° Facture:</span> {currentInvoice.number}
                       </p>
-                      <p className="text-sm text-gray-600 mb-1">
+                      <p className="text-gray-600 mb-2 text-lg">
                         <span className="font-semibold">Date:</span> {currentInvoice.date}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-gray-600 text-lg">
                         <span className="font-semibold">Heure:</span> {currentInvoice.time}
                       </p>
                     </div>
@@ -422,36 +524,36 @@ const KGPattisseriePOS = () => {
                 </div>
 
                 {/* Informations client */}
-                <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <h3 className="font-semibold text-gray-800 mb-2">Facturer à :</h3>
-                  <p className="text-gray-700">Client</p>
-                  <p className="text-gray-700">Saint-Marc, Haïti</p>
-                  <p className="text-gray-700">client@email.com</p>
+                <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                  <h3 className="font-semibold text-gray-800 mb-3 text-xl">Facturer à :</h3>
+                  <p className="text-gray-700 text-lg">Client</p>
+                  <p className="text-gray-700 text-lg">Saint-Marc, Haïti</p>
+                  <p className="text-gray-700 text-lg">client@email.com</p>
                 </div>
 
                 {/* Tableau des articles */}
-                <table className="w-full mb-8 border-collapse">
+                <table className="w-full mb-8 border-collapse" style={{ fontSize: '16px' }}>
                   <thead>
                     <tr className="bg-pink-600 text-white">
-                      <th className="text-left py-3 px-4 font-semibold text-sm">Description</th>
-                      <th className="text-center py-3 px-4 font-semibold text-sm">Prix unitaire</th>
-                      <th className="text-center py-3 px-4 font-semibold text-sm">Quantité</th>
-                      <th className="text-right py-3 px-4 font-semibold text-sm">Total</th>
+                      <th className="text-left py-4 px-6 font-semibold text-base">Description</th>
+                      <th className="text-center py-4 px-6 font-semibold text-base">Prix unitaire</th>
+                      <th className="text-center py-4 px-6 font-semibold text-base">Quantité</th>
+                      <th className="text-right py-4 px-6 font-semibold text-base">Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentInvoice.items.map((item, index) => (
                       <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
-                        <td className="py-4 px-4 text-sm">
+                        <td className="py-4 px-6 text-base">
                           <span className="font-medium text-gray-800">{item.name}</span>
                         </td>
-                        <td className="text-center py-4 px-4 text-sm text-gray-700">
+                        <td className="text-center py-4 px-6 text-base text-gray-700">
                           {item.price.toFixed(2)} HTG
                         </td>
-                        <td className="text-center py-4 px-4 text-sm text-gray-700">
+                        <td className="text-center py-4 px-6 text-base text-gray-700">
                           {item.quantity}
                         </td>
-                        <td className="text-right py-4 px-4 text-sm font-semibold text-gray-800">
+                        <td className="text-right py-4 px-6 text-base font-semibold text-gray-800">
                           {(item.price * item.quantity).toFixed(2)} HTG
                         </td>
                       </tr>
@@ -461,23 +563,23 @@ const KGPattisseriePOS = () => {
 
                 {/* Totaux */}
                 <div className="flex justify-end mb-8">
-                  <div className="w-80">
+                  <div className="w-96">
                     <div className="space-y-3">
-                      <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="font-medium text-gray-600">Sous-total:</span>
-                        <span className="font-semibold">{currentInvoice.total.toFixed(2)} HTG</span>
+                      <div className="flex justify-between py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-600 text-lg">Sous-total:</span>
+                        <span className="font-semibold text-lg">{currentInvoice.total.toFixed(2)} HTG</span>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="font-medium text-gray-600">Remise:</span>
-                        <span className="font-semibold">0.00 HTG</span>
+                      <div className="flex justify-between py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-600 text-lg">Remise:</span>
+                        <span className="font-semibold text-lg">0.00 HTG</span>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="font-medium text-gray-600">TVA (0%):</span>
-                        <span className="font-semibold">0.00 HTG</span>
+                      <div className="flex justify-between py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-600 text-lg">TVA (0%):</span>
+                        <span className="font-semibold text-lg">0.00 HTG</span>
                       </div>
-                      <div className="flex justify-between py-3 bg-pink-50 px-4 rounded-lg">
-                        <span className="font-bold text-pink-800">TOTAL À PAYER:</span>
-                        <span className="font-bold text-pink-800 text-xl">
+                      <div className="flex justify-between py-4 bg-pink-50 px-6 rounded-lg">
+                        <span className="font-bold text-pink-800 text-xl">TOTAL À PAYER:</span>
+                        <span className="font-bold text-pink-800 text-2xl">
                           {currentInvoice.total.toFixed(2)} HTG
                         </span>
                       </div>
@@ -488,62 +590,62 @@ const KGPattisseriePOS = () => {
                 {/* Mode de paiement et informations supplémentaires */}
                 <div className="grid grid-cols-2 gap-8 mb-8 pt-6 border-t border-gray-300">
                   <div>
-                    <h4 className="font-semibold text-gray-800 mb-2">Mode de paiement</h4>
-                    <p className="text-gray-700 text-sm">Espèces / Carte bancaire</p>
-                    <p className="text-gray-600 text-sm mt-2">Paiement comptant à la livraison</p>
+                    <h4 className="font-semibold text-gray-800 mb-3 text-lg">Mode de paiement</h4>
+                    <p className="text-gray-700 text-base">Espèces / Carte bancaire</p>
+                    <p className="text-gray-600 text-base mt-2">Paiement comptant à la livraison</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 mb-2">Informations supplémentaires</h4>
-                    <p className="text-gray-700 text-sm">Marchandise livrée en l'état</p>
-                    <p className="text-gray-700 text-sm">Aucun échange ou remboursement</p>
+                    <h4 className="font-semibold text-gray-800 mb-3 text-lg">Informations supplémentaires</h4>
+                    <p className="text-gray-700 text-base">Marchandise livrée en l'état</p>
+                    <p className="text-gray-700 text-base">Aucun échange ou remboursement</p>
                   </div>
                 </div>
 
                 {/* Conditions et signature */}
                 <div className="flex justify-between items-end pt-6 border-t border-gray-300">
                   <div>
-                    <p className="font-semibold text-gray-800 mb-2">Conditions générales :</p>
-                    <p className="text-xs text-gray-600 max-w-md">
+                    <p className="font-semibold text-gray-800 mb-3 text-lg">Conditions générales :</p>
+                    <p className="text-gray-600 text-sm max-w-lg leading-relaxed">
                       Cette facture est payable à réception. Tout retard de paiement entraînera des pénalités 
                       conformément à la législation en vigueur. Merci de votre confiance.
                     </p>
                   </div>
                   <div className="text-center">
-                    <div className="mb-2">
-                      <p className="text-sm text-gray-700 font-medium">Cachet et signature :</p>
+                    <div className="mb-3">
+                      <p className="text-gray-700 font-medium text-base">Cachet et signature :</p>
                     </div>
-                    <div className="border-b border-gray-400 w-48 mb-1"></div>
-                    <p className="text-xs text-gray-500 mt-1">Pour KG Pâtisserie</p>
-                    <p className="text-xs text-gray-500">{currentInvoice.date}</p>
+                    <div className="border-b border-gray-400 w-56 mb-2"></div>
+                    <p className="text-gray-500 text-sm mt-2">Pour KG Pâtisserie</p>
+                    <p className="text-gray-500 text-sm">{currentInvoice.date}</p>
                   </div>
                 </div>
                 
                 {/* Pied de page */}
-                <div className="mt-8 text-center text-gray-500 text-xs">
+                <div className="mt-8 text-center text-gray-500 text-sm">
                   <p>KG Pâtisserie - Saint-Marc, Ruelle Désir - Tél: +509 1234 5678 - Email: kentiagede@gmail.com</p>
-                  <p className="mt-1">NIF: 123-456-789-0 | RCCM: SA-2024-001234</p>
+                  <p className="mt-2">NIF: 123-456-789-0 | RCCM: SA-2024-001234</p>
                 </div>
               </div>
 
               {/* Boutons d'action */}
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="mt-6 flex justify-center gap-4">
                 <button
                   onClick={downloadInvoiceAsImage}
-                  className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-base"
                 >
                   <Download size={20} />
-                  Télécharger Image
+                  Télécharger Image (PNG)
                 </button>
                 <button
                   onClick={downloadInvoiceAsPDF}
-                  className="flex items-center justify-center gap-2 bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                  className="flex items-center justify-center gap-2 bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition-colors text-base"
                 >
                   <Download size={20} />
                   Télécharger PDF
                 </button>
                 <button
                   onClick={finalizeTransaction}
-                  className="flex items-center justify-center gap-2 bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                  className="flex items-center justify-center gap-2 bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors text-base"
                 >
                   <Receipt size={20} />
                   Terminer la vente
