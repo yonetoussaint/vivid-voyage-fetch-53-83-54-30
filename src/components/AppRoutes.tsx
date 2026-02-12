@@ -1,3 +1,4 @@
+import { Routes, Route, Navigate } from "react-router-dom"; // MISSING IMPORT
 import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
@@ -5,13 +6,26 @@ import ProductDetail from "@/pages/ProductDetail";
 import Calculator from "@/pages/Calculator";
 import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
-import AuthCallback from "@/pages/AuthCallback"; // Add this import
-import KGPattisseriePOS from "@/pages/KGPattisseriePOS"; // ✅ ONLY ADD THIS IMPORT
+import AuthCallback from "@/pages/AuthCallback";
+import KGPattisseriePOS from "@/pages/KGPattisseriePOS"; // ✅ ADD THIS
+
+// MISSING IMPORTS - Add these based on your actual project structure
+import MainLayout from "@/layouts/MainLayout"; // This must exist in your project
+import Wallet from "@/pages/Wallet"; // This must exist in your project
+import Messages from "@/pages/Messages"; // This must exist in your project
+import MallPage from "@/pages/MallPage"; // This must exist in your project
+
+// MISSING ROUTE GROUP FUNCTIONS - These must be defined somewhere
+// Either import them or define them
+const CategoryRoutes = () => null;
+const ContentRoutes = () => null;
+const AuthRoutes = () => null;
+const MiscRoutes = () => null;
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* ✅ ADD THIS: Google OAuth callback route - OUTSIDE MainLayout */}
+      {/* Google OAuth callback route - OUTSIDE MainLayout */}
       <Route
         path="auth/callback"
         element={
@@ -19,7 +33,7 @@ export function AppRoutes() {
         }
       />
 
-      {/* ✅ ADD THIS: Error route for auth failures */}
+      {/* Error route for auth failures */}
       <Route
         path="auth/error"
         element={
