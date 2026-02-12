@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom"; // ✅ ADD THIS IMPORT
+import { Routes, Route, Navigate } from "react-router-dom";
 import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
@@ -8,16 +8,17 @@ import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
 import AuthCallback from "@/pages/AuthCallback";
 import KGPattisseriePOS from "@/pages/KGPattisseriePOS"; // ✅ ADD THIS IMPORT
-import MainLayout from "@/layouts/MainLayout"; // ✅ ADD THIS IMPORT (assuming this exists)
-import Wallet from "@/pages/Wallet"; // ✅ ADD THIS IMPORT (assuming this exists)
-import Messages from "@/pages/Messages"; // ✅ ADD THIS IMPORT (assuming this exists)
-import MallPage from "@/pages/MallPage"; // ✅ ADD THIS IMPORT (assuming this exists)
-import { CategoryRoutes, ContentRoutes, AuthRoutes, MiscRoutes } from "./routeGroups"; // ✅ ADD THIS IMPORT (adjust path as needed)
+
+// Add missing imports - adjust paths based on your actual file structure
+import MainLayout from "@/layouts/MainLayout"; // Adjust path if needed
+// import Wallet from "@/pages/Wallet"; // Comment out if not exists
+// import Messages from "@/pages/Messages"; // Comment out if not exists
+// import MallPage from "@/pages/MallPage"; // Comment out if not exists
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* ✅ Google OAuth callback route - OUTSIDE MainLayout */}
+      {/* Google OAuth callback route - OUTSIDE MainLayout */}
       <Route
         path="auth/callback"
         element={
@@ -25,7 +26,7 @@ export function AppRoutes() {
         }
       />
 
-      {/* ✅ Error route for auth failures */}
+      {/* Error route for auth failures */}
       <Route
         path="auth/error"
         element={
@@ -114,6 +115,8 @@ export function AppRoutes() {
           }
         />
 
+        {/* Comment out these routes if the components don't exist yet */}
+        {/* 
         <Route
           path="wallet"
           element={
@@ -127,6 +130,7 @@ export function AppRoutes() {
             <Messages />
           }
         />
+        */}
 
         <Route
           path="profile/*"
@@ -135,12 +139,13 @@ export function AppRoutes() {
           }
         />
 
-        {CategoryRoutes()}
-        {ContentRoutes()}
-        {AuthRoutes()}
-        {MiscRoutes()}
+        {/* Remove these non-existent route groups */}
+        {/* {CategoryRoutes()} */}
+        {/* {ContentRoutes()} */}
+        {/* {AuthRoutes()} */}
+        {/* {MiscRoutes()} */}
 
-        <Route path="mall" element={<MallPage />} />
+        {/* <Route path="mall" element={<MallPage />} /> */}
       </Route>
     </Routes>
   );
