@@ -5,8 +5,7 @@ import ProductDetail from "@/pages/ProductDetail";
 import Calculator from "@/pages/Calculator";
 import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
-import AuthCallback from "@/pages/AuthCallback";
-import KGPattisseriePOS from "@/pages/KGPattisseriePOS"; // ✅ ONLY ADDED THIS IMPORT
+import AuthCallback from "@/pages/AuthCallback"; // Add this import
 
 export function AppRoutes() {
   return (
@@ -35,14 +34,6 @@ export function AppRoutes() {
               </button>
             </div>
           </div>
-        }
-      />
-
-      {/* ✅ NEW ROUTE: KG Pâtisserie POS System */}
-      <Route
-        path="pos"
-        element={
-          <KGPattisseriePOS />
         }
       />
 
@@ -121,6 +112,8 @@ export function AppRoutes() {
             <Messages />
           }
         />
+
+
 
         <Route
           path="profile/*"
