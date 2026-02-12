@@ -11,28 +11,17 @@ const KGPattisseriePOS = () => {
 
   // Saveurs de glace disponibles
   const flavors = [
-    { id: 1, name: 'Vanille' },
+    { id: 1, name: 'Fraise' },
     { id: 2, name: 'Chocolat' },
-    { id: 3, name: 'Fraise' },
-    { id: 4, name: 'Mangue' },
-    { id: 5, name: 'Coco' },
-    { id: 6, name: 'Pistache' },
-    { id: 7, name: 'Café' },
-    { id: 8, name: 'Citron' },
-    { id: 9, name: 'Menthe' },
-    { id: 10, name: 'Caramel' },
-    { id: 11, name: 'Fruits de la Passion' },
-    { id: 12, name: 'Banane' },
+    { id: 3, name: 'Vanille' },
+    { id: 4, name: 'Rhum Raisin' },
+    { id: 5, name: 'Fruit de la Passion' },
   ];
 
   // Types de glace (formats)
   const products = [
-    { id: 1, name: 'Petit Pot', price: 150, size: 'small' },
-    { id: 2, name: 'Moyen Pot', price: 250, size: 'medium' },
-    { id: 3, name: 'Grand Pot', price: 350, size: 'large' },
-    { id: 4, name: 'Cornet Simple', price: 200, size: 'cone-single' },
-    { id: 5, name: 'Cornet Double', price: 350, size: 'cone-double' },
-    { id: 6, name: 'Coupe Glacée', price: 500, size: 'sundae' },
+    { id: 1, name: '07 OZ', price: 300, size: 'small' },
+    { id: 2, name: '16 OZ', price: 500, size: 'large' },
   ];
 
   const [selectedFlavor, setSelectedFlavor] = useState('');
