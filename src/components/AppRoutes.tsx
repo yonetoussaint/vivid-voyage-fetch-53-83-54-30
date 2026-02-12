@@ -10,7 +10,7 @@ import AuthCallback from "@/pages/AuthCallback";
 import KGPattisseriePOS from "@/pages/KGPattisseriePOS"; // ✅ ADD THIS
 
 // MISSING IMPORTS - Add these based on your actual project structure
-import MainLayout from "@/layouts/MainLayout"; // This must exist in your project
+import MainLayout from "@/layout/MainLayout"; // This must exist in your project
 import Wallet from "@/pages/Wallet"; // This must exist in your project
 import Messages from "@/pages/Messages"; // This must exist in your project
 import MallPage from "@/pages/MallPage"; // This must exist in your project
