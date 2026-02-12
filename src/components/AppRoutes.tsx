@@ -17,7 +17,7 @@ import Calculator from "@/pages/Calculator";
 import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
 import AuthCallback from "@/pages/AuthCallback";
-import KGPattisseriePOS from "@/pages/KGPattisseriePOS"; // ✅ ADD THIS IMPORT
+import KGPattisseriePOS from "@/pages/KGPattiseriePOS"; // ✅ ADD THIS IMPORT
 
 export function AppRoutes() {
   return (
