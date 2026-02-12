@@ -1,4 +1,3 @@
-import { Routes, Route, Navigate } from "react-router-dom";
 import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
@@ -6,19 +5,13 @@ import ProductDetail from "@/pages/ProductDetail";
 import Calculator from "@/pages/Calculator";
 import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
-import AuthCallback from "@/pages/AuthCallback";
-import KGPattisseriePOS from "@/pages/KGPattisseriePOS"; // ✅ ADD THIS IMPORT
-
-// Add missing imports - adjust paths based on your actual file structure
-import MainLayout from "@/layouts/MainLayout"; // Adjust path if needed
-// import Wallet from "@/pages/Wallet"; // Comment out if not exists
-// import Messages from "@/pages/Messages"; // Comment out if not exists
-// import MallPage from "@/pages/MallPage"; // Comment out if not exists
+import AuthCallback from "@/pages/AuthCallback"; // Add this import
+import KGPattisseriePOS from "@/pages/KGPattisseriePOS"; // ✅ ONLY ADD THIS IMPORT
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Google OAuth callback route - OUTSIDE MainLayout */}
+      {/* ✅ ADD THIS: Google OAuth callback route - OUTSIDE MainLayout */}
       <Route
         path="auth/callback"
         element={
@@ -26,7 +19,7 @@ export function AppRoutes() {
         }
       />
 
-      {/* Error route for auth failures */}
+      {/* ✅ ADD THIS: Error route for auth failures */}
       <Route
         path="auth/error"
         element={
@@ -115,8 +108,6 @@ export function AppRoutes() {
           }
         />
 
-        {/* Comment out these routes if the components don't exist yet */}
-        {/* 
         <Route
           path="wallet"
           element={
@@ -130,7 +121,6 @@ export function AppRoutes() {
             <Messages />
           }
         />
-        */}
 
         <Route
           path="profile/*"
@@ -139,13 +129,12 @@ export function AppRoutes() {
           }
         />
 
-        {/* Remove these non-existent route groups */}
-        {/* {CategoryRoutes()} */}
-        {/* {ContentRoutes()} */}
-        {/* {AuthRoutes()} */}
-        {/* {MiscRoutes()} */}
+        {CategoryRoutes()}
+        {ContentRoutes()}
+        {AuthRoutes()}
+        {MiscRoutes()}
 
-        {/* <Route path="mall" element={<MallPage />} /> */}
+        <Route path="mall" element={<MallPage />} />
       </Route>
     </Routes>
   );
