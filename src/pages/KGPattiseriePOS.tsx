@@ -393,58 +393,122 @@ const KGPattisseriePOS = () => {
               </div>
 
               {/* Invoice Content */}
-              <div ref={invoiceRef} className="bg-white p-8 border-2 border-gray-200 rounded-lg">
-                <div className="text-center mb-6">
-                  <h1 className="text-3xl font-bold text-pink-600">KG Pâtisserie</h1>
-                  <p className="text-sm text-gray-600 mt-1">Saint-Marc, Ruelle Désir</p>
-                  <p className="text-sm text-gray-600">kentiagede@gmail.com</p>
+              <div ref={invoiceRef} className="bg-white p-8">
+                {/* Header Section */}
+                <div className="flex justify-between items-start mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gray-800 flex items-center justify-center rounded">
+                      <span className="text-white font-bold text-xs">LOGO</span>
+                    </div>
+                    <h1 className="text-5xl font-bold text-blue-600">INVOICE</h1>
+                  </div>
+                  <div className="text-right text-sm">
+                    <p className="font-bold">KG Pâtisserie</p>
+                    <p>Saint-Marc, Ruelle Désir</p>
+                    <p>Haïti</p>
+                    <p>kentiagede@gmail.com</p>
+                  </div>
                 </div>
 
-                <div className="border-t-2 border-b-2 border-gray-300 py-4 mb-6">
-                  <div className="flex justify-between text-sm">
-                    <div>
-                      <p className="font-semibold">N° Facture:</p>
-                      <p className="text-gray-700">{currentInvoice.number}</p>
+                {/* Bill To and Invoice Details */}
+                <div className="flex justify-between mb-8">
+                  <div>
+                    <p className="font-bold text-sm mb-2 bg-gray-200 px-2 py-1">BILL TO</p>
+                    <p className="text-sm">Client</p>
+                    <p className="text-sm">Saint-Marc</p>
+                    <p className="text-sm">Haïti</p>
+                  </div>
+                  <div className="text-right space-y-2">
+                    <div className="flex justify-between gap-8">
+                      <span className="font-bold text-sm">INVOICE#</span>
+                      <span className="text-sm">{currentInvoice.number}</span>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">Date:</p>
-                      <p className="text-gray-700">{currentInvoice.date}</p>
-                      <p className="text-gray-700">{currentInvoice.time}</p>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-bold text-sm">Invoice DATE</span>
+                      <span className="text-sm">{currentInvoice.date}</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-bold text-sm">Invoice DUE</span>
+                      <span className="text-sm">{currentInvoice.date}</span>
                     </div>
                   </div>
                 </div>
 
+                {/* Items Table */}
                 <table className="w-full mb-6">
                   <thead>
-                    <tr className="border-b-2 border-gray-300">
-                      <th className="text-left py-2">Article</th>
-                      <th className="text-center py-2">Qté</th>
-                      <th className="text-right py-2">Prix Unit.</th>
-                      <th className="text-right py-2">Total</th>
+                    <tr className="bg-blue-500 text-white">
+                      <th className="text-left py-3 px-3 font-bold text-sm">DESCRIPTION</th>
+                      <th className="text-center py-3 px-3 font-bold text-sm">PRICE</th>
+                      <th className="text-center py-3 px-3 font-bold text-sm">QTY</th>
+                      <th className="text-center py-3 px-3 font-bold text-sm">DISCOUNT</th>
+                      <th className="text-center py-3 px-3 font-bold text-sm">TAX</th>
+                      <th className="text-right py-3 px-3 font-bold text-sm">AMOUNT</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentInvoice.items.map((item, index) => (
-                      <tr key={index} className="border-b border-gray-200">
-                        <td className="py-3">{item.name}</td>
-                        <td className="text-center py-3">{item.quantity}</td>
-                        <td className="text-right py-3">{item.price} HTG</td>
-                        <td className="text-right py-3 font-semibold">{item.price * item.quantity} HTG</td>
+                      <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
+                        <td className="py-3 px-3 text-sm">{item.name}</td>
+                        <td className="text-center py-3 px-3 text-sm">{item.price.toFixed(2)}</td>
+                        <td className="text-center py-3 px-3 text-sm">{item.quantity.toFixed(2)}</td>
+                        <td className="text-center py-3 px-3 text-sm">-</td>
+                        <td className="text-center py-3 px-3 text-sm">-</td>
+                        <td className="text-right py-3 px-3 text-sm font-semibold">{(item.price * item.quantity).toFixed(2)} HTG</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
 
-                <div className="border-t-2 border-gray-300 pt-4">
-                  <div className="flex justify-between items-center text-2xl font-bold">
-                    <span>TOTAL</span>
-                    <span className="text-pink-600">{currentInvoice.total} HTG</span>
+                {/* Payment Method and Totals */}
+                <div className="flex justify-between mb-8">
+                  <div className="w-1/2">
+                    <p className="font-bold text-sm mb-2">PAYMENT METHOD</p>
+                    <p className="text-sm">Espèces / Carte</p>
+                  </div>
+                  <div className="w-5/12">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-bold">SUBTOTAL</span>
+                        <span>{currentInvoice.total.toFixed(2)} HTG</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="font-bold">DISCOUNT (0%)</span>
+                        <span>0.00 HTG</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="font-bold">VAT (0%)</span>
+                        <span>0.00 HTG</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="font-bold">SHIPPING</span>
+                        <span>0.00 HTG</span>
+                      </div>
+                      <div className="flex justify-between text-sm font-bold">
+                        <span>TOTAL</span>
+                        <span>{currentInvoice.total.toFixed(2)} HTG</span>
+                      </div>
+                      <div className="flex justify-between bg-blue-500 text-white py-2 px-3 rounded">
+                        <span className="font-bold text-sm">BALANCE DUE</span>
+                        <span className="font-bold text-sm">{currentInvoice.total.toFixed(2)} HTG</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="text-center mt-8 text-sm text-gray-600">
-                  <p>Merci pour votre visite !</p>
-                  <p>À bientôt chez KG Pâtisserie</p>
+                {/* Terms and Signature */}
+                <div className="flex justify-between items-end border-t pt-6">
+                  <div className="w-1/2">
+                    <p className="font-bold text-sm mb-2">TERMS & CONDITIONS:</p>
+                    <p className="text-xs text-gray-600">
+                      Veuillez payer votre facture dans les 30 jours suivant la date de facturation.
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm mb-8">Signature:</p>
+                    <div className="border-b border-gray-400 w-48 mb-2"></div>
+                    <p className="text-xs text-gray-600">{currentInvoice.date}</p>
+                  </div>
                 </div>
               </div>
 
