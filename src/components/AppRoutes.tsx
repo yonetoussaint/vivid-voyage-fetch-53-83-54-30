@@ -1,3 +1,14 @@
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import MainLayout from "./layout/MainLayout";
+import { CategoryRoutes } from "../routes/CategoryRoutes";
+import { ContentRoutes } from "../routes/ContentRoutes";
+import { AuthRoutes } from "../routes/AuthRoutes";
+import { MiscRoutes } from "../routes/MiscRoutes";
+import MallPage from "@/pages/MallPage";
+import Wallet from "@/pages/Wallet";
+import Messages from "@/pages/Messages";
+import { ChatPage } from "@/pages/Messages";
 import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
@@ -5,12 +16,13 @@ import ProductDetail from "@/pages/ProductDetail";
 import Calculator from "@/pages/Calculator";
 import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
-import AuthCallback from "@/pages/AuthCallback"; // Add this import
+import AuthCallback from "@/pages/AuthCallback";
+import KGPattisseriePOS from "@/pages/KGPattisseriePOS"; // ✅ ADD THIS IMPORT
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* ✅ ADD THIS: Google OAuth callback route - OUTSIDE MainLayout */}
+      {/* ✅ Google OAuth callback route - OUTSIDE MainLayout */}
       <Route
         path="auth/callback"
         element={
@@ -18,7 +30,7 @@ export function AppRoutes() {
         }
       />
 
-      {/* ✅ ADD THIS: Error route for auth failures */}
+      {/* ✅ Error route for auth failures */}
       <Route
         path="auth/error"
         element={
@@ -34,6 +46,14 @@ export function AppRoutes() {
               </button>
             </div>
           </div>
+        }
+      />
+
+      {/* ✅ NEW ROUTE: KG Pâtisserie POS System */}
+      <Route
+        path="pos"
+        element={
+          <KGPattisseriePOS />
         }
       />
 
@@ -112,8 +132,6 @@ export function AppRoutes() {
             <Messages />
           }
         />
-
-
 
         <Route
           path="profile/*"
