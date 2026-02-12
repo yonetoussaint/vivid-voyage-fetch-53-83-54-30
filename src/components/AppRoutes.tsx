@@ -1,3 +1,4 @@
+import { Routes, Route, Navigate } from "react-router-dom"; // ✅ ADD THIS IMPORT
 import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
@@ -7,6 +8,11 @@ import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
 import AuthCallback from "@/pages/AuthCallback";
 import KGPattisseriePOS from "@/pages/KGPattisseriePOS"; // ✅ ADD THIS IMPORT
+import MainLayout from "@/layouts/MainLayout"; // ✅ ADD THIS IMPORT (assuming this exists)
+import Wallet from "@/pages/Wallet"; // ✅ ADD THIS IMPORT (assuming this exists)
+import Messages from "@/pages/Messages"; // ✅ ADD THIS IMPORT (assuming this exists)
+import MallPage from "@/pages/MallPage"; // ✅ ADD THIS IMPORT (assuming this exists)
+import { CategoryRoutes, ContentRoutes, AuthRoutes, MiscRoutes } from "./routeGroups"; // ✅ ADD THIS IMPORT (adjust path as needed)
 
 export function AppRoutes() {
   return (
