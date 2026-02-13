@@ -112,11 +112,7 @@ const KGPattisseriePOS = () => {
         {/* Zone principale */}
         <div className="flex-1 overflow-y-auto p-4">
           {activeTab === 'vente' && (
-            <div className="text-center py-12 text-gray-500">
-              <ShoppingCart size={64} className="mx-auto mb-4 text-pink-300" />
-              <h2 className="text-2xl font-bold text-gray-700 mb-2">KG Pâtisserie</h2>
-              <p className="text-gray-500">Utilisez le panier pour ajouter des produits</p>
-            </div>
+           
           )}
 
           {activeTab === 'produits' && (
