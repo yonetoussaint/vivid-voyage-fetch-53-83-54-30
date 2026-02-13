@@ -13,7 +13,7 @@ const sellerData = {
   location: "Manila, Philippines",
   joined_date: "January 2020",
   is_online: false,
-  last_seen_hours: 3,
+  last_seen: "Last active 3 hours ago",
 
   // Stats
   stats: {
@@ -181,6 +181,15 @@ export default function XProfile() {
           )}
         </div>
 
+        {/* Last Online Status - Bottom Right of Banner */}
+        {!sellerData.is_online && sellerData.last_seen && (
+          <div className="absolute bottom-2 right-3">
+            <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
+              <span className="text-white text-xs font-medium">{sellerData.last_seen}</span>
+            </div>
+          </div>
+        )}
+
         {/* Profile Picture - Left aligned */}
         <div className="absolute -bottom-12 left-4">
           <div className="relative">
@@ -194,18 +203,10 @@ export default function XProfile() {
               </div>
             </div>
 
-            {/* Status Indicator */}
+            {/* Online Status Indicator on Profile Pic */}
             {sellerData.is_online && (
               <div className="absolute bottom-1 right-1">
                 <div className="w-4 h-4 bg-green-500 rounded-full border-[3px] border-white"></div>
-              </div>
-            )}
-            {!sellerData.is_online && sellerData.last_seen_hours && (
-              <div className="absolute bottom-1 right-1 group">
-                <div className="w-4 h-4 bg-gray-300 rounded-full border-[3px] border-white"></div>
-                <div className="absolute -bottom-6 -right-2 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  {sellerData.last_seen_hours}h ago
-                </div>
               </div>
             )}
           </div>
