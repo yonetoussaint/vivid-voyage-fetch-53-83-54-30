@@ -1,15 +1,57 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import MainLoginScreen from '@/components/auth/MainLoginScreen';
+import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { X } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+// Inner component that uses language context
+const LoginContent: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
+  const { language, setLanguage } = useLanguage();
+
+  return (
+    <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden relative">
+      {onClose && (
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
+        >
+          <X size={20} />
+        </button>
+      )}
+      
+      <MainLoginScreen
+        selectedLanguage={language}
+        setSelectedLanguage={setLanguage}
+        onContinueWithEmail={() => {
+          // Handle email login flow
+          // You'll need to integrate this with your auth context
+          console.log('Continue with email');
+        }}
+        onContinueWithPhone={() => {
+          console.log('Continue with phone');
+        }}
+        isCompact={false}
+        showHeader={true}
+      />
+      
+      <div className="text-center pb-6">
+        <button
+          onClick={() => window.location.href = '/'}
+          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          ← Retour à l'accueil
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
-  const [showLogin, setShowLogin] = useState(true);
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -23,50 +65,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // If not authenticated, show the login screen
+  // If not authenticated, show the login screen with LanguageProvider
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden relative">
-          {/* Optional close button if you want to allow closing */}
-          <button 
-            onClick={() => window.location.href = '/'}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
-          >
-            <X size={20} />
-          </button>
-          
-          <MainLoginScreen
-            selectedLanguage="en"
-            setSelectedLanguage={() => {}}
-            onContinueWithEmail={() => {
-              // Handle email login flow
-              // You might want to set a specific state in your auth context
-              console.log('Continue with email');
-            }}
-            onContinueWithPhone={() => {
-              console.log('Continue with phone');
-            }}
-            isCompact={false}
-            showHeader={true}
-          />
-          
-          {/* Optional footer with back to home link */}
-          <div className="text-center pb-6">
-            <button
-              onClick={() => window.location.href = '/'}
-              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              ← Retour à l'accueil
-            </button>
-          </div>
-        </div>
+        <LanguageProvider>
+          <LoginContent onClose={() => window.location.href = '/'} />
+        </LanguageProvider>
       </div>
     );
   }
 
-  // If authenticated, render the protected content
-  return <>{children}</>;
+  // If authenticated, render the protected content wrapped in LanguageProvider
+  return (
+    <LanguageProvider>
+      {children}
+    </LanguageProvider>
+  );
 };
 
 export default ProtectedRoute;
