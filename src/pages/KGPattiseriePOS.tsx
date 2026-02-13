@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, ShoppingCart, Plus, Minus, Trash2, FileText, Download, Home, Package, Settings, Receipt, User, Loader, Clock } from 'lucide-react';
+import { Menu, X, ShoppingCart, Plus, Minus, Trash2, FileText, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw } from 'lucide-react';
 
 // ==================== COMPOSANT PRINCIPAL ====================
 const KGPattisseriePOS = () => {
@@ -68,6 +68,22 @@ const KGPattisseriePOS = () => {
     setInvoiceHistory(prev => [invoice, ...prev]);
   };
 
+  const regenerateInvoice = async (invoice) => {
+    setIsLoading(true);
+    try {
+      await generateAndDownloadImage({ 
+        cart: invoice.items, 
+        customerName: invoice.customerName, 
+        total: invoice.total 
+      });
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la régénération de la facture');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header 
@@ -106,6 +122,8 @@ const KGPattisseriePOS = () => {
           {activeTab === 'factures' && (
             <FacturesTab 
               invoiceHistory={invoiceHistory}
+              onRegenerate={regenerateInvoice}
+              isLoading={isLoading}
             />
           )}
 
@@ -210,6 +228,7 @@ const SidebarMenu = ({ menuOpen, setMenuOpen, activeTab, setActiveTab }) => {
 // ==================== COMPOSANT ONGLET VENTE ====================
 const VenteTab = ({ flavors, products, selectedFlavor, setSelectedFlavor, addToCart }) => (
   <div className="space-y-6">
+    {/* Sélecteur de Saveur */}
     <div className="bg-white p-4 rounded-lg shadow-md">
       <label className="block text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
         <span className="text-2xl">🍦</span>
@@ -229,30 +248,36 @@ const VenteTab = ({ flavors, products, selectedFlavor, setSelectedFlavor, addToC
       </select>
     </div>
 
+    {/* Formats de Glace - Empilés verticalement */}
     <div>
       <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
         <span className="bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm">
           Formats Disponibles
         </span>
       </h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="flex flex-col space-y-3">
         {products.map(product => (
           <button
             key={product.id}
             onClick={() => addToCart(product)}
             disabled={!selectedFlavor}
-            className={`bg-white p-4 rounded-lg shadow-md transition-all active:scale-95 border-2 ${
+            className={`w-full bg-white p-6 rounded-lg shadow-md transition-all active:scale-95 border-2 ${
               selectedFlavor 
                 ? 'hover:shadow-lg border-transparent hover:border-pink-300 hover:bg-pink-50' 
                 : 'opacity-50 cursor-not-allowed border-gray-200'
             }`}
           >
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full mx-auto mb-3 flex items-center justify-center">
-                <span className="text-3xl">🍦</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center">
+                  <span className="text-3xl">🍦</span>
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-gray-800 text-lg mb-1">{product.name}</p>
+                  <p className="text-gray-600 text-sm">Format {product.size === 'small' ? 'Petit' : 'Grand'}</p>
+                </div>
               </div>
-              <p className="font-semibold text-gray-800 text-sm mb-1">{product.name}</p>
-              <p className="text-pink-600 font-bold text-lg">{product.price} HTG</p>
+              <p className="text-pink-600 font-bold text-2xl">{product.price} HTG</p>
             </div>
           </button>
         ))}
@@ -306,7 +331,7 @@ const ProduitsTab = ({ flavors, products }) => (
 );
 
 // ==================== COMPOSANT ONGLET FACTURES ====================
-const FacturesTab = ({ invoiceHistory }) => {
+const FacturesTab = ({ invoiceHistory, onRegenerate, isLoading }) => {
   if (invoiceHistory.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -330,24 +355,42 @@ const FacturesTab = ({ invoiceHistory }) => {
         {invoiceHistory.map((invoice, index) => (
           <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
-              <div>
+              <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <Receipt size={18} className="text-pink-600" />
                   <span className="font-bold text-gray-800">{invoice.number}</span>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-2">
                   <span className="flex items-center gap-1">
                     <Clock size={14} />
                     {invoice.date} à {invoice.time}
                   </span>
-                  <span>Client: {invoice.customerName || 'Client'}</span>
+                  <span className="flex items-center gap-1">
+                    <User size={14} />
+                    {invoice.customerName || 'Client'}
+                  </span>
                 </div>
-                <div className="mt-2 text-sm text-gray-600">
+                <div className="text-sm text-gray-600">
                   {invoice.items.length} article(s)
                 </div>
+                <div className="mt-2 text-sm text-gray-700">
+                  {invoice.items.map((item, i) => (
+                    <span key={i} className="inline-block bg-gray-100 rounded-full px-3 py-1 text-xs mr-2 mb-2">
+                      {item.name} x{item.quantity}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="text-right">
-                <span className="font-bold text-pink-600 text-lg">{invoice.total} HTG</span>
+              <div className="text-right flex flex-col items-end gap-2">
+                <span className="font-bold text-pink-600 text-xl">{invoice.total} HTG</span>
+                <button
+                  onClick={() => onRegenerate(invoice)}
+                  disabled={isLoading}
+                  className="flex items-center gap-1 bg-blue-50 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  <RotateCcw size={14} />
+                  Régénérer
+                </button>
               </div>
             </div>
           </div>
@@ -384,7 +427,7 @@ const ParametresTab = () => (
   </div>
 );
 
-// ==================== COMPOSANT PANIER (FLUX NORMAL) ====================
+// ==================== COMPOSANT PANIER ====================
 const CartSidebar = ({ 
   cart, 
   customerName, 
@@ -431,7 +474,7 @@ const CartSidebar = ({
   };
 
   return (
-    <div className="lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col">
+    <div className="lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full">
       {/* En-tête du panier */}
       <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -469,8 +512,8 @@ const CartSidebar = ({
         />
       </div>
 
-      {/* Liste des articles */}
-      <div className="flex-1 overflow-y-auto p-4 max-h-96 lg:max-h-full">
+      {/* Liste des articles - Scrollable */}
+      <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 350px)' }}>
         {cart.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <ShoppingCart size={48} className="mx-auto mb-3 opacity-30" />
