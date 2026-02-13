@@ -181,16 +181,7 @@ export default function XProfile() {
           )}
         </div>
 
-        {/* Last Online Status - Bottom Right of Banner */}
-        {!sellerData.is_online && sellerData.last_seen && (
-          <div className="absolute bottom-2 right-3">
-            <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
-              <span className="text-white text-xs font-medium">{sellerData.last_seen}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Profile Picture - Left aligned */}
+        {/* Profile Picture - Positioned on banner extending below */}
         <div className="absolute -bottom-12 left-4">
           <div className="relative">
             <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
@@ -211,10 +202,19 @@ export default function XProfile() {
             )}
           </div>
         </div>
+
+        {/* Last Online Status - Positioned on banner extending below (right side) */}
+        {!sellerData.is_online && sellerData.last_seen && (
+          <div className="absolute -bottom-6 right-4">
+            <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+              <span className="text-white text-xs font-medium">{sellerData.last_seen}</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Profile Info - Left aligned */}
-      <div className="px-4 pt-14 flex flex-col items-start text-left">
+      {/* Profile Info - Left aligned with more top padding to account for overlapping elements */}
+      <div className="px-4 pt-20 flex flex-col items-start text-left">
         {/* Name with Verified Badge and Username */}
         <div className="mb-1 flex flex-wrap items-center gap-1.5">
           <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
