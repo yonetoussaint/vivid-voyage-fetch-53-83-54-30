@@ -205,12 +205,12 @@ export default function XProfile() {
 
         {/* Last Online Status - Small gray bg with squircle borders */}
         {!sellerData.is_online && sellerData.last_seen && (
-          <div className="absolute -bottom-10 right-4">
-            <div className="bg-gray-100 px-3 py-1.5 rounded-2xl">
-              <span className="text-gray-700 text-xs font-medium">{sellerData.last_seen}</span>
-            </div>
-          </div>
-        )}
+  <div className="absolute -bottom-10 right-4">
+    <div className="bg-gray-100 px-2 py-0.5 rounded-md">
+      <span className="text-gray-700 text-xs font-medium">{sellerData.last_seen}</span>
+    </div>
+  </div>
+)}
       </div>
 
       {/* Profile Info - Original padding maintained, no shrinking */}
