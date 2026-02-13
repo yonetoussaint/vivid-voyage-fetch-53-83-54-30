@@ -5,6 +5,7 @@ import { UserSquare2, MoreHorizontal, MapPin, CalendarDays, Phone, Mail } from '
 const sellerData = {
   id: "JD12345678",
   name: "John Doe",
+  username: "@johndoe",
   image_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
   banner_url: "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&h=300&fit=crop",
   verified: true,
@@ -213,14 +214,15 @@ export default function XProfile() {
 
       {/* Profile Info - Left aligned */}
       <div className="px-4 pt-14 flex flex-col items-start text-left">
-        {/* Name with Verified Badge */}
-        <div className="mb-1 flex items-center gap-1.5">
+        {/* Name with Verified Badge and Username */}
+        <div className="mb-1 flex flex-wrap items-center gap-1.5">
           <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
           {sellerData.verified && (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
               <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
             </svg>
           )}
+          <span className="text-sm text-gray-500">{sellerData.username}</span>
         </div>
 
         {/* Bio */}
