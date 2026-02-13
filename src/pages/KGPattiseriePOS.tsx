@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, ShoppingCart, Plus, Minus, Trash2, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw, Search, Store, Share2, Check } from 'lucide-react';
+import { Menu, X, ShoppingCart, Plus, Minus, Trash2, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw, Search, Store, Share2, Check, Upload, Image as ImageIcon } from 'lucide-react';
 
 // ==================== COMPOSANT PRINCIPAL ====================
 const KGPattisseriePOS = () => {
@@ -12,6 +12,10 @@ const KGPattisseriePOS = () => {
   const [showCart, setShowCart] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [addingToCart, setAddingToCart] = useState(null);
+  
+  // Logo state
+  const [logoImage, setLogoImage] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
 
   const products = [
     { id: 1, name: '07 OZ - Fraise', price: 300, image: '🍓', category: '07 OZ', flavor: 'Fraise' },
@@ -28,18 +32,30 @@ const KGPattisseriePOS = () => {
 
   const categories = ['07 OZ', '16 OZ'];
 
+  // Handle logo upload
+  const handleLogoUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoImage(reader.result);
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const addToCart = async (product) => {
     setAddingToCart(product.id);
-    
-    // Simuler un délai réseau
+
     await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     const existingItem = cart.find(item => item.id === product.id);
-    
+
     if (!existingItem) {
       setCart([...cart, { ...product, quantity: 1 }]);
     }
-    
+
     setAddingToCart(null);
   };
 
@@ -77,7 +93,8 @@ const KGPattisseriePOS = () => {
       await generateAndDownloadImage({ 
         cart: invoice.items, 
         customerName: invoice.customerName, 
-        total: invoice.total 
+        total: invoice.total,
+        logo: logoImage // Pass logo to generation
       });
     } catch (error) {
       console.error('Erreur:', error);
@@ -100,8 +117,9 @@ const KGPattisseriePOS = () => {
         setMenuOpen={setMenuOpen} 
         cartCount={getTotalItems()}
         onCartClick={() => setShowCart(true)}
+        logoPreview={logoPreview} // Pass logo to header
       />
-      
+
       <SidebarMenu 
         menuOpen={menuOpen} 
         setMenuOpen={setMenuOpen} 
@@ -112,7 +130,6 @@ const KGPattisseriePOS = () => {
       <div className="flex-1 overflow-hidden">
         {activeTab === 'vente' ? (
           <>
-            {/* Store View - Style Uber Eats */}
             <StoreView 
               products={filteredProducts}
               categories={categories}
@@ -123,9 +140,9 @@ const KGPattisseriePOS = () => {
               onCartClick={() => setShowCart(true)}
               cart={cart}
               addingToCart={addingToCart}
+              logoPreview={logoPreview} // Pass logo to store view
             />
 
-            {/* Cart Drawer */}
             <CartDrawer 
               isOpen={showCart}
               onClose={() => setShowCart(false)}
@@ -139,6 +156,7 @@ const KGPattisseriePOS = () => {
               isLoading={isLoading}
               setIsLoading={setIsLoading}
               addToHistory={addToHistory}
+              logoImage={logoImage} // Pass logo to cart drawer
             />
           </>
         ) : (
@@ -154,7 +172,10 @@ const KGPattisseriePOS = () => {
               />
             )}
             {activeTab === 'parametres' && (
-              <ParametresTab />
+              <ParametresTab 
+                logoPreview={logoPreview}
+                onLogoUpload={handleLogoUpload}
+              />
             )}
           </div>
         )}
@@ -164,7 +185,7 @@ const KGPattisseriePOS = () => {
 };
 
 // ==================== COMPOSANT STORE VIEW (UBER EATS STYLE) ====================
-const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm, cartCount, onCartClick, cart, addingToCart }) => {
+const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm, cartCount, onCartClick, cart, addingToCart, logoPreview }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const filteredByCategory = selectedCategory === 'all' 
@@ -177,14 +198,16 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
 
   return (
     <div className="h-full flex flex-col bg-gray-100">
-      {/* Store Header - sticky en haut */}
       <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20">
         <div className="flex items-center gap-2 mb-3">
-          <Store size={24} className="text-pink-600" />
+          {logoPreview ? (
+            <img src={logoPreview} alt="Logo" className="w-8 h-8 object-contain" />
+          ) : (
+            <Store size={24} className="text-pink-600" />
+          )}
           <h1 className="text-xl font-bold text-gray-800">KG Pâtisserie</h1>
         </div>
-        
-        {/* Search Bar */}
+
         <div className="relative">
           <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
@@ -197,7 +220,6 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
         </div>
       </div>
 
-      {/* Categories - sticky en haut aussi */}
       <div className="bg-white px-4 py-3 border-b border-gray-200 sticky top-[88px] z-20">
         <div className="flex gap-2 overflow-x-auto pb-1">
           <button
@@ -226,7 +248,6 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
         </div>
       </div>
 
-      {/* Products Grid - avec padding bottom pour le panier fixed */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-3 pb-28">
           <div className="grid grid-cols-2 gap-3">
@@ -240,7 +261,7 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
               />
             ))}
           </div>
-          
+
           {filteredByCategory.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="text-6xl mb-4">😢</div>
@@ -250,7 +271,6 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
         </div>
       </div>
 
-      {/* Cart Bar - Fixed Bottom */}
       {cartCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
           <div className="p-3">
@@ -271,7 +291,6 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
   );
 };
 
-// ==================== COMPOSANT PRODUCT CARD ====================
 // ==================== COMPOSANT PRODUCT CARD ====================
 const ProductCard = ({ product, addToCart, isInCart, isLoading }) => {
   return (
@@ -320,7 +339,6 @@ const ProductCard = ({ product, addToCart, isInCart, isLoading }) => {
 };
 
 // ==================== COMPOSANT CART DRAWER ====================
-// ==================== COMPOSANT CART DRAWER ====================
 const CartDrawer = ({ 
   isOpen, 
   onClose, 
@@ -333,7 +351,8 @@ const CartDrawer = ({
   clearCart, 
   isLoading, 
   setIsLoading, 
-  addToHistory 
+  addToHistory,
+  logoImage 
 }) => {
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -363,17 +382,20 @@ const CartDrawer = ({
     };
 
     try {
-      const imageBlob = await generateImageBlob({ cart, customerName, total });
+      const imageBlob = await generateImageBlob({ 
+        cart, 
+        customerName, 
+        total,
+        logo: logoImage // Pass logo to image generation
+      });
 
       if (action === 'download') {
-        // Téléchargement direct
         const link = document.createElement('a');
         link.download = `facture-${invoice.number}.png`;
         link.href = URL.createObjectURL(imageBlob);
         link.click();
         URL.revokeObjectURL(link.href);
       } else {
-        // Partage natif
         const file = new File([imageBlob], `facture-${invoice.number}.png`, { type: 'image/png' });
 
         if (navigator.share) {
@@ -383,7 +405,6 @@ const CartDrawer = ({
             files: [file]
           });
         } else {
-          // Fallback pour les navigateurs qui ne supportent pas le partage
           alert('Le partage n\'est pas supporté sur ce navigateur. Utilisez le téléchargement à la place.');
         }
       }
@@ -405,15 +426,12 @@ const CartDrawer = ({
 
   return (
     <>
-      {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
         onClick={onClose}
       />
 
-      {/* Drawer */}
       <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform flex flex-col">
-        {/* Header */}
         <div className="px-4 py-4 border-b border-gray-200 flex justify-between items-center bg-white sticky top-0">
           <div className="flex items-center gap-3">
             <ShoppingCart size={24} className="text-pink-600" />
@@ -442,7 +460,6 @@ const CartDrawer = ({
           </div>
         </div>
 
-        {/* Customer Name */}
         <div className="px-4 py-4 border-b border-gray-200 bg-gray-50">
           <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
             <User size={16} />
@@ -457,7 +474,6 @@ const CartDrawer = ({
           />
         </div>
 
-        {/* Cart Items */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400">
@@ -483,7 +499,6 @@ const CartDrawer = ({
           )}
         </div>
 
-        {/* Footer - Total & Action Buttons */}
         {cart.length > 0 && (
           <div className="px-4 py-4 border-t border-gray-200 bg-white sticky bottom-0">
             <div className="flex justify-between items-center mb-4">
@@ -492,7 +507,6 @@ const CartDrawer = ({
             </div>
 
             <div className="flex gap-3">
-              {/* Bouton Téléchargement - Clean minimal style */}
               <button
                 onClick={() => handleGenerateInvoice('download')}
                 disabled={isDownloading || isSharing}
@@ -506,7 +520,6 @@ const CartDrawer = ({
                 )}
               </button>
 
-              {/* Bouton Partager - Clean primary style */}
               <button
                 onClick={() => handleGenerateInvoice('share')}
                 disabled={isSharing || isDownloading}
@@ -532,9 +545,8 @@ const CartDrawer = ({
   );
 };
 
-
 // ==================== FONCTION DE GÉNÉRATION D'IMAGE BLOB ====================
-const generateImageBlob = async ({ cart, customerName, total }) => {
+const generateImageBlob = async ({ cart, customerName, total, logo }) => {
   const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
   const invoice = {
     number: invoiceNumber,
@@ -543,11 +555,11 @@ const generateImageBlob = async ({ cart, customerName, total }) => {
     items: [...cart],
     total: total
   };
-  
+
   await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-  
-  const invoiceHTML = generateInvoiceHTML({ invoice, customerName });
-  
+
+  const invoiceHTML = generateInvoiceHTML({ invoice, customerName, logo });
+
   const iframe = document.createElement('iframe');
   iframe.style.position = 'absolute';
   iframe.style.width = '1200px';
@@ -555,15 +567,15 @@ const generateImageBlob = async ({ cart, customerName, total }) => {
   iframe.style.left = '-9999px';
   iframe.style.top = '0';
   iframe.style.border = 'none';
-  
+
   document.body.appendChild(iframe);
-  
+
   iframe.contentDocument.open();
   iframe.contentDocument.write(invoiceHTML);
   iframe.contentDocument.close();
-  
+
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   const canvas = await window.html2canvas(iframe.contentDocument.body, { 
     scale: 2,
     backgroundColor: '#ffffff',
@@ -573,9 +585,9 @@ const generateImageBlob = async ({ cart, customerName, total }) => {
     windowWidth: 1200,
     windowHeight: 1600
   });
-  
+
   document.body.removeChild(iframe);
-  
+
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
       resolve(blob);
@@ -627,7 +639,7 @@ const CartItem = ({ item, updateQuantity, removeFromCart }) => (
 );
 
 // ==================== COMPOSANT HEADER ====================
-const Header = ({ menuOpen, setMenuOpen, cartCount, onCartClick }) => (
+const Header = ({ menuOpen, setMenuOpen, cartCount, onCartClick, logoPreview }) => (
   <header className="bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-sm sticky top-0 z-30">
     <div className="flex items-center justify-between px-3 py-2">
       <button 
@@ -636,9 +648,18 @@ const Header = ({ menuOpen, setMenuOpen, cartCount, onCartClick }) => (
       >
         {menuOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
-      <div className="text-center flex-1">
-        <h1 className="text-lg font-bold">KG Pâtisserie</h1>
-        <p className="text-xs text-pink-100">Saint-Marc, Ruelle Désir</p>
+      <div className="text-center flex-1 flex items-center justify-center gap-2">
+        {logoPreview ? (
+          <img src={logoPreview} alt="Logo" className="w-8 h-8 object-contain rounded-full bg-white p-1" />
+        ) : (
+          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+            <span className="text-pink-600 font-bold text-sm">KG</span>
+          </div>
+        )}
+        <div>
+          <h1 className="text-lg font-bold">KG Pâtisserie</h1>
+          <p className="text-xs text-pink-100">Saint-Marc, Ruelle Désir</p>
+        </div>
       </div>
       <button 
         onClick={onCartClick}
@@ -792,35 +813,134 @@ const FacturesTab = ({ invoiceHistory, onRegenerate, isLoading }) => {
   );
 };
 
-// ==================== COMPOSANT ONGLET PARAMETRES ====================
-const ParametresTab = () => (
-  <div className="bg-white rounded-lg shadow-sm p-4">
-    <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-      <span className="text-xl">⚙️</span> Paramètres
-    </h2>
-    <div className="space-y-3">
-      <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">Nom</label>
-        <input type="text" value="KG Pâtisserie" className="w-full p-2 text-sm border rounded-lg bg-gray-50" readOnly />
+// ==================== COMPOSANT ONGLET PARAMETRES AVEC UPLOAD LOGO ====================
+const ParametresTab = ({ logoPreview, onLogoUpload }) => {
+  const [storeName, setStoreName] = useState('KG Pâtisserie');
+  const [address, setAddress] = useState('Saint-Marc, Ruelle Désir');
+  const [email, setEmail] = useState('kentiagede@gmail.com');
+  const [phone, setPhone] = useState('+509 1234 5678');
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-4">
+      <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <span className="text-xl">⚙️</span> Paramètres
+      </h2>
+      
+      {/* Section Logo */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <ImageIcon size={18} className="text-pink-600" />
+          Logo de l'entreprise
+        </h3>
+        
+        <div className="flex items-center gap-4">
+          {/* Preview du logo */}
+          <div className="w-20 h-20 bg-gradient-to-br from-pink-100 to-pink-200 rounded-lg flex items-center justify-center overflow-hidden border-2 border-pink-300">
+            {logoPreview ? (
+              <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain" />
+            ) : (
+              <span className="text-3xl font-bold text-pink-600">KG</span>
+            )}
+          </div>
+          
+          {/* Bouton upload */}
+          <div className="flex-1">
+            <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-pink-300 border-dashed rounded-lg cursor-pointer bg-pink-50 hover:bg-pink-100 transition-colors">
+              <div className="flex flex-col items-center justify-center pt-3 pb-2">
+                <Upload size={20} className="text-pink-600 mb-1" />
+                <p className="text-xs text-pink-600 font-medium">Télécharger un logo</p>
+                <p className="text-xs text-gray-500">PNG, JPG (max. 2MB)</p>
+              </div>
+              <input 
+                type="file" 
+                className="hidden" 
+                accept="image/*"
+                onChange={onLogoUpload}
+              />
+            </label>
+          </div>
+        </div>
+        
+        {logoPreview && (
+          <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+            <Check size={12} />
+            Logo téléchargé avec succès
+          </p>
+        )}
       </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">Adresse</label>
-        <input type="text" value="Saint-Marc, Ruelle Désir" className="w-full p-2 text-sm border rounded-lg bg-gray-50" readOnly />
-      </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
-        <input type="email" value="kentiagede@gmail.com" className="w-full p-2 text-sm border rounded-lg bg-gray-50" readOnly />
-      </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">Téléphone</label>
-        <input type="text" value="+509 1234 5678" className="w-full p-2 text-sm border rounded-lg bg-gray-50" readOnly />
+
+      {/* Informations de l'entreprise */}
+      <div className="space-y-3">
+        <h3 className="font-semibold text-gray-700 mb-2">Informations de l'entreprise</h3>
+        
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Nom</label>
+          <input 
+            type="text" 
+            value={storeName}
+            onChange={(e) => setStoreName(e.target.value)}
+            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Adresse</label>
+          <input 
+            type="text" 
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+          <input 
+            type="email" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Téléphone</label>
+          <input 
+            type="text" 
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">NIF</label>
+          <input 
+            type="text" 
+            defaultValue="123-456-789-0"
+            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">RCCM</label>
+          <input 
+            type="text" 
+            defaultValue="SA-2024-001234"
+            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+          />
+        </div>
+
+        <button className="w-full bg-pink-600 text-white py-2 rounded-lg font-medium hover:bg-pink-700 transition-colors mt-4">
+          Sauvegarder les modifications
+        </button>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
-// ==================== FONCTION DE GÉNÉRATION DE FACTURE (VERSION ORIGINALE) ====================
-const generateInvoiceHTML = ({ invoice, customerName }) => {
+// ==================== FONCTION DE GÉNÉRATION DE FACTURE AVEC LOGO ====================
+const generateInvoiceHTML = ({ invoice, customerName, logo }) => {
   const itemsHTML = invoice.items.map((item, index) => `
     <tr style="border-bottom: 1px solid #e5e7eb; ${index % 2 === 0 ? 'background-color: #f9fafb;' : ''}">
       <td style="padding: 16px 24px; font-size: 16px; color: #1f2937; font-family: 'Inter', Arial, sans-serif;">${item.name}</td>
@@ -829,6 +949,13 @@ const generateInvoiceHTML = ({ invoice, customerName }) => {
       <td style="text-align: right; padding: 16px 24px; font-size: 16px; font-weight: bold; color: #1f2937; font-family: 'Inter', Arial, sans-serif;">${(item.price * item.quantity).toFixed(2)} HTG</td>
     </tr>
   `).join('');
+
+  // Logo HTML - soit l'image uploadée, soit le texte par défaut
+  const logoHTML = logo 
+    ? `<img src="${logo}" alt="Logo" style="width: 100px; height: 100px; object-fit: contain; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" />`
+    : `<div style="width: 100px; height: 100px; background: linear-gradient(135deg, #db2777, #be185d); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <span style="color: white; font-size: 42px; font-weight: bold;">KG</span>
+       </div>`;
 
   return `<!DOCTYPE html>
 <html>
@@ -856,12 +983,10 @@ const generateInvoiceHTML = ({ invoice, customerName }) => {
   </head>
   <body>
     <div class="invoice-container">
-      <!-- En-tête -->
+      <!-- En-tête avec logo -->
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 2px solid #e5e7eb;">
         <div>
-          <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #db2777, #be185d); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <span style="color: white; font-size: 42px; font-weight: bold;">KG</span>
-          </div>
+          ${logoHTML}
           <h1 style="font-size: 42px; font-weight: 800; color: #1f2937; margin: 0 0 10px 0;">KG Pâtisserie</h1>
           <p style="font-size: 18px; color: #4b5563; margin: 6px 0;">Saint-Marc, Ruelle Désir</p>
           <p style="font-size: 18px; color: #4b5563; margin: 6px 0;">Haïti</p>
@@ -973,7 +1098,7 @@ const generateInvoiceHTML = ({ invoice, customerName }) => {
 </html>`;
 };
 
-const generateAndDownloadImage = async ({ cart, customerName, total }) => {
+const generateAndDownloadImage = async ({ cart, customerName, total, logo }) => {
   const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
   const invoice = {
     number: invoiceNumber,
@@ -982,11 +1107,11 @@ const generateAndDownloadImage = async ({ cart, customerName, total }) => {
     items: [...cart],
     total: total
   };
-  
+
   await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-  
-  const invoiceHTML = generateInvoiceHTML({ invoice, customerName });
-  
+
+  const invoiceHTML = generateInvoiceHTML({ invoice, customerName, logo });
+
   const iframe = document.createElement('iframe');
   iframe.style.position = 'absolute';
   iframe.style.width = '1200px';
@@ -994,15 +1119,15 @@ const generateAndDownloadImage = async ({ cart, customerName, total }) => {
   iframe.style.left = '-9999px';
   iframe.style.top = '0';
   iframe.style.border = 'none';
-  
+
   document.body.appendChild(iframe);
-  
+
   iframe.contentDocument.open();
   iframe.contentDocument.write(invoiceHTML);
   iframe.contentDocument.close();
-  
+
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   const canvas = await window.html2canvas(iframe.contentDocument.body, { 
     scale: 2,
     backgroundColor: '#ffffff',
@@ -1012,9 +1137,9 @@ const generateAndDownloadImage = async ({ cart, customerName, total }) => {
     windowWidth: 1200,
     windowHeight: 1600
   });
-  
+
   document.body.removeChild(iframe);
-  
+
   const link = document.createElement('a');
   link.download = `facture-${invoice.number}.png`;
   link.href = canvas.toDataURL('image/png', 1.0);
