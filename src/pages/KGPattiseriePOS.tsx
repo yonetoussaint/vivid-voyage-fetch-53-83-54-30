@@ -160,6 +160,7 @@ const KGPattisseriePOS = () => {
 };
 
 // ==================== COMPOSANT STORE VIEW (UBER EATS STYLE) ====================
+// ==================== COMPOSANT STORE VIEW (UBER EATS STYLE) ====================
 const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm, cartCount, onCartClick }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -218,44 +219,49 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
         </div>
       </div>
 
-      {/* Products Grid - 2 columns */}
-      <div className="flex-1 overflow-y-auto p-3 pb-24">
-        <div className="grid grid-cols-2 gap-3">
-          {filteredByCategory.map(product => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              addToCart={addToCart} 
-            />
-          ))}
-        </div>
-        
-        {filteredByCategory.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="text-6xl mb-4">😢</div>
-            <p className="text-gray-500 text-center">Aucun produit trouvé</p>
+      {/* Products Grid - 2 columns avec padding bottom pour le panier sticky */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-3 pb-28">
+          <div className="grid grid-cols-2 gap-3">
+            {filteredByCategory.map(product => (
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                addToCart={addToCart} 
+              />
+            ))}
           </div>
-        )}
+          
+          {filteredByCategory.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="text-6xl mb-4">😢</div>
+              <p className="text-gray-500 text-center">Aucun produit trouvé</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Cart Bar - Sticky Bottom */}
+      {/* Cart Bar - Sticky Bottom avec z-index élevé */}
       {cartCount > 0 && (
-        <div className="sticky bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-lg">
-          <button
-            onClick={onCartClick}
-            className="w-full bg-pink-600 text-white py-4 rounded-xl font-bold flex items-center justify-between px-6 hover:bg-pink-700 transition-colors shadow-md"
-          >
-            <div className="flex items-center gap-3">
-              <ShoppingCart size={24} />
-              <span className="text-lg">{cartCount} article{cartCount > 1 ? 's' : ''}</span>
-            </div>
-            <span className="text-lg">Voir le panier →</span>
-          </button>
+        <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-30">
+          <div className="p-3">
+            <button
+              onClick={onCartClick}
+              className="w-full bg-pink-600 text-white py-4 rounded-xl font-bold flex items-center justify-between px-6 hover:bg-pink-700 transition-colors shadow-md"
+            >
+              <div className="flex items-center gap-3">
+                <ShoppingCart size={24} />
+                <span className="text-lg">{cartCount} article{cartCount > 1 ? 's' : ''}</span>
+              </div>
+              <span className="text-lg">Voir le panier →</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 };
+
 
 // ==================== COMPOSANT PRODUCT CARD ====================
 const ProductCard = ({ product, addToCart }) => {
