@@ -109,10 +109,10 @@ const KGPattisseriePOS = () => {
       />
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        {/* Zone principale */}
+        {/* Zone principale - vide maintenant */}
         <div className="flex-1 overflow-y-auto p-4">
           {activeTab === 'vente' && (
-           
+            <div className="h-full"></div>
           )}
 
           {activeTab === 'produits' && (
