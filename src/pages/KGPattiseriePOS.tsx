@@ -428,6 +428,7 @@ const ParametresTab = () => (
 );
 
 // ==================== COMPOSANT PANIER ====================
+// ==================== COMPOSANT PANIER ====================
 const CartSidebar = ({ 
   cart, 
   customerName, 
@@ -474,7 +475,7 @@ const CartSidebar = ({
   };
 
   return (
-    <div className="lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full">
+    <div className="lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full relative">
       {/* En-tête du panier */}
       <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -512,8 +513,8 @@ const CartSidebar = ({
         />
       </div>
 
-      {/* Liste des articles - Scrollable */}
-      <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 350px)' }}>
+      {/* Liste des articles - Scrollable avec hauteur calculée pour laisser place au sticky */}
+      <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: cart.length > 0 ? 'calc(100vh - 450px)' : 'calc(100vh - 300px)' }}>
         {cart.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <ShoppingCart size={48} className="mx-auto mb-3 opacity-30" />
@@ -534,31 +535,33 @@ const CartSidebar = ({
         )}
       </div>
 
-      {/* Total et bouton d'action - Sticky en bas */}
+      {/* Total et bouton d'action - Sticky en bas ABSOLU */}
       {cart.length > 0 && (
-        <div className="p-4 border-t bg-gray-50 sticky bottom-0">
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-gray-600 font-medium">Sous-total</span>
-            <span className="font-bold text-xl text-pink-600">{getTotalAmount()} HTG</span>
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 shadow-lg">
+          <div className="p-4 bg-gray-50">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-gray-600 font-medium">Sous-total</span>
+              <span className="font-bold text-xl text-pink-600">{getTotalAmount()} HTG</span>
+            </div>
+            
+            <button
+              onClick={handleGenerateInvoice}
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-4 px-4 rounded-lg font-semibold hover:from-pink-700 hover:to-pink-600 transition-all shadow-lg flex items-center justify-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <Loader size={20} className="animate-spin" />
+                  Génération en cours...
+                </>
+              ) : (
+                <>
+                  <Download size={20} />
+                  Télécharger la facture
+                </>
+              )}
+            </button>
           </div>
-          
-          <button
-            onClick={handleGenerateInvoice}
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-4 px-4 rounded-lg font-semibold hover:from-pink-700 hover:to-pink-600 transition-all shadow-lg flex items-center justify-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <>
-                <Loader size={20} className="animate-spin" />
-                Génération en cours...
-              </>
-            ) : (
-              <>
-                <Download size={20} />
-                Télécharger la facture
-              </>
-            )}
-          </button>
         </div>
       )}
     </div>
