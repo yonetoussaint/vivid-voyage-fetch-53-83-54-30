@@ -260,13 +260,13 @@ const SystemeStationService = () => {
         );
       case 'liasse': // ADD THIS NEW CASE
         return (
-          <div className="p-2 sm:p-4">
+         
             <Liasse
               shift={shift}
               date={date}
               vendeurs={vendeurs}
             />
-          </div>
+          
         );
       default:
         return (
