@@ -159,8 +159,8 @@ export default function XProfile() {
           )}
         </div>
 
-        {/* Profile Picture - Centered */}
-        <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
+        {/* Profile Picture - Left aligned */}
+        <div className="absolute -bottom-12 left-4">
           <div className="relative">
             <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
               <div className="w-full h-full rounded-full bg-white p-0.5">
@@ -190,10 +190,10 @@ export default function XProfile() {
         </div>
       </div>
 
-      {/* Profile Info - All Centered */}
-      <div className="px-4 pt-14 flex flex-col items-center text-center">
+      {/* Profile Info - Left aligned */}
+      <div className="px-4 pt-14 flex flex-col items-start text-left">
         {/* Name with Verified Badge */}
-        <div className="mb-2 flex items-center justify-center gap-1.5">
+        <div className="mb-1 flex items-center gap-1.5">
           <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
           {sellerData.verified && (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
@@ -209,8 +209,8 @@ export default function XProfile() {
           </p>
         </div>
 
-        {/* Info Links - Centered */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-2 text-xs text-gray-600">
+        {/* Info Links - Left aligned */}
+        <div className="flex flex-wrap items-center gap-3 mb-2 text-xs text-gray-600">
           <div className="flex items-center gap-1">
             <MapPin size={14} className="text-gray-500" />
             <span>{sellerData.location}</span>
