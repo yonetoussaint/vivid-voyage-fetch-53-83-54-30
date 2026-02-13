@@ -349,10 +349,10 @@ const CartDrawer = ({
     } else {
       setIsSharing(true);
     }
-    
+
     const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
     const total = getTotalAmount();
-    
+
     const invoice = {
       number: invoiceNumber,
       date: new Date().toLocaleDateString('fr-FR'),
@@ -364,7 +364,7 @@ const CartDrawer = ({
 
     try {
       const imageBlob = await generateImageBlob({ cart, customerName, total });
-      
+
       if (action === 'download') {
         // Téléchargement direct
         const link = document.createElement('a');
@@ -375,7 +375,7 @@ const CartDrawer = ({
       } else {
         // Partage natif
         const file = new File([imageBlob], `facture-${invoice.number}.png`, { type: 'image/png' });
-        
+
         if (navigator.share) {
           await navigator.share({
             title: `Facture ${invoice.number}`,
@@ -387,7 +387,7 @@ const CartDrawer = ({
           alert('Le partage n\'est pas supporté sur ce navigateur. Utilisez le téléchargement à la place.');
         }
       }
-      
+
       addToHistory(invoice);
       clearCart();
       setCustomerName('');
@@ -410,7 +410,7 @@ const CartDrawer = ({
         className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
         onClick={onClose}
       />
-      
+
       {/* Drawer */}
       <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform flex flex-col">
         {/* Header */}
@@ -485,42 +485,42 @@ const CartDrawer = ({
 
         {/* Footer - Total & Action Buttons */}
         {cart.length > 0 && (
-          <div className="px-4 py-4 border-t border-gray-200 bg-white sticky bottom-0 shadow-lg">
+          <div className="px-4 py-4 border-t border-gray-200 bg-white sticky bottom-0">
             <div className="flex justify-between items-center mb-4">
               <span className="text-gray-700 font-medium">Total</span>
               <span className="font-bold text-2xl text-pink-600">{getTotalAmount()} HTG</span>
             </div>
-            
+
             <div className="flex gap-3">
-              {/* Bouton Téléchargement - Petit, icône seulement */}
+              {/* Bouton Téléchargement - Clean minimal style */}
               <button
                 onClick={() => handleGenerateInvoice('download')}
                 disabled={isDownloading || isSharing}
-                className="bg-pink-600 text-white p-4 rounded-xl hover:bg-pink-700 transition-colors shadow-lg flex items-center justify-center w-14 h-14 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-white border-2 border-pink-600 text-pink-600 p-3 rounded-lg hover:bg-pink-50 transition-all flex items-center justify-center w-12 h-12 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Télécharger la facture"
               >
                 {isDownloading ? (
-                  <Loader size={24} className="animate-spin" />
+                  <Loader size={20} className="animate-spin" />
                 ) : (
-                  <Download size={24} />
+                  <Download size={20} />
                 )}
               </button>
 
-              {/* Bouton Partager - Pleine largeur */}
+              {/* Bouton Partager - Clean primary style */}
               <button
                 onClick={() => handleGenerateInvoice('share')}
                 disabled={isSharing || isDownloading}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-blue-600 transition-all shadow-lg flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-pink-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-pink-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSharing ? (
                   <>
-                    <Loader size={24} className="animate-spin" />
-                    Préparation...
+                    <Loader size={20} className="animate-spin" />
+                    <span>Préparation...</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-2xl">📤</span>
-                    Partager Facture
+                    <Share2 size={20} />
+                    <span>Partager Facture</span>
                   </>
                 )}
               </button>
@@ -531,6 +531,7 @@ const CartDrawer = ({
     </>
   );
 };
+
 
 // ==================== FONCTION DE GÉNÉRATION D'IMAGE BLOB ====================
 const generateImageBlob = async ({ cart, customerName, total }) => {
