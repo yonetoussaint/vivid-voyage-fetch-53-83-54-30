@@ -320,6 +320,7 @@ const ProductCard = ({ product, addToCart, isInCart, isLoading }) => {
 };
 
 // ==================== COMPOSANT CART DRAWER ====================
+// ==================== COMPOSANT CART DRAWER ====================
 const CartDrawer = ({ 
   isOpen, 
   onClose, 
@@ -334,13 +335,20 @@ const CartDrawer = ({
   setIsLoading, 
   addToHistory 
 }) => {
-  const handleGenerateInvoice = async () => {
+  const [isSharing, setIsSharing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleGenerateInvoice = async (action = 'download') => {
     if (cart.length === 0) {
       alert('Panier vide');
       return;
     }
 
-    setIsLoading(true);
+    if (action === 'download') {
+      setIsDownloading(true);
+    } else {
+      setIsSharing(true);
+    }
     
     const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
     const total = getTotalAmount();
@@ -355,16 +363,41 @@ const CartDrawer = ({
     };
 
     try {
-      await generateAndDownloadImage({ cart, customerName, total });
+      const imageBlob = await generateImageBlob({ cart, customerName, total });
+      
+      if (action === 'download') {
+        // Téléchargement direct
+        const link = document.createElement('a');
+        link.download = `facture-${invoice.number}.png`;
+        link.href = URL.createObjectURL(imageBlob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+      } else {
+        // Partage natif
+        const file = new File([imageBlob], `facture-${invoice.number}.png`, { type: 'image/png' });
+        
+        if (navigator.share) {
+          await navigator.share({
+            title: `Facture ${invoice.number}`,
+            text: `Facture KG Pâtisserie - ${customerName || 'Client'} - Total: ${total} HTG`,
+            files: [file]
+          });
+        } else {
+          // Fallback pour les navigateurs qui ne supportent pas le partage
+          alert('Le partage n\'est pas supporté sur ce navigateur. Utilisez le téléchargement à la place.');
+        }
+      }
+      
       addToHistory(invoice);
       clearCart();
       setCustomerName('');
       onClose();
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de la génération de la facture');
+      alert(`Erreur lors de la ${action === 'download' ? 'génération' : 'génération et du partage'} de la facture`);
     } finally {
-      setIsLoading(false);
+      setIsDownloading(false);
+      setIsSharing(false);
     }
   };
 
@@ -450,7 +483,7 @@ const CartDrawer = ({
           )}
         </div>
 
-        {/* Footer - Total & Checkout */}
+        {/* Footer - Total & Action Buttons */}
         {cart.length > 0 && (
           <div className="px-4 py-4 border-t border-gray-200 bg-white sticky bottom-0 shadow-lg">
             <div className="flex justify-between items-center mb-4">
@@ -458,28 +491,95 @@ const CartDrawer = ({
               <span className="font-bold text-2xl text-pink-600">{getTotalAmount()} HTG</span>
             </div>
             
-            <button
-              onClick={handleGenerateInvoice}
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-4 rounded-xl font-bold hover:from-pink-700 hover:to-pink-600 transition-all shadow-lg flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
+            <div className="flex gap-3">
+              {/* Bouton Téléchargement - Petit, icône seulement */}
+              <button
+                onClick={() => handleGenerateInvoice('download')}
+                disabled={isDownloading || isSharing}
+                className="bg-pink-600 text-white p-4 rounded-xl hover:bg-pink-700 transition-colors shadow-lg flex items-center justify-center w-14 h-14 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Télécharger la facture"
+              >
+                {isDownloading ? (
                   <Loader size={24} className="animate-spin" />
-                  Génération...
-                </>
-              ) : (
-                <>
+                ) : (
                   <Download size={24} />
-                  Télécharger la facture
-                </>
-              )}
-            </button>
+                )}
+              </button>
+
+              {/* Bouton Partager - Pleine largeur */}
+              <button
+                onClick={() => handleGenerateInvoice('share')}
+                disabled={isSharing || isDownloading}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-blue-600 transition-all shadow-lg flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSharing ? (
+                  <>
+                    <Loader size={24} className="animate-spin" />
+                    Préparation...
+                  </>
+                ) : (
+                  <>
+                    <span className="text-2xl">📤</span>
+                    Partager Facture
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         )}
       </div>
     </>
   );
+};
+
+// ==================== FONCTION DE GÉNÉRATION D'IMAGE BLOB ====================
+const generateImageBlob = async ({ cart, customerName, total }) => {
+  const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
+  const invoice = {
+    number: invoiceNumber,
+    date: new Date().toLocaleDateString('fr-FR'),
+    time: new Date().toLocaleTimeString('fr-FR'),
+    items: [...cart],
+    total: total
+  };
+  
+  await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  
+  const invoiceHTML = generateInvoiceHTML({ invoice, customerName });
+  
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'absolute';
+  iframe.style.width = '1200px';
+  iframe.style.height = '1600px';
+  iframe.style.left = '-9999px';
+  iframe.style.top = '0';
+  iframe.style.border = 'none';
+  
+  document.body.appendChild(iframe);
+  
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(invoiceHTML);
+  iframe.contentDocument.close();
+  
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const canvas = await window.html2canvas(iframe.contentDocument.body, { 
+    scale: 2,
+    backgroundColor: '#ffffff',
+    logging: false,
+    allowTaint: true,
+    useCORS: true,
+    windowWidth: 1200,
+    windowHeight: 1600
+  });
+  
+  document.body.removeChild(iframe);
+  
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(blob);
+    }, 'image/png', 1.0);
+  });
 };
 
 // ==================== COMPOSANT ARTICLE DU PANIER ====================
