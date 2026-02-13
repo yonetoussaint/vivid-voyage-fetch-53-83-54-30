@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, ShoppingCart, Plus, Minus, Trash2, FileText, Download, Home, Package, Settings, Receipt, User, Loader } from 'lucide-react';
+import { Menu, X, ShoppingCart, Plus, Minus, Trash2, FileText, Download, Home, Package, Settings, Receipt, User, Loader, Clock } from 'lucide-react';
 
 // ==================== COMPOSANT PRINCIPAL ====================
 const KGPattisseriePOS = () => {
@@ -8,7 +8,8 @@ const KGPattisseriePOS = () => {
   const [cart, setCart] = useState([]);
   const [selectedFlavor, setSelectedFlavor] = useState('');
   const [customerName, setCustomerName] = useState('');
-  const [isLoading, setIsLoading] = useState({ image: false, pdf: false });
+  const [isLoading, setIsLoading] = useState(false);
+  const [invoiceHistory, setInvoiceHistory] = useState([]);
 
   const flavors = [
     { id: 1, name: 'Fraise' },
@@ -63,6 +64,10 @@ const KGPattisseriePOS = () => {
     setCart([]);
   };
 
+  const addToHistory = (invoice) => {
+    setInvoiceHistory(prev => [invoice, ...prev]);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header 
@@ -80,7 +85,7 @@ const KGPattisseriePOS = () => {
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Zone principale - Produits */}
-        <div className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-4">
+        <div className="flex-1 overflow-y-auto p-4">
           {activeTab === 'vente' && (
             <VenteTab 
               flavors={flavors}
@@ -99,7 +104,9 @@ const KGPattisseriePOS = () => {
           )}
 
           {activeTab === 'factures' && (
-            <FacturesTab />
+            <FacturesTab 
+              invoiceHistory={invoiceHistory}
+            />
           )}
 
           {activeTab === 'parametres' && (
@@ -107,7 +114,7 @@ const KGPattisseriePOS = () => {
           )}
         </div>
 
-        {/* Panier - Mobile Friendly */}
+        {/* Panier - Flux normal */}
         {activeTab === 'vente' && (
           <CartSidebar 
             cart={cart}
@@ -119,6 +126,7 @@ const KGPattisseriePOS = () => {
             clearCart={clearCart}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
+            addToHistory={addToHistory}
           />
         )}
       </div>
@@ -202,7 +210,6 @@ const SidebarMenu = ({ menuOpen, setMenuOpen, activeTab, setActiveTab }) => {
 // ==================== COMPOSANT ONGLET VENTE ====================
 const VenteTab = ({ flavors, products, selectedFlavor, setSelectedFlavor, addToCart }) => (
   <div className="space-y-6">
-    {/* Sélecteur de Saveur */}
     <div className="bg-white p-4 rounded-lg shadow-md">
       <label className="block text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
         <span className="text-2xl">🍦</span>
@@ -222,7 +229,6 @@ const VenteTab = ({ flavors, products, selectedFlavor, setSelectedFlavor, addToC
       </select>
     </div>
 
-    {/* Formats de Glace */}
     <div>
       <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
         <span className="bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm">
@@ -300,17 +306,56 @@ const ProduitsTab = ({ flavors, products }) => (
 );
 
 // ==================== COMPOSANT ONGLET FACTURES ====================
-const FacturesTab = () => (
-  <div className="bg-white rounded-lg shadow-md p-6">
-    <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-      <span>📋</span> Historique des Factures
-    </h2>
-    <div className="text-center py-12 text-gray-400">
-      <Receipt size={48} className="mx-auto mb-3 opacity-30" />
-      <p>Aucune facture enregistrée pour le moment</p>
+const FacturesTab = ({ invoiceHistory }) => {
+  if (invoiceHistory.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <span>📋</span> Historique des Factures
+        </h2>
+        <div className="text-center py-12 text-gray-400">
+          <Receipt size={48} className="mx-auto mb-3 opacity-30" />
+          <p>Aucune facture générée pour le moment</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <span>📋</span> Historique des Factures
+      </h2>
+      <div className="space-y-4">
+        {invoiceHistory.map((invoice, index) => (
+          <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Receipt size={18} className="text-pink-600" />
+                  <span className="font-bold text-gray-800">{invoice.number}</span>
+                </div>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <Clock size={14} />
+                    {invoice.date} à {invoice.time}
+                  </span>
+                  <span>Client: {invoice.customerName || 'Client'}</span>
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  {invoice.items.length} article(s)
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="font-bold text-pink-600 text-lg">{invoice.total} HTG</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ==================== COMPOSANT ONGLET PARAMETRES ====================
 const ParametresTab = () => (
@@ -339,7 +384,7 @@ const ParametresTab = () => (
   </div>
 );
 
-// ==================== COMPOSANT PANIER (MOBILE FRIENDLY) ====================
+// ==================== COMPOSANT PANIER (FLUX NORMAL) ====================
 const CartSidebar = ({ 
   cart, 
   customerName, 
@@ -349,10 +394,44 @@ const CartSidebar = ({
   getTotalAmount, 
   clearCart, 
   isLoading, 
-  setIsLoading 
+  setIsLoading,
+  addToHistory
 }) => {
+  const handleGenerateInvoice = async () => {
+    if (cart.length === 0) {
+      alert('Panier vide');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
+    const total = getTotalAmount();
+    
+    const invoice = {
+      number: invoiceNumber,
+      date: new Date().toLocaleDateString('fr-FR'),
+      time: new Date().toLocaleTimeString('fr-FR'),
+      items: [...cart],
+      total: total,
+      customerName: customerName || 'Client'
+    };
+
+    try {
+      await generateAndDownloadImage({ cart, customerName, total });
+      addToHistory(invoice);
+      clearCart();
+      setCustomerName('');
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la génération de la facture');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto shadow-lg lg:shadow-none">
+    <div className="lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col">
       {/* En-tête du panier */}
       <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -390,8 +469,8 @@ const CartSidebar = ({
         />
       </div>
 
-      {/* Liste des articles - Scrollable */}
-      <div className="flex-1 overflow-y-auto p-4 max-h-64 lg:max-h-full">
+      {/* Liste des articles */}
+      <div className="flex-1 overflow-y-auto p-4 max-h-96 lg:max-h-full">
         {cart.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <ShoppingCart size={48} className="mx-auto mb-3 opacity-30" />
@@ -412,48 +491,31 @@ const CartSidebar = ({
         )}
       </div>
 
-      {/* Total et boutons d'action */}
+      {/* Total et bouton d'action - Sticky en bas */}
       {cart.length > 0 && (
-        <div className="p-4 border-t bg-gray-50 space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Sous-total</span>
-            <span className="font-bold text-lg">{getTotalAmount()} HTG</span>
+        <div className="p-4 border-t bg-gray-50 sticky bottom-0">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-gray-600 font-medium">Sous-total</span>
+            <span className="font-bold text-xl text-pink-600">{getTotalAmount()} HTG</span>
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
-            <ActionButton
-              onClick={async () => {
-                setIsLoading(prev => ({ ...prev, image: true }));
-                await generateAndDownloadImage({ 
-                  cart, 
-                  customerName, 
-                  total: getTotalAmount(),
-                  setIsLoading: (value) => setIsLoading(prev => ({ ...prev, image: value }))
-                });
-                clearCart();
-              }}
-              isLoading={isLoading.image}
-              icon={Download}
-              color="blue"
-              label="PNG"
-            />
-            <ActionButton
-              onClick={async () => {
-                setIsLoading(prev => ({ ...prev, pdf: true }));
-                await generateAndDownloadPDF({ 
-                  cart, 
-                  customerName, 
-                  total: getTotalAmount(),
-                  setIsLoading: (value) => setIsLoading(prev => ({ ...prev, pdf: value }))
-                });
-                clearCart();
-              }}
-              isLoading={isLoading.pdf}
-              icon={Download}
-              color="red"
-              label="PDF"
-            />
-          </div>
+          <button
+            onClick={handleGenerateInvoice}
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-4 px-4 rounded-lg font-semibold hover:from-pink-700 hover:to-pink-600 transition-all shadow-lg flex items-center justify-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader size={20} className="animate-spin" />
+                Génération en cours...
+              </>
+            ) : (
+              <>
+                <Download size={20} />
+                Télécharger la facture
+              </>
+            )}
+          </button>
         </div>
       )}
     </div>
@@ -498,37 +560,7 @@ const CartItem = ({ item, updateQuantity, removeFromCart }) => (
   </div>
 );
 
-// ==================== COMPOSANT BOUTON D'ACTION AVEC LOADING ====================
-const ActionButton = ({ onClick, isLoading, icon: Icon, color, label }) => {
-  const colorClasses = {
-    blue: 'bg-blue-600 hover:bg-blue-700',
-    red: 'bg-red-600 hover:bg-red-700',
-    green: 'bg-green-600 hover:bg-green-700',
-    gray: 'bg-gray-600 hover:bg-gray-700'
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={isLoading}
-      className={`${colorClasses[color]} text-white py-3 px-4 rounded-lg font-semibold transition-all shadow-lg flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed`}
-    >
-      {isLoading ? (
-        <>
-          <Loader size={18} className="animate-spin" />
-          Chargement...
-        </>
-      ) : (
-        <>
-          <Icon size={18} />
-          {label}
-        </>
-      )}
-    </button>
-  );
-};
-
-// ==================== FONCTIONS DE GÉNÉRATION DE FACTURE ====================
+// ==================== FONCTION DE GÉNÉRATION DE FACTURE ====================
 const generateInvoiceHTML = ({ invoice, customerName }) => {
   const itemsHTML = invoice.items.map((item, index) => `
     <tr style="border-bottom: 1px solid #e5e7eb; ${index % 2 === 0 ? 'background-color: #f9fafb;' : ''}">
@@ -684,120 +716,52 @@ const generateInvoiceHTML = ({ invoice, customerName }) => {
   `;
 };
 
-const generateAndDownloadImage = async ({ cart, customerName, total, setIsLoading }) => {
-  try {
-    const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
-    const invoice = {
-      number: invoiceNumber,
-      date: new Date().toLocaleDateString('fr-FR'),
-      time: new Date().toLocaleTimeString('fr-FR'),
-      items: [...cart],
-      total: total
-    };
-    
-    await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-    
-    const invoiceHTML = generateInvoiceHTML({ invoice, customerName });
-    
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'absolute';
-    iframe.style.width = '1200px';
-    iframe.style.height = '1600px';
-    iframe.style.left = '-9999px';
-    iframe.style.top = '0';
-    iframe.style.border = 'none';
-    
-    document.body.appendChild(iframe);
-    
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(invoiceHTML);
-    iframe.contentDocument.close();
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const canvas = await window.html2canvas(iframe.contentDocument.body, { 
-      scale: 2,
-      backgroundColor: '#ffffff',
-      logging: false,
-      allowTaint: true,
-      useCORS: true,
-      windowWidth: 1200,
-      windowHeight: 1600
-    });
-    
-    document.body.removeChild(iframe);
-    
-    const link = document.createElement('a');
-    link.download = `facture-${invoice.number}.png`;
-    link.href = canvas.toDataURL('image/png', 1.0);
-    link.click();
-    
-    setIsLoading(false);
-  } catch (error) {
-    console.error('Erreur:', error);
-    alert('Erreur lors de la génération de l\'image');
-    setIsLoading(false);
-  }
-};
-
-const generateAndDownloadPDF = async ({ cart, customerName, total, setIsLoading }) => {
-  try {
-    const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
-    const invoice = {
-      number: invoiceNumber,
-      date: new Date().toLocaleDateString('fr-FR'),
-      time: new Date().toLocaleTimeString('fr-FR'),
-      items: [...cart],
-      total: total
-    };
-    
-    await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-    await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-    
-    const invoiceHTML = generateInvoiceHTML({ invoice, customerName });
-    
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'absolute';
-    iframe.style.width = '1200px';
-    iframe.style.height = '1600px';
-    iframe.style.left = '-9999px';
-    iframe.style.top = '0';
-    iframe.style.border = 'none';
-    
-    document.body.appendChild(iframe);
-    
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(invoiceHTML);
-    iframe.contentDocument.close();
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const canvas = await window.html2canvas(iframe.contentDocument.body, { 
-      scale: 2,
-      backgroundColor: '#ffffff',
-      logging: false,
-      allowTaint: true,
-      useCORS: true,
-      windowWidth: 1200,
-      windowHeight: 1600
-    });
-    
-    document.body.removeChild(iframe);
-    
-    const imgData = canvas.toDataURL('image/png');
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('l', 'mm', 'a4');
-    const imgWidth = 297;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    pdf.save(`facture-${invoice.number}.pdf`);
-    
-    setIsLoading(false);
-  } catch (error) {
-    console.error('Erreur:', error);
-    alert('Erreur lors de la génération du PDF');
-    setIsLoading(false);
-  }
+const generateAndDownloadImage = async ({ cart, customerName, total }) => {
+  const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
+  const invoice = {
+    number: invoiceNumber,
+    date: new Date().toLocaleDateString('fr-FR'),
+    time: new Date().toLocaleTimeString('fr-FR'),
+    items: [...cart],
+    total: total
+  };
+  
+  await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  
+  const invoiceHTML = generateInvoiceHTML({ invoice, customerName });
+  
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'absolute';
+  iframe.style.width = '1200px';
+  iframe.style.height = '1600px';
+  iframe.style.left = '-9999px';
+  iframe.style.top = '0';
+  iframe.style.border = 'none';
+  
+  document.body.appendChild(iframe);
+  
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(invoiceHTML);
+  iframe.contentDocument.close();
+  
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const canvas = await window.html2canvas(iframe.contentDocument.body, { 
+    scale: 2,
+    backgroundColor: '#ffffff',
+    logging: false,
+    allowTaint: true,
+    useCORS: true,
+    windowWidth: 1200,
+    windowHeight: 1600
+  });
+  
+  document.body.removeChild(iframe);
+  
+  const link = document.createElement('a');
+  link.download = `facture-${invoice.number}.png`;
+  link.href = canvas.toDataURL('image/png', 1.0);
+  link.click();
 };
 
 export default KGPattisseriePOS;
