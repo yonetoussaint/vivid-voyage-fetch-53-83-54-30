@@ -205,7 +205,7 @@ export default function XProfile() {
 
         {/* Last Online Status - Positioned on banner extending below (right side) */}
         {!sellerData.is_online && sellerData.last_seen && (
-          <div className="absolute -bottom-6 right-4">
+          <div className="absolute -bottom-10 right-4">
             <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
               <span className="text-white text-xs font-medium">{sellerData.last_seen}</span>
             </div>
@@ -213,8 +213,8 @@ export default function XProfile() {
         )}
       </div>
 
-      {/* Profile Info - Left aligned with more top padding to account for overlapping elements */}
-      <div className="px-4 pt-20 flex flex-col items-start text-left">
+      {/* Profile Info - Original padding maintained, no shrinking */}
+      <div className="px-4 pt-14 flex flex-col items-start text-left">
         {/* Name with Verified Badge and Username */}
         <div className="mb-1 flex flex-wrap items-center gap-1.5">
           <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
