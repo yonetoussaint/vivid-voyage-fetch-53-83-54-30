@@ -132,6 +132,48 @@ export default function XProfile() {
           className="w-full h-full object-cover"
         />
 
+        {/* Action Buttons - Positioned on Banner like X/Twitter */}
+        <div className="absolute top-3 right-3 flex gap-2">
+          {/* Share Button - Transparent with blur */}
+          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
+            <svg 
+              width="18" 
+              height="18" 
+              viewBox="0 0 64 64"
+              fill="white"
+              className="drop-shadow-md"
+            >
+              <path d="M34,21.54V8.64a.18.18,0,0,1,.3-.14L60.94,30.69a.18.18,0,0,1,0,.28L34.3,53.15A.18.18,0,0,1,34,53V40.86a1.14,1.14,0,0,0-.94-1.12c-3.57-.64-16.75-1.59-29.47,15.7a.26.26,0,0,1-.47-.12C2.7,50.31,1.67,21.54,34,21.54"/>
+            </svg>
+          </button>
+
+          {/* Edit/Follow Button - Transparent with blur */}
+          {isOwnProfile ? (
+            <button className="px-4 py-1.5 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all text-white text-sm font-semibold border-0 drop-shadow-md">
+              Edit profile
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
+                <MoreHorizontal size={18} className="text-white drop-shadow-md" />
+              </button>
+              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
+                <UserSquare2 size={18} className="text-white drop-shadow-md" />
+              </button>
+              <button
+                onClick={() => setIsFollowing(!isFollowing)}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all drop-shadow-md ${
+                  isFollowing 
+                    ? 'bg-black/30 backdrop-blur-sm hover:bg-black/40 text-white border-0' 
+                    : 'bg-white text-gray-900 hover:bg-gray-100 border-0'
+                }`}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Profile Picture - Centered */}
         <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
           <div className="relative">
@@ -163,50 +205,8 @@ export default function XProfile() {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-end items-center px-4 pt-3">
-        <div className="flex gap-2">
-          <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
-            <svg 
-              width="20" 
-              height="20" 
-              viewBox="0 0 64 64"
-              fill="currentColor"
-              className="text-gray-700"
-            >
-              <path d="M34,21.54V8.64a.18.18,0,0,1,.3-.14L60.94,30.69a.18.18,0,0,1,0,.28L34.3,53.15A.18.18,0,0,1,34,53V40.86a1.14,1.14,0,0,0-.94-1.12c-3.57-.64-16.75-1.59-29.47,15.7a.26.26,0,0,1-.47-.12C2.7,50.31,1.67,21.54,34,21.54"/>
-            </svg>
-          </button>
-
-          {isOwnProfile ? (
-            <button className="px-4 py-2 border border-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">
-              Edit profile
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-50">
-                <MoreHorizontal size={18} className="text-gray-700" />
-              </button>
-              <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-50">
-                <UserSquare2 size={18} className="text-gray-700" />
-              </button>
-              <button
-                onClick={() => setIsFollowing(!isFollowing)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                  isFollowing 
-                    ? 'border border-gray-300 hover:bg-gray-50 text-gray-900' 
-                    : 'bg-gray-900 text-white hover:bg-gray-800'
-                }`}
-              >
-                {isFollowing ? 'Following' : 'Follow'}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Profile Info - All Centered */}
-      <div className="px-4 pt-2 flex flex-col items-center text-center">
+      <div className="px-4 pt-14 flex flex-col items-center text-center">
         {/* Name with Verified Badge */}
         <div className="mb-2 flex items-center justify-center gap-1.5">
           <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
