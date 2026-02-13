@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Menu, X, ShoppingCart, Plus, Minus, Trash2, FileText, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw } from 'lucide-react';
+import { Menu, X, ShoppingCart, Plus, Minus, Trash2, FileText, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw, PlusCircle } from 'lucide-react';
 
 // ==================== COMPOSANT PRINCIPAL ====================
 const KGPattisseriePOS = () => {
   const [activeTab, setActiveTab] = useState('vente');
   const [menuOpen, setMenuOpen] = useState(false);
   const [cart, setCart] = useState([]);
-  const [selectedFlavor, setSelectedFlavor] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [invoiceHistory, setInvoiceHistory] = useState([]);
+  const [showAddPanel, setShowAddPanel] = useState(false);
+  const [selectedFlavor, setSelectedFlavor] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState('');
 
   const flavors = [
     { id: 1, name: 'Fraise' },
@@ -24,15 +26,17 @@ const KGPattisseriePOS = () => {
     { id: 2, name: '16 OZ', price: 500, size: 'large' },
   ];
 
-  const addToCart = (product) => {
-    if (!selectedFlavor) {
-      alert('Veuillez sélectionner une saveur');
+  const addToCart = () => {
+    if (!selectedFlavor || !selectedProduct) {
+      alert('Veuillez sélectionner une saveur et un format');
       return;
     }
 
     const flavor = flavors.find(f => f.id === parseInt(selectedFlavor));
+    const product = products.find(p => p.id === parseInt(selectedProduct));
+    
     const cartItem = {
-      id: `${product.id}-${selectedFlavor}-${Date.now()}`,
+      id: `${selectedProduct}-${selectedFlavor}-${Date.now()}`,
       productId: product.id,
       name: `${product.name} - ${flavor.name}`,
       price: product.price,
@@ -41,7 +45,9 @@ const KGPattisseriePOS = () => {
     };
 
     setCart([...cart, cartItem]);
+    setShowAddPanel(false);
     setSelectedFlavor('');
+    setSelectedProduct('');
   };
 
   const updateQuantity = (id, delta) => {
@@ -100,16 +106,55 @@ const KGPattisseriePOS = () => {
       />
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        {/* Zone principale - Produits */}
+        {/* Zone principale - Panier uniquement */}
         <div className="flex-1 overflow-y-auto p-4">
           {activeTab === 'vente' && (
-            <VenteTab 
-              flavors={flavors}
-              products={products}
-              selectedFlavor={selectedFlavor}
-              setSelectedFlavor={setSelectedFlavor}
-              addToCart={addToCart}
-            />
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <ShoppingCart size={24} className="text-pink-600" />
+                Panier de vente
+              </h2>
+              
+              {/* Add Card - Bordure en pointillés */}
+              <button
+                onClick={() => setShowAddPanel(true)}
+                className="w-full border-3 border-dashed border-pink-300 rounded-xl p-8 mb-6 flex flex-col items-center justify-center gap-3 hover:border-pink-500 hover:bg-pink-50 transition-all group"
+                style={{ borderWidth: '3px' }}
+              >
+                <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center group-hover:bg-pink-200 transition-colors">
+                  <PlusCircle size={40} className="text-pink-600" />
+                </div>
+                <span className="text-xl font-semibold text-pink-700 group-hover:text-pink-800">
+                  Ajouter une glace
+                </span>
+                <span className="text-sm text-gray-500">
+                  Choisissez une saveur et un format
+                </span>
+              </button>
+
+              {/* Panier actuel */}
+              {cart.length > 0 ? (
+                <div className="bg-white rounded-xl shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Articles dans le panier</h3>
+                  <div className="space-y-4">
+                    {cart.map(item => (
+                      <CartItem 
+                        key={item.id} 
+                        item={item} 
+                        updateQuantity={updateQuantity} 
+                        removeFromCart={removeFromCart} 
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl shadow-md p-12 text-center">
+                  <ShoppingCart size={64} className="mx-auto mb-4 text-gray-300" />
+                  <p className="text-xl text-gray-500 mb-2">Votre panier est vide</p>
+                  <p className="text-gray-400">Cliquez sur le bouton ci-dessus pour ajouter des articles</p>
+                </div>
+              )}
+            </div>
           )}
 
           {activeTab === 'produits' && (
@@ -132,14 +177,12 @@ const KGPattisseriePOS = () => {
           )}
         </div>
 
-        {/* Panier - Flux normal */}
+        {/* Panier Sidebar - Client et Total */}
         {activeTab === 'vente' && (
           <CartSidebar 
             cart={cart}
             customerName={customerName}
             setCustomerName={setCustomerName}
-            updateQuantity={updateQuantity}
-            removeFromCart={removeFromCart}
             getTotalAmount={getTotalAmount}
             clearCart={clearCart}
             isLoading={isLoading}
@@ -148,6 +191,24 @@ const KGPattisseriePOS = () => {
           />
         )}
       </div>
+
+      {/* Panel d'ajout de glace */}
+      {showAddPanel && (
+        <AddPanel
+          flavors={flavors}
+          products={products}
+          selectedFlavor={selectedFlavor}
+          setSelectedFlavor={setSelectedFlavor}
+          selectedProduct={selectedProduct}
+          setSelectedProduct={setSelectedProduct}
+          onAdd={addToCart}
+          onClose={() => {
+            setShowAddPanel(false);
+            setSelectedFlavor('');
+            setSelectedProduct('');
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -225,79 +286,105 @@ const SidebarMenu = ({ menuOpen, setMenuOpen, activeTab, setActiveTab }) => {
   );
 };
 
-// ==================== COMPOSANT ONGLET VENTE ====================
-const VenteTab = ({ flavors, products, selectedFlavor, setSelectedFlavor, addToCart }) => (
-  <div className="space-y-6">
-    {/* Sélecteur de Saveur */}
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <label className="block text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-        <span className="text-2xl">🍦</span>
-        Choisir une Saveur
-      </label>
-      <select
-        value={selectedFlavor}
-        onChange={(e) => setSelectedFlavor(e.target.value)}
-        className="w-full p-4 text-lg border-2 border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white appearance-none"
-      >
-        <option value="">-- Sélectionner une saveur --</option>
-        {flavors.map(flavor => (
-          <option key={flavor.id} value={flavor.id}>
-            {flavor.name}
-          </option>
-        ))}
-      </select>
-    </div>
+// ==================== COMPOSANT PANEL D'AJOUT ====================
+const AddPanel = ({ 
+  flavors, 
+  products, 
+  selectedFlavor, 
+  setSelectedFlavor, 
+  selectedProduct, 
+  setSelectedProduct, 
+  onAdd, 
+  onClose 
+}) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <PlusCircle size={24} className="text-pink-600" />
+              Ajouter une glace
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full"
+            >
+              <X size={24} />
+            </button>
+          </div>
 
-    {/* Formats de Glace - Empilés verticalement */}
-    <div>
-      <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
-        <span className="bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm">
-          Formats Disponibles
-        </span>
-      </h3>
-      <div className="flex flex-col space-y-3">
-        {products.map(product => (
-          <button
-            key={product.id}
-            onClick={() => addToCart(product)}
-            disabled={!selectedFlavor}
-            className={`w-full bg-white p-6 rounded-lg shadow-md transition-all active:scale-95 border-2 ${
-              selectedFlavor 
-                ? 'hover:shadow-lg border-transparent hover:border-pink-300 hover:bg-pink-50' 
-                : 'opacity-50 cursor-not-allowed border-gray-200'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center">
-                  <span className="text-3xl">🍦</span>
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-gray-800 text-lg mb-1">{product.name}</p>
-                  <p className="text-gray-600 text-sm">Format {product.size === 'small' ? 'Petit' : 'Grand'}</p>
-                </div>
-              </div>
-              <p className="text-pink-600 font-bold text-2xl">{product.price} HTG</p>
+          {/* Sélection de la saveur */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              🍦 Choisir une saveur
+            </label>
+            <select
+              value={selectedFlavor}
+              onChange={(e) => setSelectedFlavor(e.target.value)}
+              className="w-full p-4 text-lg border-2 border-pink-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white appearance-none"
+            >
+              <option value="">-- Sélectionnez une saveur --</option>
+              {flavors.map(flavor => (
+                <option key={flavor.id} value={flavor.id}>
+                  {flavor.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sélection du format */}
+          <div className="mb-8">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              📦 Choisir un format
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {products.map(product => (
+                <button
+                  key={product.id}
+                  onClick={() => setSelectedProduct(product.id.toString())}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    selectedProduct === product.id.toString()
+                      ? 'border-pink-600 bg-pink-50 ring-2 ring-pink-200'
+                      : 'border-gray-200 hover:border-pink-300 hover:bg-pink-50'
+                  }`}
+                >
+                  <div className="text-center">
+                    <span className="text-3xl mb-2 block">🍦</span>
+                    <p className="font-semibold text-gray-800">{product.name}</p>
+                    <p className="text-pink-600 font-bold mt-1">{product.price} HTG</p>
+                  </div>
+                </button>
+              ))}
             </div>
-          </button>
-        ))}
+          </div>
+
+          {/* Boutons d'action */}
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={onAdd}
+              disabled={!selectedFlavor || !selectedProduct}
+              className="flex-1 bg-gradient-to-r from-pink-600 to-pink-500 text-white py-3 px-4 rounded-xl font-semibold hover:from-pink-700 hover:to-pink-600 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus size={20} />
+              Ajouter au panier
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-
-    {!selectedFlavor && (
-      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-        <p className="text-yellow-800 font-medium flex items-center gap-2">
-          <span>⚠️</span>
-          Veuillez sélectionner une saveur pour ajouter au panier
-        </p>
-      </div>
-    )}
-  </div>
-);
+  );
+};
 
 // ==================== COMPOSANT ONGLET PRODUITS ====================
 const ProduitsTab = ({ flavors, products }) => (
-  <div className="space-y-6">
+  <div className="space-y-6 max-w-4xl mx-auto">
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
         <span>🍦</span> Saveurs Disponibles
@@ -334,7 +421,7 @@ const ProduitsTab = ({ flavors, products }) => (
 const FacturesTab = ({ invoiceHistory, onRegenerate, isLoading }) => {
   if (invoiceHistory.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
           <span>📋</span> Historique des Factures
         </h2>
@@ -347,7 +434,7 @@ const FacturesTab = ({ invoiceHistory, onRegenerate, isLoading }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
         <span>📋</span> Historique des Factures
       </h2>
@@ -402,7 +489,7 @@ const FacturesTab = ({ invoiceHistory, onRegenerate, isLoading }) => {
 
 // ==================== COMPOSANT ONGLET PARAMETRES ====================
 const ParametresTab = () => (
-  <div className="bg-white rounded-lg shadow-md p-6">
+  <div className="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto">
     <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
       <span>⚙️</span> Paramètres
     </h2>
@@ -427,14 +514,11 @@ const ParametresTab = () => (
   </div>
 );
 
-// ==================== COMPOSANT PANIER ====================
-// ==================== COMPOSANT PANIER ====================
+// ==================== COMPOSANT PANIER SIDEBAR ====================
 const CartSidebar = ({ 
   cart, 
   customerName, 
   setCustomerName, 
-  updateQuantity, 
-  removeFromCart, 
   getTotalAmount, 
   clearCart, 
   isLoading, 
@@ -475,27 +559,13 @@ const CartSidebar = ({
   };
 
   return (
-    <div className="lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full relative">
+    <div className="lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full">
       {/* En-tête du panier */}
-      <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+      <div className="p-4 border-b bg-gray-50">
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
           <ShoppingCart size={20} className="text-pink-600" />
-          Panier
-          {cart.length > 0 && (
-            <span className="bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {cart.length}
-            </span>
-          )}
+          Résumé de la commande
         </h2>
-        {cart.length > 0 && (
-          <button 
-            onClick={clearCart}
-            className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
-          >
-            <Trash2 size={16} />
-            Vider
-          </button>
-        )}
       </div>
 
       {/* Champ nom du client */}
@@ -513,55 +583,60 @@ const CartSidebar = ({
         />
       </div>
 
-      {/* Liste des articles - Scrollable avec hauteur calculée pour laisser place au sticky */}
-      <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: cart.length > 0 ? 'calc(100vh - 450px)' : 'calc(100vh - 300px)' }}>
+      {/* Résumé des articles */}
+      <div className="flex-1 overflow-y-auto p-4">
         {cart.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <ShoppingCart size={48} className="mx-auto mb-3 opacity-30" />
-            <p>Panier vide</p>
-            <p className="text-sm mt-2">Ajoutez des produits</p>
+            <p>Aucun article</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {cart.map(item => (
-              <CartItem 
-                key={item.id} 
-                item={item} 
-                updateQuantity={updateQuantity} 
-                removeFromCart={removeFromCart} 
-              />
+              <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-100">
+                <div>
+                  <p className="font-medium text-gray-800">{item.name}</p>
+                  <p className="text-sm text-gray-500">x{item.quantity}</p>
+                </div>
+                <p className="font-semibold text-gray-800">{item.price * item.quantity} HTG</p>
+              </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Total et bouton d'action - Sticky en bas ABSOLU */}
+      {/* Total et bouton d'action - Sticky en bas */}
       {cart.length > 0 && (
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 shadow-lg">
-          <div className="p-4 bg-gray-50">
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-gray-600 font-medium">Sous-total</span>
-              <span className="font-bold text-xl text-pink-600">{getTotalAmount()} HTG</span>
-            </div>
-            
-            <button
-              onClick={handleGenerateInvoice}
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-4 px-4 rounded-lg font-semibold hover:from-pink-700 hover:to-pink-600 transition-all shadow-lg flex items-center justify-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <Loader size={20} className="animate-spin" />
-                  Génération en cours...
-                </>
-              ) : (
-                <>
-                  <Download size={20} />
-                  Télécharger la facture
-                </>
-              )}
-            </button>
+        <div className="p-4 border-t bg-gray-50 sticky bottom-0">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-gray-600 font-medium">Total</span>
+            <span className="font-bold text-2xl text-pink-600">{getTotalAmount()} HTG</span>
           </div>
+          
+          <button
+            onClick={handleGenerateInvoice}
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-4 px-4 rounded-lg font-semibold hover:from-pink-700 hover:to-pink-600 transition-all shadow-lg flex items-center justify-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader size={20} className="animate-spin" />
+                Génération en cours...
+              </>
+            ) : (
+              <>
+                <Download size={20} />
+                Télécharger la facture
+              </>
+            )}
+          </button>
+          
+          <button
+            onClick={clearCart}
+            className="w-full mt-2 text-red-500 py-2 text-sm hover:text-red-700 transition-colors"
+          >
+            Vider le panier
+          </button>
         </div>
       )}
     </div>
@@ -570,36 +645,36 @@ const CartSidebar = ({
 
 // ==================== COMPOSANT ARTICLE DU PANIER ====================
 const CartItem = ({ item, updateQuantity, removeFromCart }) => (
-  <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-    <div className="flex justify-between items-start mb-2">
+  <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+    <div className="flex justify-between items-start mb-3">
       <div className="flex-1">
-        <p className="font-semibold text-gray-800">{item.name}</p>
+        <p className="font-semibold text-gray-800 text-lg">{item.name}</p>
         <p className="text-sm text-gray-600 mt-1">{item.price} HTG / unité</p>
       </div>
       <button
         onClick={() => removeFromCart(item.id)}
-        className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-full transition-colors"
+        className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-full transition-colors"
       >
         <Trash2 size={18} />
       </button>
     </div>
     <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <button
           onClick={() => updateQuantity(item.id, -1)}
-          className="w-8 h-8 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200 transition-colors"
+          className="w-10 h-10 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200 transition-colors"
         >
-          <Minus size={16} />
+          <Minus size={18} />
         </button>
-        <span className="w-12 text-center font-semibold text-lg">{item.quantity}</span>
+        <span className="w-12 text-center font-bold text-xl">{item.quantity}</span>
         <button
           onClick={() => updateQuantity(item.id, 1)}
-          className="w-8 h-8 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200 transition-colors"
+          className="w-10 h-10 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200 transition-colors"
         >
-          <Plus size={16} />
+          <Plus size={18} />
         </button>
       </div>
-      <p className="font-bold text-pink-600 text-lg">
+      <p className="font-bold text-pink-600 text-xl">
         {item.price * item.quantity} HTG
       </p>
     </div>
