@@ -108,10 +108,30 @@ const KGPattisseriePOS = () => {
         setActiveTab={setActiveTab} 
       />
 
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        {/* Zone principale - complètement vide pour l'onglet vente */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Panier - Plein écran pour l'onglet vente */}
         {activeTab === 'vente' ? (
-          <div className="flex-1"></div>
+          <CartMain 
+            cart={cart}
+            customerName={customerName}
+            setCustomerName={setCustomerName}
+            updateQuantity={updateQuantity}
+            removeFromCart={removeFromCart}
+            getTotalAmount={getTotalAmount}
+            clearCart={clearCart}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+            addToHistory={addToHistory}
+            showAddPanel={showAddPanel}
+            setShowAddPanel={setShowAddPanel}
+            selectedFlavor={selectedFlavor}
+            setSelectedFlavor={setSelectedFlavor}
+            selectedSize={selectedSize}
+            setSelectedSize={setSelectedSize}
+            addToCart={addToCart}
+            flavors={flavors}
+            sizes={sizes}
+          />
         ) : (
           <div className="flex-1 overflow-y-auto p-4">
             {activeTab === 'produits' && (
@@ -131,31 +151,6 @@ const KGPattisseriePOS = () => {
               <ParametresTab />
             )}
           </div>
-        )}
-
-        {/* Panier - Sidebar toujours visible en mode vente */}
-        {activeTab === 'vente' && (
-          <CartSidebar 
-            cart={cart}
-            customerName={customerName}
-            setCustomerName={setCustomerName}
-            updateQuantity={updateQuantity}
-            removeFromCart={removeFromCart}
-            getTotalAmount={getTotalAmount}
-            clearCart={clearCart}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-            addToHistory={addToHistory}
-            showAddPanel={showAddPanel}
-            setShowAddPanel={setShowAddPanel}
-            selectedFlavor={selectedFlavor}
-            setSelectedFlavor={setSelectedFlavor}
-            selectedSize={selectedSize}
-            setSelectedSize={selectedSize}
-            addToCart={addToCart}
-            flavors={flavors}
-            sizes={sizes}
-          />
         )}
       </div>
     </div>
@@ -367,8 +362,8 @@ const ParametresTab = () => (
   </div>
 );
 
-// ==================== COMPOSANT PANIER SIDEBAR ====================
-const CartSidebar = ({ 
+// ==================== COMPOSANT PANIER PRINCIPAL (PLEIN ÉCRAN) ====================
+const CartMain = ({ 
   cart,
   customerName,
   setCustomerName,
@@ -423,185 +418,171 @@ const CartSidebar = ({
   };
 
   return (
-    <div className="lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full">
-      {/* En-tête du panier */}
-      <div className="p-4 border-b bg-gray-50 flex justify-between items-center sticky top-0 z-10">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <ShoppingCart size={20} className="text-pink-600" />
-          Panier
+    <div className="w-full h-full bg-gray-50 overflow-y-auto p-4 md:p-6">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg">
+        {/* En-tête du panier */}
+        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <ShoppingCart size={24} className="text-pink-600" />
+            Panier
+            {cart.length > 0 && (
+              <span className="bg-pink-600 text-white text-sm rounded-full w-7 h-7 flex items-center justify-center">
+                {cart.length}
+              </span>
+            )}
+          </h2>
           {cart.length > 0 && (
-            <span className="bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {cart.length}
-            </span>
+            <button 
+              onClick={clearCart}
+              className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1 px-3 py-2 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <Trash2 size={16} />
+              Vider le panier
+            </button>
           )}
-        </h2>
-        {cart.length > 0 && (
-          <button 
-            onClick={clearCart}
-            className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
-          >
-            <Trash2 size={16} />
-            Vider
-          </button>
-        )}
-      </div>
+        </div>
 
-      {/* Champ nom du client */}
-      <div className="p-4 bg-white border-b">
-        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-          <User size={16} className="text-gray-500" />
-          Nom du client
-        </label>
-        <input
-          type="text"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          placeholder="Entrez le nom du client"
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-base"
-        />
-      </div>
-
-      {/* Liste des articles */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {cart.map(item => (
-          <CartItem 
-            key={item.id} 
-            item={item} 
-            updateQuantity={updateQuantity} 
-            removeFromCart={removeFromCart} 
+        {/* Champ nom du client */}
+        <div className="p-6 border-b border-gray-200">
+          <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+            <User size={16} className="text-gray-500" />
+            Nom du client
+          </label>
+          <input
+            type="text"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            placeholder="Entrez le nom du client"
+            className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-base"
           />
-        ))}
+        </div>
 
-        {/* Carte Ajouter - Dotted Border */}
-        {!showAddPanel ? (
-          <button
-            onClick={() => setShowAddPanel(true)}
-            className="w-full border-3 border-dashed border-pink-300 bg-pink-50/50 rounded-xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-pink-100/50 transition-colors active:scale-95"
-            style={{ borderWidth: '3px' }}
-          >
-            <div className="w-16 h-16 bg-pink-200 rounded-full flex items-center justify-center">
-              <Plus size={32} className="text-pink-600" />
+        {/* Liste des articles */}
+        <div className="p-6 space-y-4">
+          {cart.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-xl">
+              <ShoppingCart size={64} className="mx-auto mb-4 text-gray-300" />
+              <p className="text-gray-500 text-lg mb-2">Votre panier est vide</p>
+              <p className="text-gray-400">Ajoutez votre première glace ci-dessous</p>
             </div>
-            <span className="text-pink-700 font-semibold text-lg">Ajouter un article</span>
-            <span className="text-pink-500 text-sm">Glace • Format • Saveur</span>
-          </button>
-        ) : (
-          <div className="bg-white border-2 border-pink-300 rounded-xl p-5 space-y-4 shadow-lg">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                <Coffee size={20} className="text-pink-600" />
-                Nouvel article
-              </h3>
+          ) : (
+            cart.map(item => (
+              <CartItem 
+                key={item.id} 
+                item={item} 
+                updateQuantity={updateQuantity} 
+                removeFromCart={removeFromCart} 
+              />
+            ))
+          )}
+
+          {/* Panneau d'ajout - Toujours visible */}
+          <div className="mt-6 border-2 border-pink-200 rounded-xl p-6 bg-pink-50">
+            <h3 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
+              <Coffee size={20} className="text-pink-600" />
+              Ajouter une glace
+            </h3>
+
+            <div className="space-y-4">
+              {/* Sélecteur Format */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Format</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {sizes.map(size => (
+                    <button
+                      key={size.id}
+                      onClick={() => setSelectedSize(size.id.toString())}
+                      className={`p-4 rounded-xl border-2 transition-all ${
+                        selectedSize === size.id.toString()
+                          ? 'border-pink-600 bg-pink-100 text-pink-700'
+                          : 'border-gray-200 bg-white hover:border-pink-300'
+                      }`}
+                    >
+                      <span className="font-bold text-lg">{size.name}</span>
+                      <span className="block text-sm text-gray-600 mt-1">{size.price} HTG</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sélecteur Saveur */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Saveur</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {flavors.map(flavor => (
+                    <button
+                      key={flavor.id}
+                      onClick={() => setSelectedFlavor(flavor.id.toString())}
+                      className={`p-4 rounded-xl border-2 transition-all ${
+                        selectedFlavor === flavor.id.toString()
+                          ? 'border-pink-600 bg-pink-100 text-pink-700'
+                          : 'border-gray-200 bg-white hover:border-pink-300'
+                      }`}
+                    >
+                      {flavor.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bouton Ajouter */}
               <button
-                onClick={() => {
-                  setShowAddPanel(false);
-                  setSelectedFlavor('');
-                  setSelectedSize('');
-                }}
-                className="text-gray-500 hover:text-gray-700 p-1"
+                onClick={addToCart}
+                disabled={!selectedFlavor || !selectedSize}
+                className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-4 rounded-xl font-bold hover:from-pink-700 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg mt-4"
               >
-                <X size={20} />
+                <Plus size={24} />
+                Ajouter au panier
               </button>
             </div>
+          </div>
+        </div>
 
-            {/* Sélecteur Format */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Format</label>
-              <div className="grid grid-cols-2 gap-2">
-                {sizes.map(size => (
-                  <button
-                    key={size.id}
-                    onClick={() => setSelectedSize(size.id.toString())}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      selectedSize === size.id.toString()
-                        ? 'border-pink-600 bg-pink-50 text-pink-700'
-                        : 'border-gray-200 hover:border-pink-300'
-                    }`}
-                  >
-                    <span className="font-medium">{size.name}</span>
-                    <span className="block text-sm text-gray-600">{size.price} HTG</span>
-                  </button>
-                ))}
-              </div>
+        {/* Total et bouton de facture */}
+        {cart.length > 0 && (
+          <div className="p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-gray-700 text-lg font-medium">Total</span>
+              <span className="font-bold text-3xl text-pink-600">{getTotalAmount()} HTG</span>
             </div>
-
-            {/* Sélecteur Saveur */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Saveur</label>
-              <div className="grid grid-cols-2 gap-2">
-                {flavors.map(flavor => (
-                  <button
-                    key={flavor.id}
-                    onClick={() => setSelectedFlavor(flavor.id.toString())}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      selectedFlavor === flavor.id.toString()
-                        ? 'border-pink-600 bg-pink-50 text-pink-700'
-                        : 'border-gray-200 hover:border-pink-300'
-                    }`}
-                  >
-                    {flavor.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Bouton Ajouter */}
+            
             <button
-              onClick={addToCart}
-              disabled={!selectedFlavor || !selectedSize}
-              className="w-full bg-pink-600 text-white py-4 rounded-lg font-semibold hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
+              onClick={handleGenerateInvoice}
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-5 rounded-xl font-bold hover:from-pink-700 hover:to-pink-600 transition-all shadow-lg flex items-center justify-center gap-2 text-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Plus size={20} />
-              Ajouter au panier
+              {isLoading ? (
+                <>
+                  <Loader size={28} className="animate-spin" />
+                  Génération en cours...
+                </>
+              ) : (
+                <>
+                  <Download size={28} />
+                  Télécharger la facture
+                </>
+              )}
             </button>
           </div>
         )}
       </div>
-
-      {/* Total et bouton - Sticky en bas */}
-      {cart.length > 0 && (
-        <div className="p-4 border-t bg-gray-50 sticky bottom-0 shadow-lg">
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-gray-700 font-medium">Total</span>
-            <span className="font-bold text-2xl text-pink-600">{getTotalAmount()} HTG</span>
-          </div>
-          
-          <button
-            onClick={handleGenerateInvoice}
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-4 rounded-xl font-bold hover:from-pink-700 hover:to-pink-600 transition-all shadow-lg flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <>
-                <Loader size={24} className="animate-spin" />
-                Génération...
-              </>
-            ) : (
-              <>
-                <Download size={24} />
-                Télécharger la facture
-              </>
-            )}
-          </button>
-        </div>
-      )}
     </div>
   );
 };
 
 // ==================== COMPOSANT ARTICLE DU PANIER ====================
 const CartItem = ({ item, updateQuantity, removeFromCart }) => (
-  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+  <div className="bg-white p-4 rounded-xl border-2 border-gray-100 shadow-sm hover:border-pink-200 transition-colors">
     <div className="flex justify-between items-start mb-3">
       <div className="flex-1">
-        <p className="font-bold text-gray-800 text-base">{item.name}</p>
+        <p className="font-bold text-gray-800 text-lg">{item.name}</p>
         <p className="text-sm text-gray-600 mt-1">{item.price} HTG / unité</p>
       </div>
       <button
         onClick={() => removeFromCart(item.id)}
         className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-full transition-colors"
       >
-        <Trash2 size={18} />
+        <Trash2 size={20} />
       </button>
     </div>
     <div className="flex items-center justify-between">
@@ -610,17 +591,17 @@ const CartItem = ({ item, updateQuantity, removeFromCart }) => (
           onClick={() => updateQuantity(item.id, -1)}
           className="w-10 h-10 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200 transition-colors"
         >
-          <Minus size={18} />
+          <Minus size={20} />
         </button>
-        <span className="w-12 text-center font-bold text-lg">{item.quantity}</span>
+        <span className="w-12 text-center font-bold text-xl">{item.quantity}</span>
         <button
           onClick={() => updateQuantity(item.id, 1)}
           className="w-10 h-10 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200 transition-colors"
         >
-          <Plus size={18} />
+          <Plus size={20} />
         </button>
       </div>
-      <p className="font-bold text-pink-600 text-xl">
+      <p className="font-bold text-pink-600 text-2xl">
         {item.price * item.quantity} HTG
       </p>
     </div>
