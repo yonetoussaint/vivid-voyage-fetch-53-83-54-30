@@ -18,7 +18,6 @@ import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
 import AuthCallback from "@/pages/AuthCallback";
 import KGPattisseriePOS from "@/pages/KGPattiseriePOS";
-import ProtectedRoute from "@/components/ProtectedRoute"; // ✅ Import ProtectedRoute
 
 export function AppRoutes() {
   return (
@@ -50,13 +49,11 @@ export function AppRoutes() {
         }
       />
 
-      {/* ✅ PROTECTED ROUTE: KG Pâtisserie POS System - Requires Login */}
+      {/* KG Pâtisserie POS System - Now Public */}
       <Route
         path="pos"
         element={
-          <ProtectedRoute>
-            <KGPattisseriePOS />
-          </ProtectedRoute>
+          <KGPattisseriePOS />
         }
       />
 
@@ -125,36 +122,28 @@ export function AppRoutes() {
         <Route
           path="wallet"
           element={
-            <ProtectedRoute>
-              <Wallet />
-            </ProtectedRoute>
+            <Wallet />
           }
         />
 
         <Route
           path="messages"
           element={
-            <ProtectedRoute>
-              <Messages />
-            </ProtectedRoute>
+            <Messages />
           }
         />
 
         <Route
           path="messages/:chatId"
           element={
-            <ProtectedRoute>
-              <ChatPage />
-            </ProtectedRoute>
+            <ChatPage />
           }
         />
 
         <Route
           path="profile/*"
           element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
+            <ProfilePage />
           }
         />
 
@@ -166,9 +155,7 @@ export function AppRoutes() {
         <Route 
           path="mall" 
           element={
-            <ProtectedRoute>
-              <MallPage />
-            </ProtectedRoute>
+            <MallPage />
           } 
         />
       </Route>
