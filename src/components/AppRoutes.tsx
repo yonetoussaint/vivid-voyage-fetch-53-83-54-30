@@ -17,7 +17,8 @@ import Calculator from "@/pages/Calculator";
 import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
 import AuthCallback from "@/pages/AuthCallback";
-import KGPattisseriePOS from "@/pages/KGPattiseriePOS"; // ✅ ADD THIS IMPORT
+import KGPattisseriePOS from "@/pages/KGPattiseriePOS";
+import ProtectedRoute from "@/components/ProtectedRoute"; // ✅ Import ProtectedRoute
 
 export function AppRoutes() {
   return (
@@ -49,11 +50,13 @@ export function AppRoutes() {
         }
       />
 
-      {/* ✅ NEW ROUTE: KG Pâtisserie POS System */}
+      {/* ✅ PROTECTED ROUTE: KG Pâtisserie POS System - Requires Login */}
       <Route
         path="pos"
         element={
-          <KGPattisseriePOS />
+          <ProtectedRoute>
+            <KGPattisseriePOS />
+          </ProtectedRoute>
         }
       />
 
