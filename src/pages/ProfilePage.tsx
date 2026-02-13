@@ -110,16 +110,60 @@ export default function XProfile() {
   return (
     <div className="bg-white text-gray-900 min-h-screen w-full max-w-[600px] mx-auto">
       {/* Banner */}
-      <div className="relative h-32 bg-gradient-to-r from-blue-100 to-purple-100">
+      <div className="relative h-36 bg-gradient-to-r from-blue-100 to-purple-100">
         <img 
           src={sellerData.banner_url}
           alt="Banner"
           className="w-full h-full object-cover"
         />
 
-        {/* Action Buttons - Positioned on Banner like X/Twitter */}
+        {/* Subtle gradient overlay for better readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/20 to-transparent"></div>
+
+        {/* Profile Picture - Left Center with Status Ring */}
+        <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+          <div className="relative">
+            {/* Status Ring */}
+            <div className={`w-22 h-22 rounded-full p-[3px] ${
+              sellerData.is_online 
+                ? 'bg-green-500' 
+                : 'bg-gray-400'
+            }`}>
+              {/* Inner White Border */}
+              <div className="w-full h-full rounded-full bg-white p-[3px]">
+                {/* Profile Image */}
+                <div className="w-full h-full rounded-full overflow-hidden">
+                  <img 
+                    src={sellerData.image_url}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Online Indicator Dot */}
+            {sellerData.is_online && (
+              <div className="absolute bottom-1 right-1">
+                <div className="w-4 h-4 bg-green-500 rounded-full border-[3px] border-white"></div>
+              </div>
+            )}
+            
+            {/* Last Seen Tooltip */}
+            {!sellerData.is_online && sellerData.last_seen_hours && (
+              <div className="absolute bottom-1 right-1 group">
+                <div className="w-4 h-4 bg-gray-400 rounded-full border-[3px] border-white"></div>
+                <div className="absolute -bottom-6 -right-2 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  {sellerData.last_seen_hours}h ago
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons - Top Right */}
         <div className="absolute top-3 right-3 flex gap-2">
-          {/* Share Button - Transparent with blur */}
+          {/* Share Button */}
           <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
             <svg 
               width="18" 
@@ -132,7 +176,7 @@ export default function XProfile() {
             </svg>
           </button>
 
-          {/* Edit/Follow Button - Transparent with blur */}
+          {/* Edit/Follow Buttons */}
           {isOwnProfile ? (
             <button className="px-4 py-1.5 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all text-white text-sm font-semibold border-0 drop-shadow-md">
               Edit profile
@@ -158,74 +202,48 @@ export default function XProfile() {
             </div>
           )}
         </div>
-
-        {/* Profile Picture - Centered */}
-        <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
-              <div className="w-full h-full rounded-full bg-white p-0.5">
-                <img 
-                  src={sellerData.image_url}
-                  alt="Profile"
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </div>
-            </div>
-
-            {/* Status Indicator */}
-            {sellerData.is_online && (
-              <div className="absolute bottom-1 right-1">
-                <div className="w-4 h-4 bg-green-500 rounded-full border-[3px] border-white"></div>
-              </div>
-            )}
-            {!sellerData.is_online && sellerData.last_seen_hours && (
-              <div className="absolute bottom-1 right-1 group">
-                <div className="w-4 h-4 bg-gray-300 rounded-full border-[3px] border-white"></div>
-                <div className="absolute -bottom-6 -right-2 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  {sellerData.last_seen_hours}h ago
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* Profile Info - All Centered */}
-      <div className="px-4 pt-14 flex flex-col items-center text-center">
-        {/* Name with Verified Badge */}
-        <div className="mb-2 flex items-center justify-center gap-1.5">
-          <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
-          {sellerData.verified && (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
-              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-          )}
-        </div>
+      {/* Profile Info - Aligned with Profile Pic */}
+      <div className="px-4 pt-6">
+        {/* Spacer to match profile pic width + gap */}
+        <div className="flex items-start gap-4">
+          <div className="w-22 flex-shrink-0"></div>
+          <div className="flex-1">
+            {/* Name with Verified Badge */}
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
+              {sellerData.verified && (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              )}
+            </div>
 
-        {/* Bio */}
-        <div className="mb-2 max-w-md">
-          <p className="text-sm leading-relaxed text-gray-700">
-            {sellerData.bio}
-          </p>
-        </div>
+            {/* Bio */}
+            <p className="text-sm leading-relaxed text-gray-700 mb-2">
+              {sellerData.bio}
+            </p>
 
-        {/* Info Links - Centered */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-2 text-xs text-gray-600">
-          <div className="flex items-center gap-1">
-            <MapPin size={14} className="text-gray-500" />
-            <span>{sellerData.location}</span>
+            {/* Location & Joined Date */}
+            <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-gray-600">
+              <div className="flex items-center gap-1">
+                <MapPin size={14} className="text-gray-500" />
+                <span>{sellerData.location}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <CalendarDays size={14} className="text-gray-500" />
+                <span>Joined {sellerData.joined_date}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <CalendarDays size={14} className="text-gray-500" />
-            <span>Joined {sellerData.joined_date}</span>
-          </div>
         </div>
 
-        {/* Contact Section - Clean buttons with separator only */}
-        <div className="w-full mt-4 mb-2">
-          {/* Separator only - no text */}
+        {/* Contact Section - Clean Separator */}
+        <div className="w-full mt-2 mb-2">
           <div className="w-full h-px bg-gray-200 mb-4"></div>
 
+          {/* Horizontal Scrollable Contact Buttons */}
           <div className="relative">
             <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-hide justify-start">
               {contactMethods.map((contact) => {
