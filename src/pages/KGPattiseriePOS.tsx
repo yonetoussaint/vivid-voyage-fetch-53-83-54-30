@@ -5,8 +5,6 @@ const KGPattisseriePOS = () => {
   const [activeTab, setActiveTab] = useState('vente');
   const [menuOpen, setMenuOpen] = useState(false);
   const [cart, setCart] = useState([]);
-  const [currentInvoice, setCurrentInvoice] = useState(null);
-  const invoiceRef = useRef(null);
 
   // Saveurs de glace disponibles
   const flavors = [
@@ -61,7 +59,176 @@ const KGPattisseriePOS = () => {
     return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
+  const generateInvoiceHTML = (invoice) => {
+    const itemsHTML = invoice.items.map((item, index) => `
+      <tr style="border-bottom: 1px solid #e5e7eb; ${index % 2 === 0 ? 'background-color: #f9fafb;' : ''}">
+        <td style="padding: 16px 24px; font-size: 16px; color: #1f2937; font-family: Arial, sans-serif;">${item.name}</td>
+        <td style="text-align: center; padding: 16px 24px; font-size: 16px; color: #4b5563; font-family: Arial, sans-serif;">${item.price.toFixed(2)} HTG</td>
+        <td style="text-align: center; padding: 16px 24px; font-size: 16px; color: #4b5563; font-family: Arial, sans-serif;">${item.quantity}</td>
+        <td style="text-align: right; padding: 16px 24px; font-size: 16px; font-weight: bold; color: #1f2937; font-family: Arial, sans-serif;">${(item.price * item.quantity).toFixed(2)} HTG</td>
+      </tr>
+    `).join('');
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Facture ${invoice.number}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+            body {
+              margin: 0;
+              padding: 0;
+              background: white;
+              font-family: 'Inter', Arial, sans-serif;
+            }
+            .invoice-container {
+              width: 1200px;
+              max-width: 1200px;
+              margin: 0 auto;
+              background: white;
+              padding: 40px;
+              box-sizing: border-box;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-container" style="width: 1200px; max-width: 1200px; margin: 0 auto; background: white; padding: 40px; font-family: 'Inter', Arial, sans-serif; box-sizing: border-box;">
+            <!-- En-tête avec logo et informations société -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 2px solid #e5e7eb;">
+              <div>
+                <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #db2777, #be185d); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                  <span style="color: white; font-size: 42px; font-weight: bold;">KG</span>
+                </div>
+                <h1 style="font-size: 42px; font-weight: 800; color: #1f2937; margin: 0 0 10px 0; letter-spacing: -0.5px;">KG Pâtisserie</h1>
+                <p style="font-size: 18px; color: #4b5563; margin: 6px 0; line-height: 1.5;">Saint-Marc, Ruelle Désir</p>
+                <p style="font-size: 18px; color: #4b5563; margin: 6px 0; line-height: 1.5;">Haïti</p>
+                <p style="font-size: 18px; color: #4b5563; margin: 6px 0; line-height: 1.5;">kentiagede@gmail.com</p>
+                <p style="font-size: 18px; color: #4b5563; margin: 6px 0; line-height: 1.5;">Tél: +509 1234 5678</p>
+              </div>
+              <div style="text-align: right;">
+                <h2 style="font-size: 56px; font-weight: 800; color: #db2777; margin: 0 0 20px 0; letter-spacing: -1px;">FACTURE</h2>
+                <div style="background: #fdf2f8; padding: 25px 30px; border-radius: 12px; border: 1px solid #fbcfe8;">
+                  <p style="font-size: 18px; color: #4b5563; margin: 8px 0; display: flex; justify-content: flex-end; gap: 20px;">
+                    <span style="font-weight: 700; color: #1f2937;">N° Facture:</span> 
+                    <span style="font-weight: 600;">${invoice.number}</span>
+                  </p>
+                  <p style="font-size: 18px; color: #4b5563; margin: 8px 0; display: flex; justify-content: flex-end; gap: 20px;">
+                    <span style="font-weight: 700; color: #1f2937;">Date:</span> 
+                    <span style="font-weight: 600;">${invoice.date}</span>
+                  </p>
+                  <p style="font-size: 18px; color: #4b5563; margin: 8px 0; display: flex; justify-content: flex-end; gap: 20px;">
+                    <span style="font-weight: 700; color: #1f2937;">Heure:</span> 
+                    <span style="font-weight: 600;">${invoice.time}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Informations client -->
+            <div style="margin-bottom: 40px; padding: 25px 30px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+              <h3 style="font-size: 22px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Facturer à :</h3>
+              <p style="font-size: 18px; color: #374151; margin: 8px 0; font-weight: 500;">Client</p>
+              <p style="font-size: 18px; color: #374151; margin: 8px 0;">Saint-Marc, Haïti</p>
+              <p style="font-size: 18px; color: #374151; margin: 8px 0;">client@email.com</p>
+            </div>
+
+            <!-- Tableau des articles -->
+            <table style="width: 100%; margin-bottom: 40px; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <thead>
+                <tr style="background: linear-gradient(135deg, #db2777, #be185d);">
+                  <th style="text-align: left; padding: 18px 24px; font-size: 16px; font-weight: 600; color: white; font-family: 'Inter', Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">Description</th>
+                  <th style="text-align: center; padding: 18px 24px; font-size: 16px; font-weight: 600; color: white; font-family: 'Inter', Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">Prix unitaire</th>
+                  <th style="text-align: center; padding: 18px 24px; font-size: 16px; font-weight: 600; color: white; font-family: 'Inter', Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">Quantité</th>
+                  <th style="text-align: right; padding: 18px 24px; font-size: 16px; font-weight: 600; color: white; font-family: 'Inter', Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHTML}
+              </tbody>
+            </table>
+
+            <!-- Totaux -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
+              <div style="width: 450px;">
+                <div style="display: flex; justify-content: space-between; padding: 16px 24px; border-bottom: 2px solid #e5e7eb; background: white;">
+                  <span style="font-size: 18px; color: #4b5563; font-weight: 500;">Sous-total:</span>
+                  <span style="font-size: 18px; font-weight: 700; color: #1f2937;">${invoice.total.toFixed(2)} HTG</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 16px 24px; border-bottom: 2px solid #e5e7eb; background: white;">
+                  <span style="font-size: 18px; color: #4b5563; font-weight: 500;">Remise:</span>
+                  <span style="font-size: 18px; font-weight: 700; color: #1f2937;">0.00 HTG</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 16px 24px; border-bottom: 2px solid #e5e7eb; background: white;">
+                  <span style="font-size: 18px; color: #4b5563; font-weight: 500;">TVA (0%):</span>
+                  <span style="font-size: 18px; font-weight: 700; color: #1f2937;">0.00 HTG</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 20px 30px; background: linear-gradient(135deg, #fdf2f8, #fce7f3); border-radius: 12px; margin-top: 16px; border: 1px solid #fbcfe8;">
+                  <span style="font-size: 22px; font-weight: 800; color: #9d174d;">TOTAL À PAYER:</span>
+                  <span style="font-size: 28px; font-weight: 800; color: #9d174d;">${invoice.total.toFixed(2)} HTG</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mode de paiement et informations supplémentaires -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; padding-top: 30px; border-top: 2px solid #e5e7eb;">
+              <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
+                <h4 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Mode de paiement</h4>
+                <p style="font-size: 18px; color: #374151; margin: 8px 0; display: flex; align-items: center; gap: 10px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; background: #db2777; border-radius: 50%;"></span>
+                  Espèces / Carte bancaire
+                </p>
+                <p style="font-size: 16px; color: #6b7280; margin: 12px 0 0 0; font-style: italic;">Paiement comptant à la livraison</p>
+              </div>
+              <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
+                <h4 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Informations supplémentaires</h4>
+                <p style="font-size: 18px; color: #374151; margin: 8px 0; display: flex; align-items: center; gap: 10px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; background: #db2777; border-radius: 50%;"></span>
+                  Marchandise livrée en l'état
+                </p>
+                <p style="font-size: 18px; color: #374151; margin: 8px 0; display: flex; align-items: center; gap: 10px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; background: #db2777; border-radius: 50%;"></span>
+                  Aucun échange ou remboursement
+                </p>
+              </div>
+            </div>
+
+            <!-- Conditions et signature -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 30px; border-top: 2px solid #e5e7eb;">
+              <div style="max-width: 600px;">
+                <p style="font-size: 18px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Conditions générales :</p>
+                <p style="font-size: 15px; color: #6b7280; line-height: 1.8; margin: 0; font-style: italic;">
+                  Cette facture est payable à réception. Tout retard de paiement entraînera des pénalités 
+                  conformément à la législation en vigueur. Merci de votre confiance.
+                </p>
+              </div>
+              <div style="text-align: center;">
+                <p style="font-size: 18px; color: #374151; font-weight: 600; margin: 0 0 15px 0;">Cachet et signature :</p>
+                <div style="border-bottom: 3px solid #9ca3af; width: 250px; margin-bottom: 12px;"></div>
+                <p style="font-size: 16px; color: #4b5563; margin: 12px 0 4px 0; font-weight: 600;">Pour KG Pâtisserie</p>
+                <p style="font-size: 15px; color: #6b7280; margin: 0;">${invoice.date}</p>
+              </div>
+            </div>
+            
+            <!-- Pied de page -->
+            <div style="margin-top: 50px; text-align: center; padding-top: 30px; border-top: 2px solid #e5e7eb;">
+              <p style="font-size: 15px; color: #6b7280; margin: 0 0 8px 0; font-weight: 500;">KG Pâtisserie - Saint-Marc, Ruelle Désir - Tél: +509 1234 5678 - Email: kentiagede@gmail.com</p>
+              <p style="font-size: 14px; color: #9ca3af; margin: 8px 0 0 0;">NIF: 123-456-789-0 | RCCM: SA-2024-001234</p>
+              <p style="font-size: 13px; color: #d1d5db; margin-top: 20px;">Document généré automatiquement - Merci de votre visite !</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
   const generateAndDownloadPDF = () => {
+    if (cart.length === 0) {
+      alert('Panier vide');
+      return;
+    }
+
     const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
     const invoice = {
       number: invoiceNumber,
@@ -71,38 +238,36 @@ const KGPattisseriePOS = () => {
       total: getTotalAmount()
     };
     
-    setCurrentInvoice(invoice);
-    
-    // Attendre que le state soit mis à jour
-    setTimeout(() => {
-      import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
-        .then(() => import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'))
-        .then(() => {
-          // Créer l'élément facture
-          const invoiceElement = document.createElement('div');
-          invoiceElement.style.width = '1200px';
-          invoiceElement.style.maxWidth = '1200px';
-          invoiceElement.style.padding = '40px';
-          invoiceElement.style.backgroundColor = 'white';
-          invoiceElement.style.fontFamily = 'Arial, sans-serif';
-          invoiceElement.style.position = 'absolute';
-          invoiceElement.style.left = '-9999px';
-          invoiceElement.style.top = '0';
-          
-          // Contenu HTML de la facture
-          invoiceElement.innerHTML = generateInvoiceHTML(invoice);
-          
-          document.body.appendChild(invoiceElement);
-          
-          window.html2canvas(invoiceElement, { 
+    import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
+      .then(() => import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'))
+      .then(() => {
+        const invoiceHTML = generateInvoiceHTML(invoice);
+        
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '1200px';
+        iframe.style.height = '1600px';
+        iframe.style.left = '-9999px';
+        iframe.style.top = '0';
+        iframe.style.border = 'none';
+        
+        document.body.appendChild(iframe);
+        
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(invoiceHTML);
+        iframe.contentDocument.close();
+        
+        setTimeout(() => {
+          window.html2canvas(iframe.contentDocument.body, { 
             scale: 2,
             backgroundColor: '#ffffff',
             logging: false,
             allowTaint: true,
             useCORS: true,
-            windowWidth: 1200
+            windowWidth: 1200,
+            windowHeight: 1600
           }).then(canvas => {
-            document.body.removeChild(invoiceElement);
+            document.body.removeChild(iframe);
             
             const imgData = canvas.toDataURL('image/png');
             const { jsPDF } = window.jspdf;
@@ -111,12 +276,20 @@ const KGPattisseriePOS = () => {
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
             pdf.save(`facture-${invoice.number}.pdf`);
+            
+            // Vider le panier après génération
+            setCart([]);
           });
-        });
-    }, 100);
+        }, 500);
+      });
   };
 
   const generateAndDownloadImage = () => {
+    if (cart.length === 0) {
+      alert('Panier vide');
+      return;
+    }
+
     const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
     const invoice = {
       number: invoiceNumber,
@@ -126,165 +299,46 @@ const KGPattisseriePOS = () => {
       total: getTotalAmount()
     };
     
-    setCurrentInvoice(invoice);
-    
-    setTimeout(() => {
-      import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
-        .then(() => {
-          const invoiceElement = document.createElement('div');
-          invoiceElement.style.width = '1200px';
-          invoiceElement.style.maxWidth = '1200px';
-          invoiceElement.style.padding = '40px';
-          invoiceElement.style.backgroundColor = 'white';
-          invoiceElement.style.fontFamily = 'Arial, sans-serif';
-          invoiceElement.style.position = 'absolute';
-          invoiceElement.style.left = '-9999px';
-          invoiceElement.style.top = '0';
-          
-          invoiceElement.innerHTML = generateInvoiceHTML(invoice);
-          
-          document.body.appendChild(invoiceElement);
-          
-          window.html2canvas(invoiceElement, { 
+    import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
+      .then(() => {
+        const invoiceHTML = generateInvoiceHTML(invoice);
+        
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '1200px';
+        iframe.style.height = '1600px';
+        iframe.style.left = '-9999px';
+        iframe.style.top = '0';
+        iframe.style.border = 'none';
+        
+        document.body.appendChild(iframe);
+        
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(invoiceHTML);
+        iframe.contentDocument.close();
+        
+        setTimeout(() => {
+          window.html2canvas(iframe.contentDocument.body, { 
             scale: 2,
             backgroundColor: '#ffffff',
             logging: false,
             allowTaint: true,
             useCORS: true,
-            windowWidth: 1200
+            windowWidth: 1200,
+            windowHeight: 1600
           }).then(canvas => {
-            document.body.removeChild(invoiceElement);
+            document.body.removeChild(iframe);
             
             const link = document.createElement('a');
             link.download = `facture-${invoice.number}.png`;
-            link.href = canvas.toDataURL('image/png');
+            link.href = canvas.toDataURL('image/png', 1.0);
             link.click();
+            
+            // Vider le panier après génération
+            setCart([]);
           });
-        });
-    }, 100);
-  };
-
-  const generateInvoiceHTML = (invoice) => {
-    return `
-      <div style="width: 1200px; max-width: 1200px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
-        <!-- En-tête -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 2px solid #e5e7eb;">
-          <div>
-            <div style="width: 96px; height: 96px; background: #db2777; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-              <span style="color: white; font-size: 36px; font-weight: bold;">KG</span>
-            </div>
-            <h1 style="font-size: 36px; font-weight: bold; color: #1f2937; margin: 0 0 8px 0;">KG Pâtisserie</h1>
-            <p style="font-size: 18px; color: #4b5563; margin: 4px 0;">Saint-Marc, Ruelle Désir</p>
-            <p style="font-size: 18px; color: #4b5563; margin: 4px 0;">Haïti</p>
-            <p style="font-size: 18px; color: #4b5563; margin: 4px 0;">kentiagede@gmail.com</p>
-            <p style="font-size: 18px; color: #4b5563; margin: 4px 0;">Tél: +509 1234 5678</p>
-          </div>
-          <div style="text-align: right;">
-            <h2 style="font-size: 48px; font-weight: bold; color: #db2777; margin: 0 0 24px 0;">FACTURE</h2>
-            <div style="background: #fdf2f8; padding: 24px; border-radius: 8px;">
-              <p style="font-size: 18px; color: #4b5563; margin: 8px 0;">
-                <span style="font-weight: bold;">N° Facture:</span> ${invoice.number}
-              </p>
-              <p style="font-size: 18px; color: #4b5563; margin: 8px 0;">
-                <span style="font-weight: bold;">Date:</span> ${invoice.date}
-              </p>
-              <p style="font-size: 18px; color: #4b5563; margin: 8px 0;">
-                <span style="font-weight: bold;">Heure:</span> ${invoice.time}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Client -->
-        <div style="margin-bottom: 40px; padding: 24px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
-          <h3 style="font-size: 20px; font-weight: bold; color: #1f2937; margin: 0 0 12px 0;">Facturer à :</h3>
-          <p style="font-size: 18px; color: #374151; margin: 4px 0;">Client</p>
-          <p style="font-size: 18px; color: #374151; margin: 4px 0;">Saint-Marc, Haïti</p>
-          <p style="font-size: 18px; color: #374151; margin: 4px 0;">client@email.com</p>
-        </div>
-
-        <!-- Tableau -->
-        <table style="width: 100%; margin-bottom: 40px; border-collapse: collapse;">
-          <thead>
-            <tr style="background: #db2777; color: white;">
-              <th style="text-align: left; padding: 16px 24px; font-size: 16px;">Description</th>
-              <th style="text-align: center; padding: 16px 24px; font-size: 16px;">Prix unitaire</th>
-              <th style="text-align: center; padding: 16px 24px; font-size: 16px;">Quantité</th>
-              <th style="text-align: right; padding: 16px 24px; font-size: 16px;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${invoice.items.map((item, index) => `
-              <tr style="border-bottom: 1px solid #e5e7eb; ${index % 2 === 0 ? 'background: #f9fafb;' : ''}">
-                <td style="padding: 16px 24px; font-size: 16px; color: #1f2937;">${item.name}</td>
-                <td style="text-align: center; padding: 16px 24px; font-size: 16px; color: #4b5563;">${item.price.toFixed(2)} HTG</td>
-                <td style="text-align: center; padding: 16px 24px; font-size: 16px; color: #4b5563;">${item.quantity}</td>
-                <td style="text-align: right; padding: 16px 24px; font-size: 16px; font-weight: bold; color: #1f2937;">${(item.price * item.quantity).toFixed(2)} HTG</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-
-        <!-- Totaux -->
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
-          <div style="width: 400px;">
-            <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
-              <span style="font-size: 18px; color: #4b5563;">Sous-total:</span>
-              <span style="font-size: 18px; font-weight: bold;">${invoice.total.toFixed(2)} HTG</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
-              <span style="font-size: 18px; color: #4b5563;">Remise:</span>
-              <span style="font-size: 18px; font-weight: bold;">0.00 HTG</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
-              <span style="font-size: 18px; color: #4b5563;">TVA (0%):</span>
-              <span style="font-size: 18px; font-weight: bold;">0.00 HTG</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 20px 24px; background: #fdf2f8; border-radius: 8px; margin-top: 8px;">
-              <span style="font-size: 20px; font-weight: bold; color: #9d174d;">TOTAL À PAYER:</span>
-              <span style="font-size: 24px; font-weight: bold; color: #9d174d;">${invoice.total.toFixed(2)} HTG</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Informations supplémentaires -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 40px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
-          <div>
-            <h4 style="font-size: 18px; font-weight: bold; color: #1f2937; margin: 0 0 12px 0;">Mode de paiement</h4>
-            <p style="font-size: 16px; color: #374151; margin: 4px 0;">Espèces / Carte bancaire</p>
-            <p style="font-size: 16px; color: #6b7280; margin: 8px 0 0 0;">Paiement comptant à la livraison</p>
-          </div>
-          <div>
-            <h4 style="font-size: 18px; font-weight: bold; color: #1f2937; margin: 0 0 12px 0;">Informations supplémentaires</h4>
-            <p style="font-size: 16px; color: #374151; margin: 4px 0;">Marchandise livrée en l'état</p>
-            <p style="font-size: 16px; color: #374151; margin: 4px 0;">Aucun échange ou remboursement</p>
-          </div>
-        </div>
-
-        <!-- Conditions et signature -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 24px; border-top: 2px solid #e5e7eb;">
-          <div>
-            <p style="font-size: 18px; font-weight: bold; color: #1f2937; margin: 0 0 12px 0;">Conditions générales :</p>
-            <p style="font-size: 14px; color: #6b7280; max-width: 600px; line-height: 1.6;">
-              Cette facture est payable à réception. Tout retard de paiement entraînera des pénalités 
-              conformément à la législation en vigueur. Merci de votre confiance.
-            </p>
-          </div>
-          <div style="text-align: center;">
-            <p style="font-size: 16px; color: #374151; font-weight: bold; margin: 0 0 12px 0;">Cachet et signature :</p>
-            <div style="border-bottom: 2px solid #9ca3af; width: 220px; margin-bottom: 8px;"></div>
-            <p style="font-size: 14px; color: #6b7280; margin: 8px 0 4px 0;">Pour KG Pâtisserie</p>
-            <p style="font-size: 14px; color: #6b7280; margin: 0;">${invoice.date}</p>
-          </div>
-        </div>
-        
-        <!-- Pied de page -->
-        <div style="margin-top: 40px; text-align: center; color: #6b7280; font-size: 14px;">
-          <p>KG Pâtisserie - Saint-Marc, Ruelle Désir - Tél: +509 1234 5678 - Email: kentiagede@gmail.com</p>
-          <p style="margin-top: 8px;">NIF: 123-456-789-0 | RCCM: SA-2024-001234</p>
-        </div>
-      </div>
-    `;
+        }, 500);
+      });
   };
 
   const NavItem = ({ icon: Icon, label, tab }) => (
@@ -547,24 +601,16 @@ const KGPattisseriePOS = () => {
                     className="bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg flex items-center justify-center gap-2 text-sm"
                   >
                     <Download size={18} />
-                    Image PNG
+                    Télécharger PNG
                   </button>
                   <button
                     onClick={generateAndDownloadPDF}
                     className="bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2 text-sm"
                   >
                     <Download size={18} />
-                    PDF
+                    Télécharger PDF
                   </button>
                 </div>
-                
-                <button
-                  onClick={() => setCart([])}
-                  className="w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all shadow-lg flex items-center justify-center gap-2"
-                >
-                  <Receipt size={20} />
-                  Vider le panier
-                </button>
               </div>
             )}
           </div>
