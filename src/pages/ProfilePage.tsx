@@ -14,6 +14,13 @@ const sellerData = {
   is_online: false,
   last_seen_hours: 3,
 
+  // Stats
+  stats: {
+    following: 1234,
+    followers: 5678,
+    products: 89
+  },
+
   // Contact Information
   contacts: {
     phone: "+63 912 345 6789",
@@ -106,6 +113,11 @@ export default function XProfile() {
       action: `https://tiktok.com/@${sellerData.contacts.tiktok.replace('@', '')}`,
     },
   ];
+
+  // Format numbers with commas
+  const formatNumber = (num) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
 
   return (
     <div className="bg-white text-gray-900 min-h-screen w-full max-w-[600px] mx-auto">
@@ -210,7 +222,7 @@ export default function XProfile() {
         </div>
 
         {/* Info Links - Left aligned */}
-        <div className="flex flex-wrap items-center gap-3 mb-2 text-xs text-gray-600">
+        <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-gray-600">
           <div className="flex items-center gap-1">
             <MapPin size={14} className="text-gray-500" />
             <span>{sellerData.location}</span>
@@ -221,8 +233,24 @@ export default function XProfile() {
           </div>
         </div>
 
+        {/* Stats - Following, Followers, Products */}
+        <div className="flex items-center gap-4 mb-3">
+          <div className="flex items-center gap-1">
+            <span className="font-semibold text-sm text-gray-900">{formatNumber(sellerData.stats.following)}</span>
+            <span className="text-xs text-gray-500">Following</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="font-semibold text-sm text-gray-900">{formatNumber(sellerData.stats.followers)}</span>
+            <span className="text-xs text-gray-500">Followers</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="font-semibold text-sm text-gray-900">{sellerData.stats.products}</span>
+            <span className="text-xs text-gray-500">Products</span>
+          </div>
+        </div>
+
         {/* Contact Section - Clean buttons with separator only */}
-        <div className="w-full mt-4 mb-2">
+        <div className="w-full mt-1 mb-2">
           {/* Separator only - no text */}
           <div className="w-full h-px bg-gray-200 mb-4"></div>
 
