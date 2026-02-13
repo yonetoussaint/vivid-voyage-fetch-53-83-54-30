@@ -130,196 +130,195 @@ export default function XProfile() {
   };
 
   return (
-    <div className="bg-white text-gray-900 min-h-screen w-full max-w-[600px] mx-auto">
-      {/* Banner */}
-      <div className="relative h-32 bg-gradient-to-r from-blue-100 to-purple-100">
-        <img 
-          src={sellerData.banner_url}
-          alt="Banner"
-          className="w-full h-full object-cover"
-        />
+    <div className="min-h-screen w-full max-w-[600px] mx-auto bg-[#f8f9fa] p-4">
+      <div className="bg-white rounded-3xl overflow-hidden shadow-sm">
+        {/* Banner */}
+        <div className="relative h-32 bg-gradient-to-r from-blue-100 to-purple-100">
+          <img 
+            src={sellerData.banner_url}
+            alt="Banner"
+            className="w-full h-full object-cover"
+          />
 
-        {/* Action Buttons - Positioned on Banner like X/Twitter */}
-        <div className="absolute top-3 right-3 flex gap-2">
-          {/* Share Button - Transparent with blur */}
-          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
-            <svg 
-              width="18" 
-              height="18" 
-              viewBox="0 0 64 64"
-              fill="white"
-              className="drop-shadow-md"
-            >
-              <path d="M34,21.54V8.64a.18.18,0,0,1,.3-.14L60.94,30.69a.18.18,0,0,1,0,.28L34.3,53.15A.18.18,0,0,1,34,53V40.86a1.14,1.14,0,0,0-.94-1.12c-3.57-.64-16.75-1.59-29.47,15.7a.26.26,0,0,1-.47-.12C2.7,50.31,1.67,21.54,34,21.54"/>
-            </svg>
-          </button>
-
-          {/* Edit/Follow Button - Transparent with blur */}
-          {isOwnProfile ? (
-            <button className="px-4 py-1.5 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all text-white text-sm font-semibold border-0 drop-shadow-md">
-              Edit profile
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
-                <MoreHorizontal size={18} className="text-white drop-shadow-md" />
-              </button>
-              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
-                <UserSquare2 size={18} className="text-white drop-shadow-md" />
-              </button>
-              <button
-                onClick={() => setIsFollowing(!isFollowing)}
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all drop-shadow-md ${
-                  isFollowing 
-                    ? 'bg-black/30 backdrop-blur-sm hover:bg-black/40 text-white border-0' 
-                    : 'bg-white text-gray-900 hover:bg-gray-100 border-0'
-                }`}
+          {/* Action Buttons - Positioned on Banner like X/Twitter */}
+          <div className="absolute top-3 right-3 flex gap-2">
+            {/* Share Button - Transparent with blur */}
+            <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
+              <svg 
+                width="18" 
+                height="18" 
+                viewBox="0 0 64 64"
+                fill="white"
+                className="drop-shadow-md"
               >
-                {isFollowing ? 'Following' : 'Follow'}
+                <path d="M34,21.54V8.64a.18.18,0,0,1,.3-.14L60.94,30.69a.18.18,0,0,1,0,.28L34.3,53.15A.18.18,0,0,1,34,53V40.86a1.14,1.14,0,0,0-.94-1.12c-3.57-.64-16.75-1.59-29.47,15.7a.26.26,0,0,1-.47-.12C2.7,50.31,1.67,21.54,34,21.54"/>
+              </svg>
+            </button>
+
+            {/* Edit/Follow Button - Transparent with blur */}
+            {isOwnProfile ? (
+              <button className="px-4 py-1.5 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all text-white text-sm font-semibold border-0 drop-shadow-md">
+                Edit profile
               </button>
-            </div>
-          )}
-        </div>
-
-        {/* Profile Picture - Positioned on banner extending below */}
-        <div className="absolute -bottom-12 left-4">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
-              <div className="w-full h-full rounded-full bg-white p-0.5">
-                <img 
-                  src={sellerData.image_url}
-                  alt="Profile"
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </div>
-            </div>
-
-            {/* Online Status Indicator on Profile Pic */}
-            {sellerData.is_online && (
-              <div className="absolute bottom-1 right-1">
-                <div className="w-4 h-4 bg-green-500 rounded-full border-[3px] border-white"></div>
+            ) : (
+              <div className="flex gap-2">
+                <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
+                  <MoreHorizontal size={18} className="text-white drop-shadow-md" />
+                </button>
+                <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
+                  <UserSquare2 size={18} className="text-white drop-shadow-md" />
+                </button>
+                <button
+                  onClick={() => setIsFollowing(!isFollowing)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all drop-shadow-md ${
+                    isFollowing 
+                      ? 'bg-black/30 backdrop-blur-sm hover:bg-black/40 text-white border-0' 
+                      : 'bg-white text-gray-900 hover:bg-gray-100 border-0'
+                  }`}
+                >
+                  {isFollowing ? 'Following' : 'Follow'}
+                </button>
               </div>
             )}
           </div>
-        </div>
 
-        {/* Last Online Status - Positioned on banner extending below (right side) */}
-        {!sellerData.is_online && sellerData.last_seen && (
-          <div className="absolute -bottom-10 right-4">
-            <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <span className="text-white text-xs font-medium">{sellerData.last_seen}</span>
-            </div>
-          </div>
-        )}
-      </div>
+          {/* Profile Picture - Positioned on banner extending below */}
+          <div className="absolute -bottom-12 left-4">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
+                <div className="w-full h-full rounded-full bg-white p-0.5">
+                  <img 
+                    src={sellerData.image_url}
+                    alt="Profile"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                </div>
+              </div>
 
-      {/* Profile Info - Original padding maintained, no shrinking */}
-      <div className="px-4 pt-14 flex flex-col items-start text-left">
-        {/* Name with Verified Badge and Username */}
-        <div className="mb-1 flex flex-wrap items-center gap-1.5">
-          <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
-          {sellerData.verified && (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
-              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-          )}
-          <span className="text-sm text-gray-500">{sellerData.username}</span>
-        </div>
-
-        {/* Bio */}
-        <div className="mb-2 max-w-md">
-          <p className="text-sm leading-relaxed text-gray-700">
-            {sellerData.bio}
-          </p>
-        </div>
-
-        {/* Info Links - Left aligned */}
-        <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-gray-600">
-          <div className="flex items-center gap-1">
-            <MapPin size={14} className="text-gray-500" />
-            <span>{sellerData.location}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <CalendarDays size={14} className="text-gray-500" />
-            <span>Joined {sellerData.joined_date}</span>
-          </div>
-        </div>
-
-        {/* Stats - Following, Followers, Products */}
-        <div className="flex items-center gap-4 mb-4">
-          <div className="flex items-center gap-1">
-            <span className="font-semibold text-sm text-gray-900">{formatNumber(sellerData.stats.following)}</span>
-            <span className="text-xs text-gray-500">Following</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="font-semibold text-sm text-gray-900">{formatNumber(sellerData.stats.followers)}</span>
-            <span className="text-xs text-gray-500">Followers</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="font-semibold text-sm text-gray-900">{sellerData.stats.products}</span>
-            <span className="text-xs text-gray-500">Products</span>
-          </div>
-        </div>
-
-        {/* Contact Section - Colored Icons, No Separator */}
-        <div className="w-full mb-2">
-          <div className="relative">
-            <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-hide justify-start">
-              {contactMethods.map((contact) => {
-                const Icon = contact.icon;
-                return (
-                  <a
-                    key={contact.type}
-                    href={contact.action}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all active:scale-95 whitespace-nowrap text-gray-700"
-                  >
-                    <div className="flex-shrink-0">
-                      {typeof Icon === 'function' ? <Icon /> : <Icon size={16} className={contact.iconColor || ''} />}
-                    </div>
-                    <span className="text-xs font-medium">{contact.label}</span>
-                  </a>
-                );
-              })}
-            </div>
-            <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mt-2">
-        <div className="flex">
-          {['Products', 'Reviews', 'Media', 'Likes'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab.toLowerCase())}
-              className={`flex-1 py-2.5 text-sm font-medium relative ${
-                activeTab === tab.toLowerCase() 
-                  ? 'text-gray-900' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab}
-              {activeTab === tab.toLowerCase() && (
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-1 bg-blue-600 rounded-full"></div>
+              {/* Online Status Indicator on Profile Pic */}
+              {sellerData.is_online && (
+                <div className="absolute bottom-1 right-1">
+                  <div className="w-4 h-4 bg-green-500 rounded-full border-[3px] border-white"></div>
+                </div>
               )}
-            </button>
-          ))}
+            </div>
+          </div>
+
+          {/* Last Online Status - Positioned on banner extending below (right side) */}
+          {!sellerData.is_online && sellerData.last_seen && (
+            <div className="absolute -bottom-10 right-4">
+              <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                <span className="text-white text-xs font-medium">{sellerData.last_seen}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Profile Info - Original padding maintained, no shrinking */}
+        <div className="px-4 pt-14 pb-4 flex flex-col items-start text-left">
+          {/* Name with Verified Badge and Username */}
+          <div className="mb-1 flex flex-wrap items-center gap-1.5">
+            <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
+            {sellerData.verified && (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+            )}
+            <span className="text-sm text-gray-500">{sellerData.username}</span>
+          </div>
+
+          {/* Bio */}
+          <div className="mb-2 max-w-md">
+            <p className="text-sm leading-relaxed text-gray-700">
+              {sellerData.bio}
+            </p>
+          </div>
+
+          {/* Info Links - Left aligned */}
+          <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-gray-600">
+            <div className="flex items-center gap-1">
+              <MapPin size={14} className="text-gray-500" />
+              <span>{sellerData.location}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <CalendarDays size={14} className="text-gray-500" />
+              <span>Joined {sellerData.joined_date}</span>
+            </div>
+          </div>
+
+          {/* Stats - Following, Followers, Products */}
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-sm text-gray-900">{formatNumber(sellerData.stats.following)}</span>
+              <span className="text-xs text-gray-500">Following</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-sm text-gray-900">{formatNumber(sellerData.stats.followers)}</span>
+              <span className="text-xs text-gray-500">Followers</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-sm text-gray-900">{sellerData.stats.products}</span>
+              <span className="text-xs text-gray-500">Products</span>
+            </div>
+          </div>
+
+          {/* Contact Section - Colored Icons, No Separator */}
+          <div className="w-full mb-2">
+            <div className="relative">
+              <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-hide justify-start">
+                {contactMethods.map((contact) => {
+                  const Icon = contact.icon;
+                  return (
+                    <a
+                      key={contact.type}
+                      href={contact.action}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all active:scale-95 whitespace-nowrap text-gray-700"
+                    >
+                      <div className="flex-shrink-0">
+                        {typeof Icon === 'function' ? <Icon /> : <Icon size={16} className={contact.iconColor || ''} />}
+                      </div>
+                      <span className="text-xs font-medium">{contact.label}</span>
+                    </a>
+                  );
+                })}
+              </div>
+              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-gray-200">
+          <div className="flex px-4">
+            {['Products', 'Reviews', 'Media', 'Likes'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab.toLowerCase())}
+                className={`flex-1 py-2.5 text-sm font-medium relative ${
+                  activeTab === tab.toLowerCase() 
+                    ? 'text-gray-900' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab}
+                {activeTab === tab.toLowerCase() && (
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-1 bg-blue-600 rounded-full"></div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="px-4 py-6">
+          <div className="text-center text-gray-500 text-sm">
+            <p>Seller's products and reviews appear here</p>
+            <p className="text-xs mt-1">Select a tab above to view different content</p>
+          </div>
         </div>
       </div>
-
-      {/* Content Section */}
-      <div className="px-4 py-6">
-        <div className="text-center text-gray-500 text-sm">
-          <p>Seller's products and reviews appear here</p>
-          <p className="text-xs mt-1">Select a tab above to view different content</p>
-        </div>
-      </div>
-
-      {/* Bottom Spacing */}
-      <div className="h-16"></div>
     </div>
   );
 }
