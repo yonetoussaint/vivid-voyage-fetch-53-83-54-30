@@ -125,21 +125,36 @@ export function AppRoutes() {
         <Route
           path="wallet"
           element={
-            <Wallet />
+            <ProtectedRoute>
+              <Wallet />
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="messages"
           element={
-            <Messages />
+            <ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="messages/:chatId"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="profile/*"
           element={
-            <ProfilePage />
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
           }
         />
 
@@ -148,7 +163,14 @@ export function AppRoutes() {
         {AuthRoutes()}
         {MiscRoutes()}
 
-        <Route path="mall" element={<MallPage />} />
+        <Route 
+          path="mall" 
+          element={
+            <ProtectedRoute>
+              <MallPage />
+            </ProtectedRoute>
+          } 
+        />
       </Route>
     </Routes>
   );
