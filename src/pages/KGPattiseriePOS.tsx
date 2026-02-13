@@ -170,7 +170,7 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
 
   return (
     <div className="h-full flex flex-col bg-gray-100">
-      {/* Store Header */}
+      {/* Store Header - sticky en haut */}
       <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20">
         <div className="flex items-center gap-2 mb-3">
           <Store size={24} className="text-pink-600" />
@@ -190,12 +190,12 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
         </div>
       </div>
 
-      {/* Categories */}
-      <div className="bg-white px-4 py-3 border-b border-gray-200 overflow-x-auto">
-        <div className="flex gap-2">
+      {/* Categories - sticky en haut aussi */}
+      <div className="bg-white px-4 py-3 border-b border-gray-200 sticky top-[88px] z-20">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
               selectedCategory === 'all'
                 ? 'bg-pink-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -207,7 +207,7 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
                 selectedCategory === category
                   ? 'bg-pink-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -219,9 +219,9 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
         </div>
       </div>
 
-      {/* Products Grid - 2 columns avec padding bottom pour le panier sticky */}
+      {/* Products Grid - avec padding bottom pour éviter que le contenu soit caché derrière le panier fixed */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-3 pb-28">
+        <div className="p-3 pb-24">
           <div className="grid grid-cols-2 gap-3">
             {filteredByCategory.map(product => (
               <ProductCard 
@@ -241,9 +241,9 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
         </div>
       </div>
 
-      {/* Cart Bar - Sticky Bottom avec z-index élevé */}
+      {/* Cart Bar - Fixed Bottom */}
       {cartCount > 0 && (
-        <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-30">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
           <div className="p-3">
             <button
               onClick={onCartClick}
@@ -258,6 +258,9 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
           </div>
         </div>
       )}
+
+      {/* Espace réservé pour le panier fixed (invisible) */}
+      {cartCount > 0 && <div className="h-[76px]"></div>}
     </div>
   );
 };
