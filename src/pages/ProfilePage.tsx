@@ -130,7 +130,7 @@ export default function XProfile() {
   };
 
   return (
-    <div className="bg-white text-gray-900 min-h-screen w-full max-w-[600px] mx-auto">
+   <div className="bg-white text-gray-900 min-h-screen w-full mx-auto px-2">
       {/* Banner */}
       <div className="relative h-32 bg-gradient-to-r from-blue-100 to-purple-100">
         <img 
