@@ -1,23 +1,19 @@
 import React, { useState } from 'react';
-import { MapPin, CalendarDays, Phone, Mail, Grid, Film, Bookmark, Heart, Settings } from 'lucide-react';
+import { UserSquare2, MoreHorizontal, MapPin, CalendarDays, Phone, Mail } from 'lucide-react';
 
 // Seller data
 const sellerData = {
   id: "JD12345678",
   name: "John Doe",
-  username: "johndoe",
   image_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
   banner_url: "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&h=300&fit=crop",
   verified: true,
   bio: "Living my best life 🌟 | Shop owner 🛍️ | Premium quality products at affordable prices",
   location: "Manila, Philippines",
   joined_date: "January 2020",
-  
-  // Stats
-  posts: 42,
-  followers: 1234,
-  following: 567,
-  
+  is_online: false,
+  last_seen_hours: 3,
+
   // Contact Information
   contacts: {
     phone: "+63 912 345 6789",
@@ -31,8 +27,8 @@ const sellerData = {
   }
 };
 
-export default function InstagramProfile() {
-  const [activeTab, setActiveTab] = useState('posts');
+export default function XProfile() {
+  const [activeTab, setActiveTab] = useState('products');
   const [isFollowing, setIsFollowing] = useState(false);
   const isOwnProfile = true;
 
@@ -79,19 +75,94 @@ export default function InstagramProfile() {
       ),
       action: `https://instagram.com/${sellerData.contacts.instagram.replace('@', '')}`,
     },
+    { 
+      type: 'telegram', 
+      label: 'Telegram',
+      icon: () => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.509l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.022c.242-.213-.054-.333-.373-.121l-6.869 4.326-2.96-.924c-.643-.204-.656-.643.136-.953l11.57-4.461c.537-.196 1.006.128.832.941z"/>
+        </svg>
+      ),
+      action: `https://t.me/${sellerData.contacts.telegram.replace('@', '')}`,
+    },
+    { 
+      type: 'twitter', 
+      label: 'Twitter',
+      icon: () => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+        </svg>
+      ),
+      action: `https://twitter.com/${sellerData.contacts.twitter.replace('@', '')}`,
+    },
+    { 
+      type: 'tiktok', 
+      label: 'TikTok',
+      icon: () => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.589 6.686a4.793 4.793 0 01-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 01-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 013.183-4.51v-3.5a6.329 6.329 0 00-5.394 10.692 6.33 6.33 0 0010.857-4.424V8.687a8.182 8.182 0 004.773 1.526V6.79a4.831 4.831 0 01-3.77-1.905"/>
+        </svg>
+      ),
+      action: `https://tiktok.com/@${sellerData.contacts.tiktok.replace('@', '')}`,
+    },
   ];
 
   return (
     <div className="bg-white text-gray-900 min-h-screen w-full max-w-[600px] mx-auto">
-      {/* Banner - Instagram uses subtle gradient, no image */}
-      <div className="h-16 bg-gradient-to-r from-gray-100 to-gray-200"></div>
-      
-      {/* Profile Header */}
-      <div className="px-4 relative">
-        {/* Profile Picture - Instagram style: left aligned, 1/3 overlap */}
-        <div className="flex items-start justify-between">
-          <div className="relative -mt-12">
-            <div className="w-20 h-20 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5 shadow-lg">
+      {/* Banner */}
+      <div className="relative h-32 bg-gradient-to-r from-blue-100 to-purple-100">
+        <img 
+          src={sellerData.banner_url}
+          alt="Banner"
+          className="w-full h-full object-cover"
+        />
+
+        {/* Action Buttons - Positioned on Banner like X/Twitter */}
+        <div className="absolute top-3 right-3 flex gap-2">
+          {/* Share Button - Transparent with blur */}
+          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
+            <svg 
+              width="18" 
+              height="18" 
+              viewBox="0 0 64 64"
+              fill="white"
+              className="drop-shadow-md"
+            >
+              <path d="M34,21.54V8.64a.18.18,0,0,1,.3-.14L60.94,30.69a.18.18,0,0,1,0,.28L34.3,53.15A.18.18,0,0,1,34,53V40.86a1.14,1.14,0,0,0-.94-1.12c-3.57-.64-16.75-1.59-29.47,15.7a.26.26,0,0,1-.47-.12C2.7,50.31,1.67,21.54,34,21.54"/>
+            </svg>
+          </button>
+
+          {/* Edit/Follow Button - Transparent with blur */}
+          {isOwnProfile ? (
+            <button className="px-4 py-1.5 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all text-white text-sm font-semibold border-0 drop-shadow-md">
+              Edit profile
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
+                <MoreHorizontal size={18} className="text-white drop-shadow-md" />
+              </button>
+              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-all border-0">
+                <UserSquare2 size={18} className="text-white drop-shadow-md" />
+              </button>
+              <button
+                onClick={() => setIsFollowing(!isFollowing)}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all drop-shadow-md ${
+                  isFollowing 
+                    ? 'bg-black/30 backdrop-blur-sm hover:bg-black/40 text-white border-0' 
+                    : 'bg-white text-gray-900 hover:bg-gray-100 border-0'
+                }`}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Profile Picture - Centered */}
+        <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
+          <div className="relative">
+            <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
               <div className="w-full h-full rounded-full bg-white p-0.5">
                 <img 
                   src={sellerData.image_url}
@@ -100,203 +171,118 @@ export default function InstagramProfile() {
                 />
               </div>
             </div>
-          </div>
-          
-          {/* Action Buttons - Instagram style */}
-          <div className="flex gap-2 mt-2">
-            {isOwnProfile ? (
-              <>
-                <button className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold transition-colors">
-                  Edit profile
-                </button>
-                <button className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold transition-colors">
-                  Share profile
-                </button>
-                <button className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                  <Settings size={18} className="text-gray-700" />
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => setIsFollowing(!isFollowing)}
-                  className={`px-5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
-                    isFollowing 
-                      ? 'bg-gray-100 hover:bg-gray-200 text-gray-900' 
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
-                  }`}
-                >
-                  {isFollowing ? 'Following' : 'Follow'}
-                </button>
-                <button className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold transition-colors">
-                  Message
-                </button>
-                <button className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="1" />
-                    <circle cx="19" cy="12" r="1" />
-                    <circle cx="5" cy="12" r="1" />
-                  </svg>
-                </button>
-              </>
+
+            {/* Status Indicator */}
+            {sellerData.is_online && (
+              <div className="absolute bottom-1 right-1">
+                <div className="w-4 h-4 bg-green-500 rounded-full border-[3px] border-white"></div>
+              </div>
             )}
-          </div>
-        </div>
-
-        {/* Profile Info */}
-        <div className="mt-3">
-          {/* Name and Username */}
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="font-bold text-base text-gray-900">{sellerData.name}</span>
-            {sellerData.verified && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#3897f0">
-                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-              </svg>
-            )}
-          </div>
-          <p className="text-sm text-gray-500 mb-3">@{sellerData.username}</p>
-          
-          {/* Bio */}
-          <p className="text-sm leading-relaxed text-gray-900 mb-3 max-w-md">
-            {sellerData.bio}
-          </p>
-          
-          {/* Location */}
-          <div className="flex items-center gap-1 mb-3 text-xs text-gray-500">
-            <MapPin size={14} className="text-gray-400" />
-            <span>{sellerData.location}</span>
-          </div>
-        </div>
-
-        {/* Stats - Instagram style */}
-        <div className="flex gap-6 py-3 border-t border-b border-gray-100">
-          <div className="flex flex-col">
-            <span className="font-semibold text-gray-900">{sellerData.posts}</span>
-            <span className="text-xs text-gray-500">posts</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-semibold text-gray-900">{sellerData.followers}</span>
-            <span className="text-xs text-gray-500">followers</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-semibold text-gray-900">{sellerData.following}</span>
-            <span className="text-xs text-gray-500">following</span>
-          </div>
-        </div>
-
-        {/* Contact Buttons - Horizontal scroll */}
-        <div className="relative py-3">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            {contactMethods.map((contact) => {
-              const Icon = contact.icon;
-              return (
-                <a
-                  key={contact.type}
-                  href={contact.action}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all active:scale-95 whitespace-nowrap text-sm text-gray-700"
-                >
-                  <div className="flex-shrink-0 text-gray-600">
-                    {typeof Icon === 'function' ? <Icon /> : <Icon size={16} />}
-                  </div>
-                  <span className="font-medium">{contact.label}</span>
-                </a>
-              );
-            })}
-          </div>
-          <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
-        </div>
-      </div>
-
-      {/* Tabs - Instagram style */}
-      <div className="border-t border-gray-200 mt-2">
-        <div className="flex justify-around">
-          <button
-            onClick={() => setActiveTab('posts')}
-            className={`flex-1 py-3 flex items-center justify-center gap-1.5 relative ${
-              activeTab === 'posts' ? 'text-gray-900' : 'text-gray-400'
-            }`}
-          >
-            <Grid size={20} fill={activeTab === 'posts' ? 'currentColor' : 'none'} />
-            <span className="text-xs font-medium hidden sm:inline">Posts</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('reels')}
-            className={`flex-1 py-3 flex items-center justify-center gap-1.5 relative ${
-              activeTab === 'reels' ? 'text-gray-900' : 'text-gray-400'
-            }`}
-          >
-            <Film size={20} fill={activeTab === 'reels' ? 'currentColor' : 'none'} />
-            <span className="text-xs font-medium hidden sm:inline">Reels</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('saved')}
-            className={`flex-1 py-3 flex items-center justify-center gap-1.5 relative ${
-              activeTab === 'saved' ? 'text-gray-900' : 'text-gray-400'
-            }`}
-          >
-            <Bookmark size={20} fill={activeTab === 'saved' ? 'currentColor' : 'none'} />
-            <span className="text-xs font-medium hidden sm:inline">Saved</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('tagged')}
-            className={`flex-1 py-3 flex items-center justify-center gap-1.5 relative ${
-              activeTab === 'tagged' ? 'text-gray-900' : 'text-gray-400'
-            }`}
-          >
-            <Heart size={20} fill={activeTab === 'tagged' ? 'currentColor' : 'none'} />
-            <span className="text-xs font-medium hidden sm:inline">Tagged</span>
-          </button>
-        </div>
-        {/* Active Tab Indicator */}
-        <div className="relative h-0.5">
-          <div 
-            className={`absolute bottom-0 h-0.5 bg-gray-900 transition-all duration-200 ${
-              activeTab === 'posts' ? 'left-0 w-1/4' :
-              activeTab === 'reels' ? 'left-1/4 w-1/4' :
-              activeTab === 'saved' ? 'left-2/4 w-1/4' :
-              'left-3/4 w-1/4'
-            }`}
-          />
-        </div>
-      </div>
-
-      {/* Content Grid - Instagram style 3-column grid */}
-      <div className="p-0.5">
-        {activeTab === 'posts' && (
-          <div className="grid grid-cols-3 gap-0.5">
-            {[...Array(9)].map((_, i) => (
-              <div key={i} className="aspect-square bg-gray-100 hover:opacity-95 transition-opacity">
-                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-500 text-xs">
-                  Post {i + 1}
+            {!sellerData.is_online && sellerData.last_seen_hours && (
+              <div className="absolute bottom-1 right-1 group">
+                <div className="w-4 h-4 bg-gray-300 rounded-full border-[3px] border-white"></div>
+                <div className="absolute -bottom-6 -right-2 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  {sellerData.last_seen_hours}h ago
                 </div>
               </div>
-            ))}
+            )}
           </div>
-        )}
-        
-        {activeTab === 'reels' && (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-gray-500 text-sm">No reels yet</p>
+        </div>
+      </div>
+
+      {/* Profile Info - All Centered */}
+      <div className="px-4 pt-14 flex flex-col items-center text-center">
+        {/* Name with Verified Badge */}
+        <div className="mb-2 flex items-center justify-center gap-1.5">
+          <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
+          {sellerData.verified && (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
+              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+          )}
+        </div>
+
+        {/* Bio */}
+        <div className="mb-2 max-w-md">
+          <p className="text-sm leading-relaxed text-gray-700">
+            {sellerData.bio}
+          </p>
+        </div>
+
+        {/* Info Links - Centered */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-2 text-xs text-gray-600">
+          <div className="flex items-center gap-1">
+            <MapPin size={14} className="text-gray-500" />
+            <span>{sellerData.location}</span>
           </div>
-        )}
-        
-        {activeTab === 'saved' && (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-gray-500 text-sm">No saved posts</p>
+          <div className="flex items-center gap-1">
+            <CalendarDays size={14} className="text-gray-500" />
+            <span>Joined {sellerData.joined_date}</span>
           </div>
-        )}
-        
-        {activeTab === 'tagged' && (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-gray-500 text-sm">No tagged posts</p>
+        </div>
+
+        {/* Contact Section - Clean buttons with separator only */}
+        <div className="w-full mt-4 mb-2">
+          {/* Separator only - no text */}
+          <div className="w-full h-px bg-gray-200 mb-4"></div>
+
+          <div className="relative">
+            <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-hide justify-start">
+              {contactMethods.map((contact) => {
+                const Icon = contact.icon;
+                return (
+                  <a
+                    key={contact.type}
+                    href={contact.action}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all active:scale-95 whitespace-nowrap text-gray-700"
+                  >
+                    <div className="flex-shrink-0 text-gray-600">
+                      {typeof Icon === 'function' ? <Icon /> : <Icon size={16} />}
+                    </div>
+                    <span className="text-xs font-medium">{contact.label}</span>
+                  </a>
+                );
+              })}
+            </div>
+            <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200 mt-2">
+        <div className="flex">
+          {['Products', 'Reviews', 'Media', 'Likes'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab.toLowerCase())}
+              className={`flex-1 py-2.5 text-sm font-medium relative ${
+                activeTab === tab.toLowerCase() 
+                  ? 'text-gray-900' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab}
+              {activeTab === tab.toLowerCase() && (
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-1 bg-blue-600 rounded-full"></div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="px-4 py-6">
+        <div className="text-center text-gray-500 text-sm">
+          <p>Seller's products and reviews appear here</p>
+          <p className="text-xs mt-1">Select a tab above to view different content</p>
+        </div>
       </div>
 
       {/* Bottom Spacing */}
-      <div className="h-8"></div>
+      <div className="h-16"></div>
     </div>
   );
 }
