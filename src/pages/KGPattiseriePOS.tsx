@@ -272,6 +272,7 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
 };
 
 // ==================== COMPOSANT PRODUCT CARD ====================
+// ==================== COMPOSANT PRODUCT CARD ====================
 const ProductCard = ({ product, addToCart, isInCart, isLoading }) => {
   return (
     <div className={`bg-white rounded-xl shadow-sm overflow-hidden border ${
@@ -283,7 +284,7 @@ const ProductCard = ({ product, addToCart, isInCart, isLoading }) => {
           {product.category}
         </span>
         {isInCart && (
-          <span className="absolute top-2 left-2 bg-pink-600 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+          <span className="absolute bottom-2 left-2 bg-pink-600 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-md">
             <Check size={12} />
             Dans le panier
           </span>
