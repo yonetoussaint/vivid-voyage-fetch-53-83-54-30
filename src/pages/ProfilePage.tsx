@@ -13,7 +13,7 @@ const sellerData = {
   joined_date: "January 2020",
   is_online: false,
   last_seen_hours: 3,
-  
+
   // Contact Information
   contacts: {
     phone: "+63 912 345 6789",
@@ -131,9 +131,9 @@ export default function XProfile() {
           alt="Banner"
           className="w-full h-full object-cover"
         />
-        
-        {/* Profile Picture with Status Indicator */}
-        <div className="absolute -bottom-12 left-4">
+
+        {/* Profile Picture - Centered */}
+        <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
           <div className="relative">
             <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5">
               <div className="w-full h-full rounded-full bg-white p-0.5">
@@ -144,15 +144,13 @@ export default function XProfile() {
                 />
               </div>
             </div>
-            
-            {/* Simple Green Dot for Online - Positioned exactly like Facebook */}
+
+            {/* Status Indicator */}
             {sellerData.is_online && (
               <div className="absolute bottom-1 right-1">
                 <div className="w-4 h-4 bg-green-500 rounded-full border-[3px] border-white"></div>
               </div>
             )}
-            
-            {/* Time Indicator for Offline - Appears on hover */}
             {!sellerData.is_online && sellerData.last_seen_hours && (
               <div className="absolute bottom-1 right-1 group">
                 <div className="w-4 h-4 bg-gray-300 rounded-full border-[3px] border-white"></div>
@@ -167,9 +165,7 @@ export default function XProfile() {
 
       {/* Action Buttons */}
       <div className="flex justify-end items-center px-4 pt-3">
-        {/* Right side buttons */}
         <div className="flex gap-2">
-          {/* Custom Share Icon from Noun Project */}
           <button className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
             <svg 
               width="20" 
@@ -181,7 +177,7 @@ export default function XProfile() {
               <path d="M34,21.54V8.64a.18.18,0,0,1,.3-.14L60.94,30.69a.18.18,0,0,1,0,.28L34.3,53.15A.18.18,0,0,1,34,53V40.86a1.14,1.14,0,0,0-.94-1.12c-3.57-.64-16.75-1.59-29.47,15.7a.26.26,0,0,1-.47-.12C2.7,50.31,1.67,21.54,34,21.54"/>
             </svg>
           </button>
-          
+
           {isOwnProfile ? (
             <button className="px-4 py-2 border border-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">
               Edit profile
@@ -209,29 +205,27 @@ export default function XProfile() {
         </div>
       </div>
 
-      {/* Profile Info */}
-      <div className="px-2 pt-2">
-        {/* Name */}
-        <div className="mb-2">
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
-            {sellerData.verified && (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
-                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-              </svg>
-            )}
-          </div>
+      {/* Profile Info - All Centered */}
+      <div className="px-4 pt-2 flex flex-col items-center text-center">
+        {/* Name with Verified Badge */}
+        <div className="mb-2 flex items-center justify-center gap-1.5">
+          <span className="font-bold text-xl text-gray-900">{sellerData.name}</span>
+          {sellerData.verified && (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#1D9BF0">
+              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+          )}
         </div>
 
         {/* Bio */}
-        <div className="mb-2">
+        <div className="mb-2 max-w-md">
           <p className="text-sm leading-relaxed text-gray-700">
             {sellerData.bio}
           </p>
         </div>
 
-        {/* Info Links */}
-        <div className="flex flex-wrap items-center gap-3 mb-2 text-xs text-gray-600">
+        {/* Info Links - Centered */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-2 text-xs text-gray-600">
           <div className="flex items-center gap-1">
             <MapPin size={14} className="text-gray-500" />
             <span>{sellerData.location}</span>
@@ -242,16 +236,15 @@ export default function XProfile() {
           </div>
         </div>
 
-        {/* Horizontally Scrollable Contact Section - Reduced Height */}
-        <div className="">
-          <div className="flex items-center gap-3 mb-2">
+        {/* Contact Section - Centered */}
+        <div className="w-full mt-2">
+          <div className="flex items-center gap-3 mb-2 justify-center">
             <span className="text-sm font-medium text-gray-900">Contact Seller</span>
-            <div className="flex-1 h-px bg-gray-200"></div>
+            <div className="flex-1 h-px bg-gray-200 max-w-[200px]"></div>
           </div>
-          
+
           <div className="relative">
-            {/* Horizontal Scrollable Container - Smaller Height */}
-            <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-hide justify-start">
               {contactMethods.map((contact) => {
                 const Icon = contact.icon;
                 return (
@@ -270,15 +263,13 @@ export default function XProfile() {
                 );
               })}
             </div>
-            
-            {/* Fade Gradient Overlay for Scroll Hint */}
             <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 mt-4">
         <div className="flex">
           {['Products', 'Reviews', 'Media', 'Likes'].map((tab) => (
             <button
