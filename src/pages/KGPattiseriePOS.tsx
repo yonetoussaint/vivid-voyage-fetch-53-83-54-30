@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, ShoppingCart, Plus, Minus, Trash2, FileText, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw, Coffee } from 'lucide-react';
+import { Menu, X, ShoppingCart, Plus, Minus, Trash2, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw, Search, Store } from 'lucide-react';
 
 // ==================== COMPOSANT PRINCIPAL ====================
 const KGPattisseriePOS = () => {
@@ -9,45 +9,36 @@ const KGPattisseriePOS = () => {
   const [customerName, setCustomerName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [invoiceHistory, setInvoiceHistory] = useState([]);
-  const [showAddPanel, setShowAddPanel] = useState(false);
-  const [selectedFlavor, setSelectedFlavor] = useState('');
-  const [selectedSize, setSelectedSize] = useState('');
+  const [showCart, setShowCart] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const flavors = [
-    { id: 1, name: 'Fraise' },
-    { id: 2, name: 'Chocolat' },
-    { id: 3, name: 'Vanille' },
-    { id: 4, name: 'Rhum Raisin' },
-    { id: 5, name: 'Fruit de la Passion' },
+  const products = [
+    { id: 1, name: '07 OZ - Fraise', price: 300, image: '🍓', category: '07 OZ', flavor: 'Fraise' },
+    { id: 2, name: '07 OZ - Chocolat', price: 300, image: '🍫', category: '07 OZ', flavor: 'Chocolat' },
+    { id: 3, name: '07 OZ - Vanille', price: 300, image: '🍦', category: '07 OZ', flavor: 'Vanille' },
+    { id: 4, name: '07 OZ - Rhum Raisin', price: 300, image: '🍇', category: '07 OZ', flavor: 'Rhum Raisin' },
+    { id: 5, name: '07 OZ - Fruit de la Passion', price: 300, image: '💛', category: '07 OZ', flavor: 'Fruit de la Passion' },
+    { id: 6, name: '16 OZ - Fraise', price: 500, image: '🍓', category: '16 OZ', flavor: 'Fraise' },
+    { id: 7, name: '16 OZ - Chocolat', price: 500, image: '🍫', category: '16 OZ', flavor: 'Chocolat' },
+    { id: 8, name: '16 OZ - Vanille', price: 500, image: '🍦', category: '16 OZ', flavor: 'Vanille' },
+    { id: 9, name: '16 OZ - Rhum Raisin', price: 500, image: '🍇', category: '16 OZ', flavor: 'Rhum Raisin' },
+    { id: 10, name: '16 OZ - Fruit de la Passion', price: 500, image: '💛', category: '16 OZ', flavor: 'Fruit de la Passion' },
   ];
 
-  const sizes = [
-    { id: 1, name: '07 OZ', price: 300 },
-    { id: 2, name: '16 OZ', price: 500 },
-  ];
+  const categories = ['07 OZ', '16 OZ'];
 
-  const addToCart = () => {
-    if (!selectedFlavor || !selectedSize) {
-      alert('Veuillez sélectionner une saveur et un format');
-      return;
-    }
-
-    const flavor = flavors.find(f => f.id === parseInt(selectedFlavor));
-    const size = sizes.find(s => s.id === parseInt(selectedSize));
+  const addToCart = (product) => {
+    const existingItem = cart.find(item => item.id === product.id);
     
-    const cartItem = {
-      id: `${selectedSize}-${selectedFlavor}-${Date.now()}`,
-      name: `${size.name} - ${flavor.name}`,
-      price: size.price,
-      flavor: flavor.name,
-      size: size.name,
-      quantity: 1
-    };
-
-    setCart([...cart, cartItem]);
-    setSelectedFlavor('');
-    setSelectedSize('');
-    setShowAddPanel(false);
+    if (existingItem) {
+      setCart(cart.map(item => 
+        item.id === product.id 
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      ));
+    } else {
+      setCart([...cart, { ...product, quantity: 1 }]);
+    }
   };
 
   const updateQuantity = (id, delta) => {
@@ -66,11 +57,12 @@ const KGPattisseriePOS = () => {
     return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
+  const getTotalItems = () => {
+    return cart.reduce((sum, item) => sum + item.quantity, 0);
+  };
+
   const clearCart = () => {
     setCart([]);
-    setShowAddPanel(false);
-    setSelectedFlavor('');
-    setSelectedSize('');
   };
 
   const addToHistory = (invoice) => {
@@ -93,12 +85,19 @@ const KGPattisseriePOS = () => {
     }
   };
 
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.flavor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <Header 
         menuOpen={menuOpen} 
         setMenuOpen={setMenuOpen} 
-        cartCount={cart.length} 
+        cartCount={getTotalItems()}
+        onCartClick={() => setShowCart(true)}
       />
       
       <SidebarMenu 
@@ -108,37 +107,40 @@ const KGPattisseriePOS = () => {
         setActiveTab={setActiveTab} 
       />
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Panier - Plein écran */}
+      <div className="flex-1 overflow-hidden">
         {activeTab === 'vente' ? (
-          <CartMain 
-            cart={cart}
-            customerName={customerName}
-            setCustomerName={setCustomerName}
-            updateQuantity={updateQuantity}
-            removeFromCart={removeFromCart}
-            getTotalAmount={getTotalAmount}
-            clearCart={clearCart}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-            addToHistory={addToHistory}
-            showAddPanel={showAddPanel}
-            setShowAddPanel={setShowAddPanel}
-            selectedFlavor={selectedFlavor}
-            setSelectedFlavor={setSelectedFlavor}
-            selectedSize={selectedSize}
-            setSelectedSize={setSelectedSize}
-            addToCart={addToCart}
-            flavors={flavors}
-            sizes={sizes}
-          />
+          <>
+            {/* Store View - Style Uber Eats */}
+            <StoreView 
+              products={filteredProducts}
+              categories={categories}
+              addToCart={addToCart}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              cartCount={getTotalItems()}
+              onCartClick={() => setShowCart(true)}
+            />
+
+            {/* Cart Drawer */}
+            <CartDrawer 
+              isOpen={showCart}
+              onClose={() => setShowCart(false)}
+              cart={cart}
+              customerName={customerName}
+              setCustomerName={setCustomerName}
+              updateQuantity={updateQuantity}
+              removeFromCart={removeFromCart}
+              getTotalAmount={getTotalAmount}
+              clearCart={clearCart}
+              isLoading={isLoading}
+              setIsLoading={setIsLoading}
+              addToHistory={addToHistory}
+            />
+          </>
         ) : (
-          <div className="flex-1 overflow-y-auto p-2">
+          <div className="h-full overflow-y-auto p-3">
             {activeTab === 'produits' && (
-              <ProduitsTab 
-                flavors={flavors}
-                sizes={sizes}
-              />
+              <ProductsTab products={products} />
             )}
             {activeTab === 'factures' && (
               <FacturesTab 
@@ -157,13 +159,347 @@ const KGPattisseriePOS = () => {
   );
 };
 
+// ==================== COMPOSANT STORE VIEW (UBER EATS STYLE) ====================
+const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm, cartCount, onCartClick }) => {
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  const filteredByCategory = selectedCategory === 'all' 
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
+
+  return (
+    <div className="h-full flex flex-col bg-gray-100">
+      {/* Store Header */}
+      <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20">
+        <div className="flex items-center gap-2 mb-3">
+          <Store size={24} className="text-pink-600" />
+          <h1 className="text-xl font-bold text-gray-800">KG Pâtisserie</h1>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="relative">
+          <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Rechercher une glace..."
+            className="w-full pl-10 pr-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      {/* Categories */}
+      <div className="bg-white px-4 py-3 border-b border-gray-200 overflow-x-auto">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setSelectedCategory('all')}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              selectedCategory === 'all'
+                ? 'bg-pink-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Tous
+          </button>
+          {categories.map(category => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                selectedCategory === category
+                  ? 'bg-pink-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Products Grid - 2 columns */}
+      <div className="flex-1 overflow-y-auto p-3">
+        <div className="grid grid-cols-2 gap-3">
+          {filteredByCategory.map(product => (
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              addToCart={addToCart} 
+            />
+          ))}
+        </div>
+        
+        {filteredByCategory.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="text-6xl mb-4">😢</div>
+            <p className="text-gray-500 text-center">Aucun produit trouvé</p>
+          </div>
+        )}
+      </div>
+
+      {/* Cart Bar - Fixed Bottom */}
+      {cartCount > 0 && (
+        <div className="sticky bottom-0 p-3 bg-white border-t border-gray-200 shadow-lg">
+          <button
+            onClick={onCartClick}
+            className="w-full bg-pink-600 text-white py-4 rounded-xl font-bold flex items-center justify-between px-6 hover:bg-pink-700 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <ShoppingCart size={24} />
+              <span className="text-lg">{cartCount} article{cartCount > 1 ? 's' : ''}</span>
+            </div>
+            <span className="text-lg">Voir le panier →</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==================== COMPOSANT PRODUCT CARD ====================
+const ProductCard = ({ product, addToCart }) => {
+  const [imageError, setImageError] = useState(false);
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center relative">
+        <span className="text-6xl">{product.image}</span>
+        <span className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-bold text-pink-600 border border-pink-200">
+          {product.category}
+        </span>
+      </div>
+      <div className="p-3">
+        <h3 className="font-semibold text-gray-800 text-sm mb-1 line-clamp-2">
+          {product.flavor}
+        </h3>
+        <div className="flex items-center justify-between mt-2">
+          <span className="font-bold text-pink-600 text-lg">{product.price} HTG</span>
+          <button
+            onClick={() => addToCart(product)}
+            className="bg-pink-600 text-white p-2 rounded-full hover:bg-pink-700 transition-colors flex items-center justify-center w-10 h-10 shadow-sm"
+          >
+            <Plus size={20} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ==================== COMPOSANT CART DRAWER ====================
+const CartDrawer = ({ 
+  isOpen, 
+  onClose, 
+  cart, 
+  customerName, 
+  setCustomerName, 
+  updateQuantity, 
+  removeFromCart, 
+  getTotalAmount, 
+  clearCart, 
+  isLoading, 
+  setIsLoading, 
+  addToHistory 
+}) => {
+  const handleGenerateInvoice = async () => {
+    if (cart.length === 0) {
+      alert('Panier vide');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
+    const total = getTotalAmount();
+    
+    const invoice = {
+      number: invoiceNumber,
+      date: new Date().toLocaleDateString('fr-FR'),
+      time: new Date().toLocaleTimeString('fr-FR'),
+      items: [...cart],
+      total: total,
+      customerName: customerName || 'Client'
+    };
+
+    try {
+      await generateAndDownloadImage({ cart, customerName, total });
+      addToHistory(invoice);
+      clearCart();
+      setCustomerName('');
+      onClose();
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la génération de la facture');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+        onClick={onClose}
+      />
+      
+      {/* Drawer */}
+      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform flex flex-col">
+        {/* Header */}
+        <div className="px-4 py-4 border-b border-gray-200 flex justify-between items-center bg-white sticky top-0">
+          <div className="flex items-center gap-3">
+            <ShoppingCart size={24} className="text-pink-600" />
+            <h2 className="text-xl font-bold text-gray-800">Votre panier</h2>
+            {cart.length > 0 && (
+              <span className="bg-pink-600 text-white text-sm rounded-full w-6 h-6 flex items-center justify-center">
+                {cart.reduce((sum, item) => sum + item.quantity, 0)}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {cart.length > 0 && (
+              <button 
+                onClick={clearCart}
+                className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <Trash2 size={20} />
+              </button>
+            )}
+            <button 
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <X size={24} />
+            </button>
+          </div>
+        </div>
+
+        {/* Customer Name */}
+        <div className="px-4 py-4 border-b border-gray-200 bg-gray-50">
+          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <User size={16} />
+            Nom du client
+          </label>
+          <input
+            type="text"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            placeholder="Entrez le nom du client"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-base bg-white"
+          />
+        </div>
+
+        {/* Cart Items */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {cart.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+              <ShoppingCart size={64} className="mb-4 opacity-30" />
+              <p className="text-lg font-medium">Votre panier est vide</p>
+              <p className="text-sm mt-2">Ajoutez des produits depuis la boutique</p>
+              <button
+                onClick={onClose}
+                className="mt-6 bg-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-pink-700 transition-colors"
+              >
+                Parcourir la boutique
+              </button>
+            </div>
+          ) : (
+            cart.map(item => (
+              <CartItem 
+                key={item.id} 
+                item={item} 
+                updateQuantity={updateQuantity} 
+                removeFromCart={removeFromCart} 
+              />
+            ))
+          )}
+        </div>
+
+        {/* Footer - Total & Checkout */}
+        {cart.length > 0 && (
+          <div className="px-4 py-4 border-t border-gray-200 bg-white sticky bottom-0 shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-gray-700 font-medium">Total</span>
+              <span className="font-bold text-2xl text-pink-600">{getTotalAmount()} HTG</span>
+            </div>
+            
+            <button
+              onClick={handleGenerateInvoice}
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-4 rounded-xl font-bold hover:from-pink-700 hover:to-pink-600 transition-all shadow-lg flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <Loader size={24} className="animate-spin" />
+                  Génération...
+                </>
+              ) : (
+                <>
+                  <Download size={24} />
+                  Télécharger la facture
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+// ==================== COMPOSANT ARTICLE DU PANIER ====================
+const CartItem = ({ item, updateQuantity, removeFromCart }) => (
+  <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+    <div className="flex justify-between items-start mb-2">
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{item.image}</span>
+          <div>
+            <p className="font-semibold text-gray-800 text-sm">{item.flavor}</p>
+            <p className="text-xs text-gray-500">{item.category}</p>
+          </div>
+        </div>
+      </div>
+      <button
+        onClick={() => removeFromCart(item.id)}
+        className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded-full transition-colors"
+      >
+        <Trash2 size={18} />
+      </button>
+    </div>
+    <div className="flex items-center justify-between mt-2">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => updateQuantity(item.id, -1)}
+          className="w-9 h-9 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200 transition-colors"
+        >
+          <Minus size={18} />
+        </button>
+        <span className="w-10 text-center font-bold text-base">{item.quantity}</span>
+        <button
+          onClick={() => updateQuantity(item.id, 1)}
+          className="w-9 h-9 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200 transition-colors"
+        >
+          <Plus size={18} />
+        </button>
+      </div>
+      <p className="font-bold text-pink-600 text-lg">
+        {item.price * item.quantity} HTG
+      </p>
+    </div>
+  </div>
+);
+
 // ==================== COMPOSANT HEADER ====================
-const Header = ({ menuOpen, setMenuOpen, cartCount }) => (
-  <header className="bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-sm sticky top-0 z-40">
+const Header = ({ menuOpen, setMenuOpen, cartCount, onCartClick }) => (
+  <header className="bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-sm sticky top-0 z-30">
     <div className="flex items-center justify-between px-3 py-2">
       <button 
         onClick={() => setMenuOpen(!menuOpen)}
-        className="p-1.5 hover:bg-pink-700 rounded-lg transition-colors"
+        className="p-2 hover:bg-pink-700 rounded-lg transition-colors"
       >
         {menuOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
@@ -171,14 +507,17 @@ const Header = ({ menuOpen, setMenuOpen, cartCount }) => (
         <h1 className="text-lg font-bold">KG Pâtisserie</h1>
         <p className="text-xs text-pink-100">Saint-Marc, Ruelle Désir</p>
       </div>
-      <div className="relative">
+      <button 
+        onClick={onCartClick}
+        className="relative p-2 hover:bg-pink-700 rounded-lg transition-colors"
+      >
         <ShoppingCart size={22} />
         {cartCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
             {cartCount}
           </span>
         )}
-      </div>
+      </button>
     </div>
   </header>
 );
@@ -191,7 +530,7 @@ const SidebarMenu = ({ menuOpen, setMenuOpen, activeTab, setActiveTab }) => {
         setActiveTab(tab);
         setMenuOpen(false);
       }}
-      className={`flex items-center gap-3 w-full px-4 py-2.5 transition-colors ${
+      className={`flex items-center gap-3 w-full px-4 py-3 transition-colors ${
         activeTab === tab 
           ? 'bg-pink-100 text-pink-700 border-l-4 border-pink-600' 
           : 'text-gray-700 hover:bg-gray-100'
@@ -204,7 +543,7 @@ const SidebarMenu = ({ menuOpen, setMenuOpen, activeTab, setActiveTab }) => {
 
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity ${
+      className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity ${
         menuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
       onClick={() => setMenuOpen(false)}
@@ -231,36 +570,24 @@ const SidebarMenu = ({ menuOpen, setMenuOpen, activeTab, setActiveTab }) => {
 };
 
 // ==================== COMPOSANT ONGLET PRODUITS ====================
-const ProduitsTab = ({ flavors, sizes }) => (
-  <div className="space-y-3">
-    <div className="bg-white rounded-lg shadow-sm p-4">
-      <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-        <span className="text-xl">🍦</span> Saveurs
-      </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-        {flavors.map(flavor => (
-          <div key={flavor.id} className="bg-pink-50 p-2 rounded-lg text-center border border-pink-200">
-            <p className="font-medium text-gray-800 text-sm">{flavor.name}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-
-    <div className="bg-white rounded-lg shadow-sm p-4">
-      <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-        <span className="text-xl">📦</span> Formats
-      </h2>
-      <div className="space-y-2">
-        {sizes.map(size => (
-          <div key={size.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🍦</span>
-              <p className="font-medium text-gray-800">{size.name}</p>
+const ProductsTab = ({ products }) => (
+  <div className="bg-white rounded-lg shadow-sm p-4">
+    <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+      <span className="text-xl">🍦</span> Tous les produits
+    </h2>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      {products.map(product => (
+        <div key={product.id} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-3xl">{product.image}</span>
+            <div>
+              <p className="font-medium text-gray-800 text-sm">{product.flavor}</p>
+              <p className="text-xs text-gray-500">{product.category}</p>
             </div>
-            <p className="font-bold text-pink-600">{size.price} HTG</p>
           </div>
-        ))}
-      </div>
+          <p className="font-bold text-pink-600 text-right">{product.price} HTG</p>
+        </div>
+      ))}
     </div>
   </div>
 );
@@ -308,7 +635,7 @@ const FacturesTab = ({ invoiceHistory, onRegenerate, isLoading }) => {
                 <div className="mt-1">
                   {invoice.items.map((item, i) => (
                     <span key={i} className="inline-block bg-gray-100 rounded-full px-2 py-0.5 text-xs mr-1 mb-1">
-                      {item.name} x{item.quantity}
+                      {item.flavor} x{item.quantity}
                     </span>
                   ))}
                 </div>
@@ -359,267 +686,12 @@ const ParametresTab = () => (
   </div>
 );
 
-// ==================== COMPOSANT PANIER PRINCIPAL (PLEIN ÉCRAN, FLAT) ====================
-const CartMain = ({ 
-  cart,
-  customerName,
-  setCustomerName,
-  updateQuantity,
-  removeFromCart,
-  getTotalAmount,
-  clearCart,
-  isLoading,
-  setIsLoading,
-  addToHistory,
-  showAddPanel,
-  setShowAddPanel,
-  selectedFlavor,
-  setSelectedFlavor,
-  selectedSize,
-  setSelectedSize,
-  addToCart,
-  flavors,
-  sizes
-}) => {
-  const handleGenerateInvoice = async () => {
-    if (cart.length === 0) {
-      alert('Panier vide');
-      return;
-    }
-
-    setIsLoading(true);
-    
-    const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
-    const total = getTotalAmount();
-    
-    const invoice = {
-      number: invoiceNumber,
-      date: new Date().toLocaleDateString('fr-FR'),
-      time: new Date().toLocaleTimeString('fr-FR'),
-      items: [...cart],
-      total: total,
-      customerName: customerName || 'Client'
-    };
-
-    try {
-      await generateAndDownloadImage({ cart, customerName, total });
-      addToHistory(invoice);
-      clearCart();
-      setCustomerName('');
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la génération de la facture');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="w-full h-full bg-gray-100 overflow-y-auto p-2">
-      {/* En-tête */}
-      <div className="flex justify-between items-center mb-2 px-1">
-        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-          <ShoppingCart size={18} className="text-pink-600" />
-          Panier
-          {cart.length > 0 && (
-            <span className="bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {cart.length}
-            </span>
-          )}
-        </h2>
-        {cart.length > 0 && (
-          <button 
-            onClick={clearCart}
-            className="text-red-500 hover:text-red-700 text-xs flex items-center gap-1 px-2 py-1.5 hover:bg-red-50 rounded-lg"
-          >
-            <Trash2 size={14} />
-            Vider
-          </button>
-        )}
-      </div>
-
-      {/* Client */}
-      <div className="mb-2">
-        <input
-          type="text"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          placeholder="Nom du client"
-          className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-pink-500 focus:border-pink-500 bg-white"
-        />
-      </div>
-
-      {/* Liste des articles */}
-      <div className="space-y-2 mb-2">
-        {cart.map(item => (
-          <CartItem 
-            key={item.id} 
-            item={item} 
-            updateQuantity={updateQuantity} 
-            removeFromCart={removeFromCart} 
-          />
-        ))}
-      </div>
-
-      {/* Carte Ajouter - Dotted Border */}
-      {!showAddPanel ? (
-        <button
-          onClick={() => setShowAddPanel(true)}
-          className="w-full border-2 border-dashed border-pink-300 bg-pink-50/50 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 hover:bg-pink-100/50 transition-colors active:scale-95 mb-2"
-        >
-          <div className="w-12 h-12 bg-pink-200 rounded-full flex items-center justify-center">
-            <Plus size={24} className="text-pink-600" />
-          </div>
-          <span className="text-pink-700 font-medium text-sm">Ajouter un article</span>
-          <span className="text-pink-500 text-xs">Glace • Format • Saveur</span>
-        </button>
-      ) : (
-        <div className="bg-white border-2 border-pink-300 rounded-xl p-4 space-y-3 shadow-sm mb-2">
-          <div className="flex justify-between items-center">
-            <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">
-              <Coffee size={16} className="text-pink-600" />
-              Nouvel article
-            </h3>
-            <button
-              onClick={() => {
-                setShowAddPanel(false);
-                setSelectedFlavor('');
-                setSelectedSize('');
-              }}
-              className="text-gray-500 hover:text-gray-700 p-1"
-            >
-              <X size={16} />
-            </button>
-          </div>
-
-          {/* Format */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-gray-700">Format</label>
-            <div className="grid grid-cols-2 gap-2">
-              {sizes.map(size => (
-                <button
-                  key={size.id}
-                  onClick={() => setSelectedSize(size.id.toString())}
-                  className={`p-2.5 rounded-lg border transition-all text-sm ${
-                    selectedSize === size.id.toString()
-                      ? 'border-pink-600 bg-pink-50 text-pink-700'
-                      : 'border-gray-200 bg-white hover:border-pink-300'
-                  }`}
-                >
-                  <span className="font-medium">{size.name}</span>
-                  <span className="block text-xs text-gray-600 mt-0.5">{size.price} HTG</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Saveur */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-gray-700">Saveur</label>
-            <div className="grid grid-cols-2 gap-2">
-              {flavors.map(flavor => (
-                <button
-                  key={flavor.id}
-                  onClick={() => setSelectedFlavor(flavor.id.toString())}
-                  className={`p-2.5 rounded-lg border transition-all text-sm ${
-                    selectedFlavor === flavor.id.toString()
-                      ? 'border-pink-600 bg-pink-50 text-pink-700'
-                      : 'border-gray-200 bg-white hover:border-pink-300'
-                  }`}
-                >
-                  {flavor.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Bouton Ajouter */}
-          <button
-            onClick={addToCart}
-            disabled={!selectedFlavor || !selectedSize}
-            className="w-full bg-pink-600 text-white py-3 rounded-lg font-medium text-sm hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
-          >
-            <Plus size={18} />
-            Ajouter
-          </button>
-        </div>
-      )}
-
-      {/* Total et bouton */}
-      {cart.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-3 sticky bottom-2 shadow-sm">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-700 text-sm font-medium">Total</span>
-            <span className="font-bold text-lg text-pink-600">{getTotalAmount()} HTG</span>
-          </div>
-          
-          <button
-            onClick={handleGenerateInvoice}
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-3 rounded-lg font-medium text-sm hover:from-pink-700 hover:to-pink-600 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {isLoading ? (
-              <>
-                <Loader size={18} className="animate-spin" />
-                Génération...
-              </>
-            ) : (
-              <>
-                <Download size={18} />
-                Télécharger la facture
-              </>
-            )}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ==================== COMPOSANT ARTICLE DU PANIER ====================
-const CartItem = ({ item, updateQuantity, removeFromCart }) => (
-  <div className="bg-white border border-gray-200 rounded-lg p-3">
-    <div className="flex justify-between items-start mb-2">
-      <div className="flex-1">
-        <p className="font-medium text-gray-800 text-sm">{item.name}</p>
-        <p className="text-xs text-gray-600 mt-0.5">{item.price} HTG / unité</p>
-      </div>
-      <button
-        onClick={() => removeFromCart(item.id)}
-        className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-full"
-      >
-        <Trash2 size={16} />
-      </button>
-    </div>
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => updateQuantity(item.id, -1)}
-          className="w-8 h-8 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200"
-        >
-          <Minus size={16} />
-        </button>
-        <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
-        <button
-          onClick={() => updateQuantity(item.id, 1)}
-          className="w-8 h-8 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200"
-        >
-          <Plus size={16} />
-        </button>
-      </div>
-      <p className="font-bold text-pink-600 text-base">
-        {item.price * item.quantity} HTG
-      </p>
-    </div>
-  </div>
-);
-
 // ==================== FONCTION DE GÉNÉRATION DE FACTURE ====================
 const generateInvoiceHTML = ({ invoice, customerName }) => {
   const itemsHTML = invoice.items.map((item, index) => `
     <tr style="border-bottom: 1px solid #e5e7eb; ${index % 2 === 0 ? 'background-color: #f9fafb;' : ''}">
-      <td style="padding: 12px 16px; font-size: 14px; color: #1f2937; font-family: 'Inter', Arial, sans-serif;">${item.name}</td>
-      <td style="text-align: center; padding: 12px 16px; font-size: 14px; color: #4b5563;">${item.price.toFixed(2)} HTG</td>
+      <td style="padding: 12px 16px; font-size: 14px; color: #1f2937;">${item.flavor} (${item.category})</td>
+      <td style="text-align: center; padding: 12px 16px; font-size: 14px; color: #4b5563;">${item.price.toFixed(2)}</td>
       <td style="text-align: center; padding: 12px 16px; font-size: 14px; color: #4b5563;">${item.quantity}</td>
       <td style="text-align: right; padding: 12px 16px; font-size: 14px; font-weight: bold; color: #1f2937;">${(item.price * item.quantity).toFixed(2)} HTG</td>
     </tr>
@@ -630,47 +702,37 @@ const generateInvoiceHTML = ({ invoice, customerName }) => {
   <head>
     <meta charset="UTF-8">
     <title>Facture ${invoice.number}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { margin: 0; padding: 20px; background: white; font-family: 'Inter', Arial, sans-serif; }
-      .invoice-container { max-width: 1000px; margin: 0 auto; background: white; }
+      body { margin: 0; padding: 30px; background: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+      .invoice { max-width: 800px; margin: 0 auto; background: white; }
     </style>
   </head>
   <body>
-    <div class="invoice-container">
-      <!-- En-tête simplifiée -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e5e7eb;">
+    <div class="invoice">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #db2777;">
         <div>
-          <div style="width: 60px; height: 60px; background: #db2777; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-            <span style="color: white; font-size: 24px; font-weight: bold;">KG</span>
-          </div>
-          <h1 style="font-size: 24px; font-weight: 700; color: #1f2937;">KG Pâtisserie</h1>
-          <p style="font-size: 14px; color: #4b5563;">Saint-Marc, Haïti</p>
+          <h1 style="font-size: 28px; font-weight: 800; color: #db2777;">KG Pâtisserie</h1>
+          <p style="font-size: 14px; color: #4b5563; margin-top: 5px;">Saint-Marc, Haïti</p>
         </div>
         <div style="text-align: right;">
-          <h2 style="font-size: 32px; font-weight: 700; color: #db2777;">FACTURE</h2>
-          <div style="background: #fdf2f8; padding: 15px; border-radius: 8px; margin-top: 10px;">
-            <p style="font-size: 14px; color: #4b5563;"><span style="font-weight: 700;">N°:</span> ${invoice.number}</p>
-            <p style="font-size: 14px; color: #4b5563;"><span style="font-weight: 700;">Date:</span> ${invoice.date}</p>
-          </div>
+          <h2 style="font-size: 24px; font-weight: 700; color: #1f2937;">FACTURE</h2>
+          <p style="font-size: 14px; color: #4b5563; margin-top: 5px;">N° ${invoice.number}</p>
+          <p style="font-size: 14px; color: #4b5563;">${invoice.date}</p>
         </div>
       </div>
 
-      <!-- Client -->
       <div style="margin-bottom: 30px; padding: 15px; background: #f9fafb; border-radius: 8px;">
-        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Client</h3>
-        <p style="font-size: 14px;">${customerName || 'Client'}</p>
+        <p style="font-size: 14px; font-weight: 600; color: #374151;">Client: ${customerName || 'Client'}</p>
       </div>
 
-      <!-- Tableau -->
-      <table style="width: 100%; margin-bottom: 30px; border-collapse: collapse;">
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
         <thead>
           <tr style="background: #db2777; color: white;">
-            <th style="text-align: left; padding: 10px 12px; font-size: 13px;">Description</th>
-            <th style="text-align: center; padding: 10px 12px; font-size: 13px;">Prix</th>
-            <th style="text-align: center; padding: 10px 12px; font-size: 13px;">Qté</th>
-            <th style="text-align: right; padding: 10px 12px; font-size: 13px;">Total</th>
+            <th style="text-align: left; padding: 12px; font-size: 13px;">Description</th>
+            <th style="text-align: center; padding: 12px; font-size: 13px;">Prix</th>
+            <th style="text-align: center; padding: 12px; font-size: 13px;">Qté</th>
+            <th style="text-align: right; padding: 12px; font-size: 13px;">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -678,27 +740,18 @@ const generateInvoiceHTML = ({ invoice, customerName }) => {
         </tbody>
       </table>
 
-      <!-- Totaux -->
       <div style="display: flex; justify-content: flex-end; margin-bottom: 30px;">
         <div style="width: 300px;">
-          <div style="display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #e5e7eb;">
-            <span style="font-size: 14px;">Total</span>
-            <span style="font-size: 14px; font-weight: 700;">${invoice.total.toFixed(2)} HTG</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 12px; background: #fdf2f8; border-radius: 8px; margin-top: 8px;">
-            <span style="font-size: 16px; font-weight: 700; color: #9d174d;">À PAYER</span>
+          <div style="display: flex; justify-content: space-between; padding: 12px; background: #fdf2f8; border-radius: 8px;">
+            <span style="font-size: 16px; font-weight: 700; color: #9d174d;">TOTAL</span>
             <span style="font-size: 20px; font-weight: 700; color: #9d174d;">${invoice.total.toFixed(2)} HTG</span>
           </div>
         </div>
       </div>
 
-      <!-- Signature -->
-      <div style="display: flex; justify-content: space-between; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-        <div style="font-size: 12px; color: #6b7280;">Merci de votre confiance</div>
-        <div style="text-align: center;">
-          <div style="border-bottom: 2px solid #9ca3af; width: 180px; margin-bottom: 5px;"></div>
-          <p style="font-size: 12px; color: #4b5563;">KG Pâtisserie</p>
-        </div>
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px;">
+        <p>KG Pâtisserie - Saint-Marc, Ruelle Désir - Tél: +509 1234 5678</p>
+        <p style="margin-top: 5px;">Merci de votre confiance !</p>
       </div>
     </div>
   </body>
@@ -710,7 +763,6 @@ const generateAndDownloadImage = async ({ cart, customerName, total }) => {
   const invoice = {
     number: invoiceNumber,
     date: new Date().toLocaleDateString('fr-FR'),
-    time: new Date().toLocaleTimeString('fr-FR'),
     items: [...cart],
     total: total
   };
@@ -721,8 +773,8 @@ const generateAndDownloadImage = async ({ cart, customerName, total }) => {
   
   const iframe = document.createElement('iframe');
   iframe.style.position = 'absolute';
-  iframe.style.width = '1000px';
-  iframe.style.height = '1200px';
+  iframe.style.width = '800px';
+  iframe.style.height = '1000px';
   iframe.style.left = '-9999px';
   iframe.style.top = '0';
   iframe.style.border = 'none';
@@ -738,8 +790,7 @@ const generateAndDownloadImage = async ({ cart, customerName, total }) => {
   const canvas = await window.html2canvas(iframe.contentDocument.body, { 
     scale: 2,
     backgroundColor: '#ffffff',
-    logging: false,
-    windowWidth: 1000
+    windowWidth: 800
   });
   
   document.body.removeChild(iframe);
