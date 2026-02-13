@@ -109,33 +109,31 @@ const KGPattisseriePOS = () => {
       />
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        {/* Zone principale - vide maintenant */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {activeTab === 'vente' && (
-            <div className="h-full"></div>
-          )}
+        {/* Zone principale - complètement vide pour l'onglet vente */}
+        {activeTab === 'vente' ? (
+          <div className="flex-1"></div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-4">
+            {activeTab === 'produits' && (
+              <ProduitsTab 
+                flavors={flavors}
+                sizes={sizes}
+              />
+            )}
+            {activeTab === 'factures' && (
+              <FacturesTab 
+                invoiceHistory={invoiceHistory}
+                onRegenerate={regenerateInvoice}
+                isLoading={isLoading}
+              />
+            )}
+            {activeTab === 'parametres' && (
+              <ParametresTab />
+            )}
+          </div>
+        )}
 
-          {activeTab === 'produits' && (
-            <ProduitsTab 
-              flavors={flavors}
-              sizes={sizes}
-            />
-          )}
-
-          {activeTab === 'factures' && (
-            <FacturesTab 
-              invoiceHistory={invoiceHistory}
-              onRegenerate={regenerateInvoice}
-              isLoading={isLoading}
-            />
-          )}
-
-          {activeTab === 'parametres' && (
-            <ParametresTab />
-          )}
-        </div>
-
-        {/* Panier - Sidebar */}
+        {/* Panier - Sidebar toujours visible en mode vente */}
         {activeTab === 'vente' && (
           <CartSidebar 
             cart={cart}
@@ -153,7 +151,7 @@ const KGPattisseriePOS = () => {
             selectedFlavor={selectedFlavor}
             setSelectedFlavor={setSelectedFlavor}
             selectedSize={selectedSize}
-            setSelectedSize={setSelectedSize}
+            setSelectedSize={selectedSize}
             addToCart={addToCart}
             flavors={flavors}
             sizes={sizes}
