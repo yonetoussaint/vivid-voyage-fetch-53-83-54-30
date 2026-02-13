@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, ShoppingCart, Plus, Minus, Trash2, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw, Search, Store, Check } from 'lucide-react';
+import { Menu, X, ShoppingCart, Plus, Minus, Trash2, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw, Search, Store, Share2, Check } from 'lucide-react';
 
 // ==================== COMPOSANT PRINCIPAL ====================
 const KGPattisseriePOS = () => {
