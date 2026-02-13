@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, ShoppingCart, Plus, Minus, Trash2, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw, Search, Store } from 'lucide-react';
+import { Menu, X, ShoppingCart, Plus, Minus, Trash2, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw, Search, Store, Check } from 'lucide-react';
 
 // ==================== COMPOSANT PRINCIPAL ====================
 const KGPattisseriePOS = () => {
@@ -11,6 +11,7 @@ const KGPattisseriePOS = () => {
   const [invoiceHistory, setInvoiceHistory] = useState([]);
   const [showCart, setShowCart] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [addingToCart, setAddingToCart] = useState(null);
 
   const products = [
     { id: 1, name: '07 OZ - Fraise', price: 300, image: '🍓', category: '07 OZ', flavor: 'Fraise' },
@@ -27,18 +28,19 @@ const KGPattisseriePOS = () => {
 
   const categories = ['07 OZ', '16 OZ'];
 
-  const addToCart = (product) => {
+  const addToCart = async (product) => {
+    setAddingToCart(product.id);
+    
+    // Simuler un délai réseau
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     const existingItem = cart.find(item => item.id === product.id);
     
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.id === product.id 
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
-    } else {
+    if (!existingItem) {
       setCart([...cart, { ...product, quantity: 1 }]);
     }
+    
+    setAddingToCart(null);
   };
 
   const updateQuantity = (id, delta) => {
@@ -119,6 +121,8 @@ const KGPattisseriePOS = () => {
               setSearchTerm={setSearchTerm}
               cartCount={getTotalItems()}
               onCartClick={() => setShowCart(true)}
+              cart={cart}
+              addingToCart={addingToCart}
             />
 
             {/* Cart Drawer */}
@@ -160,12 +164,16 @@ const KGPattisseriePOS = () => {
 };
 
 // ==================== COMPOSANT STORE VIEW (UBER EATS STYLE) ====================
-const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm, cartCount, onCartClick }) => {
+const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm, cartCount, onCartClick, cart, addingToCart }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const filteredByCategory = selectedCategory === 'all' 
     ? products 
     : products.filter(p => p.category === selectedCategory);
+
+  const isInCart = (productId) => {
+    return cart.some(item => item.id === productId);
+  };
 
   return (
     <div className="h-full flex flex-col bg-gray-100">
@@ -227,6 +235,8 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
                 key={product.id} 
                 product={product} 
                 addToCart={addToCart} 
+                isInCart={isInCart(product.id)}
+                isLoading={addingToCart === product.id}
               />
             ))}
           </div>
@@ -262,14 +272,22 @@ const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm,
 };
 
 // ==================== COMPOSANT PRODUCT CARD ====================
-const ProductCard = ({ product, addToCart }) => {
+const ProductCard = ({ product, addToCart, isInCart, isLoading }) => {
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
+    <div className={`bg-white rounded-xl shadow-sm overflow-hidden border ${
+      isInCart ? 'border-pink-400 border-2' : 'border-gray-200'
+    } hover:shadow-md transition-shadow`}>
       <div className="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center relative">
         <span className="text-6xl">{product.image}</span>
         <span className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-bold text-pink-600 border border-pink-200">
           {product.category}
         </span>
+        {isInCart && (
+          <span className="absolute top-2 left-2 bg-pink-600 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+            <Check size={12} />
+            Dans le panier
+          </span>
+        )}
       </div>
       <div className="p-3">
         <h3 className="font-semibold text-gray-800 text-sm mb-1 line-clamp-2">
@@ -277,12 +295,23 @@ const ProductCard = ({ product, addToCart }) => {
         </h3>
         <div className="flex items-center justify-between mt-2">
           <span className="font-bold text-pink-600 text-lg">{product.price} HTG</span>
-          <button
-            onClick={() => addToCart(product)}
-            className="bg-pink-600 text-white p-2 rounded-full hover:bg-pink-700 transition-colors flex items-center justify-center w-10 h-10 shadow-sm"
-          >
-            <Plus size={20} />
-          </button>
+          {isInCart ? (
+            <div className="bg-green-100 text-green-700 p-2 rounded-full w-10 h-10 flex items-center justify-center">
+              <Check size={20} />
+            </div>
+          ) : (
+            <button
+              onClick={() => addToCart(product)}
+              disabled={isLoading}
+              className="bg-pink-600 text-white p-2 rounded-full hover:bg-pink-700 transition-colors flex items-center justify-center w-10 h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <Loader size={20} className="animate-spin" />
+              ) : (
+                <Plus size={20} />
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>
