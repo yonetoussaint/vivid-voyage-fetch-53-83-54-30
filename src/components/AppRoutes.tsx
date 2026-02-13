@@ -8,7 +8,8 @@ import { MiscRoutes } from "../routes/MiscRoutes";
 import MallPage from "@/pages/MallPage";
 import Wallet from "@/pages/Wallet";
 import Messages from "@/pages/Messages";
-import { ChatPage } from "@/pages/Messages";
+// Remove or fix this import if ChatPage doesn't exist
+// import { ChatPage } from "@/pages/Messages";
 import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
@@ -133,12 +134,13 @@ export function AppRoutes() {
           }
         />
 
-        <Route
+        {/* Comment out or remove this route if ChatPage doesn't exist */}
+        {/* <Route
           path="messages/:chatId"
           element={
             <ChatPage />
           }
-        />
+        /> */}
 
         <Route
           path="profile/*"
