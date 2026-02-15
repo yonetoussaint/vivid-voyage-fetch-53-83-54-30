@@ -73,13 +73,17 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
   const [itemBeingReplied, setItemBeingReplied] = useState<string | null>(null);
   const [repliesMap, setRepliesMap] = useState<Map<string, ReviewReply[]>>(new Map());
   const [userLikes, setUserLikes] = useState<Set<string>>(new Set());
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   const { toast } = useToast();
   const { user } = useAuth();
 
   // Fetch user's liked items
   const fetchUserLikes = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setUserLikes(new Set());
+      return new Set();
+    }
 
     try {
       const { data, error } = await supabase
@@ -91,8 +95,10 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
 
       const likedSet = new Set(data?.map(like => like.item_id) || []);
       setUserLikes(likedSet);
+      return likedSet;
     } catch (err) {
       console.error('Error fetching user likes:', err);
+      return new Set();
     }
   }, [user]);
 
@@ -107,21 +113,15 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
 
       if (error) throw error;
 
-      // Mark replies that the user has liked
-      const repliesWithLikes = (data || []).map(reply => ({
-        ...reply,
-        isLiked: userLikes.has(reply.id)
-      }));
-
-      return repliesWithLikes;
+      return data || [];
     } catch (err) {
       console.error('Error fetching replies:', err);
       return [];
     }
-  }, [userLikes]);
+  }, []);
 
   // Fetch all replies for multiple reviews
-  const fetchAllReplies = useCallback(async (reviewIds: string[]) => {
+  const fetchAllReplies = useCallback(async (reviewIds: string[], likes?: Set<string>) => {
     if (reviewIds.length === 0) return;
 
     try {
@@ -133,6 +133,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
 
       if (error) throw error;
 
+      const currentLikes = likes || userLikes;
       const newRepliesMap = new Map();
       reviewIds.forEach(id => newRepliesMap.set(id, []));
 
@@ -140,7 +141,8 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
         const replies = newRepliesMap.get(reply.review_id) || [];
         replies.push({
           ...reply,
-          isLiked: userLikes.has(reply.id)
+          like_count: reply.like_count || 0,
+          isLiked: currentLikes.has(reply.id)
         });
         newRepliesMap.set(reply.review_id, replies);
       });
@@ -152,10 +154,11 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
   }, [userLikes]);
 
   // Fetch reviews from database
-  const fetchReviews = useCallback(async () => {
+  const fetchReviews = useCallback(async (likes?: Set<string>) => {
     if (!productId) {
       setReviews([]);
       setIsLoading(false);
+      setInitialLoadComplete(true);
       return;
     }
 
@@ -222,6 +225,9 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
 
       if (fetchError) throw fetchError;
 
+      // Get current user likes
+      const currentLikes = likes || userLikes;
+      
       // Mark reviews that the user has liked
       const reviewsWithLikes = (data || []).map(review => ({
         ...review,
@@ -229,35 +235,73 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
         comment_count: review.comment_count || 0,
         share_count: review.share_count || 0,
         helpful_count: review.helpful_count || 0,
-        isLiked: userLikes.has(review.id)
+        isLiked: currentLikes.has(review.id)
       }));
 
       setReviews(reviewsWithLikes);
 
       // Fetch replies for these reviews
       if (data && data.length > 0) {
-        await fetchAllReplies(data.map(r => r.id));
+        await fetchAllReplies(data.map(r => r.id), currentLikes);
       }
     } catch (err: any) {
       console.error('Error fetching reviews:', err);
       setError(err.message || 'Failed to load reviews');
     } finally {
       setIsLoading(false);
+      setInitialLoadComplete(true);
     }
   }, [productId, limit, filters, userLikes, fetchAllReplies]);
 
+  // Update isLiked status for all reviews and replies when userLikes changes
+  const updateLikeStatus = useCallback((likes: Set<string>) => {
+    // Update reviews
+    setReviews(prevReviews => 
+      prevReviews.map(review => ({
+        ...review,
+        isLiked: likes.has(review.id)
+      }))
+    );
+
+    // Update replies
+    setRepliesMap(prevMap => {
+      const newMap = new Map(prevMap);
+      for (const [reviewId, replies] of newMap.entries()) {
+        const updatedReplies = replies.map(reply => ({
+          ...reply,
+          isLiked: likes.has(reply.id)
+        }));
+        newMap.set(reviewId, updatedReplies);
+      }
+      return newMap;
+    });
+  }, []);
+
   // Load user likes on mount and when user changes
   useEffect(() => {
-    if (user) {
-      fetchUserLikes();
-    } else {
-      setUserLikes(new Set());
-    }
-  }, [user, fetchUserLikes]);
+    const loadUserLikes = async () => {
+      const likes = await fetchUserLikes();
+      
+      // If we already have reviews loaded, update their like status
+      if (reviews.length > 0) {
+        updateLikeStatus(likes);
+      }
+      
+      // If this is the initial load and we haven't fetched reviews yet,
+      // fetch them with the new likes
+      if (!initialLoadComplete && productId) {
+        await fetchReviews(likes);
+      }
+    };
+
+    loadUserLikes();
+  }, [user]); // Only depend on user changes
 
   // Load reviews when productId or filters change
   useEffect(() => {
-    fetchReviews();
+    if (productId) {
+      fetchReviews();
+    }
   }, [productId, filters]); // Remove fetchReviews from dependencies
 
   // Like/unlike a review or reply
@@ -596,7 +640,11 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
       setRepliesMap(prev => {
         const newMap = new Map(prev);
         const currentReplies = newMap.get(reviewId) || [];
-        newMap.set(reviewId, [...currentReplies, { ...data, like_count: 0, isLiked: false }]);
+        newMap.set(reviewId, [...currentReplies, { 
+          ...data, 
+          like_count: 0, 
+          isLiked: false 
+        }]);
         return newMap;
       });
 
