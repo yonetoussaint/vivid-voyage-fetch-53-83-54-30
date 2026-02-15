@@ -1,19 +1,17 @@
-// components/product/ReviewItem.tsx
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
 import { Play, Heart, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/utils/textUtils";
 import { useNavigate } from 'react-router-dom';
-// Update this import to use the types from the hook
-import type { MediaItem, Reply, Review } from '@/hooks/useProductReviews';  // Changed from '@/types/reviews'
+import type { MediaItem, Reply, Review } from '@/hooks/useProductReviews';
 
 interface ReviewItemProps {
   review: Review;
   expandedReviews: Set<string>;
   expandedReplies?: Set<string>;
   onToggleReadMore: (reviewId: string) => void;
-  onToggleShowReplies?: (reviewId: string) => void;
+  onToggleShowMoreReplies?: (reviewId: string) => void;
   onCommentClick?: (reviewId: string) => void;
   onShareClick?: (reviewId: string) => void;
   onLikeReview?: (reviewId: string) => void;
@@ -37,13 +35,12 @@ interface ReviewItemProps {
   getRepliesForReview?: (reviewId: string) => Reply[];
 }
 
-
 const ReviewItem = memo(({
   review,
   expandedReviews,
   expandedReplies,
   onToggleReadMore,
-  onToggleShowReplies,
+  onToggleShowMoreReplies,
   onCommentClick,
   onShareClick,
   onLikeReview,
@@ -68,13 +65,10 @@ const ReviewItem = memo(({
 }: ReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
-  const [showReplyMenu, setShowReplyMenu] = useState<string | null>(null);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const replyMenuRef = useRef<HTMLDivElement>(null);
   const mediaContainerRef = useRef<HTMLDivElement>(null);
 
-  // Use the correct database column names
   const {
     id,
     user_id,
@@ -233,13 +227,13 @@ const ReviewItem = memo(({
   }, [id, onMarkHelpful]);
 
   const handleCommentClick = useCallback(() => {
-    if (onToggleShowReplies) {
-      onToggleShowReplies(id);
+    if (onToggleShowMoreReplies) {
+      onToggleShowMoreReplies(id);
     } else {
       navigate(`/reviews/${id}`);
       onCommentClick?.(id);
     }
-  }, [id, onToggleShowReplies, navigate, onCommentClick]);
+  }, [id, onToggleShowMoreReplies, navigate, onCommentClick]);
 
   const handleShareClick = useCallback(() => {
     onShareClick?.(id);
@@ -259,8 +253,8 @@ const ReviewItem = memo(({
   }, [id, onToggleReadMore]);
 
   const handleShowRepliesClick = useCallback(() => {
-    onToggleShowReplies?.(id);
-  }, [id, onToggleShowReplies]);
+    onToggleShowMoreReplies?.(id);
+  }, [id, onToggleShowMoreReplies]);
 
   const handleLoadMoreReplies = useCallback(() => {
     loadMoreReplies?.(id);
@@ -271,19 +265,16 @@ const ReviewItem = memo(({
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
       }
-      if (replyMenuRef.current && !replyMenuRef.current.contains(event.target as Node)) {
-        setShowReplyMenu(null);
-      }
     };
 
-    if (showMenu || showReplyMenu) {
+    if (showMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showMenu, showReplyMenu]);
+  }, [showMenu]);
 
   const isRepliesExpanded = useMemo(() => expandedReplies?.has(id), [expandedReplies, id]);
   const hasReplies = useMemo(() => replies.length > 0, [replies.length]);
@@ -480,7 +471,7 @@ const ReviewItem = memo(({
       {/* Replies Section */}
       {hasReplies && (
         <div className="mt-3">
-          {onToggleShowReplies && (
+          {onToggleShowMoreReplies && (
             <button
               onClick={handleShowRepliesClick}
               className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 font-medium mb-2 transition-colors"
