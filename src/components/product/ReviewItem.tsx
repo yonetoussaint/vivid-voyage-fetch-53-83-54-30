@@ -1,5 +1,5 @@
 // components/product/ReviewItem.tsx
-import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
+import React, { memo, useCallback, useState, useEffect, useRef } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
 import { Play, Heart, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
 import { formatDate } from './DateUtils';
@@ -83,19 +83,17 @@ const ReviewItem = memo(({
     likeCount = 0,
     commentCount = 0,
     rating,
-    isLiked = false, // Add this from the hook
+    isLiked = false,
   } = review;
 
   // Get replies for this review
-  const replies = useMemo(() => {
-    return getRepliesForReview ? getRepliesForReview(id) : [];
-  }, [getRepliesForReview, id]);
+  const replies = getRepliesForReview ? getRepliesForReview(id) : [];
 
   useEffect(() => {
     onReviewView?.(id);
   }, [id, onReviewView]);
 
-  const getInitials = useCallback((name?: string) => {
+  const getInitials = (name?: string) => {
     if (!name) return 'U';
     return name
       .split(' ')
@@ -103,9 +101,9 @@ const ReviewItem = memo(({
       .join('')
       .toUpperCase()
       .slice(0, 2);
-  }, []);
+  };
 
-  const getAvatarColor = useCallback((name?: string) => {
+  const getAvatarColor = (name?: string) => {
     const colors = [
       'bg-blue-500',
       'bg-purple-500',
@@ -118,12 +116,12 @@ const ReviewItem = memo(({
     ];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
-  }, []);
+  };
 
-  const avatarColor = useMemo(() => getAvatarColor(user_name), [user_name, getAvatarColor]);
-  const initials = useMemo(() => getInitials(user_name), [user_name, getInitials]);
+  const avatarColor = getAvatarColor(user_name);
+  const initials = getInitials(user_name);
 
-  const renderStars = useCallback((ratingNum: number) => (
+  const renderStars = (ratingNum: number) => (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
@@ -135,67 +133,62 @@ const ReviewItem = memo(({
         />
       ))}
     </div>
-  ), []);
+  );
 
-  const formattedDate = useMemo(() => formatDate(created_at), [created_at]);
-  const truncatedComment = useMemo(() => truncateText(comment), [comment]);
-  const shouldShowReadMore = useMemo(() => comment.length > 120, [comment.length]);
+  const formattedDate = formatDate(created_at);
+  const truncatedComment = truncateText(comment);
+  const shouldShowReadMore = comment.length > 120;
 
-  const handleMediaItemClick = useCallback((item: MediaItem, index: number) => {
+  const handleMediaItemClick = (item: MediaItem, index: number) => {
     if (onMediaClick) {
       onMediaClick(media, index);
     } else {
       window.open(item.url, '_blank');
     }
-  }, [media, onMediaClick]);
+  };
 
-  const renderedMedia = useMemo(() => 
-    media.map((item, index) => (
-      <div key={`${id}-media-${index}`} className="flex-shrink-0 relative">
-        {item.type === 'image' ? (
+  const renderedMedia = media.map((item, index) => (
+    <div key={`${id}-media-${index}`} className="flex-shrink-0 relative">
+      {item.type === 'image' ? (
+        <img
+          src={item.url}
+          alt={item.alt || `Review media ${index + 1}`}
+          className="w-32 h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
+          onClick={() => handleMediaItemClick(item, index)}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setIsMediaLoaded(true)}
+          style={{ opacity: isMediaLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
+        />
+      ) : item.type === 'video' ? (
+        <div
+          className="w-32 h-32 relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden rounded-lg"
+          onClick={() => handleMediaItemClick(item, index)}
+        >
           <img
-            src={item.url}
-            alt={item.alt || `Review media ${index + 1}`}
-            className="w-32 h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
-            onClick={() => handleMediaItemClick(item, index)}
+            src={item.thumbnail || item.url}
+            alt={item.alt || `Video thumbnail ${index + 1}`}
+            className="w-full h-full object-cover"
             loading="lazy"
             decoding="async"
             onLoad={() => setIsMediaLoaded(true)}
             style={{ opacity: isMediaLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
           />
-        ) : item.type === 'video' ? (
-          <div
-            className="w-32 h-32 relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden rounded-lg"
-            onClick={() => handleMediaItemClick(item, index)}
+          <div 
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
           >
-            <img
-              src={item.thumbnail || item.url}
-              alt={item.alt || `Video thumbnail ${index + 1}`}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-              onLoad={() => setIsMediaLoaded(true)}
-              style={{ opacity: isMediaLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
-            />
-            <div 
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-            >
-              <div className="bg-white rounded-full p-2">
-                <Play className="w-5 h-5 text-gray-900 fill-gray-900" />
-              </div>
+            <div className="bg-white rounded-full p-2">
+              <Play className="w-5 h-5 text-gray-900 fill-gray-900" />
             </div>
           </div>
-        ) : null}
-      </div>
-    )),
-    [media, id, isMediaLoaded, handleMediaItemClick]
-  );
+        </div>
+      ) : null}
+    </div>
+  ));
 
-  const renderedReplies = useMemo(() => {
-    if (!replies.length || !expandedReplies?.has(id)) return null;
-
-    return replies.map((reply) => (
+  const renderedReplies = !replies.length || !expandedReplies?.has(id) ? null : (
+    replies.map((reply) => (
       <MemoizedReplyItem
         key={reply.id}
         reply={reply}
@@ -210,58 +203,58 @@ const ReviewItem = memo(({
         currentUserId={currentUserId}
         isOwner={reply.user_id === currentUserId}
       />
-    ));
-  }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onReplyToReply, onEditReply, onDeleteReply, onReportReply, currentUserId]);
+    ))
+  );
 
-  const handleLikeClick = useCallback(() => {
+  const handleLikeClick = () => {
     onLikeReview?.(id);
-  }, [id, onLikeReview]);
+  };
 
-  const handleFollowClick = useCallback(() => {
+  const handleFollowClick = () => {
     if (isFollowing) {
       onUnfollowUser?.(user_id || id, user_name || '');
     } else {
       onFollowUser?.(user_id || id, user_name || '');
     }
-  }, [id, user_id, user_name, isFollowing, onFollowUser, onUnfollowUser]);
+  };
 
-  const handleHelpfulClick = useCallback(() => {
+  const handleHelpfulClick = () => {
     onMarkHelpful?.(id);
-  }, [id, onMarkHelpful]);
+  };
 
-  const handleCommentClick = useCallback(() => {
+  const handleCommentClick = () => {
     if (onToggleShowReplies) {
       onToggleShowReplies(id);
     } else {
       navigate(`/reviews/${id}`);
       onCommentClick?.(id);
     }
-  }, [id, onToggleShowReplies, navigate, onCommentClick]);
+  };
 
-  const handleShareClick = useCallback(() => {
+  const handleShareClick = () => {
     onShareClick?.(id);
-  }, [id, onShareClick]);
+  };
 
-  const handleMenuAction = useCallback((action: 'report' | 'edit' | 'delete' | 'share') => {
+  const handleMenuAction = (action: 'report' | 'edit' | 'delete' | 'share') => {
     onMenuAction?.(id, action);
     setShowMenu(false);
-  }, [id, onMenuAction]);
+  };
 
-  const toggleMenu = useCallback(() => {
+  const toggleMenu = () => {
     setShowMenu(prev => !prev);
-  }, []);
+  };
 
-  const handleReadMoreClick = useCallback(() => {
+  const handleReadMoreClick = () => {
     onToggleReadMore(id);
-  }, [id, onToggleReadMore]);
+  };
 
-  const handleShowRepliesClick = useCallback(() => {
+  const handleShowRepliesClick = () => {
     onToggleShowReplies?.(id);
-  }, [id, onToggleShowReplies]);
+  };
 
-  const handleLoadMoreReplies = useCallback(() => {
+  const handleLoadMoreReplies = () => {
     loadMoreReplies?.(id);
-  }, [id, loadMoreReplies]);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -282,10 +275,10 @@ const ReviewItem = memo(({
     };
   }, [showMenu, showReplyMenu]);
 
-  const isRepliesExpanded = useMemo(() => expandedReplies?.has(id), [expandedReplies, id]);
-  const hasReplies = useMemo(() => replies.length > 0, [replies.length]);
-  const hasMedia = useMemo(() => media.length > 0, [media.length]);
-  const hasMoreReplies = useMemo(() => replyPagination?.hasMore, [replyPagination?.hasMore]);
+  const isRepliesExpanded = expandedReplies?.has(id);
+  const hasReplies = replies.length > 0;
+  const hasMedia = media.length > 0;
+  const hasMoreReplies = replyPagination?.hasMore;
 
   return (
     <div 
@@ -408,7 +401,7 @@ const ReviewItem = memo(({
       {/* Engagement Section */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-6">
-          {/* Like Button - Updated with isLiked state */}
+          {/* Like Button */}
           <button
             onClick={handleLikeClick}
             className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium group"
@@ -420,7 +413,7 @@ const ReviewItem = memo(({
                   ? 'fill-red-500 stroke-red-500 scale-110' 
                   : 'fill-none stroke-current group-hover:scale-110'
               }`}
-              strokeWidth={isLiked ? "2" : "2"}
+              strokeWidth="2"
             />
             {likeCount > 0 && (
               <span className={isLiked ? 'text-red-500 font-semibold' : ''}>
@@ -550,32 +543,32 @@ const ReplyItem = memo(({
     isLiked = false,
   } = reply;
 
-  const handleLikeClick = useCallback(() => {
+  const handleLikeClick = () => {
     onLikeReply?.(id, reviewId);
-  }, [id, reviewId, onLikeReply]);
+  };
 
-  const handleReplyClick = useCallback(() => {
+  const handleReplyClick = () => {
     onReplyToReply?.(id, reviewId, user_name || '');
-  }, [id, reviewId, user_name, onReplyToReply]);
+  };
 
-  const handleEditClick = useCallback(() => {
+  const handleEditClick = () => {
     onEditReply?.(id, reviewId, comment || '');
     setShowReplyMenu(false);
-  }, [id, reviewId, comment, onEditReply]);
+  };
 
-  const handleDeleteClick = useCallback(() => {
+  const handleDeleteClick = () => {
     onDeleteReply?.(id, reviewId);
     setShowReplyMenu(false);
-  }, [id, reviewId, onDeleteReply]);
+  };
 
-  const handleReportClick = useCallback(() => {
+  const handleReportClick = () => {
     onReportReply?.(id, reviewId, 'inappropriate');
     setShowReplyMenu(false);
-  }, [id, reviewId, onReportReply]);
+  };
 
-  const toggleReplyMenu = useCallback(() => {
+  const toggleReplyMenu = () => {
     setShowReplyMenu(prev => !prev);
-  }, []);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -593,9 +586,9 @@ const ReplyItem = memo(({
     };
   }, [showReplyMenu]);
 
-  const formattedDate = useMemo(() => formatDate(created_at), [created_at]);
-  const avatarColor = useMemo(() => getAvatarColor(user_name), [user_name, getAvatarColor]);
-  const initials = useMemo(() => getInitials(user_name), [user_name, getInitials]);
+  const formattedDate = formatDate(created_at);
+  const avatarColor = getAvatarColor(user_name);
+  const initials = getInitials(user_name);
 
   return (
     <div className="ml-12 mt-3 pl-3 border-l-2 border-gray-200">
@@ -618,7 +611,7 @@ const ReplyItem = memo(({
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Reply Like Button - Updated with isLiked state */}
+              {/* Reply Like Button */}
               <button
                 onClick={handleLikeClick}
                 className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors group"
@@ -630,7 +623,7 @@ const ReplyItem = memo(({
                       ? 'fill-red-500 stroke-red-500 scale-110' 
                       : 'fill-none stroke-current group-hover:scale-110'
                   }`}
-                  strokeWidth={isLiked ? "2" : "2"}
+                  strokeWidth="2"
                 />
                 {likeCount > 0 && (
                   <span className={isLiked ? 'text-red-500 font-semibold' : ''}>
