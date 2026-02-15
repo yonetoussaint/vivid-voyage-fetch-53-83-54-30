@@ -119,46 +119,11 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
     ]
   },
   {
-    id: 'mediaType',
-    label: 'Media Type',
-    type: 'dropdown',
-    value: null,
-    icon: Image,
-    options: [
-      { label: 'All Media', value: 'all' },
-      { label: 'With Photos', value: 'photos' },
-      { label: 'With Videos', value: 'videos' },
-    ]
-  },
-  {
     id: 'verifiedPurchase',
     label: 'Verified Purchase',
     type: 'checkbox',
     value: false,
     icon: BadgeCheck
-  },
-  {
-    id: 'withResponse',
-    label: 'With Seller Response',
-    type: 'checkbox',
-    value: false,
-    icon: MessageSquare,
-    description: 'Show only reviews with seller replies'
-  },
-  {
-    id: 'priceRange',
-    label: 'Price Range',
-    type: 'dropdown',
-    value: null,
-    icon: DollarSign,
-    options: [
-      { label: 'All Prices', value: null },
-      { label: '0 - 1,000 G', value: { min: 0, max: 1000 } },
-      { label: '1,000 - 5,000 G', value: { min: 1000, max: 5000 } },
-      { label: '5,000 - 10,000 G', value: { min: 5000, max: 10000 } },
-      { label: '10,000 - 50,000 G', value: { min: 10000, max: 50000 } },
-      { label: '50,000+ G', value: { min: 50000, max: 1000000 } },
-    ]
   }
 ]);
 
