@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import SectionHeader from '@/components/home/SectionHeader';
 import { 
   MessageCircle, 
   HelpCircle
 } from 'lucide-react';
 import FilterTabs, { FilterTab, ActiveFilter } from '@/components/FilterTabs';
+import { useProductReviews } from '@/hooks/useProductReviews';
 
 // Custom SVG Icons with colors (defined in the parent component)
 const ArrowUpDownIcon = () => (
@@ -54,28 +55,9 @@ interface RatingDistribution {
   percentage: number;
 }
 
-interface ReviewsSummaryData {
-  averageRating: number;
-  totalReviews: number;
-  distribution: RatingDistribution[];
-}
-
-const mockReviewsSummary: ReviewsSummaryData = {
-  averageRating: 4.6,
-  totalReviews: 1459914,
-  distribution: [
-    { stars: 5, count: 1100000, percentage: 75 },
-    { stars: 4, count: 200000, percentage: 14 },
-    { stars: 3, count: 80000, percentage: 5 },
-    { stars: 2, count: 40000, percentage: 3 },
-    { stars: 1, count: 39914, percentage: 3 }
-  ]
-};
-
 interface ReviewsSummaryProps {
   title?: string;
   subtitle?: string;
-  reviewsSummary?: ReviewsSummaryData;
   className?: string;
   actionButton?: {
     label: string;
@@ -91,12 +73,13 @@ interface ReviewsSummaryProps {
   customButtonIcon?: React.ComponentType<{ className?: string }>;
   onCustomButtonClick?: () => void;
   icon?: React.ComponentType<{ className?: string }>;
+  productId?: string;
+  onFilterChange?: (filters: any) => void;
 }
 
 const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
   title = "REVIEWS/COMMENTS",
   subtitle = "Ratings and reviews are verified and are from people who use the same type of device that you use",
-  reviewsSummary = mockReviewsSummary,
   className = '',
   actionButton,
   viewAllLink = '/reviews/all',
@@ -108,58 +91,96 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
   customButtonIcon,
   onCustomButtonClick,
   icon = MessageCircle,
+  productId,
+  onFilterChange,
 }) => {
+  // Fetch real review data
+  const { reviews, summaryStats, isLoading, error } = useProductReviews({ 
+    productId,
+    limit: 100 // Fetch enough reviews to calculate distribution
+  });
+
+  // Calculate rating distribution from real reviews
+  const distribution = useMemo(() => {
+    if (!reviews.length) {
+      return [
+        { stars: 5, count: 0, percentage: 0 },
+        { stars: 4, count: 0, percentage: 0 },
+        { stars: 3, count: 0, percentage: 0 },
+        { stars: 2, count: 0, percentage: 0 },
+        { stars: 1, count: 0, percentage: 0 }
+      ];
+    }
+
+    const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    
+    reviews.forEach(review => {
+      const rating = review.rating;
+      if (rating >= 1 && rating <= 5) {
+        counts[rating as keyof typeof counts]++;
+      }
+    });
+
+    const total = reviews.length;
+    
+    return [5, 4, 3, 2, 1].map(stars => ({
+      stars,
+      count: counts[stars as keyof typeof counts],
+      percentage: total > 0 ? Math.round((counts[stars as keyof typeof counts] / total) * 100) : 0
+    }));
+  }, [reviews]);
+
   // Filter tabs state with custom SVG icons
   const [filterTabs, setFilterTabs] = useState<FilterTab[]>([
-  {
-    id: 'sortBy',
-    label: 'Sort by',
-    type: 'dropdown',
-    value: 'mostRelevant',
-    icon: <ArrowUpDownIcon />,
-    options: [
-      { label: 'Most Relevant', value: 'mostRelevant' },
-      { label: 'Most Recent', value: 'mostRecent' },
-      { label: 'Highest Rated', value: 'highestRated' },
-      { label: 'Lowest Rated', value: 'lowestRated' },
-    ]
-  },
-  {
-    id: 'rating',
-    label: 'Rating',
-    type: 'dropdown',
-    value: null,
-    icon: <StarIcon />,
-    options: [
-      { label: '5 Stars', value: 5 },
-      { label: '4 Stars', value: 4 },
-      { label: '3 Stars', value: 3 },
-      { label: '2 Stars', value: 2 },
-      { label: '1 Star', value: 1 },
-    ]
-  },
-  {
-    id: 'timePeriod',
-    label: 'Time Period',
-    type: 'dropdown',
-    value: null,
-    icon: <CalendarIcon />,
-    options: [
-      { label: 'All Time', value: 'all' },
-      { label: 'Last Week', value: 'week' },
-      { label: 'Last Month', value: 'month' },
-      { label: 'Last 3 Months', value: 'quarter' },
-      { label: 'Last Year', value: 'year' },
-    ]
-  },
-  {
-    id: 'verifiedPurchase',
-    label: 'Verified Purchase',
-    type: 'checkbox',
-    value: false,
-    icon: <VerifiedBadgeIcon />
-  }
-]);
+    {
+      id: 'sortBy',
+      label: 'Sort by',
+      type: 'dropdown',
+      value: 'mostRelevant',
+      icon: <ArrowUpDownIcon />,
+      options: [
+        { label: 'Most Relevant', value: 'mostRelevant' },
+        { label: 'Most Recent', value: 'mostRecent' },
+        { label: 'Highest Rated', value: 'highestRated' },
+        { label: 'Lowest Rated', value: 'lowestRated' },
+      ]
+    },
+    {
+      id: 'rating',
+      label: 'Rating',
+      type: 'dropdown',
+      value: null,
+      icon: <StarIcon />,
+      options: [
+        { label: '5 Stars', value: 5 },
+        { label: '4 Stars', value: 4 },
+        { label: '3 Stars', value: 3 },
+        { label: '2 Stars', value: 2 },
+        { label: '1 Star', value: 1 },
+      ]
+    },
+    {
+      id: 'timePeriod',
+      label: 'Time Period',
+      type: 'dropdown',
+      value: null,
+      icon: <CalendarIcon />,
+      options: [
+        { label: 'All Time', value: 'all' },
+        { label: 'Last Week', value: 'week' },
+        { label: 'Last Month', value: 'month' },
+        { label: 'Last 3 Months', value: 'quarter' },
+        { label: 'Last Year', value: 'year' },
+      ]
+    },
+    {
+      id: 'verifiedPurchase',
+      label: 'Verified Purchase',
+      type: 'checkbox',
+      value: false,
+      icon: <VerifiedBadgeIcon />
+    }
+  ]);
 
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
 
@@ -178,15 +199,8 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
 
         if (tab.type === 'checkbox') {
           displayValue = 'Yes';
-        } else if (tab.id === 'priceRange' && value && typeof value === 'object') {
-          displayValue = `$${value.min} - $${value.max}`;
         } else if (tab.options) {
-          const option = tab.options.find(opt => {
-            if (tab.id === 'priceRange' && value && opt.value) {
-              return opt.value.min === value.min && opt.value.max === value.max;
-            }
-            return opt.value === value;
-          });
+          const option = tab.options.find(opt => opt.value === value);
           displayValue = option ? option.label : String(value);
         } else {
           displayValue = String(value);
@@ -202,6 +216,17 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
           });
           return newFilters;
         });
+
+        // Notify parent component of filter changes
+        if (onFilterChange) {
+          const allFilters = [...activeFilters.filter(f => f.id !== tabId), {
+            id: tabId,
+            label: tab.label,
+            value,
+            displayValue
+          }];
+          onFilterChange(allFilters);
+        }
       }
     }
   };
@@ -216,6 +241,9 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
       value: tab.type === 'checkbox' ? false : null
     })));
     setActiveFilters([]);
+    if (onFilterChange) {
+      onFilterChange([]);
+    }
   };
 
   const renderStars = (rating: number) => {
@@ -255,6 +283,40 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
     return num.toString();
   };
 
+  // Show loading skeleton
+  if (isLoading) {
+    return (
+      <div className={`bg-white ${className} animate-pulse`}>
+        <div className="h-12 bg-gray-200 mb-4"></div>
+        <div className="px-2 py-2">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
+          <div className="flex items-stretch gap-6">
+            <div className="flex-shrink-0 w-24">
+              <div className="h-16 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-20 mx-auto"></div>
+            </div>
+            <div className="flex-1 space-y-2">
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="h-3 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className={`bg-white ${className} p-4`}>
+        <div className="text-center text-red-500">
+          Failed to load reviews summary
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`bg-white ${className}`}>
       {/* Section Header with uppercase title, icon, and view all button */}
@@ -292,19 +354,19 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
             {/* Rating number and stars */}
             <div className="flex-shrink-0 flex flex-col items-center justify-center text-center">
               <div className="text-6xl font-light text-gray-900 leading-none">
-                {reviewsSummary.averageRating.toFixed(1)}
+                {summaryStats.averageRating.toFixed(1)}
               </div>
               <div className="flex gap-0.5 mt-1">
-                {renderStars(reviewsSummary.averageRating)}
+                {renderStars(summaryStats.averageRating)}
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                {formatNumber(reviewsSummary.totalReviews)} reviews
+                {formatNumber(summaryStats.totalReviews)} reviews
               </div>
             </div>
 
             {/* Rating bars */}
             <div className="flex-1 flex flex-col justify-center gap-1.5">
-              {reviewsSummary.distribution.map((dist) => (
+              {distribution.map((dist) => (
                 <div key={dist.stars} className="flex items-center gap-2">
                   <span className="text-xs text-gray-500 w-3">{dist.stars}</span>
                   <div className="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden">
