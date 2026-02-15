@@ -1,5 +1,5 @@
 // hooks/useProductReviews.ts
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/RedirectAuthContext';
@@ -20,7 +20,7 @@ export interface Review {
   share_count: number;
   verified_purchase: boolean;
   user_id?: string;
-  isLiked?: boolean; // Add this for UI state
+  isLiked?: boolean;
 }
 
 export interface ReviewReply {
@@ -32,7 +32,7 @@ export interface ReviewReply {
   like_count: number;
   parent_reply_id?: string;
   user_id?: string;
-  isLiked?: boolean; // Add this for UI state
+  isLiked?: boolean;
 }
 
 export interface UseProductReviewsProps {
@@ -52,7 +52,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
   const [replyText, setReplyText] = useState('');
   const [itemBeingReplied, setItemBeingReplied] = useState<string | null>(null);
   const [repliesMap, setRepliesMap] = useState<Map<string, ReviewReply[]>>(new Map());
-  const [userLikes, setUserLikes] = useState<Set<string>>(new Set()); // Track which items user has liked
+  const [userLikes, setUserLikes] = useState<Set<string>>(new Set());
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -202,9 +202,11 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
 
       if (fetchError) throw fetchError;
 
-      // Mark reviews that the user has liked
+      // Mark reviews that the user has liked - PRESERVE existing like counts
       const reviewsWithLikes = (data || []).map(review => ({
         ...review,
+        like_count: review.like_count || 0, // Ensure like_count is always a number
+        comment_count: review.comment_count || 0,
         isLiked: userLikes.has(review.id)
       }));
 
@@ -222,7 +224,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
     }
   }, [productId, limit, filters, userLikes, fetchAllReplies]);
 
-  // Like/unlike a review or reply
+  // Like/unlike a review or reply - FIXED to properly update counts
   const handleLike = useCallback(async (itemId: string, type: 'review' | 'reply') => {
     if (!user) {
       toast({
@@ -248,23 +250,43 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
 
         // Decrement like count
         if (type === 'review') {
+          const { data: currentReview } = await supabase
+            .from('reviews')
+            .select('like_count')
+            .eq('id', itemId)
+            .single();
+
+          const newCount = Math.max(0, (currentReview?.like_count || 1) - 1);
+          
           await supabase
             .from('reviews')
-            .update({ like_count: supabase.rpc('decrement', { amount: 1 }) })
+            .update({ like_count: newCount })
             .eq('id', itemId);
 
-          // Update local state
+          // Update local state - IMMEDIATELY update the count
           setReviews(prev =>
             prev.map(review =>
               review.id === itemId
-                ? { ...review, like_count: (review.like_count || 0) - 1, isLiked: false }
+                ? { 
+                    ...review, 
+                    like_count: newCount, 
+                    isLiked: false 
+                  }
                 : review
             )
           );
         } else {
+          const { data: currentReply } = await supabase
+            .from('review_replies')
+            .select('like_count')
+            .eq('id', itemId)
+            .single();
+
+          const newCount = Math.max(0, (currentReply?.like_count || 1) - 1);
+
           await supabase
             .from('review_replies')
-            .update({ like_count: supabase.rpc('decrement', { amount: 1 }) })
+            .update({ like_count: newCount })
             .eq('id', itemId);
 
           // Update replies map
@@ -273,7 +295,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
             for (const [reviewId, replies] of newMap.entries()) {
               const updatedReplies = replies.map(reply =>
                 reply.id === itemId
-                  ? { ...reply, like_count: (reply.like_count || 0) - 1, isLiked: false }
+                  ? { ...reply, like_count: newCount, isLiked: false }
                   : reply
               );
               newMap.set(reviewId, updatedReplies);
@@ -287,11 +309,6 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
           const newSet = new Set(prev);
           newSet.delete(itemId);
           return newSet;
-        });
-
-        toast({
-          title: 'Removed like',
-          description: 'You unliked this item',
         });
       } else {
         // Like
@@ -307,23 +324,43 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
 
         // Increment like count
         if (type === 'review') {
+          const { data: currentReview } = await supabase
+            .from('reviews')
+            .select('like_count')
+            .eq('id', itemId)
+            .single();
+
+          const newCount = (currentReview?.like_count || 0) + 1;
+
           await supabase
             .from('reviews')
-            .update({ like_count: supabase.rpc('increment', { amount: 1 }) })
+            .update({ like_count: newCount })
             .eq('id', itemId);
 
-          // Update local state
+          // Update local state - IMMEDIATELY update the count
           setReviews(prev =>
             prev.map(review =>
               review.id === itemId
-                ? { ...review, like_count: (review.like_count || 0) + 1, isLiked: true }
+                ? { 
+                    ...review, 
+                    like_count: newCount, 
+                    isLiked: true 
+                  }
                 : review
             )
           );
         } else {
+          const { data: currentReply } = await supabase
+            .from('review_replies')
+            .select('like_count')
+            .eq('id', itemId)
+            .single();
+
+          const newCount = (currentReply?.like_count || 0) + 1;
+
           await supabase
             .from('review_replies')
-            .update({ like_count: supabase.rpc('increment', { amount: 1 }) })
+            .update({ like_count: newCount })
             .eq('id', itemId);
 
           // Update replies map
@@ -332,7 +369,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
             for (const [reviewId, replies] of newMap.entries()) {
               const updatedReplies = replies.map(reply =>
                 reply.id === itemId
-                  ? { ...reply, like_count: (reply.like_count || 0) + 1, isLiked: true }
+                  ? { ...reply, like_count: newCount, isLiked: true }
                   : reply
               );
               newMap.set(reviewId, updatedReplies);
@@ -346,11 +383,6 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
           const newSet = new Set(prev);
           newSet.add(itemId);
           return newSet;
-        });
-
-        toast({
-          title: 'Liked!',
-          description: 'You liked this item',
         });
       }
     } catch (err: any) {
@@ -417,12 +449,11 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
           rating: reviewData.rating,
           title: reviewData.title,
           comment: reviewData.comment,
-          verified_purchase: false, // You can implement logic to check if user purchased
+          verified_purchase: false,
           helpful_count: 0,
           like_count: 0,
           comment_count: 0,
           share_count: 0,
-          images: imageUrls
         })
         .select()
         .single();
@@ -432,6 +463,8 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
       // Add the new review to the list
       setReviews(prev => [{
         ...data,
+        like_count: 0,
+        comment_count: 0,
         isLiked: false
       }, ...prev]);
       setTotalCount(prev => prev + 1);
@@ -481,16 +514,24 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
       if (error) throw error;
 
       // Increment comment count on the review
+      const { data: currentReview } = await supabase
+        .from('reviews')
+        .select('comment_count')
+        .eq('id', reviewId)
+        .single();
+
+      const newCommentCount = (currentReview?.comment_count || 0) + 1;
+
       await supabase
         .from('reviews')
-        .update({ comment_count: supabase.rpc('increment', { amount: 1 }) })
+        .update({ comment_count: newCommentCount })
         .eq('id', reviewId);
 
       // Add reply to local state
       setRepliesMap(prev => {
         const newMap = new Map(prev);
         const currentReplies = newMap.get(reviewId) || [];
-        newMap.set(reviewId, [...currentReplies, { ...data, isLiked: false }]);
+        newMap.set(reviewId, [...currentReplies, { ...data, like_count: 0, isLiked: false }]);
         return newMap;
       });
 
@@ -498,7 +539,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
       setReviews(prev =>
         prev.map(review =>
           review.id === reviewId
-            ? { ...review, comment_count: (review.comment_count || 0) + 1 }
+            ? { ...review, comment_count: newCommentCount }
             : review
         )
       );
@@ -519,20 +560,6 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
       return false;
     }
   }, [user, toast]);
-
-  // Load user likes on mount and when user changes
-  useEffect(() => {
-    if (user) {
-      fetchUserLikes();
-    } else {
-      setUserLikes(new Set());
-    }
-  }, [user, fetchUserLikes]);
-
-  // Load reviews on mount and when dependencies change
-  useEffect(() => {
-    fetchReviews();
-  }, [fetchReviews]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
@@ -566,6 +593,20 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
       totalRatings: totalRating
     };
   }, [reviews]);
+
+  // Load user likes on mount and when user changes
+  useEffect(() => {
+    if (user) {
+      fetchUserLikes();
+    } else {
+      setUserLikes(new Set());
+    }
+  }, [user, fetchUserLikes]);
+
+  // Load reviews on mount and when dependencies change
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   // Toggle functions
   const toggleReadMore = useCallback((reviewId: string) => {
@@ -606,9 +647,17 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
   const handleShareClick = useCallback(async (reviewId: string) => {
     try {
       // Increment share count
+      const { data: currentReview } = await supabase
+        .from('reviews')
+        .select('share_count')
+        .eq('id', reviewId)
+        .single();
+
+      const newCount = (currentReview?.share_count || 0) + 1;
+
       await supabase
         .from('reviews')
-        .update({ share_count: supabase.rpc('increment', { amount: 1 }) })
+        .update({ share_count: newCount })
         .eq('id', reviewId);
 
       // Share logic
@@ -629,7 +678,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
       setReviews(prev =>
         prev.map(review =>
           review.id === reviewId
-            ? { ...review, share_count: (review.share_count || 0) + 1 }
+            ? { ...review, share_count: newCount }
             : review
         )
       );
