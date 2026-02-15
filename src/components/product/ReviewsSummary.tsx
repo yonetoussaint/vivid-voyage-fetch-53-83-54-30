@@ -2,17 +2,51 @@ import React, { useState } from 'react';
 import SectionHeader from '@/components/home/SectionHeader';
 import { 
   MessageCircle, 
-  HelpCircle, 
-  ArrowUpDown, // For Sort by
-  Star, // For Rating
-  Image, // For Media Type
-  Smartphone, // For Device Type
-  BadgeCheck,
-Calendar,
-MessageSquare,
-  DollarSign // For Price Range
+  HelpCircle
 } from 'lucide-react';
-import FilterTabs, { FilterTab, ActiveFilter } from '@/components/FilterTabs'; // Adjust the import path as needed
+import FilterTabs, { FilterTab, ActiveFilter } from '@/components/FilterTabs';
+
+// Custom SVG Icons with colors (defined in the parent component)
+const ArrowUpDownIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7 10L12 5L17 10" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M7 14L12 19L17 14" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const StarIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+    <path 
+      d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" 
+      fill="#F59E0B" 
+      stroke="#F59E0B" 
+      strokeWidth="1.5"
+    />
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="4" width="18" height="18" rx="2" fill="#8B5CF6" />
+    <path d="M3 8H21" stroke="white" strokeWidth="2" />
+    <path d="M8 2V6" stroke="#8B5CF6" strokeWidth="2" />
+    <path d="M16 2V6" stroke="#8B5CF6" strokeWidth="2" />
+    <circle cx="12" cy="15" r="2" fill="white" />
+  </svg>
+);
+
+const VerifiedBadgeIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+    <path 
+      d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z" 
+      fill="#3B82F6" // Blue fill
+    />
+    <path 
+      d="M10 14.17L16.59 7.58C17.05 7.12 17.77 7.12 18.23 7.58C18.69 8.04 18.69 8.76 18.23 9.22L11.13 16.32C10.85 16.6 10.48 16.78 10.07 16.78C9.66 16.78 9.29 16.6 9.01 16.32L5.91 13.22C5.45 12.76 5.45 12.04 5.91 11.58C6.37 11.12 7.09 11.12 7.55 11.58L10 14.17Z" 
+      fill="white" // White checkmark
+    />
+  </svg>
+);
 
 interface RatingDistribution {
   stars: number;
@@ -75,14 +109,14 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
   onCustomButtonClick,
   icon = MessageCircle,
 }) => {
-  // Filter tabs state with icons
+  // Filter tabs state with custom SVG icons
   const [filterTabs, setFilterTabs] = useState<FilterTab[]>([
   {
     id: 'sortBy',
     label: 'Sort by',
     type: 'dropdown',
     value: 'mostRelevant',
-    icon: ArrowUpDown,
+    icon: <ArrowUpDownIcon />, // Custom SVG
     options: [
       { label: 'Most Relevant', value: 'mostRelevant' },
       { label: 'Most Recent', value: 'mostRecent' },
@@ -95,7 +129,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
     label: 'Rating',
     type: 'dropdown',
     value: null,
-    icon: Star,
+    icon: <StarIcon />, // Custom SVG with amber fill
     options: [
       { label: '5 Stars', value: 5 },
       { label: '4 Stars', value: 4 },
@@ -109,7 +143,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
     label: 'Time Period',
     type: 'dropdown',
     value: null,
-    icon: Calendar,
+    icon: <CalendarIcon />, // Custom SVG with purple fill
     options: [
       { label: 'All Time', value: 'all' },
       { label: 'Last Week', value: 'week' },
@@ -123,7 +157,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
     label: 'Verified Purchase',
     type: 'checkbox',
     value: false,
-    icon: BadgeCheck
+    icon: <VerifiedBadgeIcon /> // Custom SVG with blue fill and white checkmark
   }
 ]);
 
