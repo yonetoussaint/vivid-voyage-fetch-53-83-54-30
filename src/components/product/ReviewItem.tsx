@@ -31,6 +31,7 @@ interface ReviewItemProps {
   onReportReply?: (replyId: string, reviewId: string, reason: string) => void;
   loadMoreReplies?: (reviewId: string) => void;
   replyPagination?: { page: number; hasMore: boolean };
+  isLast?: boolean;
 }
 
 const ReviewItem = memo(({
@@ -58,6 +59,7 @@ const ReviewItem = memo(({
   onReportReply,
   loadMoreReplies,
   replyPagination,
+  isLast = false,
 }: ReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
@@ -274,7 +276,11 @@ const ReviewItem = memo(({
   const hasMoreReplies = useMemo(() => replyPagination?.hasMore, [replyPagination?.hasMore]);
 
   return (
-    <div className="bg-white border-b border-gray-100 py-2 transition-colors">
+    <div 
+      className={`bg-white py-2 transition-colors ${
+        !isLast ? 'border-b border-gray-100' : ''
+      }`}
+    >
       {/* Review Header */}
       <div className="flex gap-2 mb-2">
         <div 
