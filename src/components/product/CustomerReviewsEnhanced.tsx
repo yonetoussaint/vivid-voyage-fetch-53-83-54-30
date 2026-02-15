@@ -4,18 +4,22 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Plus, Star, AlertCircle } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
-import { useProductReviews } from "@/hooks/useProductReviews";
+import { useProductReviews } from "@/hooks/useProductReviews"; // This now exports the types
 import ReviewsSummary from '@/components/product/ReviewsSummary';
-import ReviewItem, { Review } from '@/components/product/ReviewItem';
+import ReviewItem from '@/components/product/ReviewItem'; // Remove the { Review } import
 import ReplyBar from '@/components/product/ReplyBar';
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
+
+// Import the Review type from the hook instead
+import type { Review } from '@/hooks/useProductReviews';
 
 interface CustomerReviewsProps {
   productId?: string;
   limit?: number;
   productName?: string;
 }
+
 
 const CustomerReviews = React.memo(({ 
   productId, 
