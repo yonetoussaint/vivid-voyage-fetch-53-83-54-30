@@ -48,6 +48,7 @@ const CustomerReviews = React.memo(({
     handleCancelReply,
     fetchReviews,
     summaryStats,
+    getRepliesForReview,
   } = useProductReviews({ 
     productId, 
     limit,
@@ -192,13 +193,15 @@ const CustomerReviews = React.memo(({
   return (
     <ErrorBoundary>
       <div className="w-full bg-white">
-        {/* Reviews Summary Section with Filter Handling */}
+        {/* Reviews Summary Section - Pass summaryStats to prevent extra fetching */}
         <ReviewsSummary 
-          productId={productId} 
+          productId={productId}
+          summaryStats={summaryStats}
+          reviews={reviews}
           onFilterChange={handleFilterChange}
         />
 
-        {/* Full-screen Add Review Button */}
+        {/* Add Review Button */}
         <div className="px-4 py-4">
           <button
             onClick={handleAddReviewClick}
@@ -291,6 +294,7 @@ const CustomerReviews = React.memo(({
                     onLikeReply={memoizedHandleLike}
                     onReplyToReply={memoizedHandleReplyToReply}
                     isLast={index === displayedReviews.length - 1}
+                    getRepliesForReview={getRepliesForReview}
                   />
                 </div>
               ))
