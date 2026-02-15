@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, X, LucideIcon } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
 export interface FilterTab {
   id: string;
@@ -10,7 +10,7 @@ export interface FilterTab {
     label: string;
     value: any;
   }>;
-  icon?: LucideIcon; // Added icon property back
+  icon?: React.ReactNode; // Changed to accept any React node (SVG, icon component, etc.)
 }
 
 export interface ActiveFilter {
@@ -126,7 +126,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                 (tab.id === 'priceRange' && tab.value && option.value && 
                  tab.value.min === option.value?.min && tab.value.max === option.value?.max) ||
                 (tab.id !== 'priceRange' && tab.value === option.value)
-                  ? 'text-red-600 font-medium' // Changed from blue to red
+                  ? 'text-red-600 font-medium'
                   : 'text-gray-700'
               }`}
             >
@@ -148,11 +148,8 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
       {/* Filter Tabs Row */}
       <div>
         <div className="overflow-x-auto hide-scrollbar">
-          {/* Changed gap from gap-1 to gap-2 for more spacing */}
           <div className="flex items-center gap-1.5 px-2 min-w-max py-1">
             {tabs.map((tab) => {
-              const IconComponent = tab.icon;
-
               return (
                 <React.Fragment key={tab.id}>
                   {tab.type === 'dropdown' && (
@@ -160,15 +157,17 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                       onClick={() => toggleDropdown(tab.id)}
                       className={`flex items-center gap-1 px-3 py-2 text-xs font-medium whitespace-nowrap transition-all border ${
                         isTabActive(tab)
-                          ? 'bg-red-50 text-red-700 border-red-200' // Changed from blue to red, added border
+                          ? 'bg-red-50 text-red-700 border-red-200'
                           : activeDropdown === tab.id
                           ? 'bg-white border-gray-300 shadow-sm text-gray-900'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
                       }`}
                     >
-                      {/* Render icon if provided */}
-                      {IconComponent && (
-                        <IconComponent className="w-3 h-3 flex-shrink-0" />
+                      {/* Render icon if provided - now accepts any React node */}
+                      {tab.icon && (
+                        <span className="w-3.5 h-3.5 flex-shrink-0">
+                          {tab.icon}
+                        </span>
                       )}
 
                       <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
@@ -182,9 +181,9 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                       {isTabActive(tab) && (
                         <div 
                           onClick={(e) => handleRemoveSelection(tab.id, e)}
-                          className="ml-0.5 p-0.5 hover:bg-red-100 transition-colors" // Removed rounded-full
+                          className="ml-0.5 p-0.5 hover:bg-red-100 transition-colors"
                         >
-                          <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
+                          <X className="w-3 h-3 text-red-600" />
                         </div>
                       )}
                     </button>
@@ -195,13 +194,15 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                       onClick={() => handleCheckboxToggle(tab.id, tab.value)}
                       className={`flex items-center gap-1 px-3 py-2 text-xs font-medium whitespace-nowrap transition-all border ${
                         isTabActive(tab)
-                          ? 'bg-red-50 text-red-700 border-red-200' // Changed from blue to red, added border
+                          ? 'bg-red-50 text-red-700 border-red-200'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
                       }`}
                     >
-                      {/* Render icon if provided */}
-                      {IconComponent && (
-                        <IconComponent className="w-3 h-3 flex-shrink-0" />
+                      {/* Render icon if provided - now accepts any React node */}
+                      {tab.icon && (
+                        <span className="w-3.5 h-3.5 flex-shrink-0">
+                          {tab.icon}
+                        </span>
                       )}
 
                       <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
@@ -210,9 +211,9 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                       {isTabActive(tab) && (
                         <div 
                           onClick={(e) => handleRemoveSelection(tab.id, e)}
-                          className="ml-1 p-0.5 hover:bg-red-100 transition-colors" // Removed rounded-full
+                          className="ml-1 p-0.5 hover:bg-red-100 transition-colors"
                         >
-                          <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
+                          <X className="w-3 h-3 text-red-600" />
                         </div>
                       )}
                     </button>
