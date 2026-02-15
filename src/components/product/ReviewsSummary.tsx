@@ -1,3 +1,4 @@
+// components/product/ReviewsSummary.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import SectionHeader from '@/components/home/SectionHeader';
 import { 
@@ -7,7 +8,7 @@ import {
 import FilterTabs, { FilterTab, ActiveFilter } from '@/components/FilterTabs';
 import { useProductReviews } from '@/hooks/useProductReviews';
 
-// Custom SVG Icons with colors (defined in the parent component)
+// Custom SVG Icons with colors
 const ArrowUpDownIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
     <path d="M7 10L12 5L17 10" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -74,7 +75,20 @@ interface ReviewsSummaryProps {
   onCustomButtonClick?: () => void;
   icon?: React.ComponentType<{ className?: string }>;
   productId?: string;
-  onFilterChange?: (filters: any) => void;
+  onFilterChange?: (filters: any[]) => void;
+  summaryStats?: {
+    averageRating: number;
+    totalReviews: number;
+    ratingCounts: {
+      5: number;
+      4: number;
+      3: number;
+      2: number;
+      1: number;
+    };
+    totalRatings: number;
+  };
+  reviews?: any[];
 }
 
 const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
@@ -93,14 +107,20 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
   icon = MessageCircle,
   productId,
   onFilterChange,
+  summaryStats: propSummaryStats,
+  reviews: propReviews = [],
 }) => {
-  // Fetch real review data
-  const { reviews, summaryStats, isLoading, error } = useProductReviews({ 
-    productId,
-    limit: 100 // Fetch enough reviews to calculate distribution
+  // Only fetch if we don't have props
+  const { summaryStats: hookSummaryStats, reviews: hookReviews, isLoading, error } = useProductReviews({ 
+    productId: productId,
+    limit: 100
   });
 
-  // Calculate rating distribution from real reviews
+  // Use props if provided, otherwise use hook data
+  const summaryStats = propSummaryStats || hookSummaryStats;
+  const reviews = propReviews.length > 0 ? propReviews : hookReviews;
+
+  // Calculate rating distribution from reviews
   const distribution = useMemo(() => {
     if (!reviews.length) {
       return [
@@ -130,7 +150,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
     }));
   }, [reviews]);
 
-  // Filter tabs state with custom SVG icons
+  // Filter tabs state
   const [filterTabs, setFilterTabs] = useState<FilterTab[]>([
     {
       id: 'sortBy',
@@ -253,13 +273,13 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<span key={i} className="text-blue-500 text-xl">★</span>);
+        stars.push(<span key={i} className="text-yellow-400 text-xl">★</span>);
       } else if (i === fullStars && hasHalfStar) {
         stars.push(
           <span key={i} className="relative inline-block text-xl">
             <span className="text-gray-300">★</span>
             <span 
-              className="absolute top-0 left-0 text-blue-500 overflow-hidden"
+              className="absolute top-0 left-0 text-yellow-400 overflow-hidden"
               style={{ width: '50%' }}
             >
               ★
@@ -283,8 +303,8 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
     return num.toString();
   };
 
-  // Show loading skeleton
-  if (isLoading) {
+  // Show loading skeleton only if we're not getting props
+  if (isLoading && !propSummaryStats) {
     return (
       <div className={`bg-white ${className} animate-pulse`}>
         <div className="h-12 bg-gray-200 mb-4"></div>
@@ -306,8 +326,8 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
     );
   }
 
-  // Show error state
-  if (error) {
+  // Show error state only if we're not getting props
+  if (error && !propSummaryStats) {
     return (
       <div className={`bg-white ${className} p-4`}>
         <div className="text-center text-red-500">
@@ -319,7 +339,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
 
   return (
     <div className={`bg-white ${className}`}>
-      {/* Section Header with uppercase title, icon, and view all button */}
+      {/* Section Header */}
       <SectionHeader
         title={title}
         icon={icon}
@@ -337,7 +357,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
 
       {/* Reviews summary content */}
       <div className="px-2 py-2">
-        {/* Subtitle with help icon at the end of the line */}
+        {/* Subtitle */}
         {subtitle && (
           <div className="mb-3">
             <div className="text-xs text-gray-500 leading-relaxed">
@@ -369,9 +389,9 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
               {distribution.map((dist) => (
                 <div key={dist.stars} className="flex items-center gap-2">
                   <span className="text-xs text-gray-500 w-3">{dist.stars}</span>
-                  <div className="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-blue-500 transition-all duration-500 ease-out"
+                      className="h-full bg-yellow-400 transition-all duration-500 ease-out"
                       style={{ width: `${dist.percentage}%` }}
                     />
                   </div>
@@ -385,8 +405,8 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
         </div>
       </div>
 
-      {/* Filter Tabs Section at the Bottom */}
-      <div className="">
+      {/* Filter Tabs */}
+      <div className="mt-2">
         <FilterTabs
           tabs={filterTabs}
           activeFilters={activeFilters}
