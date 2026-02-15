@@ -1,21 +1,30 @@
 // components/product/CustomerReviews.tsx
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Plus, Star } from 'lucide-react';
+import { Plus, Star, AlertCircle } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
 import { useProductReviews } from "@/hooks/useProductReviews";
 import ReviewsSummary from '@/components/product/ReviewsSummary';
 import ReviewItem, { Review } from '@/components/product/ReviewItem';
 import ReplyBar from '@/components/product/ReplyBar';
-import AddReviewModal from '@/components/product/AddReviewModal';
+import { useAuth } from '@/context/RedirectAuthContext';
+import { useAuthOverlay } from '@/context/AuthOverlayContext';
 
 interface CustomerReviewsProps {
   productId?: string;
   limit?: number;
+  productName?: string;
 }
 
-const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsProps) => {
-  const [isAddReviewModalOpen, setIsAddReviewModalOpen] = useState(false);
+const CustomerReviews = React.memo(({ 
+  productId, 
+  limit = 5,
+  productName = "This Product" 
+}: CustomerReviewsProps) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { openAuthOverlay } = useAuthOverlay();
   
   const {
     reviews,
@@ -37,10 +46,13 @@ const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsPro
     handleSubmitReply,
     handleCancelReply,
     fetchReviews,
-    submitReview,
     summaryStats,
-    user
   } = useProductReviews({ productId, limit });
+
+  // Load reviews when component mounts or productId changes
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews, productId]);
 
   // Memoize the displayed reviews
   const displayedReviews = useMemo(() => 
@@ -51,6 +63,10 @@ const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsPro
   // Memoize event handlers
   const memoizedHandleLike = useCallback((replyId: string, reviewId: string) => {
     handleLike(replyId, 'reply');
+  }, [handleLike]);
+
+  const memoizedHandleLikeReview = useCallback((reviewId: string) => {
+    handleLike(reviewId, 'review');
   }, [handleLike]);
 
   const memoizedToggleReadMore = useCallback((reviewId: string) => {
@@ -70,65 +86,69 @@ const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsPro
   }, [handleReplyToReply]);
 
   const handleViewAllReviews = useCallback(() => {
-    window.location.href = `/product/${productId}/reviews`;
-  }, [productId]);
+    navigate(`/product/${productId}/reviews`);
+  }, [productId, navigate]);
 
   const handleAddReviewClick = useCallback(() => {
     if (!user) {
-      // Show login modal or redirect to login
-      // You can integrate with your auth context here
-      alert('Please sign in to leave a review');
+      openAuthOverlay();
       return;
     }
-    setIsAddReviewModalOpen(true);
-  }, [user]);
-
-  const handleAddReviewSubmit = useCallback(async (reviewData: {
-    rating: number;
-    title: string;
-    comment: string;
-  }) => {
-    const success = await submitReview({
-      rating: reviewData.rating,
-      title: reviewData.title,
-      comment: reviewData.comment
+    navigate(`/product/${productId}/add-review`, { 
+      state: { productName } 
     });
-    
-    if (success) {
-      setIsAddReviewModalOpen(false);
-    }
-  }, [submitReview]);
+  }, [productId, user, navigate, openAuthOverlay, productName]);
 
   // Show loading state
   if (isLoading) {
     return (
       <div className="w-full bg-white">
         <div className="animate-pulse">
-          <div className="p-4">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="space-y-3">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          {/* Summary Section Skeleton */}
+          <div className="p-4 border-b">
+            <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+            <div className="flex items-center gap-4 mb-3">
+              <div className="h-8 bg-gray-200 rounded w-24"></div>
+              <div className="h-4 bg-gray-200 rounded w-32"></div>
+            </div>
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="h-4 bg-gray-200 rounded w-12"></div>
+                  <div className="flex-1 h-2 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded w-8"></div>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="p-4 border-t">
+
+          {/* Add Review Button Skeleton */}
+          <div className="px-4 py-4">
+            <div className="w-full h-16 bg-gray-200 rounded-xl"></div>
+          </div>
+
+          {/* Reviews List Skeleton */}
+          <div className="px-4 space-y-4">
             {[1, 2].map((i) => (
-              <div key={i} className="mb-4 p-3 border rounded">
-                <div className="flex items-center gap-3 mb-3">
+              <div key={i} className="border-b border-gray-100 pb-4">
+                <div className="flex gap-3 mb-3">
                   <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
                   <div className="flex-1">
-                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/6"></div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-gray-200 rounded w-full"></div>
+                      <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                      <div className="h-3 bg-gray-200 rounded w-4/6"></div>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2 mb-3">
-                  <div className="h-3 bg-gray-200 rounded w-full"></div>
-                  <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="h-4 bg-gray-200 rounded w-10"></div>
-                  <div className="h-4 bg-gray-200 rounded w-10"></div>
+                <div className="flex gap-4 mt-2">
+                  <div className="h-4 bg-gray-200 rounded w-12"></div>
+                  <div className="h-4 bg-gray-200 rounded w-12"></div>
+                  <div className="h-4 bg-gray-200 rounded w-12"></div>
                 </div>
               </div>
             ))}
@@ -138,17 +158,20 @@ const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsPro
     );
   }
 
+  // Show error state
   if (error) {
     return (
       <div className="w-full bg-white">
-        <div className="text-center py-8">
-          <p className="text-red-600">Error: {error}</p>
+        <div className="text-center py-12 px-4">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <p className="text-red-600 font-medium mb-2">Failed to load reviews</p>
+          <p className="text-sm text-gray-500 mb-4">{error}</p>
           <Button
             variant="outline"
-            className="mt-4"
+            className="mx-auto"
             onClick={fetchReviews}
           >
-            Retry
+            Try Again
           </Button>
         </div>
       </div>
@@ -158,32 +181,61 @@ const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsPro
   return (
     <ErrorBoundary>
       <div className="w-full bg-white">
+        {/* Reviews Summary Section */}
         <ReviewsSummary stats={summaryStats} />
 
-        {/* Dotted Border Add Review Button */}
-        <div className="px-4 py-3">
+        {/* Full-screen Add Review Button */}
+        <div className="px-4 py-4">
           <button
             onClick={handleAddReviewClick}
-            className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center gap-2 hover:border-blue-500 hover:bg-blue-50 transition-colors group"
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl py-4 px-6 flex items-center justify-between shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 group"
           >
-            <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
-            <span className="text-gray-600 group-hover:text-blue-600 font-medium">
-              Write a Review
-            </span>
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 rounded-full p-2 group-hover:bg-white/30 transition-colors">
+                <Plus className="w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <span className="block font-semibold text-lg">Write a Review</span>
+                <span className="block text-sm text-blue-100">
+                  Share your experience with {productName}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className="w-5 h-5 text-white fill-white"
+                />
+              ))}
+            </div>
           </button>
         </div>
 
+        {/* Reviews List */}
         <div className="py-2">
           <div className="space-y-2">
             {reviews.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground" style={{ color: '#666' }}>
-                  No reviews yet. Be the first to review this product!
+              <div className="text-center py-12 px-4">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Star className="w-10 h-10 text-gray-400" />
+                </div>
+                <p className="text-gray-600 font-medium mb-2">
+                  No reviews yet
                 </p>
+                <p className="text-sm text-gray-500 mb-6">
+                  Be the first to share your experience with {productName}
+                </p>
+                <Button
+                  onClick={handleAddReviewClick}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                >
+                  Write a Review
+                </Button>
               </div>
             ) : (
               displayedReviews.map((review: Review, index: number) => (
-                <div key={review.id} className="px-2">
+                <div key={review.id} className="px-4">
                   <ReviewItem
                     review={review}
                     expandedReviews={expandedReviews}
@@ -192,7 +244,7 @@ const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsPro
                     onToggleShowMoreReplies={memoizedToggleShowMoreReplies}
                     onCommentClick={memoizedHandleCommentClick}
                     onShareClick={() => handleShareClick(review.id)}
-                    onLikeReview={(reviewId) => handleLike(reviewId, 'review')}
+                    onLikeReview={memoizedHandleLikeReview}
                     onLikeReply={memoizedHandleLike}
                     onReplyToReply={memoizedHandleReplyToReply}
                     isLast={index === displayedReviews.length - 1}
@@ -203,11 +255,12 @@ const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsPro
           </div>
         </div>
 
+        {/* View All Reviews Button */}
         {totalCount > 2 && (
-          <div className="px-2 pb-2">
+          <div className="px-4 pb-4">
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full py-3 border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
               onClick={handleViewAllReviews}
             >
               View All {totalCount} Reviews
@@ -215,6 +268,7 @@ const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsPro
           </div>
         )}
 
+        {/* Reply Bar Component */}
         <ReplyBar
           replyingTo={replyingTo}
           replyText={replyText}
@@ -223,13 +277,34 @@ const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsPro
           onCancelReply={handleCancelReply}
         />
 
-        {/* Add Review Modal */}
-        <AddReviewModal
-          isOpen={isAddReviewModalOpen}
-          onClose={() => setIsAddReviewModalOpen(false)}
-          onSubmit={handleAddReviewSubmit}
-          productName="This Product" // You can pass the actual product name from props
-        />
+        {/* Quick Stats Footer */}
+        {reviews.length > 0 && (
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-600">Average Rating:</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-semibold text-gray-900">
+                    {summaryStats.averageRating.toFixed(1)}
+                  </span>
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className="w-4 h-4"
+                        fill={star <= Math.round(summaryStats.averageRating) ? '#FBBF24' : '#E5E7EB'}
+                        stroke={star <= Math.round(summaryStats.averageRating) ? '#FBBF24' : '#E5E7EB'}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="text-gray-500">
+                Based on {totalCount} {totalCount === 1 ? 'review' : 'reviews'}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );
