@@ -1,4 +1,4 @@
-// src/hooks/useProductReviews.ts
+// hooks/useProductReviews.ts
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,8 @@ export interface Review {
   comment_count: number;
   share_count: number;
   verified_purchase: boolean;
+  user_id?: string;
+  isLiked?: boolean; // Add this for UI state
 }
 
 export interface ReviewReply {
@@ -29,14 +31,17 @@ export interface ReviewReply {
   created_at: string;
   like_count: number;
   parent_reply_id?: string;
+  user_id?: string;
+  isLiked?: boolean; // Add this for UI state
 }
 
 export interface UseProductReviewsProps {
   productId?: string;
   limit?: number;
+  filters?: any[];
 }
 
-export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsProps) => {
+export const useProductReviews = ({ productId, limit = 10, filters = [] }: UseProductReviewsProps) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,9 +51,85 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
   const [replyingTo, setReplyingTo] = useState<{ type: 'review' | 'reply'; id: string; userName?: string } | null>(null);
   const [replyText, setReplyText] = useState('');
   const [itemBeingReplied, setItemBeingReplied] = useState<string | null>(null);
+  const [repliesMap, setRepliesMap] = useState<Map<string, ReviewReply[]>>(new Map());
+  const [userLikes, setUserLikes] = useState<Set<string>>(new Set()); // Track which items user has liked
   
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Fetch user's liked items
+  const fetchUserLikes = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_likes')
+        .select('item_id, item_type')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const likedSet = new Set(data?.map(like => like.item_id) || []);
+      setUserLikes(likedSet);
+    } catch (err) {
+      console.error('Error fetching user likes:', err);
+    }
+  }, [user]);
+
+  // Fetch replies for a review
+  const fetchReplies = useCallback(async (reviewId: string): Promise<ReviewReply[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('review_replies')
+        .select('*')
+        .eq('review_id', reviewId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      // Mark replies that the user has liked
+      const repliesWithLikes = (data || []).map(reply => ({
+        ...reply,
+        isLiked: userLikes.has(reply.id)
+      }));
+
+      return repliesWithLikes;
+    } catch (err) {
+      console.error('Error fetching replies:', err);
+      return [];
+    }
+  }, [userLikes]);
+
+  // Fetch all replies for multiple reviews
+  const fetchAllReplies = useCallback(async (reviewIds: string[]) => {
+    if (reviewIds.length === 0) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('review_replies')
+        .select('*')
+        .in('review_id', reviewIds)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const newRepliesMap = new Map();
+      reviewIds.forEach(id => newRepliesMap.set(id, []));
+
+      (data || []).forEach(reply => {
+        const replies = newRepliesMap.get(reply.review_id) || [];
+        replies.push({
+          ...reply,
+          isLiked: userLikes.has(reply.id)
+        });
+        newRepliesMap.set(reply.review_id, replies);
+      });
+
+      setRepliesMap(newRepliesMap);
+    } catch (err) {
+      console.error('Error fetching replies:', err);
+    }
+  }, [userLikes]);
 
   // Fetch reviews from database
   const fetchReviews = useCallback(async () => {
@@ -71,12 +152,47 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
       if (countError) throw countError;
       setTotalCount(count || 0);
 
-      // Then fetch the reviews with pagination
+      // Build query with filters
       let query = supabase
         .from('reviews')
         .select('*')
-        .eq('product_id', productId)
-        .order('created_at', { ascending: false });
+        .eq('product_id', productId);
+
+      // Apply filters
+      filters.forEach(filter => {
+        switch(filter.id) {
+          case 'rating':
+            if (filter.value) {
+              query = query.eq('rating', filter.value);
+            }
+            break;
+          case 'verifiedPurchase':
+            if (filter.value) {
+              query = query.eq('verified_purchase', true);
+            }
+            break;
+          case 'sortBy':
+            switch(filter.value) {
+              case 'mostRecent':
+                query = query.order('created_at', { ascending: false });
+                break;
+              case 'highestRated':
+                query = query.order('rating', { ascending: false });
+                break;
+              case 'lowestRated':
+                query = query.order('rating', { ascending: true });
+                break;
+              default:
+                query = query.order('created_at', { ascending: false });
+            }
+            break;
+        }
+      });
+
+      // Add default sorting if no sort filter applied
+      if (!filters.find(f => f.id === 'sortBy')) {
+        query = query.order('created_at', { ascending: false });
+      }
 
       if (limit) {
         query = query.limit(limit);
@@ -86,37 +202,185 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
 
       if (fetchError) throw fetchError;
 
-      setReviews(data || []);
+      // Mark reviews that the user has liked
+      const reviewsWithLikes = (data || []).map(review => ({
+        ...review,
+        isLiked: userLikes.has(review.id)
+      }));
+
+      setReviews(reviewsWithLikes);
+
+      // Fetch replies for these reviews
+      if (data && data.length > 0) {
+        await fetchAllReplies(data.map(r => r.id));
+      }
     } catch (err: any) {
       console.error('Error fetching reviews:', err);
       setError(err.message || 'Failed to load reviews');
     } finally {
       setIsLoading(false);
     }
-  }, [productId, limit]);
+  }, [productId, limit, filters, userLikes, fetchAllReplies]);
 
-  // Fetch replies for a review
-  const fetchReplies = useCallback(async (reviewId: string): Promise<ReviewReply[]> => {
-    try {
-      const { data, error } = await supabase
-        .from('review_replies')
-        .select('*')
-        .eq('review_id', reviewId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    } catch (err) {
-      console.error('Error fetching replies:', err);
-      return [];
+  // Like/unlike a review or reply
+  const handleLike = useCallback(async (itemId: string, type: 'review' | 'reply') => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please sign in to like',
+        variant: 'destructive',
+      });
+      return;
     }
-  }, []);
+
+    const isLiked = userLikes.has(itemId);
+
+    try {
+      if (isLiked) {
+        // Unlike
+        const { error } = await supabase
+          .from('user_likes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('item_id', itemId);
+
+        if (error) throw error;
+
+        // Decrement like count
+        if (type === 'review') {
+          await supabase
+            .from('reviews')
+            .update({ like_count: supabase.rpc('decrement', { amount: 1 }) })
+            .eq('id', itemId);
+
+          // Update local state
+          setReviews(prev =>
+            prev.map(review =>
+              review.id === itemId
+                ? { ...review, like_count: (review.like_count || 0) - 1, isLiked: false }
+                : review
+            )
+          );
+        } else {
+          await supabase
+            .from('review_replies')
+            .update({ like_count: supabase.rpc('decrement', { amount: 1 }) })
+            .eq('id', itemId);
+
+          // Update replies map
+          setRepliesMap(prev => {
+            const newMap = new Map(prev);
+            for (const [reviewId, replies] of newMap.entries()) {
+              const updatedReplies = replies.map(reply =>
+                reply.id === itemId
+                  ? { ...reply, like_count: (reply.like_count || 0) - 1, isLiked: false }
+                  : reply
+              );
+              newMap.set(reviewId, updatedReplies);
+            }
+            return newMap;
+          });
+        }
+
+        // Update user likes set
+        setUserLikes(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(itemId);
+          return newSet;
+        });
+
+        toast({
+          title: 'Removed like',
+          description: 'You unliked this item',
+        });
+      } else {
+        // Like
+        const { error } = await supabase
+          .from('user_likes')
+          .insert({
+            user_id: user.id,
+            item_id: itemId,
+            item_type: type
+          });
+
+        if (error) throw error;
+
+        // Increment like count
+        if (type === 'review') {
+          await supabase
+            .from('reviews')
+            .update({ like_count: supabase.rpc('increment', { amount: 1 }) })
+            .eq('id', itemId);
+
+          // Update local state
+          setReviews(prev =>
+            prev.map(review =>
+              review.id === itemId
+                ? { ...review, like_count: (review.like_count || 0) + 1, isLiked: true }
+                : review
+            )
+          );
+        } else {
+          await supabase
+            .from('review_replies')
+            .update({ like_count: supabase.rpc('increment', { amount: 1 }) })
+            .eq('id', itemId);
+
+          // Update replies map
+          setRepliesMap(prev => {
+            const newMap = new Map(prev);
+            for (const [reviewId, replies] of newMap.entries()) {
+              const updatedReplies = replies.map(reply =>
+                reply.id === itemId
+                  ? { ...reply, like_count: (reply.like_count || 0) + 1, isLiked: true }
+                  : reply
+              );
+              newMap.set(reviewId, updatedReplies);
+            }
+            return newMap;
+          });
+        }
+
+        // Update user likes set
+        setUserLikes(prev => {
+          const newSet = new Set(prev);
+          newSet.add(itemId);
+          return newSet;
+        });
+
+        toast({
+          title: 'Liked!',
+          description: 'You liked this item',
+        });
+      }
+    } catch (err: any) {
+      console.error('Error liking item:', err);
+      toast({
+        title: 'Failed to like',
+        description: err.message || 'Please try again later',
+        variant: 'destructive',
+      });
+    }
+  }, [user, userLikes, toast]);
+
+  // Get replies for a review
+  const getRepliesForReview = useCallback((reviewId: string): ReviewReply[] => {
+    return repliesMap.get(reviewId) || [];
+  }, [repliesMap]);
+
+  // Load more replies (pagination)
+  const loadMoreReplies = useCallback(async (reviewId: string) => {
+    // Implement pagination logic here if needed
+    const currentReplies = repliesMap.get(reviewId) || [];
+    // Fetch next page of replies
+  }, [repliesMap]);
 
   // Submit a new review
   const submitReview = useCallback(async (reviewData: {
     rating: number;
     title?: string;
     comment: string;
+    images?: File[];
   }) => {
     if (!user) {
       toast({
@@ -137,10 +401,18 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
     }
 
     try {
+      // Upload images first if any
+      let imageUrls: string[] = [];
+      if (reviewData.images && reviewData.images.length > 0) {
+        // Implement image upload logic here
+        // Upload to storage and get URLs
+      }
+
       const { data, error } = await supabase
         .from('reviews')
         .insert({
           product_id: productId,
+          user_id: user.id,
           user_name: user.email?.split('@')[0] || 'Anonymous',
           rating: reviewData.rating,
           title: reviewData.title,
@@ -149,7 +421,8 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
           helpful_count: 0,
           like_count: 0,
           comment_count: 0,
-          share_count: 0
+          share_count: 0,
+          images: imageUrls
         })
         .select()
         .single();
@@ -157,7 +430,10 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
       if (error) throw error;
 
       // Add the new review to the list
-      setReviews(prev => [data, ...prev]);
+      setReviews(prev => [{
+        ...data,
+        isLiked: false
+      }, ...prev]);
       setTotalCount(prev => prev + 1);
 
       toast({
@@ -193,6 +469,7 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
         .from('review_replies')
         .insert({
           review_id: reviewId,
+          user_id: user.id,
           user_name: user.email?.split('@')[0] || 'Anonymous',
           reply_text: replyText,
           parent_reply_id: parentReplyId,
@@ -208,6 +485,23 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
         .from('reviews')
         .update({ comment_count: supabase.rpc('increment', { amount: 1 }) })
         .eq('id', reviewId);
+
+      // Add reply to local state
+      setRepliesMap(prev => {
+        const newMap = new Map(prev);
+        const currentReplies = newMap.get(reviewId) || [];
+        newMap.set(reviewId, [...currentReplies, { ...data, isLiked: false }]);
+        return newMap;
+      });
+
+      // Update review comment count
+      setReviews(prev =>
+        prev.map(review =>
+          review.id === reviewId
+            ? { ...review, comment_count: (review.comment_count || 0) + 1 }
+            : review
+        )
+      );
 
       toast({
         title: 'Reply posted',
@@ -226,51 +520,52 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
     }
   }, [user, toast]);
 
-  // Like a review or reply
-  const handleLike = useCallback(async (itemId: string, type: 'review' | 'reply') => {
-    if (!user) {
-      toast({
-        title: 'Authentication required',
-        description: 'Please sign in to like',
-        variant: 'destructive',
-      });
-      return;
+  // Load user likes on mount and when user changes
+  useEffect(() => {
+    if (user) {
+      fetchUserLikes();
+    } else {
+      setUserLikes(new Set());
+    }
+  }, [user, fetchUserLikes]);
+
+  // Load reviews on mount and when dependencies change
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
+
+  // Calculate summary statistics
+  const summaryStats = useMemo(() => {
+    if (reviews.length === 0) {
+      return {
+        averageRating: 0,
+        totalReviews: 0,
+        ratingCounts: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+        totalRatings: 0
+      };
     }
 
-    try {
-      if (type === 'review') {
-        const { error } = await supabase
-          .from('reviews')
-          .update({ like_count: supabase.rpc('increment', { amount: 1 }) })
-          .eq('id', itemId);
+    const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    let totalRating = 0;
 
-        if (error) throw error;
-
-        setReviews(prev =>
-          prev.map(review =>
-            review.id === itemId
-              ? { ...review, like_count: (review.like_count || 0) + 1 }
-              : review
-          )
-        );
-      } else {
-        // Handle reply like
-        const { error } = await supabase
-          .from('review_replies')
-          .update({ like_count: supabase.rpc('increment', { amount: 1 }) })
-          .eq('id', itemId);
-
-        if (error) throw error;
+    reviews.forEach(review => {
+      const rating = review.rating;
+      if (rating >= 1 && rating <= 5) {
+        ratingCounts[rating as keyof typeof ratingCounts]++;
+        totalRating += rating;
       }
-    } catch (err: any) {
-      console.error('Error liking item:', err);
-      toast({
-        title: 'Failed to like',
-        description: err.message || 'Please try again later',
-        variant: 'destructive',
-      });
-    }
-  }, [user, toast]);
+    });
+
+    const totalReviews = reviews.length;
+    const averageRating = totalRating / totalReviews;
+
+    return {
+      averageRating: parseFloat(averageRating.toFixed(1)),
+      totalReviews,
+      ratingCounts,
+      totalRatings: totalRating
+    };
+  }, [reviews]);
 
   // Toggle functions
   const toggleReadMore = useCallback((reviewId: string) => {
@@ -356,54 +651,14 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
       setReplyText('');
       setReplyingTo(null);
       setItemBeingReplied(null);
-      // Refresh reviews to show the new reply
-      fetchReviews();
     }
-  }, [replyingTo, replyText, itemBeingReplied, submitReply, fetchReviews]);
+  }, [replyingTo, replyText, itemBeingReplied, submitReply]);
 
   const handleCancelReply = useCallback(() => {
     setReplyText('');
     setReplyingTo(null);
     setItemBeingReplied(null);
   }, []);
-
-  // Calculate summary statistics
-  const summaryStats = useCallback(() => {
-    if (reviews.length === 0) {
-      return {
-        averageRating: 0,
-        totalReviews: 0,
-        ratingCounts: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-        totalRatings: 0
-      };
-    }
-
-    const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    let totalRating = 0;
-
-    reviews.forEach(review => {
-      const rating = review.rating;
-      if (rating >= 1 && rating <= 5) {
-        ratingCounts[rating as keyof typeof ratingCounts]++;
-        totalRating += rating;
-      }
-    });
-
-    const totalReviews = reviews.length;
-    const averageRating = totalRating / totalReviews;
-
-    return {
-      averageRating: parseFloat(averageRating.toFixed(1)),
-      totalReviews,
-      ratingCounts,
-      totalRatings: totalRating
-    };
-  }, [reviews]);
-
-  // Load reviews on mount and when productId changes
-  useEffect(() => {
-    fetchReviews();
-  }, [fetchReviews]);
 
   return {
     // Data
@@ -434,11 +689,14 @@ export const useProductReviews = ({ productId, limit = 10 }: UseProductReviewsPr
     handleShareClick,
     handleSubmitReply,
     handleCancelReply,
+    getRepliesForReview,
+    loadMoreReplies,
     
     // Computed
-    summaryStats: summaryStats(),
+    summaryStats,
     
     // User
-    user
+    user,
+    userLikes
   };
 };
