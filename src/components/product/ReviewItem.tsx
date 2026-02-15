@@ -81,8 +81,8 @@ const ReviewItem = memo(({
     created_at,
     verified_purchase,
     media = [],
-    like_count = 0, // This matches your database column
-    comment_count = 0, // This matches your database column
+    like_count = 0,
+    comment_count = 0,
     rating,
     isLiked = false,
   } = review;
@@ -409,7 +409,7 @@ const ReviewItem = memo(({
       {/* Engagement Section */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-6">
-          {/* Like Button - Using like_count from database */}
+          {/* Like Button */}
           <button
             onClick={handleLikeClick}
             className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium group"
@@ -430,7 +430,7 @@ const ReviewItem = memo(({
             )}
           </button>
 
-          {/* Comment Button - Using comment_count from database */}
+          {/* Comment Button */}
           <button
             onClick={handleCommentClick}
             className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group"
@@ -513,7 +513,7 @@ const ReviewItem = memo(({
 });
 
 interface ReplyItemProps {
-  reply: Reply & { isLiked?: boolean; like_count?: number };
+  reply: Reply;
   reviewId: string;
   getAvatarColor: (name?: string) => string;
   getInitials: (name?: string) => string;
@@ -547,7 +547,7 @@ const ReplyItem = memo(({
     user_name,
     comment,
     created_at,
-    like_count = 0, // Use like_count to match database
+    like_count = 0,
     isLiked = false,
   } = reply;
 
@@ -619,7 +619,7 @@ const ReplyItem = memo(({
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Reply Like Button - Using like_count */}
+              {/* Reply Like Button */}
               <button
                 onClick={handleLikeClick}
                 className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors group"
