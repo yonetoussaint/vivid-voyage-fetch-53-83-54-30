@@ -5,7 +5,8 @@ import { Play, Heart, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronU
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/utils/textUtils";
 import { useNavigate } from 'react-router-dom';
-import type { MediaItem, Reply, Review } from '@/types/reviews';
+// Update this import to use the types from the hook
+import type { MediaItem, Reply, Review } from '@/hooks/useProductReviews';  // Changed from '@/types/reviews'
 
 interface ReviewItemProps {
   review: Review;
@@ -35,6 +36,7 @@ interface ReviewItemProps {
   isLast?: boolean;
   getRepliesForReview?: (reviewId: string) => Reply[];
 }
+
 
 const ReviewItem = memo(({
   review,
