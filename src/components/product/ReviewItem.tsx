@@ -72,6 +72,7 @@ const ReviewItem = memo(({
   const replyMenuRef = useRef<HTMLDivElement>(null);
   const mediaContainerRef = useRef<HTMLDivElement>(null);
 
+  // Use the correct database column names
   const {
     id,
     user_id,
@@ -80,10 +81,10 @@ const ReviewItem = memo(({
     created_at,
     verified_purchase,
     media = [],
-    likeCount = 0,
-    commentCount = 0,
+    like_count = 0, // This matches your database column
+    comment_count = 0, // This matches your database column
     rating,
-    isLiked = false, // Add this from the hook
+    isLiked = false,
   } = review;
 
   // Get replies for this review
@@ -408,11 +409,11 @@ const ReviewItem = memo(({
       {/* Engagement Section */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-6">
-          {/* Like Button - Updated with isLiked state */}
+          {/* Like Button - Using like_count from database */}
           <button
             onClick={handleLikeClick}
             className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium group"
-            aria-label={`Like this review. ${likeCount} likes`}
+            aria-label={`Like this review. ${like_count} likes`}
           >
             <Heart
               className={`w-5 h-5 transition-all ${
@@ -422,21 +423,21 @@ const ReviewItem = memo(({
               }`}
               strokeWidth={isLiked ? "2" : "2"}
             />
-            {likeCount > 0 && (
+            {like_count > 0 && (
               <span className={isLiked ? 'text-red-500 font-semibold' : ''}>
-                {likeCount}
+                {like_count}
               </span>
             )}
           </button>
 
-          {/* Comment Button */}
+          {/* Comment Button - Using comment_count from database */}
           <button
             onClick={handleCommentClick}
             className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group"
-            aria-label={`Comment on this review. ${commentCount} comments`}
+            aria-label={`Comment on this review. ${comment_count} comments`}
           >
             <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            {commentCount > 0 && <span>{commentCount}</span>}
+            {comment_count > 0 && <span>{comment_count}</span>}
           </button>
 
           {/* Helpful Button */}
@@ -512,7 +513,7 @@ const ReviewItem = memo(({
 });
 
 interface ReplyItemProps {
-  reply: Reply & { isLiked?: boolean };
+  reply: Reply & { isLiked?: boolean; like_count?: number };
   reviewId: string;
   getAvatarColor: (name?: string) => string;
   getInitials: (name?: string) => string;
@@ -546,7 +547,7 @@ const ReplyItem = memo(({
     user_name,
     comment,
     created_at,
-    likeCount = 0,
+    like_count = 0, // Use like_count to match database
     isLiked = false,
   } = reply;
 
@@ -618,11 +619,11 @@ const ReplyItem = memo(({
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Reply Like Button - Updated with isLiked state */}
+              {/* Reply Like Button - Using like_count */}
               <button
                 onClick={handleLikeClick}
                 className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors group"
-                aria-label={`Like this reply. ${likeCount} likes`}
+                aria-label={`Like this reply. ${like_count} likes`}
               >
                 <Heart
                   className={`w-4 h-4 transition-all ${
@@ -632,9 +633,9 @@ const ReplyItem = memo(({
                   }`}
                   strokeWidth={isLiked ? "2" : "2"}
                 />
-                {likeCount > 0 && (
+                {like_count > 0 && (
                   <span className={isLiked ? 'text-red-500 font-semibold' : ''}>
-                    {likeCount}
+                    {like_count}
                   </span>
                 )}
               </button>
