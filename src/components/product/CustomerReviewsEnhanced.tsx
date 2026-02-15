@@ -1,17 +1,15 @@
-// components/product/CustomerReviews.tsx
 import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Plus, Star, AlertCircle } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
-import { useProductReviews } from "@/hooks/useProductReviews"; // This now exports the types
+import { useProductReviews } from "@/hooks/useProductReviews";
 import ReviewsSummary from '@/components/product/ReviewsSummary';
-import ReviewItem from '@/components/product/ReviewItem'; // Remove the { Review } import
+import ReviewItem from '@/components/product/ReviewItem';
 import ReplyBar from '@/components/product/ReplyBar';
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
 
-// Import the Review type from the hook instead
 import type { Review } from '@/hooks/useProductReviews';
 
 interface CustomerReviewsProps {
@@ -19,7 +17,6 @@ interface CustomerReviewsProps {
   limit?: number;
   productName?: string;
 }
-
 
 const CustomerReviews = React.memo(({ 
   productId, 
@@ -58,11 +55,6 @@ const CustomerReviews = React.memo(({
     limit,
     filters: activeFilters
   });
-
-  // Load reviews when component mounts or productId changes
-  useEffect(() => {
-    fetchReviews();
-  }, [fetchReviews, productId, activeFilters]);
 
   // Memoize the displayed reviews
   const displayedReviews = useMemo(() => 
@@ -197,7 +189,7 @@ const CustomerReviews = React.memo(({
   return (
     <ErrorBoundary>
       <div className="w-full bg-white">
-        {/* Reviews Summary Section - Pass summaryStats to prevent extra fetching */}
+        {/* Reviews Summary Section */}
         <ReviewsSummary 
           productId={productId}
           summaryStats={summaryStats}
