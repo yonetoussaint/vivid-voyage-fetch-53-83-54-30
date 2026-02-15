@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
 import { CategoryRoutes } from "../routes/CategoryRoutes";
+import AddReviewPage from '@/pages/AddReviewPage';
 import { ContentRoutes } from "../routes/ContentRoutes";
 import { AuthRoutes } from "../routes/AuthRoutes";
 import { MiscRoutes } from "../routes/MiscRoutes";
@@ -30,6 +31,7 @@ export function AppRoutes() {
           <AuthCallback />
         }
       />
+<Route path="/product/:productId/add-review" element={<AddReviewPage />} />
 
       {/* ✅ Error route for auth failures */}
       <Route
