@@ -1,3 +1,4 @@
+// components/product/ReviewItem.tsx
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
 import { Play, Heart, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
@@ -32,6 +33,7 @@ interface ReviewItemProps {
   loadMoreReplies?: (reviewId: string) => void;
   replyPagination?: { page: number; hasMore: boolean };
   isLast?: boolean;
+  getRepliesForReview?: (reviewId: string) => Reply[];
 }
 
 const ReviewItem = memo(({
@@ -60,6 +62,7 @@ const ReviewItem = memo(({
   loadMoreReplies,
   replyPagination,
   isLast = false,
+  getRepliesForReview,
 }: ReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
@@ -80,8 +83,13 @@ const ReviewItem = memo(({
     likeCount = 0,
     commentCount = 0,
     rating,
-    replies = [],
+    isLiked = false, // Add this from the hook
   } = review;
+
+  // Get replies for this review
+  const replies = useMemo(() => {
+    return getRepliesForReview ? getRepliesForReview(id) : [];
+  }, [getRepliesForReview, id]);
 
   useEffect(() => {
     onReviewView?.(id);
@@ -229,6 +237,10 @@ const ReviewItem = memo(({
       onCommentClick?.(id);
     }
   }, [id, onToggleShowReplies, navigate, onCommentClick]);
+
+  const handleShareClick = useCallback(() => {
+    onShareClick?.(id);
+  }, [id, onShareClick]);
 
   const handleMenuAction = useCallback((action: 'report' | 'edit' | 'delete' | 'share') => {
     onMenuAction?.(id, action);
@@ -387,7 +399,7 @@ const ReviewItem = memo(({
       {/* Media Section */}
       {hasMedia && (
         <div className="mb-2" ref={mediaContainerRef}>
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {renderedMedia}
           </div>
         </div>
@@ -396,37 +408,66 @@ const ReviewItem = memo(({
       {/* Engagement Section */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-6">
-          
-<button
-  onClick={handleLikeClick}
-  className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium"
-  aria-label={`Like this review. ${likeCount} likes`}
->
-  <Heart
-    className="w-5 h-5"
-    fill={review.isLiked ? '#ef4444' : 'none'}
-    stroke={review.isLiked ? '#ef4444' : 'currentColor'}
-    strokeWidth="2"
-  />
-  {likeCount > 0 && <span>{likeCount}</span>}
-</button>
+          {/* Like Button - Updated with isLiked state */}
+          <button
+            onClick={handleLikeClick}
+            className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium group"
+            aria-label={`Like this review. ${likeCount} likes`}
+          >
+            <Heart
+              className={`w-5 h-5 transition-all ${
+                isLiked 
+                  ? 'fill-red-500 stroke-red-500 scale-110' 
+                  : 'fill-none stroke-current group-hover:scale-110'
+              }`}
+              strokeWidth={isLiked ? "2" : "2"}
+            />
+            {likeCount > 0 && (
+              <span className={isLiked ? 'text-red-500 font-semibold' : ''}>
+                {likeCount}
+              </span>
+            )}
+          </button>
 
+          {/* Comment Button */}
           <button
             onClick={handleCommentClick}
-            className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium"
+            className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group"
             aria-label={`Comment on this review. ${commentCount} comments`}
           >
-            <MessageCircle className="w-5 h-5" />
+            <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
             {commentCount > 0 && <span>{commentCount}</span>}
           </button>
 
+          {/* Helpful Button */}
           <button
             onClick={handleHelpfulClick}
-            className="text-sm text-gray-500 hover:text-green-600 transition-colors flex items-center gap-2 font-medium"
+            className="text-sm text-gray-500 hover:text-green-600 transition-colors flex items-center gap-2 font-medium group"
             aria-label="Mark this review as helpful"
           >
-            <ThumbsUp className="w-5 h-5" />
+            <ThumbsUp className="w-5 h-5 group-hover:scale-110 transition-transform" />
             <span>Helpful</span>
+          </button>
+
+          {/* Share Button */}
+          <button
+            onClick={handleShareClick}
+            className="text-sm text-gray-500 hover:text-purple-600 transition-colors flex items-center gap-2 font-medium group"
+            aria-label="Share this review"
+          >
+            <svg 
+              className="w-5 h-5 group-hover:scale-110 transition-transform" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" 
+              />
+            </svg>
           </button>
         </div>
 
@@ -439,7 +480,7 @@ const ReviewItem = memo(({
           {onToggleShowReplies && (
             <button
               onClick={handleShowRepliesClick}
-              className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 font-medium mb-2"
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 font-medium mb-2 transition-colors"
               aria-expanded={isRepliesExpanded}
             >
               {isRepliesExpanded ? (
@@ -457,7 +498,7 @@ const ReviewItem = memo(({
               {hasMoreReplies && (
                 <button
                   onClick={handleLoadMoreReplies}
-                  className="ml-12 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  className="ml-12 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
                 >
                   Load more replies
                 </button>
@@ -471,7 +512,7 @@ const ReviewItem = memo(({
 });
 
 interface ReplyItemProps {
-  reply: Reply;
+  reply: Reply & { isLiked?: boolean };
   reviewId: string;
   getAvatarColor: (name?: string) => string;
   getInitials: (name?: string) => string;
@@ -500,28 +541,37 @@ const ReplyItem = memo(({
   const [showReplyMenu, setShowReplyMenu] = useState(false);
   const replyMenuRef = useRef<HTMLDivElement>(null);
 
+  const {
+    id,
+    user_name,
+    comment,
+    created_at,
+    likeCount = 0,
+    isLiked = false,
+  } = reply;
+
   const handleLikeClick = useCallback(() => {
-    onLikeReply?.(reply.id, reviewId);
-  }, [reply.id, reviewId, onLikeReply]);
+    onLikeReply?.(id, reviewId);
+  }, [id, reviewId, onLikeReply]);
 
   const handleReplyClick = useCallback(() => {
-    onReplyToReply?.(reply.id, reviewId, reply.user_name || '');
-  }, [reply.id, reviewId, reply.user_name, onReplyToReply]);
+    onReplyToReply?.(id, reviewId, user_name || '');
+  }, [id, reviewId, user_name, onReplyToReply]);
 
   const handleEditClick = useCallback(() => {
-    onEditReply?.(reply.id, reviewId, reply.comment || '');
+    onEditReply?.(id, reviewId, comment || '');
     setShowReplyMenu(false);
-  }, [reply.id, reviewId, reply.comment, onEditReply]);
+  }, [id, reviewId, comment, onEditReply]);
 
   const handleDeleteClick = useCallback(() => {
-    onDeleteReply?.(reply.id, reviewId);
+    onDeleteReply?.(id, reviewId);
     setShowReplyMenu(false);
-  }, [reply.id, reviewId, onDeleteReply]);
+  }, [id, reviewId, onDeleteReply]);
 
   const handleReportClick = useCallback(() => {
-    onReportReply?.(reply.id, reviewId, 'inappropriate');
+    onReportReply?.(id, reviewId, 'inappropriate');
     setShowReplyMenu(false);
-  }, [reply.id, reviewId, onReportReply]);
+  }, [id, reviewId, onReportReply]);
 
   const toggleReplyMenu = useCallback(() => {
     setShowReplyMenu(prev => !prev);
@@ -543,9 +593,9 @@ const ReplyItem = memo(({
     };
   }, [showReplyMenu]);
 
-  const formattedDate = useMemo(() => formatDate(reply.created_at), [reply.created_at]);
-  const avatarColor = useMemo(() => getAvatarColor(reply.user_name), [reply.user_name, getAvatarColor]);
-  const initials = useMemo(() => getInitials(reply.user_name), [reply.user_name, getInitials]);
+  const formattedDate = useMemo(() => formatDate(created_at), [created_at]);
+  const avatarColor = useMemo(() => getAvatarColor(user_name), [user_name, getAvatarColor]);
+  const initials = useMemo(() => getInitials(user_name), [user_name, getInitials]);
 
   return (
     <div className="ml-12 mt-3 pl-3 border-l-2 border-gray-200">
@@ -560,7 +610,7 @@ const ReplyItem = memo(({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-gray-900 text-sm">
-                {reply.user_name || 'Anonymous'}
+                {user_name || 'Anonymous'}
               </span>
               <span className="text-xs text-gray-500">
                 {formattedDate}
@@ -568,28 +618,37 @@ const ReplyItem = memo(({
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Reply Like Button - Updated with isLiked state */}
               <button
                 onClick={handleLikeClick}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600"
-                aria-label={`Like this reply. ${reply.likeCount || 0} likes`}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors group"
+                aria-label={`Like this reply. ${likeCount} likes`}
               >
                 <Heart
-                  className="w-4 h-4"
-                  fill={reply.isLiked ? '#ef4444' : 'none'}
-                  stroke={reply.isLiked ? '#ef4444' : 'currentColor'}
-                  strokeWidth="2"
+                  className={`w-4 h-4 transition-all ${
+                    isLiked 
+                      ? 'fill-red-500 stroke-red-500 scale-110' 
+                      : 'fill-none stroke-current group-hover:scale-110'
+                  }`}
+                  strokeWidth={isLiked ? "2" : "2"}
                 />
-                {(reply.likeCount || 0) > 0 && <span>{reply.likeCount}</span>}
+                {likeCount > 0 && (
+                  <span className={isLiked ? 'text-red-500 font-semibold' : ''}>
+                    {likeCount}
+                  </span>
+                )}
               </button>
 
+              {/* Reply Button */}
               <button
                 onClick={handleReplyClick}
-                className="text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded"
-                aria-label={`Reply to ${reply.user_name || 'this user'}`}
+                className="text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                aria-label={`Reply to ${user_name || 'this user'}`}
               >
                 Reply
               </button>
 
+              {/* Reply Menu */}
               <div className="relative" ref={replyMenuRef}>
                 <button
                   onClick={toggleReplyMenu}
@@ -632,7 +691,7 @@ const ReplyItem = memo(({
             </div>
           </div>
 
-          <p className="text-gray-700 text-sm mt-1">{reply.comment}</p>
+          <p className="text-gray-700 text-sm mt-1">{comment}</p>
         </div>
       </div>
     </div>
