@@ -13,7 +13,6 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
-    
   },
   "dependencies": {
     "@babel/standalone": "^7.28.3",
