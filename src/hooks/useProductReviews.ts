@@ -4,34 +4,55 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/RedirectAuthContext';
 
+// Types moved inside the hook file
+export interface MediaItem {
+  type: 'image' | 'video';
+  url: string;
+  thumbnail?: string;
+  alt?: string;
+}
+
+export interface Reply {
+  id: string;
+  user_id?: string;
+  user_name?: string;
+  comment?: string;
+  created_at: string;
+  like_count: number;
+  isLiked?: boolean;
+  reply_count?: number;
+  replies?: Reply[];
+}
+
 export interface Review {
   id: string;
   product_id: string;
   seller_id?: string;
+  user_id?: string;
   user_name: string;
   rating: number;
   title?: string;
-  comment?: string;
+  comment: string;
   created_at: string;
   updated_at?: string;
-  helpful_count: number;
+  verified_purchase: boolean;
+  media?: MediaItem[];
   like_count: number;
   comment_count: number;
   share_count: number;
-  verified_purchase: boolean;
-  user_id?: string;
+  helpful_count: number;
   isLiked?: boolean;
 }
 
 export interface ReviewReply {
   id: string;
   review_id: string;
+  user_id?: string;
   user_name: string;
   reply_text: string;
   created_at: string;
   like_count: number;
   parent_reply_id?: string;
-  user_id?: string;
   isLiked?: boolean;
 }
 
@@ -53,7 +74,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
   const [itemBeingReplied, setItemBeingReplied] = useState<string | null>(null);
   const [repliesMap, setRepliesMap] = useState<Map<string, ReviewReply[]>>(new Map());
   const [userLikes, setUserLikes] = useState<Set<string>>(new Set());
-  
+
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -205,8 +226,10 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
       // Mark reviews that the user has liked - PRESERVE existing like counts
       const reviewsWithLikes = (data || []).map(review => ({
         ...review,
-        like_count: review.like_count || 0, // Ensure like_count is always a number
+        like_count: review.like_count || 0,
         comment_count: review.comment_count || 0,
+        share_count: review.share_count || 0,
+        helpful_count: review.helpful_count || 0,
         isLiked: userLikes.has(review.id)
       }));
 
@@ -224,7 +247,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
     }
   }, [productId, limit, filters, userLikes, fetchAllReplies]);
 
-  // Like/unlike a review or reply - FIXED to properly update counts
+  // Like/unlike a review or reply
   const handleLike = useCallback(async (itemId: string, type: 'review' | 'reply') => {
     if (!user) {
       toast({
@@ -257,13 +280,13 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
             .single();
 
           const newCount = Math.max(0, (currentReview?.like_count || 1) - 1);
-          
+
           await supabase
             .from('reviews')
             .update({ like_count: newCount })
             .eq('id', itemId);
 
-          // Update local state - IMMEDIATELY update the count
+          // Update local state
           setReviews(prev =>
             prev.map(review =>
               review.id === itemId
@@ -337,7 +360,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
             .update({ like_count: newCount })
             .eq('id', itemId);
 
-          // Update local state - IMMEDIATELY update the count
+          // Update local state
           setReviews(prev =>
             prev.map(review =>
               review.id === itemId
@@ -433,13 +456,6 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
     }
 
     try {
-      // Upload images first if any
-      let imageUrls: string[] = [];
-      if (reviewData.images && reviewData.images.length > 0) {
-        // Implement image upload logic here
-        // Upload to storage and get URLs
-      }
-
       const { data, error } = await supabase
         .from('reviews')
         .insert({
@@ -465,6 +481,8 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
         ...data,
         like_count: 0,
         comment_count: 0,
+        share_count: 0,
+        helpful_count: 0,
         isLiked: false
       }, ...prev]);
       setTotalCount(prev => prev + 1);
@@ -715,17 +733,17 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
     isLoading,
     error,
     totalCount,
-    
+
     // UI State
     expandedReviews,
     expandedReplies,
     replyingTo,
     replyText,
     itemBeingReplied,
-    
+
     // Setters
     setReplyText,
-    
+
     // Actions
     fetchReviews,
     submitReview,
@@ -740,10 +758,10 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
     handleCancelReply,
     getRepliesForReview,
     loadMoreReplies,
-    
+
     // Computed
     summaryStats,
-    
+
     // User
     user,
     userLikes
