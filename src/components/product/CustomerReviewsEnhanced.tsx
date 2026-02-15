@@ -139,7 +139,7 @@ const CustomerReviews = React.memo(({ productId, limit }: CustomerReviewsProps) 
                 </p>
               </div>
             ) : (
-              displayedReviews.map((review: Review) => (
+              displayedReviews.map((review: Review, index: number) => (
                 <div key={review.id} className="px-2">
                   <ReviewItem
                     review={review}
@@ -151,6 +151,7 @@ const CustomerReviews = React.memo(({ productId, limit }: CustomerReviewsProps) 
                     onShareClick={handleShareClick}
                     onLikeReply={memoizedHandleLikeReply}
                     onReplyToReply={memoizedHandleReplyToReply}
+                    isLast={index === displayedReviews.length - 1} // Add this line
                   />
                 </div>
               ))
