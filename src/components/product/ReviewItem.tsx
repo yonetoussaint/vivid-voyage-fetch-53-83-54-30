@@ -396,19 +396,20 @@ const ReviewItem = memo(({
       {/* Engagement Section */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-6">
-          <button
-            onClick={handleLikeClick}
-            className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium"
-            aria-label={`Like this review. ${likeCount} likes`}
-          >
-            <Heart
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-            {likeCount > 0 && <span>{likeCount}</span>}
-          </button>
+          
+<button
+  onClick={handleLikeClick}
+  className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium"
+  aria-label={`Like this review. ${likeCount} likes`}
+>
+  <Heart
+    className="w-5 h-5"
+    fill={review.isLiked ? '#ef4444' : 'none'}
+    stroke={review.isLiked ? '#ef4444' : 'currentColor'}
+    strokeWidth="2"
+  />
+  {likeCount > 0 && <span>{likeCount}</span>}
+</button>
 
           <button
             onClick={handleCommentClick}
