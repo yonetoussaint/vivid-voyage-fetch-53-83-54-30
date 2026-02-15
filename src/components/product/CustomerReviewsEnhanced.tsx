@@ -1,5 +1,5 @@
 // components/product/CustomerReviews.tsx
-import React, { useMemo, useCallback, useEffect } from 'react';
+import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Plus, Star, AlertCircle } from 'lucide-react';
@@ -25,7 +25,8 @@ const CustomerReviews = React.memo(({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
-  
+  const [activeFilters, setActiveFilters] = useState<any[]>([]);
+
   const {
     reviews,
     isLoading,
@@ -47,12 +48,16 @@ const CustomerReviews = React.memo(({
     handleCancelReply,
     fetchReviews,
     summaryStats,
-  } = useProductReviews({ productId, limit });
+  } = useProductReviews({ 
+    productId, 
+    limit,
+    filters: activeFilters
+  });
 
   // Load reviews when component mounts or productId changes
   useEffect(() => {
     fetchReviews();
-  }, [fetchReviews, productId]);
+  }, [fetchReviews, productId, activeFilters]);
 
   // Memoize the displayed reviews
   const displayedReviews = useMemo(() => 
@@ -86,8 +91,10 @@ const CustomerReviews = React.memo(({
   }, [handleReplyToReply]);
 
   const handleViewAllReviews = useCallback(() => {
-    navigate(`/product/${productId}/reviews`);
-  }, [productId, navigate]);
+    navigate(`/product/${productId}/reviews`, { 
+      state: { filters: activeFilters } 
+    });
+  }, [productId, navigate, activeFilters]);
 
   const handleAddReviewClick = useCallback(() => {
     if (!user) {
@@ -99,8 +106,12 @@ const CustomerReviews = React.memo(({
     });
   }, [productId, user, navigate, openAuthOverlay, productName]);
 
+  const handleFilterChange = useCallback((filters: any[]) => {
+    setActiveFilters(filters);
+  }, []);
+
   // Show loading state
-  if (isLoading) {
+  if (isLoading && reviews.length === 0) {
     return (
       <div className="w-full bg-white">
         <div className="animate-pulse">
@@ -181,8 +192,11 @@ const CustomerReviews = React.memo(({
   return (
     <ErrorBoundary>
       <div className="w-full bg-white">
-        {/* Reviews Summary Section */}
-        <ReviewsSummary stats={summaryStats} />
+        {/* Reviews Summary Section with Filter Handling */}
+        <ReviewsSummary 
+          productId={productId} 
+          onFilterChange={handleFilterChange}
+        />
 
         {/* Full-screen Add Review Button */}
         <div className="px-4 py-4">
@@ -212,6 +226,23 @@ const CustomerReviews = React.memo(({
           </button>
         </div>
 
+        {/* Active Filters Display */}
+        {activeFilters.length > 0 && (
+          <div className="px-4 pb-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-500">Active filters:</span>
+              {activeFilters.map((filter) => (
+                <span
+                  key={filter.id}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs"
+                >
+                  {filter.label}: {filter.displayValue}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Reviews List */}
         <div className="py-2">
           <div className="space-y-2">
@@ -221,17 +252,29 @@ const CustomerReviews = React.memo(({
                   <Star className="w-10 h-10 text-gray-400" />
                 </div>
                 <p className="text-gray-600 font-medium mb-2">
-                  No reviews yet
+                  {activeFilters.length > 0 ? 'No reviews match your filters' : 'No reviews yet'}
                 </p>
                 <p className="text-sm text-gray-500 mb-6">
-                  Be the first to share your experience with {productName}
+                  {activeFilters.length > 0 
+                    ? 'Try adjusting your filters' 
+                    : `Be the first to share your experience with ${productName}`}
                 </p>
-                <Button
-                  onClick={handleAddReviewClick}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-                >
-                  Write a Review
-                </Button>
+                {activeFilters.length > 0 ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveFilters([])}
+                    className="mx-auto"
+                  >
+                    Clear Filters
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleAddReviewClick}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                  >
+                    Write a Review
+                  </Button>
+                )}
               </div>
             ) : (
               displayedReviews.map((review: Review, index: number) => (
@@ -256,7 +299,7 @@ const CustomerReviews = React.memo(({
         </div>
 
         {/* View All Reviews Button */}
-        {totalCount > 2 && (
+        {totalCount > 2 && reviews.length > 0 && (
           <div className="px-4 pb-4">
             <Button
               variant="outline"
