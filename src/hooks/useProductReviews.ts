@@ -319,29 +319,53 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
     try {
       if (isLiked) {
         // Unlike
-        const { error } = await supabase
+        // Delete from user_likes
+        const { error: deleteError } = await supabase
           .from('user_likes')
           .delete()
           .eq('user_id', user.id)
           .eq('item_id', itemId);
 
-        if (error) throw error;
+        if (deleteError) throw deleteError;
 
         // Decrement like count in database
         if (type === 'review') {
-          await supabase
+          // First get current count
+          const { data: currentReview } = await supabase
             .from('reviews')
-            .update({ like_count: supabase.rpc('decrement', { x: 1 }) })
+            .select('like_count')
+            .eq('id', itemId)
+            .single();
+          
+          const newCount = Math.max(0, (currentReview?.like_count || 1) - 1);
+          
+          const { error: updateError } = await supabase
+            .from('reviews')
+            .update({ like_count: newCount })
             .eq('id', itemId);
+
+          if (updateError) throw updateError;
         } else {
-          await supabase
+          // For replies
+          const { data: currentReply } = await supabase
             .from('review_replies')
-            .update({ like_count: supabase.rpc('decrement', { x: 1 }) })
+            .select('like_count')
+            .eq('id', itemId)
+            .single();
+          
+          const newCount = Math.max(0, (currentReply?.like_count || 1) - 1);
+          
+          const { error: updateError } = await supabase
+            .from('review_replies')
+            .update({ like_count: newCount })
             .eq('id', itemId);
+
+          if (updateError) throw updateError;
         }
       } else {
         // Like
-        const { error } = await supabase
+        // Insert into user_likes
+        const { error: insertError } = await supabase
           .from('user_likes')
           .insert({
             user_id: user.id,
@@ -349,30 +373,55 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
             item_type: type
           });
 
-        if (error) throw error;
+        if (insertError) throw insertError;
 
         // Increment like count in database
         if (type === 'review') {
-          await supabase
+          // First get current count
+          const { data: currentReview } = await supabase
             .from('reviews')
-            .update({ like_count: supabase.rpc('increment', { x: 1 }) })
+            .select('like_count')
+            .eq('id', itemId)
+            .single();
+          
+          const newCount = (currentReview?.like_count || 0) + 1;
+          
+          const { error: updateError } = await supabase
+            .from('reviews')
+            .update({ like_count: newCount })
             .eq('id', itemId);
+
+          if (updateError) throw updateError;
         } else {
-          await supabase
+          // For replies
+          const { data: currentReply } = await supabase
             .from('review_replies')
-            .update({ like_count: supabase.rpc('increment', { x: 1 }) })
+            .select('like_count')
+            .eq('id', itemId)
+            .single();
+          
+          const newCount = (currentReply?.like_count || 0) + 1;
+          
+          const { error: updateError } = await supabase
+            .from('review_replies')
+            .update({ like_count: newCount })
             .eq('id', itemId);
+
+          if (updateError) throw updateError;
         }
       }
     } catch (err: any) {
       // Revert optimistic updates on error
+      console.error('Error liking item:', err);
+      
+      // Revert UI
       if (type === 'review') {
         setReviews(prev =>
           prev.map(review =>
             review.id === itemId
               ? { 
                   ...review, 
-                  like_count: isLiked ? review.like_count + 1 : review.like_count - 1,
+                  like_count: isLiked ? review.like_count + 1 : Math.max(0, review.like_count - 1),
                   isLiked: isLiked 
                 }
               : review
@@ -386,7 +435,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
               reply.id === itemId
                 ? { 
                     ...reply, 
-                    like_count: isLiked ? reply.like_count + 1 : reply.like_count - 1,
+                    like_count: isLiked ? reply.like_count + 1 : Math.max(0, reply.like_count - 1),
                     isLiked: isLiked 
                   }
                 : reply
@@ -397,6 +446,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
         });
       }
 
+      // Revert user likes
       setUserLikes(prev => {
         const newSet = new Set(prev);
         if (isLiked) {
@@ -407,7 +457,6 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
         return newSet;
       });
 
-      console.error('Error liking item:', err);
       toast({
         title: 'Failed to like',
         description: err.message || 'Please try again later',
