@@ -1,8 +1,8 @@
 // components/product/CustomerReviews.tsx
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import ErrorBoundary from './ErrorBoundary';
-import { useMockReviews } from "@/hooks/useMockReviews";
+import { useProductReviews } from "@/hooks/useProductReviews";
 import ReviewsSummary from '@/components/product/ReviewsSummary';
 import ReviewItem, { Review } from '@/components/product/ReviewItem';
 import ReplyBar from '@/components/product/ReplyBar';
@@ -12,17 +12,19 @@ interface CustomerReviewsProps {
   limit?: number;
 }
 
-const CustomerReviews = React.memo(({ productId, limit }: CustomerReviewsProps) => {
+const CustomerReviews = React.memo(({ productId, limit = 5 }: CustomerReviewsProps) => {
   const {
-    expandedReviews,
-    expandedReplies,
+    reviews,
     isLoading,
     error,
+    totalCount,
+    expandedReviews,
+    expandedReplies,
     replyingTo,
     replyText,
     itemBeingReplied,
     setReplyText,
-    handleLikeReply,
+    handleLike,
     toggleReadMore,
     toggleShowMoreReplies,
     handleCommentClick,
@@ -31,20 +33,20 @@ const CustomerReviews = React.memo(({ productId, limit }: CustomerReviewsProps) 
     handleSubmitReply,
     handleCancelReply,
     fetchReviews,
-    finalReviews,
-    summaryStats
-  } = useMockReviews({ productId, limit });
+    summaryStats,
+    user
+  } = useProductReviews({ productId, limit });
 
   // Memoize the displayed reviews
   const displayedReviews = useMemo(() => 
-    finalReviews.slice(0, 2), 
-    [finalReviews]
+    reviews.slice(0, 2), 
+    [reviews]
   );
 
   // Memoize event handlers
-  const memoizedHandleLikeReply = useCallback((replyId: string, reviewId: string) => {
-    handleLikeReply(replyId, reviewId);
-  }, [handleLikeReply]);
+  const memoizedHandleLike = useCallback((replyId: string, reviewId: string) => {
+    handleLike(replyId, 'reply');
+  }, [handleLike]);
 
   const memoizedToggleReadMore = useCallback((reviewId: string) => {
     toggleReadMore(reviewId);
@@ -125,11 +127,11 @@ const CustomerReviews = React.memo(({ productId, limit }: CustomerReviewsProps) 
   return (
     <ErrorBoundary>
       <div className="w-full bg-white">
-        <ReviewsSummary />
+        <ReviewsSummary stats={summaryStats} />
 
         <div className="py-2">
           <div className="space-y-2">
-            {finalReviews.length === 0 ? (
+            {reviews.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground" style={{ color: '#666' }}>
                   No reviews found for this product.
@@ -148,10 +150,10 @@ const CustomerReviews = React.memo(({ productId, limit }: CustomerReviewsProps) 
                     onToggleReadMore={memoizedToggleReadMore}
                     onToggleShowMoreReplies={memoizedToggleShowMoreReplies}
                     onCommentClick={memoizedHandleCommentClick}
-                    onShareClick={handleShareClick}
-                    onLikeReply={memoizedHandleLikeReply}
+                    onShareClick={() => handleShareClick(review.id)}
+                    onLikeReply={memoizedHandleLike}
                     onReplyToReply={memoizedHandleReplyToReply}
-                    isLast={index === displayedReviews.length - 1} // Add this line
+                    isLast={index === displayedReviews.length - 1}
                   />
                 </div>
               ))
@@ -159,14 +161,14 @@ const CustomerReviews = React.memo(({ productId, limit }: CustomerReviewsProps) 
           </div>
         </div>
 
-        {finalReviews.length > 2 && (
+        {totalCount > 2 && (
           <div className="px-2 pb-2">
             <Button
               variant="outline"
               className="w-full"
               onClick={handleViewAllReviews}
             >
-              View All {finalReviews.length} Reviews
+              View All {totalCount} Reviews
             </Button>
           </div>
         )}
