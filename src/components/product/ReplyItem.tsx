@@ -1,39 +1,11 @@
-interface Reply {
-  id: string;
-  user_id: string;
-  user_name?: string;
-  comment: string;
-  created_at: string;
-  like_count: number;
-  isLiked: boolean;
-}
+import { memo } from 'react';
 
-interface ReplyItemProps {
-  reply: Reply;
-  reviewId: string;
-  getAvatarColor: (name?: string) => string;
-  getInitials: (name?: string) => string;
-  formatDate: (date: string) => string;
-  icons: {
-    Heart: React.ComponentType<any>;
-    MoreHorizontal: React.ComponentType<any>;
-  };
-  onLikeReply?: () => void;
-  onReplyToReply?: () => void;
-  onEditReply?: (comment: string) => void;
-  onDeleteReply?: () => void;
-  onReportReply?: (reason: string) => void;
-  currentUserId?: string;
-  isOwner?: boolean;
-}
-
-const ReplyItem = ({
+export const ReplyItem = memo(({
   reply,
   reviewId,
   getAvatarColor,
   getInitials,
   formatDate,
-  icons,
   onLikeReply,
   onReplyToReply,
   onEditReply,
@@ -41,10 +13,7 @@ const ReplyItem = ({
   onReportReply,
   currentUserId,
   isOwner = false,
-}: ReplyItemProps) => {
-  const [showReplyMenu, setShowReplyMenu] = React.useState(false);
-  const replyMenuRef = React.useRef<HTMLDivElement>(null);
-
+}) => {
   const {
     id,
     user_name,
@@ -54,52 +23,9 @@ const ReplyItem = ({
     isLiked = false,
   } = reply;
 
-  const handleLikeClick = React.useCallback(() => {
-    onLikeReply?.();
-  }, [onLikeReply]);
-
-  const handleReplyClick = React.useCallback(() => {
-    onReplyToReply?.();
-  }, [onReplyToReply]);
-
-  const handleEditClick = React.useCallback(() => {
-    onEditReply?.(comment || '');
-    setShowReplyMenu(false);
-  }, [comment, onEditReply]);
-
-  const handleDeleteClick = React.useCallback(() => {
-    onDeleteReply?.();
-    setShowReplyMenu(false);
-  }, [onDeleteReply]);
-
-  const handleReportClick = React.useCallback(() => {
-    onReportReply?.('inappropriate');
-    setShowReplyMenu(false);
-  }, [onReportReply]);
-
-  const toggleReplyMenu = React.useCallback(() => {
-    setShowReplyMenu(prev => !prev);
-  }, []);
-
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (replyMenuRef.current && !replyMenuRef.current.contains(event.target as Node)) {
-        setShowReplyMenu(false);
-      }
-    };
-
-    if (showReplyMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showReplyMenu]);
-
-  const formattedDate = React.useMemo(() => formatDate(created_at), [created_at, formatDate]);
-  const avatarColor = React.useMemo(() => getAvatarColor(user_name), [user_name, getAvatarColor]);
-  const initials = React.useMemo(() => getInitials(user_name), [user_name, getInitials]);
+  const formattedDate = formatDate(created_at);
+  const avatarColor = getAvatarColor(user_name);
+  const initials = getInitials(user_name);
 
   return (
     <div className="ml-12 mt-3 pl-3 border-l-2 border-gray-200">
@@ -124,18 +50,23 @@ const ReplyItem = ({
             <div className="flex items-center gap-2">
               {/* Reply Like Button */}
               <button
-                onClick={handleLikeClick}
+                onClick={() => onLikeReply?.(id, reviewId)}
                 className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors group"
                 aria-label={`Like this reply. ${like_count} likes`}
               >
-                <icons.Heart
+                <svg
                   className={`w-4 h-4 transition-all ${
                     isLiked 
                       ? 'fill-red-500 stroke-red-500 scale-110' 
                       : 'fill-none stroke-current group-hover:scale-110'
                   }`}
                   strokeWidth={isLiked ? "2" : "2"}
-                />
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
                 {like_count > 0 && (
                   <span className={isLiked ? 'text-red-500 font-semibold' : ''}>
                     {like_count}
@@ -145,7 +76,7 @@ const ReplyItem = ({
 
               {/* Reply Button */}
               <button
-                onClick={handleReplyClick}
+                onClick={() => onReplyToReply?.(id, reviewId, user_name || '')}
                 className="text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
                 aria-label={`Reply to ${user_name || 'this user'}`}
               >
@@ -153,44 +84,15 @@ const ReplyItem = ({
               </button>
 
               {/* Reply Menu */}
-              <div className="relative" ref={replyMenuRef}>
+              <div className="relative">
                 <button
-                  onClick={toggleReplyMenu}
                   className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                   aria-label="Reply options"
                 >
-                  <icons.MoreHorizontal className="w-3.5 h-3.5" />
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
                 </button>
-
-                {showReplyMenu && (
-                  <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                    {isOwner && (
-                      <>
-                        <button
-                          onClick={handleEditClick}
-                          className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          Edit reply
-                        </button>
-                        <button
-                          onClick={handleDeleteClick}
-                          className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          Delete reply
-                        </button>
-                      </>
-                    )}
-
-                    {!isOwner && (
-                      <button
-                        onClick={handleReportClick}
-                        className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        Report reply
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -200,6 +102,7 @@ const ReplyItem = ({
       </div>
     </div>
   );
-};
+});
 
+ReplyItem.displayName = 'ReplyItem';
 export default ReplyItem;
