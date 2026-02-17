@@ -5,7 +5,6 @@ const CustomerReviewsEnhanced = ({
   productId,
   limit = 5,
   productName = "This Product",
-  // All props come from the parent component
   reviews = [],
   isLoading = false,
   error = null,
