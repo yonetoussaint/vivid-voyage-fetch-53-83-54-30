@@ -1,56 +1,51 @@
-import { memo } from 'react';
+import React from 'react';
 import { AlertCircle, Plus, Star } from 'lucide-react';
 
-export const CustomerReviews = memo(({ 
-  productId, 
+const CustomerReviewsEnhanced = ({
+  productId,
   limit = 5,
-  productName = "This Product" 
+  productName = "This Product",
+  // All props come from the parent component
+  reviews = [],
+  isLoading = false,
+  error = null,
+  totalCount = 0,
+  expandedReviews = new Set(),
+  expandedReplies = new Set(),
+  replyingTo = null,
+  replyText = '',
+  itemBeingReplied = null,
+  repliesMap = new Map(),
+  setReplyText = () => {},
+  handleLike = () => {},
+  handleReply = () => {},
+  handleShare = () => {},
+  handleSubmitReply = () => {},
+  handleCancelReply = () => {},
+  toggleReadMore = () => {},
+  toggleShowMoreReplies = () => {},
+  handleReplyToReply = () => {},
+  fetchReviews = () => {},
+  summaryStats = { averageRating: 0, totalReviews: 0, ratingCounts: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } },
+  handleCommentClick = () => {},
+  user = null,
+  openAuthOverlay = () => {},
+  handleAddReview = () => {},
+  handleViewAllReviews = () => {},
+  handleFilterChange = () => {},
+  activeFilters = [],
+  setActiveFilters = () => {},
+  getAvatarColor = () => 'bg-blue-500',
+  getInitials = () => 'U',
+  formatDate = () => '',
+  renderStars = () => null,
+  ReplyItemComponent,
+  ReviewItemComponent,
+  ReviewsSummaryComponent,
+  ReplyBarComponent,
+  displayedReviews = [],
+  showSkeleton = false,
 }) => {
-  // All logic is in the parent component that uses this
-  // This component receives everything as props
-  
-  const {
-    reviews,
-    isLoading,
-    error,
-    totalCount,
-    expandedReviews,
-    expandedReplies,
-    replyingTo,
-    replyText,
-    itemBeingReplied,
-    repliesMap,
-    setReplyText,
-    handleLike,
-    handleReply,
-    handleShare,
-    handleSubmitReply,
-    handleCancelReply,
-    toggleReadMore,
-    toggleShowMoreReplies,
-    handleReplyToReply,
-    fetchReviews,
-    summaryStats,
-    handleCommentClick,
-    user,
-    openAuthOverlay,
-    handleAddReview,
-    handleViewAllReviews,
-    handleFilterChange,
-    activeFilters,
-    setActiveFilters,
-    getAvatarColor,
-    getInitials,
-    formatDate,
-    renderStars,
-    ReplyItemComponent,
-    ReviewItemComponent,
-    ReviewsSummaryComponent,
-    ReplyBarComponent,
-    displayedReviews,
-    showSkeleton,
-  } = props;
-
   if (showSkeleton) {
     return (
       <div className="w-full bg-white">
@@ -283,7 +278,6 @@ export const CustomerReviews = memo(({
       )}
     </div>
   );
-});
+};
 
-CustomerReviews.displayName = 'CustomerReviews';
-export default CustomerReviews;
+export default CustomerReviewsEnhanced;
