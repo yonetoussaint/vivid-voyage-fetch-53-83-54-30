@@ -293,12 +293,17 @@ const ReviewItem = memo(({
                 <VerificationBadge />
               )}
             </div>
-            <div className="text-xs text-gray-500 mt-0.5">
-              {formattedDate}
-            </div>
+            {/* Date removed from here */}
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+            {/* Stars moved here - to the right side */}
+            {rating && (
+              <div className="mr-2">
+                {renderStars(rating)}
+              </div>
+            )}
+            
             <button 
               onClick={handleFollowClick}
               className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
@@ -413,7 +418,10 @@ const ReviewItem = memo(({
           </button>
         </div>
 
-        {rating && renderStars(rating)}
+        {/* Date moved to the bottom right where stars used to be */}
+        <div className="text-xs text-gray-500">
+          {formattedDate}
+        </div>
       </div>
 
       {/* Replies Section */}
