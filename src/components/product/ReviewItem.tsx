@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
 import { Play, Heart, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
 import type { MediaItem, Reply, Review } from '@/hooks/useProductReviews';
-import { useReviewItem, useReplyItem } from './review-item.hooks';
+import { useReviewItem, useReplyItem } from '@/hooks/review-item.hooks';
 
 interface ReviewItemProps {
   review: Review;
