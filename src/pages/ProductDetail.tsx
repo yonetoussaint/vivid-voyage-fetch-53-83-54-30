@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { Store, Star, MessageCircle } from "lucide-react";
 import ProductDetailError from "@/components/product/ProductDetailError";
@@ -93,33 +93,57 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     limit: 5 
   });
 
+  // Safe function to get replies for a review with error handling
+  const getRepliesForReview = useCallback((reviewId: string) => {
+    try {
+      if (!reviewId || !repliesMap) return [];
+      return repliesMap[reviewId] || [];
+    } catch (error) {
+      console.error('Error getting replies for review:', error);
+      return [];
+    }
+  }, [repliesMap]);
+
   // Helper functions
-  const getAvatarColor = (name?: string) => {
+  const getAvatarColor = useCallback((name?: string) => {
     const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-red-500', 'bg-yellow-500', 'bg-teal-500'];
     if (!name) return colors[0];
-    const hash = name.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
-    return colors[Math.abs(hash) % colors.length];
-  };
+    try {
+      const hash = name.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+      return colors[Math.abs(hash) % colors.length];
+    } catch (error) {
+      return colors[0];
+    }
+  }, []);
 
-  const getInitials = (name?: string) => {
+  const getInitials = useCallback((name?: string) => {
     if (!name) return '?';
-    const parts = name.trim().split(' ');
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-  };
+    try {
+      const parts = name.trim().split(' ');
+      if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    } catch (error) {
+      return '?';
+    }
+  }, []);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
+  const formatDate = useCallback((dateString: string) => {
+    if (!dateString) return 'Unknown date';
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+      if (diffInSeconds < 60) return 'Just now';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+      if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (error) {
+      return 'Invalid date';
+    }
+  }, []);
 
-  const renderStars = (rating: number) => (
+  const renderStars = useCallback((rating: number) => (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
@@ -131,7 +155,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
         />
       ))}
     </div>
-  );
+  ), []);
 
   const handleReviewSubmit = async (review: string, rating: number) => {
     try {
@@ -144,23 +168,22 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     }
   };
 
-  const handleAddReview = () => {
+  const handleAddReview = useCallback(() => {
     if (!user) {
       openAuthOverlay();
       return;
     }
     navigate(`/product/${productId}/add-review`);
-  };
+  }, [user, openAuthOverlay, navigate, productId]);
 
-  const handleViewAllReviews = () => {
+  const handleViewAllReviews = useCallback(() => {
     navigate(`/product/${productId}/reviews`);
-  };
+  }, [navigate, productId]);
 
-  const handleFilterChange = (filters: any[]) => {
+  const handleFilterChange = useCallback((filters: any[]) => {
     setReviewFilters(filters);
-    // Here you can implement filtering logic based on the filters
     console.log('Filters changed:', filters);
-  };
+  }, []);
 
   if (!productId && !props.productId) {
     return <ProductDetailError message="Product ID is missing" />;
@@ -174,7 +197,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     return <ProductDetailError />;
   }
 
-  const displayedReviews = reviews.slice(0, 5); // Show up to 5 reviews
+  const displayedReviews = reviews.slice(0, 5);
   const showSkeleton = reviewsLoading && reviews.length === 0;
 
   return (
@@ -337,7 +360,11 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
                   onShareClick={handleReviewShare}
                   onLikeReview={handleLike}
                   onReplyToReply={handleReplyToReply}
-                  getRepliesForReview={(reviewId) => repliesMap[reviewId] || []}
+                  getRepliesForReview={getRepliesForReview}
+                  getAvatarColor={getAvatarColor}
+                  getInitials={getInitials}
+                  formatDate={formatDate}
+                  currentUserId={user?.id}
                   isLast={index === displayedReviews.length - 1}
                 />
               ))}
