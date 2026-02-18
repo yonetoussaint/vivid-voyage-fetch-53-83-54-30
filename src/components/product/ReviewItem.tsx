@@ -1,15 +1,18 @@
-import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
+import React, { memo } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
 import { Play, Heart, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
-import { formatDate } from './DateUtils';
-import { truncateText } from "@/utils/textUtils";
-import { useNavigate } from 'react-router-dom';
 import type { MediaItem, Reply, Review } from '@/hooks/useProductReviews';
+import { useReviewItem, useReplyItem } from './review-item.hooks';
 
 interface ReviewItemProps {
   review: Review;
   expandedReviews: Set<string>;
   expandedReplies?: Set<string>;
+  replyPagination?: { page: number; hasMore: boolean };
+  isLast?: boolean;
+  currentUserId?: string;
+  isOwner?: boolean;
+  isFollowing?: boolean;
   onToggleReadMore: (reviewId: string) => void;
   onToggleShowMoreReplies?: (reviewId: string) => void;
   onCommentClick?: (reviewId: string) => void;
@@ -17,12 +20,9 @@ interface ReviewItemProps {
   onLikeReview?: (reviewId: string) => void;
   onFollowUser?: (userId: string, userName: string) => void;
   onUnfollowUser?: (userId: string, userName: string) => void;
-  isFollowing?: boolean;
   onLikeReply?: (replyId: string, reviewId: string) => void;
   onReplyToReply?: (replyId: string, reviewId: string, userName: string) => void;
   onMenuAction?: (reviewId: string, action: 'report' | 'edit' | 'delete' | 'share') => void;
-  currentUserId?: string;
-  isOwner?: boolean;
   onMediaClick?: (media: MediaItem[], index: number) => void;
   onReviewView?: (reviewId: string) => void;
   onMarkHelpful?: (reviewId: string) => void;
@@ -30,8 +30,6 @@ interface ReviewItemProps {
   onDeleteReply?: (replyId: string, reviewId: string) => void;
   onReportReply?: (replyId: string, reviewId: string, reason: string) => void;
   loadMoreReplies?: (reviewId: string) => void;
-  replyPagination?: { page: number; hasMore: boolean };
-  isLast?: boolean;
   getRepliesForReview?: (reviewId: string) => Reply[];
 }
 
@@ -39,6 +37,11 @@ const ReviewItem = memo(({
   review,
   expandedReviews,
   expandedReplies,
+  replyPagination,
+  isLast = false,
+  currentUserId,
+  isOwner = false,
+  isFollowing = false,
   onToggleReadMore,
   onToggleShowMoreReplies,
   onCommentClick,
@@ -46,12 +49,9 @@ const ReviewItem = memo(({
   onLikeReview,
   onFollowUser,
   onUnfollowUser,
-  isFollowing = false,
   onLikeReply,
   onReplyToReply,
   onMenuAction,
-  currentUserId,
-  isOwner = false,
   onMediaClick,
   onReviewView,
   onMarkHelpful,
@@ -59,227 +59,122 @@ const ReviewItem = memo(({
   onDeleteReply,
   onReportReply,
   loadMoreReplies,
-  replyPagination,
-  isLast = false,
   getRepliesForReview,
 }: ReviewItemProps) => {
-  const navigate = useNavigate();
-  const [showMenu, setShowMenu] = useState(false);
-  const [isMediaLoaded, setIsMediaLoaded] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const mediaContainerRef = useRef<HTMLDivElement>(null);
-
   const {
+    showMenu,
+    isMediaLoaded,
+    menuRef,
+    mediaContainerRef,
+    setIsMediaLoaded,
     id,
     user_id,
     user_name,
-    comment = '',
-    created_at,
+    comment,
     verified_purchase,
-    media = [],
-    like_count = 0,
-    comment_count = 0,
+    media,
+    like_count,
+    comment_count,
     rating,
-    isLiked = false,
-  } = review;
+    isLiked,
+    replies,
+    avatarColor,
+    initials,
+    formattedDate,
+    truncatedComment,
+    shouldShowReadMore,
+    isRepliesExpanded,
+    hasReplies,
+    hasMedia,
+    hasMoreReplies,
+    handleMediaItemClick,
+    handleLikeClick,
+    handleFollowClick,
+    handleHelpfulClick,
+    handleCommentClick,
+    handleShareClick,
+    handleMenuAction,
+    toggleMenu,
+    handleReadMoreClick,
+    handleShowRepliesClick,
+    handleLoadMoreReplies,
+    renderStars,
+    getAvatarColor,
+    getInitials,
+  } = useReviewItem(
+    review,
+    onReviewView,
+    onMediaClick,
+    onLikeReview,
+    onFollowUser,
+    onUnfollowUser,
+    isFollowing,
+    onMarkHelpful,
+    onToggleReadMore,
+    onToggleShowMoreReplies,
+    onCommentClick,
+    onShareClick,
+    onMenuAction,
+    loadMoreReplies,
+    getRepliesForReview
+  );
 
-  // Get replies for this review
-  const replies = useMemo(() => {
-    return getRepliesForReview ? getRepliesForReview(id) : [];
-  }, [getRepliesForReview, id]);
-
-  useEffect(() => {
-    onReviewView?.(id);
-  }, [id, onReviewView]);
-
-  const getInitials = useCallback((name?: string) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  }, []);
-
-  const getAvatarColor = useCallback((name?: string) => {
-    const colors = [
-      'bg-blue-500',
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-green-500',
-      'bg-yellow-500',
-      'bg-red-500',
-      'bg-indigo-500',
-      'bg-teal-500',
-    ];
-    const index = name ? name.charCodeAt(0) % colors.length : 0;
-    return colors[index];
-  }, []);
-
-  const avatarColor = useMemo(() => getAvatarColor(user_name), [user_name, getAvatarColor]);
-  const initials = useMemo(() => getInitials(user_name), [user_name, getInitials]);
-
-  const renderStars = useCallback((ratingNum: number) => (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className="w-4 h-4"
-          fill={star <= ratingNum ? '#FBBF24' : 'none'}
-          stroke={star <= ratingNum ? '#FBBF24' : '#D1D5DB'}
-          strokeWidth="1.5"
+  const renderedMedia = media.map((item, index) => (
+    <div key={`${id}-media-${index}`} className="flex-shrink-0 relative">
+      {item.type === 'image' ? (
+        <img
+          src={item.url}
+          alt={item.alt || `Review media ${index + 1}`}
+          className="w-32 h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
+          onClick={() => handleMediaItemClick(item, index)}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setIsMediaLoaded(true)}
+          style={{ opacity: isMediaLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
         />
-      ))}
-    </div>
-  ), []);
-
-  const formattedDate = useMemo(() => formatDate(created_at), [created_at]);
-  const truncatedComment = useMemo(() => truncateText(comment), [comment]);
-  const shouldShowReadMore = useMemo(() => comment.length > 120, [comment.length]);
-
-  const handleMediaItemClick = useCallback((item: MediaItem, index: number) => {
-    if (onMediaClick) {
-      onMediaClick(media, index);
-    } else {
-      window.open(item.url, '_blank');
-    }
-  }, [media, onMediaClick]);
-
-  const renderedMedia = useMemo(() => 
-    media.map((item, index) => (
-      <div key={`${id}-media-${index}`} className="flex-shrink-0 relative">
-        {item.type === 'image' ? (
+      ) : item.type === 'video' ? (
+        <div
+          className="w-32 h-32 relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden rounded-lg"
+          onClick={() => handleMediaItemClick(item, index)}
+        >
           <img
-            src={item.url}
-            alt={item.alt || `Review media ${index + 1}`}
-            className="w-32 h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
-            onClick={() => handleMediaItemClick(item, index)}
+            src={item.thumbnail || item.url}
+            alt={item.alt || `Video thumbnail ${index + 1}`}
+            className="w-full h-full object-cover"
             loading="lazy"
             decoding="async"
             onLoad={() => setIsMediaLoaded(true)}
             style={{ opacity: isMediaLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
           />
-        ) : item.type === 'video' ? (
-          <div
-            className="w-32 h-32 relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden rounded-lg"
-            onClick={() => handleMediaItemClick(item, index)}
+          <div 
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
           >
-            <img
-              src={item.thumbnail || item.url}
-              alt={item.alt || `Video thumbnail ${index + 1}`}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-              onLoad={() => setIsMediaLoaded(true)}
-              style={{ opacity: isMediaLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
-            />
-            <div 
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-            >
-              <div className="bg-white rounded-full p-2">
-                <Play className="w-5 h-5 text-gray-900 fill-gray-900" />
-              </div>
+            <div className="bg-white rounded-full p-2">
+              <Play className="w-5 h-5 text-gray-900 fill-gray-900" />
             </div>
           </div>
-        ) : null}
-      </div>
-    )),
-    [media, id, isMediaLoaded, handleMediaItemClick]
-  );
+        </div>
+      ) : null}
+    </div>
+  ));
 
-  const renderedReplies = useMemo(() => {
-    if (!replies.length || !expandedReplies?.has(id)) return null;
-
-    return replies.map((reply) => (
-      <MemoizedReplyItem
-        key={reply.id}
-        reply={reply}
-        reviewId={id}
-        getAvatarColor={getAvatarColor}
-        getInitials={getInitials}
-        onLikeReply={onLikeReply}
-        onReplyToReply={onReplyToReply}
-        onEditReply={onEditReply}
-        onDeleteReply={onDeleteReply}
-        onReportReply={onReportReply}
-        currentUserId={currentUserId}
-        isOwner={reply.user_id === currentUserId}
-      />
-    ));
-  }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onReplyToReply, onEditReply, onDeleteReply, onReportReply, currentUserId]);
-
-  const handleLikeClick = useCallback(() => {
-    onLikeReview?.(id);
-  }, [id, onLikeReview]);
-
-  const handleFollowClick = useCallback(() => {
-    if (isFollowing) {
-      onUnfollowUser?.(user_id || id, user_name || '');
-    } else {
-      onFollowUser?.(user_id || id, user_name || '');
-    }
-  }, [id, user_id, user_name, isFollowing, onFollowUser, onUnfollowUser]);
-
-  const handleHelpfulClick = useCallback(() => {
-    onMarkHelpful?.(id);
-  }, [id, onMarkHelpful]);
-
-  const handleCommentClick = useCallback(() => {
-    if (onToggleShowMoreReplies) {
-      onToggleShowMoreReplies(id);
-    } else {
-      navigate(`/reviews/${id}`);
-      onCommentClick?.(id);
-    }
-  }, [id, onToggleShowMoreReplies, navigate, onCommentClick]);
-
-  const handleShareClick = useCallback(() => {
-    onShareClick?.(id);
-  }, [id, onShareClick]);
-
-  const handleMenuAction = useCallback((action: 'report' | 'edit' | 'delete' | 'share') => {
-    onMenuAction?.(id, action);
-    setShowMenu(false);
-  }, [id, onMenuAction]);
-
-  const toggleMenu = useCallback(() => {
-    setShowMenu(prev => !prev);
-  }, []);
-
-  const handleReadMoreClick = useCallback(() => {
-    onToggleReadMore(id);
-  }, [id, onToggleReadMore]);
-
-  const handleShowRepliesClick = useCallback(() => {
-    onToggleShowMoreReplies?.(id);
-  }, [id, onToggleShowMoreReplies]);
-
-  const handleLoadMoreReplies = useCallback(() => {
-    loadMoreReplies?.(id);
-  }, [id, loadMoreReplies]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-
-    if (showMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showMenu]);
-
-  const isRepliesExpanded = useMemo(() => expandedReplies?.has(id), [expandedReplies, id]);
-  const hasReplies = useMemo(() => replies.length > 0, [replies.length]);
-  const hasMedia = useMemo(() => media.length > 0, [media.length]);
-  const hasMoreReplies = useMemo(() => replyPagination?.hasMore, [replyPagination?.hasMore]);
+  const renderedReplies = isRepliesExpanded && replies.map((reply) => (
+    <MemoizedReplyItem
+      key={reply.id}
+      reply={reply}
+      reviewId={id}
+      getAvatarColor={getAvatarColor}
+      getInitials={getInitials}
+      onLikeReply={onLikeReply}
+      onReplyToReply={onReplyToReply}
+      onEditReply={onEditReply}
+      onDeleteReply={onDeleteReply}
+      onReportReply={onReportReply}
+      currentUserId={currentUserId}
+      isOwner={reply.user_id === currentUserId}
+    />
+  ));
 
   return (
     <div 
@@ -532,62 +427,31 @@ const ReplyItem = memo(({
   currentUserId,
   isOwner = false,
 }: ReplyItemProps) => {
-  const [showReplyMenu, setShowReplyMenu] = useState(false);
-  const replyMenuRef = useRef<HTMLDivElement>(null);
-
   const {
+    showReplyMenu,
+    replyMenuRef,
     id,
     user_name,
     comment,
-    created_at,
-    like_count = 0,
-    isLiked = false,
-  } = reply;
+    like_count,
+    isLiked,
+    formattedDate,
+    handleLikeClick,
+    handleReplyClick,
+    handleEditClick,
+    handleDeleteClick,
+    handleReportClick,
+    toggleReplyMenu,
+  } = useReplyItem(
+    reply,
+    reviewId,
+    onLikeReply,
+    onReplyToReply,
+    onEditReply,
+    onDeleteReply,
+    onReportReply
+  );
 
-  const handleLikeClick = useCallback(() => {
-    onLikeReply?.(id, reviewId);
-  }, [id, reviewId, onLikeReply]);
-
-  const handleReplyClick = useCallback(() => {
-    onReplyToReply?.(id, reviewId, user_name || '');
-  }, [id, reviewId, user_name, onReplyToReply]);
-
-  const handleEditClick = useCallback(() => {
-    onEditReply?.(id, reviewId, comment || '');
-    setShowReplyMenu(false);
-  }, [id, reviewId, comment, onEditReply]);
-
-  const handleDeleteClick = useCallback(() => {
-    onDeleteReply?.(id, reviewId);
-    setShowReplyMenu(false);
-  }, [id, reviewId, onDeleteReply]);
-
-  const handleReportClick = useCallback(() => {
-    onReportReply?.(id, reviewId, 'inappropriate');
-    setShowReplyMenu(false);
-  }, [id, reviewId, onReportReply]);
-
-  const toggleReplyMenu = useCallback(() => {
-    setShowReplyMenu(prev => !prev);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (replyMenuRef.current && !replyMenuRef.current.contains(event.target as Node)) {
-        setShowReplyMenu(false);
-      }
-    };
-
-    if (showReplyMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showReplyMenu]);
-
-  const formattedDate = useMemo(() => formatDate(created_at), [created_at]);
   const avatarColor = useMemo(() => getAvatarColor(user_name), [user_name, getAvatarColor]);
   const initials = useMemo(() => getInitials(user_name), [user_name, getInitials]);
 
