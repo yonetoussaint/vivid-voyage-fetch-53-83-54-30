@@ -1,24 +1,49 @@
 import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { formatDate } from './DateUtils';
+import { truncateText } from "@/utils/textUtils";
+import { Star } from 'lucide-react';
 import type { MediaItem, Reply, Review } from '@/hooks/useProductReviews';
 
-export const useReviewItem = (
-  review: Review,
-  onReviewView?: (reviewId: string) => void,
-  onMediaClick?: (media: MediaItem[], index: number) => void,
-  onLikeReview?: (reviewId: string) => void,
-  onFollowUser?: (userId: string, userName: string) => void,
-  onUnfollowUser?: (userId: string, userName: string) => void,
-  isFollowing?: boolean,
-  onMarkHelpful?: (reviewId: string) => void,
-  onToggleReadMore?: (reviewId: string) => void,
-  onToggleShowMoreReplies?: (reviewId: string) => void,
-  onCommentClick?: (reviewId: string) => void,
-  onShareClick?: (reviewId: string) => void,
-  onMenuAction?: (reviewId: string, action: 'report' | 'edit' | 'delete' | 'share') => void,
-  loadMoreReplies?: (reviewId: string) => void,
-  getRepliesForReview?: (reviewId: string) => Reply[]
-) => {
+interface UseReviewItemProps {
+  review: Review;
+  expandedReplies?: Set<string>;
+  replyPagination?: { page: number; hasMore: boolean };
+  onReviewView?: (reviewId: string) => void;
+  onMediaClick?: (media: MediaItem[], index: number) => void;
+  onLikeReview?: (reviewId: string) => void;
+  onFollowUser?: (userId: string, userName: string) => void;
+  onUnfollowUser?: (userId: string, userName: string) => void;
+  isFollowing?: boolean;
+  onMarkHelpful?: (reviewId: string) => void;
+  onToggleReadMore?: (reviewId: string) => void;
+  onToggleShowMoreReplies?: (reviewId: string) => void;
+  onCommentClick?: (reviewId: string) => void;
+  onShareClick?: (reviewId: string) => void;
+  onMenuAction?: (reviewId: string, action: 'report' | 'edit' | 'delete' | 'share') => void;
+  loadMoreReplies?: (reviewId: string) => void;
+  getRepliesForReview?: (reviewId: string) => Reply[];
+}
+
+export const useReviewItem = ({
+  review,
+  expandedReplies,
+  replyPagination,
+  onReviewView,
+  onMediaClick,
+  onLikeReview,
+  onFollowUser,
+  onUnfollowUser,
+  isFollowing = false,
+  onMarkHelpful,
+  onToggleReadMore,
+  onToggleShowMoreReplies,
+  onCommentClick,
+  onShareClick,
+  onMenuAction,
+  loadMoreReplies,
+  getRepliesForReview,
+}: UseReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
@@ -220,15 +245,25 @@ export const useReviewItem = (
   };
 };
 
-export const useReplyItem = (
-  reply: Reply,
-  reviewId: string,
-  onLikeReply?: (replyId: string, reviewId: string) => void,
-  onReplyToReply?: (replyId: string, reviewId: string, userName: string) => void,
-  onEditReply?: (replyId: string, reviewId: string, comment: string) => void,
-  onDeleteReply?: (replyId: string, reviewId: string) => void,
-  onReportReply?: (replyId: string, reviewId: string, reason: string) => void
-) => {
+interface UseReplyItemProps {
+  reply: Reply;
+  reviewId: string;
+  onLikeReply?: (replyId: string, reviewId: string) => void;
+  onReplyToReply?: (replyId: string, reviewId: string, userName: string) => void;
+  onEditReply?: (replyId: string, reviewId: string, comment: string) => void;
+  onDeleteReply?: (replyId: string, reviewId: string) => void;
+  onReportReply?: (replyId: string, reviewId: string, reason: string) => void;
+}
+
+export const useReplyItem = ({
+  reply,
+  reviewId,
+  onLikeReply,
+  onReplyToReply,
+  onEditReply,
+  onDeleteReply,
+  onReportReply,
+}: UseReplyItemProps) => {
   const [showReplyMenu, setShowReplyMenu] = useState(false);
   const replyMenuRef = useRef<HTMLDivElement>(null);
 
