@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { Store } from "lucide-react";
+import { Store, Star, Filter, ChevronDown } from "lucide-react";
 import ProductDetailError from "@/components/product/ProductDetailError";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
@@ -11,14 +11,13 @@ import StoreBanner from "@/components/StoreBanner";
 import GalleryThumbnails from "@/components/product/GalleryThumbnails";
 import ProductDetailInfo from "@/components/product/ProductDetailInfo";
 import ProductDetailLoading from "@/components/product/ProductDetailLoading";
-import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced";
 import ReviewsGallery from "@/components/product/ReviewsGallery";
 import ReviewTypingBar from "@/components/product/ReviewTypingBar";
 import ReviewItem from "@/components/product/ReviewItem";
 import ReplyItem from "@/components/product/ReplyItem";
 import ReviewsSummary from "@/components/product/ReviewsSummary";
 import ReplyBar from "@/components/product/ReplyBar";
-import { Star } from "lucide-react";
+import ReviewSkeleton from "@/components/product/ReviewSkeleton";
 
 // Hooks
 import { useProductDetail } from "@/hooks/product-detail.hooks";
@@ -35,10 +34,26 @@ interface ProductDetailProps {
   stickyTopOffset?: number;
 }
 
+// Filter options
+const filterOptions = [
+  { id: 'all', label: 'All Reviews' },
+  { id: 'with-media', label: 'With Photos/Videos' },
+  { id: '5-star', label: '5 Star' },
+  { id: '4-star', label: '4 Star' },
+  { id: '3-star', label: '3 Star' },
+  { id: '2-star', label: '2 Star' },
+  { id: '1-star', label: '1 Star' },
+];
+
 const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
+  
+  // Local state for filters
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<string[]>(['all']);
+  const filterDropdownRef = React.useRef<HTMLDivElement>(null);
 
   // Product detail hook
   const {
@@ -154,6 +169,30 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     navigate(`/product/${productId}/reviews`);
   };
 
+  const handleFilterChange = (filterId: string) => {
+    if (filterId === 'all') {
+      setActiveFilters(['all']);
+    } else {
+      setActiveFilters(prev => 
+        prev.includes(filterId) 
+          ? prev.filter(f => f !== filterId)
+          : [...prev.filter(f => f !== 'all'), filterId]
+      );
+    }
+    setShowFilterDropdown(false);
+  };
+
+  // Close filter dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+        setShowFilterDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   if (!productId && !props.productId) {
     return <ProductDetailError message="Product ID is missing" />;
   }
@@ -165,6 +204,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
   if (error || !product) {
     return <ProductDetailError />;
   }
+
+  const displayedReviews = reviews.slice(0, 2);
+  const showSkeleton = reviewsLoading && reviews.length === 0;
 
   return (
     <>
@@ -257,51 +299,151 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
 
         <Separator />
 
-        <div className="mt-4">
-          <CustomerReviewsEnhanced
-            productId={productId || props.productId}
-            limit={5}
-            productName={product?.name || "This Product"}
-            reviews={reviews}
-            isLoading={reviewsLoading}
-            error={reviewsError}
-            totalCount={totalCount}
-            expandedReviews={expandedReviews}
-            expandedReplies={expandedReplies}
-            replyingTo={replyingTo}
-            replyText={replyText}
-            itemBeingReplied={itemBeingReplied}
-            repliesMap={repliesMap}
-            setReplyText={setReplyText}
-            handleLike={handleLike}
-            handleReply={handleCommentClick}
-            handleShare={handleReviewShare}
-            handleSubmitReply={handleSubmitReply}
-            handleCancelReply={handleCancelReply}
-            toggleReadMore={toggleReadMore}
-            toggleShowMoreReplies={toggleShowMoreReplies}
-            handleReplyToReply={handleReplyToReply}
-            fetchReviews={fetchReviews}
-            summaryStats={summaryStats}
-            handleCommentClick={handleCommentClick}
-            user={user}
-            openAuthOverlay={openAuthOverlay}
-            handleAddReview={handleAddReview}
-            handleViewAllReviews={handleViewAllReviews}
-            handleFilterChange={() => {}}
-            activeFilters={[]}
-            setActiveFilters={() => {}}
-            getAvatarColor={getAvatarColor}
-            getInitials={getInitials}
-            formatDate={formatDate}
-            renderStars={renderStars}
-            ReplyItemComponent={ReplyItem}
-            ReviewItemComponent={ReviewItem}
-            ReviewsSummaryComponent={ReviewsSummary}
-            ReplyBarComponent={ReplyBar}
-            displayedReviews={reviews.slice(0, 2)}
-            showSkeleton={reviewsLoading && reviews.length === 0}
-          />
+        {/* Reviews Summary Section */}
+        {summaryStats && (
+          <div className="mt-4 px-4">
+            <ReviewsSummary
+              averageRating={summaryStats.averageRating}
+              totalReviews={summaryStats.totalReviews}
+              ratingCounts={summaryStats.ratingCounts}
+              reviewDistribution={summaryStats.reviewDistribution || summaryStats.ratingCounts}
+            />
+          </div>
+        )}
+
+        {/* Customer Reviews Header */}
+        <div className="mt-6 px-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Customer Reviews ({totalCount})
+            </h2>
+            
+            {/* Filter Button */}
+            <div className="relative" ref={filterDropdownRef}>
+              <button
+                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filter</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showFilterDropdown ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Filter Dropdown */}
+              {showFilterDropdown && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                  {filterOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => handleFilterChange(option.id)}
+                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+                        activeFilters.includes(option.id)
+                          ? 'bg-blue-50 text-blue-600 font-medium'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && !activeFilters.includes('all') && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {activeFilters.map((filter) => {
+                const option = filterOptions.find(opt => opt.id === filter);
+                return option ? (
+                  <span
+                    key={filter}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full"
+                  >
+                    {option.label}
+                    <button
+                      onClick={() => handleFilterChange(filter)}
+                      className="ml-1 hover:text-blue-900"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ) : null;
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Write a Review Button */}
+        <div className="px-4 mb-4">
+          <button
+            onClick={handleAddReview}
+            className="w-full py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Write a Review
+          </button>
+        </div>
+
+        {/* Reviews List */}
+        <div className="px-4">
+          {showSkeleton ? (
+            // Loading Skeletons
+            Array(3).fill(0).map((_, index) => (
+              <ReviewSkeleton key={index} />
+            ))
+          ) : reviewsError ? (
+            // Error State
+            <div className="text-center py-8">
+              <p className="text-red-500 mb-4">Failed to load reviews</p>
+              <button
+                onClick={() => fetchReviews()}
+                className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : reviews.length === 0 ? (
+            // Empty State
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">No reviews yet</p>
+              <button
+                onClick={handleAddReview}
+                className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                Be the first to review
+              </button>
+            </div>
+          ) : (
+            // Reviews
+            <>
+              {displayedReviews.map((review, index) => (
+                <ReviewItem
+                  key={review.id}
+                  review={review}
+                  expandedReviews={expandedReviews}
+                  expandedReplies={expandedReplies}
+                  onToggleReadMore={toggleReadMore}
+                  onToggleShowMoreReplies={toggleShowMoreReplies}
+                  onCommentClick={handleCommentClick}
+                  onShareClick={handleReviewShare}
+                  onLikeReview={handleLike}
+                  onReplyToReply={handleReplyToReply}
+                  getRepliesForReview={(reviewId) => repliesMap[reviewId] || []}
+                  isLast={index === displayedReviews.length - 1}
+                />
+              ))}
+
+              {/* View All Reviews Button */}
+              {totalCount > displayedReviews.length && (
+                <button
+                  onClick={handleViewAllReviews}
+                  className="w-full mt-4 py-3 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  View All {totalCount} Reviews
+                </button>
+              )}
+            </>
+          )}
         </div>
 
         <Separator />
@@ -317,6 +459,20 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
           contentClassName="px-4"
         />
       </div>
+
+      {/* Reply Bar - Shown when replying to a comment */}
+      {replyingTo && (
+        <ReplyBar
+          replyingTo={replyingTo}
+          replyText={replyText}
+          itemBeingReplied={itemBeingReplied}
+          onSubmit={handleSubmitReply}
+          onCancel={handleCancelReply}
+          setReplyText={setReplyText}
+          getAvatarColor={getAvatarColor}
+          getInitials={getInitials}
+        />
+      )}
 
       {/* ALWAYS VISIBLE Review Typing Bar */}
       <ReviewTypingBar
