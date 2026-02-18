@@ -317,7 +317,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
         </div>
 
         {/* Reviews List */}
-        <div className="px-4 mt-4">
+        <div className="px-2 mt-4">
           {showSkeleton ? (
             // Loading Skeletons
             Array(3).fill(0).map((_, index) => (
