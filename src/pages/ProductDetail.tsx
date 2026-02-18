@@ -340,7 +340,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
               <p className="text-gray-500 mb-4">No reviews yet</p>
               <button
                 onClick={handleAddReview}
-                className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                className="px-2 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
               >
                 Be the first to review
               </button>
