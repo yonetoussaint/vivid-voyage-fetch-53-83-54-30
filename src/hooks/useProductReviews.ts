@@ -227,7 +227,7 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
 
       // Get current user likes
       const currentLikes = likes || userLikes;
-
+      
       // Mark reviews that the user has liked
       const reviewsWithLikes = (data || []).map(review => ({
         ...review,
@@ -253,43 +253,323 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
     }
   }, [productId, limit, filters, userLikes, fetchAllReplies]);
 
-  // Toggle like for a review or reply
-  const toggleLike = useCallback(async (itemId: string, itemType: 'review' | 'reply', reviewId?: string) => {
+  // Update isLiked status for all reviews and replies when userLikes changes
+  const updateLikeStatus = useCallback((likes: Set<string>) => {
+    // Update reviews
+    setReviews(prevReviews => 
+      prevReviews.map(review => ({
+        ...review,
+        isLiked: likes.has(review.id)
+      }))
+    );
+
+    // Update replies
+    setRepliesMap(prevMap => {
+      const newMap = new Map(prevMap);
+      for (const [reviewId, replies] of newMap.entries()) {
+        const updatedReplies = replies.map(reply => ({
+          ...reply,
+          isLiked: likes.has(reply.id)
+        }));
+        newMap.set(reviewId, updatedReplies);
+      }
+      return newMap;
+    });
+  }, []);
+
+  // Load user likes on mount and when user changes
+  useEffect(() => {
+    const loadUserLikes = async () => {
+      const likes = await fetchUserLikes();
+      
+      // If we already have reviews loaded, update their like status
+      if (reviews.length > 0) {
+        updateLikeStatus(likes);
+      }
+      
+      // If this is the initial load and we haven't fetched reviews yet,
+      // fetch them with the new likes
+      if (!initialLoadComplete && productId) {
+        await fetchReviews(likes);
+      }
+    };
+
+    loadUserLikes();
+  }, [user]); // Only depend on user changes
+
+  // Load reviews when productId or filters change
+  useEffect(() => {
+    if (productId) {
+      fetchReviews();
+    }
+  }, [productId, filters]); // Remove fetchReviews from dependencies
+
+  // Like/unlike a review or reply
+  const handleLike = useCallback(async (itemId: string, type: 'review' | 'reply') => {
     if (!user) {
       toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to like reviews',
+        title: 'Authentication required',
+        description: 'Please sign in to like',
         variant: 'destructive',
       });
       return;
     }
 
-    try {
-      const alreadyLiked = userLikes.has(itemId);
-      const updatedLikes = new Set(userLikes);
+    const isLiked = userLikes.has(itemId);
+    
+    // Store current values for potential revert
+    let previousState = { 
+      isLiked, 
+      likeCount: 0,
+      reviewId: type === 'reply' ? '' : itemId
+    };
+    
+    // Optimistically update UI
+    if (type === 'review') {
+      setReviews(prev => {
+        const updatedReviews = prev.map(review => {
+          if (review.id === itemId) {
+            previousState.likeCount = review.like_count;
+            return {
+              ...review,
+              like_count: isLiked ? Math.max(0, review.like_count - 1) : review.like_count + 1,
+              isLiked: !isLiked
+            };
+          }
+          return review;
+        });
+        return updatedReviews;
+      });
+    } else {
+      setRepliesMap(prev => {
+        const newMap = new Map(prev);
+        for (const [reviewId, replies] of newMap.entries()) {
+          const updatedReplies = replies.map(reply => {
+            if (reply.id === itemId) {
+              previousState.likeCount = reply.like_count;
+              previousState.reviewId = reviewId;
+              return {
+                ...reply,
+                like_count: isLiked ? Math.max(0, reply.like_count - 1) : reply.like_count + 1,
+                isLiked: !isLiked
+              };
+            }
+            return reply;
+          });
+          newMap.set(reviewId, updatedReplies);
+        }
+        return newMap;
+      });
+    }
 
-      // Optimistic UI update
-      if (itemType === 'review') {
-        setReviews(prev => prev.map(review => 
-          review.id === itemId
-            ? {
-                ...review,
-                like_count: alreadyLiked ? review.like_count - 1 : review.like_count + 1,
-                isLiked: !alreadyLiked
-              }
-            : review
-        ));
-      } else if (itemType === 'reply' && reviewId) {
+    // Update user likes set
+    setUserLikes(prev => {
+      const newSet = new Set(prev);
+      if (isLiked) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+
+    try {
+      if (isLiked) {
+        // Unlike
+        // Delete from user_likes
+        const { error: deleteError } = await supabase
+          .from('user_likes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('item_id', itemId);
+
+        if (deleteError) throw deleteError;
+
+        // Decrement like count in database
+        if (type === 'review') {
+          // Use RPC to atomically decrement
+          const { error: rpcError } = await supabase
+            .rpc('decrement_like_count', { 
+              table_name: 'reviews',
+              row_id: itemId 
+            });
+
+          if (rpcError) {
+            // Fallback to manual update if RPC fails
+            const { data: currentReview } = await supabase
+              .from('reviews')
+              .select('like_count')
+              .eq('id', itemId)
+              .single();
+            
+            const newCount = Math.max(0, (currentReview?.like_count || 1) - 1);
+            
+            const { error: updateError } = await supabase
+              .from('reviews')
+              .update({ like_count: newCount })
+              .eq('id', itemId);
+
+            if (updateError) throw updateError;
+          }
+        } else {
+          // For replies
+          const { error: rpcError } = await supabase
+            .rpc('decrement_like_count', { 
+              table_name: 'review_replies',
+              row_id: itemId 
+            });
+
+          if (rpcError) {
+            const { data: currentReply } = await supabase
+              .from('review_replies')
+              .select('like_count')
+              .eq('id', itemId)
+              .single();
+            
+            const newCount = Math.max(0, (currentReply?.like_count || 1) - 1);
+            
+            const { error: updateError } = await supabase
+              .from('review_replies')
+              .update({ like_count: newCount })
+              .eq('id', itemId);
+
+            if (updateError) throw updateError;
+          }
+        }
+      } else {
+        // Like
+        // Insert into user_likes
+        const { error: insertError } = await supabase
+          .from('user_likes')
+          .insert({
+            user_id: user.id,
+            item_id: itemId,
+            item_type: type
+          });
+
+        if (insertError) throw insertError;
+
+        // Increment like count in database
+        if (type === 'review') {
+          // Use RPC to atomically increment
+          const { error: rpcError } = await supabase
+            .rpc('increment_like_count', { 
+              table_name: 'reviews',
+              row_id: itemId 
+            });
+
+          if (rpcError) {
+            // Fallback to manual update if RPC fails
+            const { data: currentReview } = await supabase
+              .from('reviews')
+              .select('like_count')
+              .eq('id', itemId)
+              .single();
+            
+            const newCount = (currentReview?.like_count || 0) + 1;
+            
+            const { error: updateError } = await supabase
+              .from('reviews')
+              .update({ like_count: newCount })
+              .eq('id', itemId);
+
+            if (updateError) throw updateError;
+          }
+        } else {
+          // For replies
+          const { error: rpcError } = await supabase
+            .rpc('increment_like_count', { 
+              table_name: 'review_replies',
+              row_id: itemId 
+            });
+
+          if (rpcError) {
+            const { data: currentReply } = await supabase
+              .from('review_replies')
+              .select('like_count')
+              .eq('id', itemId)
+              .single();
+            
+            const newCount = (currentReply?.like_count || 0) + 1;
+            
+            const { error: updateError } = await supabase
+              .from('review_replies')
+              .update({ like_count: newCount })
+              .eq('id', itemId);
+
+            if (updateError) throw updateError;
+          }
+        }
+      }
+
+      // After successful database update, fetch the updated count to ensure consistency
+      setTimeout(async () => {
+        if (type === 'review') {
+          const { data } = await supabase
+            .from('reviews')
+            .select('like_count')
+            .eq('id', itemId)
+            .single();
+          
+          if (data) {
+            setReviews(prev =>
+              prev.map(review =>
+                review.id === itemId
+                  ? { ...review, like_count: data.like_count }
+                  : review
+              )
+            );
+          }
+        } else {
+          const { data } = await supabase
+            .from('review_replies')
+            .select('like_count')
+            .eq('id', itemId)
+            .single();
+          
+          if (data && previousState.reviewId) {
+            setRepliesMap(prev => {
+              const newMap = new Map(prev);
+              const replies = newMap.get(previousState.reviewId) || [];
+              const updatedReplies = replies.map(reply =>
+                reply.id === itemId
+                  ? { ...reply, like_count: data.like_count }
+                  : reply
+              );
+              newMap.set(previousState.reviewId, updatedReplies);
+              return newMap;
+            });
+          }
+        }
+      }, 500); // Delay to ensure database consistency
+      
+    } catch (err: any) {
+      // Revert optimistic updates on error
+      console.error('Error liking item:', err);
+      
+      // Revert UI
+      if (type === 'review') {
+        setReviews(prev =>
+          prev.map(review =>
+            review.id === itemId
+              ? { 
+                  ...review, 
+                  like_count: previousState.likeCount,
+                  isLiked: previousState.isLiked 
+                }
+              : review
+          )
+        );
+      } else {
         setRepliesMap(prev => {
           const newMap = new Map(prev);
-          const replies = newMap.get(reviewId);
-          if (replies) {
+          for (const [reviewId, replies] of newMap.entries()) {
             const updatedReplies = replies.map(reply =>
               reply.id === itemId
-                ? {
-                    ...reply,
-                    like_count: alreadyLiked ? reply.like_count - 1 : reply.like_count + 1,
-                    isLiked: !alreadyLiked
+                ? { 
+                    ...reply, 
+                    like_count: previousState.likeCount,
+                    isLiked: previousState.isLiked 
                   }
                 : reply
             );
@@ -299,300 +579,225 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
         });
       }
 
-      // Update userLikes state
-      if (alreadyLiked) {
-        updatedLikes.delete(itemId);
-      } else {
-        updatedLikes.add(itemId);
-      }
-      setUserLikes(updatedLikes);
-
-      // Perform database operation
-      if (alreadyLiked) {
-        // Unlike
-        const { error: deleteError } = await supabase
-          .from('user_likes')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('item_id', itemId);
-
-        if (deleteError) throw deleteError;
-
-        // Decrement like count in the database
-        const tableName = itemType === 'review' ? 'reviews' : 'review_replies';
-        const { error: updateError } = await supabase.rpc('decrement_like_count', {
-          table_name: tableName,
-          row_id: itemId
-        });
-
-        if (updateError) {
-          // If RPC doesn't exist, use direct update
-          const { data: currentData } = await supabase
-            .from(tableName)
-            .select('like_count')
-            .eq('id', itemId)
-            .single();
-
-          if (currentData) {
-            await supabase
-              .from(tableName)
-              .update({ like_count: Math.max(0, (currentData.like_count || 0) - 1) })
-              .eq('id', itemId);
-          }
+      // Revert user likes
+      setUserLikes(prev => {
+        const newSet = new Set(prev);
+        if (previousState.isLiked) {
+          newSet.add(itemId);
+        } else {
+          newSet.delete(itemId);
         }
-      } else {
-        // Like
-        const { error: insertError } = await supabase
-          .from('user_likes')
-          .insert({
-            user_id: user.id,
-            item_id: itemId,
-            item_type: itemType
-          });
-
-        if (insertError) throw insertError;
-
-        // Increment like count in the database
-        const tableName = itemType === 'review' ? 'reviews' : 'review_replies';
-        const { error: updateError } = await supabase.rpc('increment_like_count', {
-          table_name: tableName,
-          row_id: itemId
-        });
-
-        if (updateError) {
-          // If RPC doesn't exist, use direct update
-          const { data: currentData } = await supabase
-            .from(tableName)
-            .select('like_count')
-            .eq('id', itemId)
-            .single();
-
-          if (currentData) {
-            await supabase
-              .from(tableName)
-              .update({ like_count: (currentData.like_count || 0) + 1 })
-              .eq('id', itemId);
-          }
-        }
-      }
-
-    } catch (err: any) {
-      console.error('Error toggling like:', err);
-
-      // Revert optimistic update on error
-      if (itemType === 'review') {
-        setReviews(prev => prev.map(review => 
-          review.id === itemId
-            ? {
-                ...review,
-                like_count: userLikes.has(itemId) ? review.like_count + 1 : review.like_count - 1,
-                isLiked: userLikes.has(itemId)
-              }
-            : review
-        ));
-      } else if (itemType === 'reply' && reviewId) {
-        setRepliesMap(prev => {
-          const newMap = new Map(prev);
-          const replies = newMap.get(reviewId);
-          if (replies) {
-            const revertedReplies = replies.map(reply =>
-              reply.id === itemId
-                ? {
-                    ...reply,
-                    like_count: userLikes.has(itemId) ? reply.like_count + 1 : reply.like_count - 1,
-                    isLiked: userLikes.has(itemId)
-                  }
-                : reply
-            );
-            newMap.set(reviewId, revertedReplies);
-          }
-          return newMap;
-        });
-      }
+        return newSet;
+      });
 
       toast({
-        title: 'Error',
-        description: 'Failed to update like. Please try again.',
+        title: 'Failed to like',
+        description: err.message || 'Please try again later',
         variant: 'destructive',
       });
     }
   }, [user, userLikes, toast]);
 
-  // Add a reply to a review
-  const addReply = useCallback(async (reviewId: string, replyText: string, parentReplyId?: string) => {
+  // Get replies for a review
+  const getRepliesForReview = useCallback((reviewId: string): ReviewReply[] => {
+    return repliesMap.get(reviewId) || [];
+  }, [repliesMap]);
+
+  // Load more replies (pagination)
+  const loadMoreReplies = useCallback(async (reviewId: string) => {
+    // Implement pagination logic here if needed
+    const currentReplies = repliesMap.get(reviewId) || [];
+    // Fetch next page of replies
+  }, [repliesMap]);
+
+  // Submit a new review
+  const submitReview = useCallback(async (reviewData: {
+    rating: number;
+    title?: string;
+    comment: string;
+    images?: File[];
+  }) => {
     if (!user) {
       toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to reply',
+        title: 'Authentication required',
+        description: 'Please sign in to leave a review',
         variant: 'destructive',
       });
-      return;
+      return false;
     }
 
-    if (!replyText.trim()) {
+    if (!productId) {
       toast({
-        title: 'Invalid Reply',
-        description: 'Reply cannot be empty',
+        title: 'Error',
+        description: 'Product ID is missing',
         variant: 'destructive',
       });
-      return;
+      return false;
     }
 
     try {
-      setItemBeingReplied(reviewId);
-
       const { data, error } = await supabase
-        .from('review_replies')
+        .from('reviews')
         .insert({
-          review_id: reviewId,
+          product_id: productId,
           user_id: user.id,
-          user_name: user.user_metadata?.full_name || user.email || 'Anonymous',
-          reply_text: replyText,
-          parent_reply_id: parentReplyId || null,
+          user_name: user.email?.split('@')[0] || 'Anonymous',
+          rating: reviewData.rating,
+          title: reviewData.title,
+          comment: reviewData.comment,
+          verified_purchase: false,
+          helpful_count: 0,
+          like_count: 0,
+          comment_count: 0,
+          share_count: 0,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Update the replies map
+      // Add the new review to the list
+      setReviews(prev => [{
+        ...data,
+        like_count: 0,
+        comment_count: 0,
+        share_count: 0,
+        helpful_count: 0,
+        isLiked: false
+      }, ...prev]);
+      setTotalCount(prev => prev + 1);
+
+      toast({
+        title: 'Review submitted',
+        description: 'Thank you for your feedback!',
+      });
+
+      return true;
+    } catch (err: any) {
+      console.error('Error submitting review:', err);
+      toast({
+        title: 'Failed to submit review',
+        description: err.message || 'Please try again later',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  }, [productId, user, toast]);
+
+  // Submit a reply to a review
+  const submitReply = useCallback(async (reviewId: string, replyText: string, parentReplyId?: string) => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please sign in to reply',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('review_replies')
+        .insert({
+          review_id: reviewId,
+          user_id: user.id,
+          user_name: user.email?.split('@')[0] || 'Anonymous',
+          reply_text: replyText,
+          parent_reply_id: parentReplyId,
+          like_count: 0
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Increment comment count on the review
+      const { data: currentReview } = await supabase
+        .from('reviews')
+        .select('comment_count')
+        .eq('id', reviewId)
+        .single();
+
+      const newCommentCount = (currentReview?.comment_count || 0) + 1;
+
+      await supabase
+        .from('reviews')
+        .update({ comment_count: newCommentCount })
+        .eq('id', reviewId);
+
+      // Add reply to local state
       setRepliesMap(prev => {
         const newMap = new Map(prev);
-        const replies = newMap.get(reviewId) || [];
-        newMap.set(reviewId, [...replies, { ...data, like_count: 0, isLiked: false }]);
+        const currentReplies = newMap.get(reviewId) || [];
+        newMap.set(reviewId, [...currentReplies, { 
+          ...data, 
+          like_count: 0, 
+          isLiked: false 
+        }]);
         return newMap;
       });
 
       // Update review comment count
-      setReviews(prev => prev.map(review =>
-        review.id === reviewId
-          ? { ...review, comment_count: review.comment_count + 1 }
-          : review
-      ));
-
-      setReplyText('');
-      setReplyingTo(null);
+      setReviews(prev =>
+        prev.map(review =>
+          review.id === reviewId
+            ? { ...review, comment_count: newCommentCount }
+            : review
+        )
+      );
 
       toast({
-        title: 'Success',
-        description: 'Reply posted successfully',
+        title: 'Reply posted',
+        description: 'Your reply has been added',
       });
+
+      return true;
     } catch (err: any) {
-      console.error('Error adding reply:', err);
+      console.error('Error submitting reply:', err);
       toast({
-        title: 'Error',
-        description: 'Failed to post reply. Please try again.',
+        title: 'Failed to post reply',
+        description: err.message || 'Please try again later',
         variant: 'destructive',
       });
-    } finally {
-      setItemBeingReplied(null);
+      return false;
     }
   }, [user, toast]);
 
-  // Delete a reply
-  const deleteReply = useCallback(async (replyId: string, reviewId: string) => {
-    if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to delete replies',
-        variant: 'destructive',
-      });
-      return;
+  // Calculate summary statistics
+  const summaryStats = useMemo(() => {
+    if (reviews.length === 0) {
+      return {
+        averageRating: 0,
+        totalReviews: 0,
+        ratingCounts: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+        totalRatings: 0
+      };
     }
 
-    try {
-      const { error } = await supabase
-        .from('review_replies')
-        .delete()
-        .eq('id', replyId)
-        .eq('user_id', user.id);
+    const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    let totalRating = 0;
 
-      if (error) throw error;
+    reviews.forEach(review => {
+      const rating = review.rating;
+      if (rating >= 1 && rating <= 5) {
+        ratingCounts[rating as keyof typeof ratingCounts]++;
+        totalRating += rating;
+      }
+    });
 
-      // Update the replies map
-      setRepliesMap(prev => {
-        const newMap = new Map(prev);
-        const replies = newMap.get(reviewId) || [];
-        newMap.set(reviewId, replies.filter(reply => reply.id !== replyId));
-        return newMap;
-      });
+    const totalReviews = reviews.length;
+    const averageRating = totalRating / totalReviews;
 
-      // Update review comment count
-      setReviews(prev => prev.map(review =>
-        review.id === reviewId
-          ? { ...review, comment_count: Math.max(0, review.comment_count - 1) }
-          : review
-      ));
+    return {
+      averageRating: parseFloat(averageRating.toFixed(1)),
+      totalReviews,
+      ratingCounts,
+      totalRatings: totalRating
+    };
+  }, [reviews]);
 
-      toast({
-        title: 'Success',
-        description: 'Reply deleted successfully',
-      });
-    } catch (err: any) {
-      console.error('Error deleting reply:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete reply. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  }, [user, toast]);
-
-  // Edit a reply
-  const editReply = useCallback(async (replyId: string, reviewId: string, newText: string) => {
-    if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to edit replies',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!newText.trim()) {
-      toast({
-        title: 'Invalid Reply',
-        description: 'Reply cannot be empty',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('review_replies')
-        .update({ reply_text: newText })
-        .eq('id', replyId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Update the replies map
-      setRepliesMap(prev => {
-        const newMap = new Map(prev);
-        const replies = newMap.get(reviewId) || [];
-        newMap.set(reviewId, replies.map(reply =>
-          reply.id === replyId ? { ...reply, reply_text: newText } : reply
-        ));
-        return newMap;
-      });
-
-      toast({
-        title: 'Success',
-        description: 'Reply updated successfully',
-      });
-    } catch (err: any) {
-      console.error('Error editing reply:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to update reply. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  }, [user, toast]);
-
-  // Toggle expansion of review replies
-  const toggleReviewExpansion = useCallback((reviewId: string) => {
+  // Toggle functions
+  const toggleReadMore = useCallback((reviewId: string) => {
     setExpandedReviews(prev => {
       const newSet = new Set(prev);
       if (newSet.has(reviewId)) {
@@ -604,40 +809,93 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
     });
   }, []);
 
-  // Toggle expansion of nested replies
-  const toggleReplyExpansion = useCallback((replyId: string) => {
+  const toggleShowMoreReplies = useCallback((reviewId: string) => {
     setExpandedReplies(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(replyId)) {
-        newSet.delete(replyId);
+      if (newSet.has(reviewId)) {
+        newSet.delete(reviewId);
       } else {
-        newSet.add(replyId);
+        newSet.add(reviewId);
       }
       return newSet;
     });
   }, []);
 
-  // Get replies for a review
-  const getRepliesForReview = useCallback((reviewId: string): ReviewReply[] => {
-    return repliesMap.get(reviewId) || [];
-  }, [repliesMap]);
+  const handleCommentClick = useCallback((reviewId: string) => {
+    setReplyingTo({ type: 'review', id: reviewId });
+    setItemBeingReplied(reviewId);
+  }, []);
 
-  // Initial load
-  useEffect(() => {
-    const initialize = async () => {
-      const likes = await fetchUserLikes();
-      await fetchReviews(likes);
-    };
+  const handleReplyToReply = useCallback((replyId: string, reviewId: string, userName: string) => {
+    setReplyingTo({ type: 'reply', id: replyId, userName });
+    setItemBeingReplied(reviewId);
+    setReplyText(`@${userName} `);
+  }, []);
 
-    initialize();
-  }, [productId, filters]);
+  const handleShareClick = useCallback(async (reviewId: string) => {
+    try {
+      // Increment share count
+      const { data: currentReview } = await supabase
+        .from('reviews')
+        .select('share_count')
+        .eq('id', reviewId)
+        .single();
 
-  // Refresh user likes when user changes
-  useEffect(() => {
-    if (initialLoadComplete) {
-      fetchUserLikes();
+      const newCount = (currentReview?.share_count || 0) + 1;
+
+      await supabase
+        .from('reviews')
+        .update({ share_count: newCount })
+        .eq('id', reviewId);
+
+      // Share logic
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Check out this review',
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: 'Link copied!',
+          description: 'Review link copied to clipboard',
+        });
+      }
+
+      // Update local state
+      setReviews(prev =>
+        prev.map(review =>
+          review.id === reviewId
+            ? { ...review, share_count: newCount }
+            : review
+        )
+      );
+    } catch (err) {
+      console.error('Error sharing:', err);
     }
-  }, [user, initialLoadComplete]);
+  }, [toast]);
+
+  const handleSubmitReply = useCallback(async () => {
+    if (!replyingTo || !replyText.trim() || !itemBeingReplied) return;
+
+    const success = await submitReply(
+      itemBeingReplied,
+      replyText,
+      replyingTo.type === 'reply' ? replyingTo.id : undefined
+    );
+
+    if (success) {
+      setReplyText('');
+      setReplyingTo(null);
+      setItemBeingReplied(null);
+    }
+  }, [replyingTo, replyText, itemBeingReplied, submitReply]);
+
+  const handleCancelReply = useCallback(() => {
+    setReplyText('');
+    setReplyingTo(null);
+    setItemBeingReplied(null);
+  }, []);
 
   return {
     // Data
@@ -645,73 +903,37 @@ export const useProductReviews = ({ productId, limit = 10, filters = [] }: UsePr
     isLoading,
     error,
     totalCount,
-    
+
     // UI State
     expandedReviews,
     expandedReplies,
     replyingTo,
     replyText,
     itemBeingReplied,
-    repliesMap,
-    userLikes,
-    
+
     // Setters
     setReplyText,
-    setReplyingTo,
-    
+
     // Actions
     fetchReviews,
-    fetchUserLikes,
-    toggleLike,
-    addReply,
-    deleteReply,
-    editReply,
-    toggleReviewExpansion,
-    toggleReplyExpansion,
+    submitReview,
+    submitReply,
+    handleLike,
+    toggleReadMore,
+    toggleShowMoreReplies,
+    handleCommentClick,
+    handleReplyToReply,
+    handleShareClick,
+    handleSubmitReply,
+    handleCancelReply,
     getRepliesForReview,
+    loadMoreReplies,
+
+    // Computed
+    summaryStats,
+
+    // User
+    user,
+    userLikes
   };
-};
-
-// Helper functions (pure functions, no hooks, no components)
-export const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-export const getAvatarColor = (name?: string): string => {
-  const colors = [
-    'bg-blue-500',
-    'bg-green-500',
-    'bg-purple-500',
-    'bg-pink-500',
-    'bg-indigo-500',
-    'bg-red-500',
-    'bg-yellow-500',
-    'bg-teal-500',
-  ];
-
-  if (!name) return colors[0];
-
-  const hash = name.split('').reduce((acc, char) => {
-    return char.charCodeAt(0) + ((acc << 5) - acc);
-  }, 0);
-
-  return colors[Math.abs(hash) % colors.length];
-};
-
-export const getInitials = (name?: string): string => {
-  if (!name) return '?';
-
-  const parts = name.trim().split(' ');
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
