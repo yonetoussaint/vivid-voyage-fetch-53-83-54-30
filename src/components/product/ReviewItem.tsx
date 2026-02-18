@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
-import { Play, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react'; // Removed MessageCircle
+import { Play, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/utils/textUtils";
 import { useNavigate } from 'react-router-dom';
@@ -59,7 +59,7 @@ const ReviewItem = memo(({
   replyPagination,
   isLast = false,
   getRepliesForReview,
-  helpfulCount = 0,
+  helpfulCount = 0, // Already defaults to 0
 }: ReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
@@ -121,7 +121,7 @@ const ReviewItem = memo(({
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className="w-3.5 h-3.5"
+          className="w-3 h-3" // Reduced from w-3.5 h-3.5 to w-3 h-3
           fill={star <= ratingNum ? '#FBBF24' : 'none'}
           stroke={star <= ratingNum ? '#FBBF24' : '#D1D5DB'}
           strokeWidth="1.5"
@@ -283,7 +283,7 @@ const ReviewItem = memo(({
                 <VerificationBadge />
               )}
             </div>
-            {/* Stars positioned here - where date used to be */}
+            {/* Stars positioned here - with reduced height */}
             {rating && (
               <div className="text-xs text-gray-500 mt-0.5">
                 {renderStars(rating)}
@@ -380,16 +380,16 @@ const ReviewItem = memo(({
         </div>
       )}
 
-      {/* Engagement Section - Now only Helpful button and date */}
+      {/* Engagement Section - Helpful button with counter and date */}
       <div className="flex items-center justify-between pt-2">
-        {/* Only Helpful Button */}
+        {/* Helpful Button with counter */}
         <button
           onClick={handleHelpfulClick}
           className="text-sm text-gray-500 hover:text-green-600 transition-colors flex items-center gap-2 font-medium group"
-          aria-label="Mark this review as helpful"
+          aria-label={`Mark this review as helpful. ${helpfulCount} people found this helpful`}
         >
           <ThumbsUp className="w-5 h-5 group-hover:scale-110 transition-transform" />
-          {helpfulCount > 0 && <span>{helpfulCount}</span>}
+          <span>{helpfulCount}</span>
           <span>Helpful</span>
         </button>
 
