@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
-import { Play, Heart, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
+import { Play, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/utils/textUtils";
 import { useNavigate } from 'react-router-dom';
@@ -13,7 +13,6 @@ interface ReviewItemProps {
   onToggleReadMore: (reviewId: string) => void;
   onToggleShowMoreReplies?: (reviewId: string) => void;
   onCommentClick?: (reviewId: string) => void;
-  onLikeReview?: (reviewId: string) => void;
   onFollowUser?: (userId: string, userName: string) => void;
   onUnfollowUser?: (userId: string, userName: string) => void;
   isFollowing?: boolean;
@@ -32,7 +31,7 @@ interface ReviewItemProps {
   replyPagination?: { page: number; hasMore: boolean };
   isLast?: boolean;
   getRepliesForReview?: (reviewId: string) => Reply[];
-  helpfulCount?: number; // Add helpful count prop
+  helpfulCount?: number;
 }
 
 const ReviewItem = memo(({
@@ -42,7 +41,6 @@ const ReviewItem = memo(({
   onToggleReadMore,
   onToggleShowMoreReplies,
   onCommentClick,
-  onLikeReview,
   onFollowUser,
   onUnfollowUser,
   isFollowing = false,
@@ -61,7 +59,7 @@ const ReviewItem = memo(({
   replyPagination,
   isLast = false,
   getRepliesForReview,
-  helpfulCount = 0, // Default to 0
+  helpfulCount = 0,
 }: ReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
@@ -77,10 +75,8 @@ const ReviewItem = memo(({
     created_at,
     verified_purchase,
     media = [],
-    like_count = 0,
     comment_count = 0,
     rating,
-    isLiked = false,
   } = review;
 
   // Get replies for this review
@@ -209,10 +205,6 @@ const ReviewItem = memo(({
       />
     ));
   }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onReplyToReply, onEditReply, onDeleteReply, onReportReply, currentUserId]);
-
-  const handleLikeClick = useCallback(() => {
-    onLikeReview?.(id);
-  }, [id, onLikeReview]);
 
   const handleFollowClick = useCallback(() => {
     if (isFollowing) {
@@ -398,28 +390,7 @@ const ReviewItem = memo(({
       {/* Engagement Section */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-6">
-          {/* Like Button */}
-          <button
-            onClick={handleLikeClick}
-            className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-2 font-medium group"
-            aria-label={`Like this review. ${like_count} likes`}
-          >
-            <Heart
-              className={`w-5 h-5 transition-all ${
-                isLiked 
-                  ? 'fill-red-500 stroke-red-500 scale-110' 
-                  : 'fill-none stroke-current group-hover:scale-110'
-              }`}
-              strokeWidth={isLiked ? "2" : "2"}
-            />
-            {like_count > 0 && (
-              <span className={isLiked ? 'text-red-500 font-semibold' : ''}>
-                {like_count}
-              </span>
-            )}
-          </button>
-
-          {/* Comment Button - Updated to match reply button style */}
+          {/* Comment Button */}
           <button
             onClick={handleCommentClick}
             className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group"
