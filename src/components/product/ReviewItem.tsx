@@ -121,7 +121,7 @@ const ReviewItem = memo(({
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className="w-4 h-4"
+          className="w-3.5 h-3.5" // Reduced from w-4 h-4 to w-3.5 h-3.5
           fill={star <= ratingNum ? '#FBBF24' : 'none'}
           stroke={star <= ratingNum ? '#FBBF24' : '#D1D5DB'}
           strokeWidth="1.5"
@@ -502,10 +502,6 @@ const ReplyItem = memo(({
     onLikeReply?.(id, reviewId);
   }, [id, reviewId, onLikeReply]);
 
-  const handleReplyClick = useCallback(() => {
-    onReplyToReply?.(id, reviewId, user_name || '');
-  }, [id, reviewId, user_name, onReplyToReply]);
-
   const handleEditClick = useCallback(() => {
     onEditReply?.(id, reviewId, comment || '');
     setShowReplyMenu(false);
@@ -585,15 +581,6 @@ const ReplyItem = memo(({
                     {like_count}
                   </span>
                 )}
-              </button>
-
-              {/* Reply Button */}
-              <button
-                onClick={handleReplyClick}
-                className="text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
-                aria-label={`Reply to ${user_name || 'this user'}`}
-              >
-                Reply
               </button>
 
               {/* Reply Menu */}
