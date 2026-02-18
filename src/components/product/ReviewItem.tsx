@@ -13,7 +13,6 @@ interface ReviewItemProps {
   onToggleReadMore: (reviewId: string) => void;
   onToggleShowMoreReplies?: (reviewId: string) => void;
   onCommentClick?: (reviewId: string) => void;
-  onShareClick?: (reviewId: string) => void;
   onLikeReview?: (reviewId: string) => void;
   onFollowUser?: (userId: string, userName: string) => void;
   onUnfollowUser?: (userId: string, userName: string) => void;
@@ -33,6 +32,7 @@ interface ReviewItemProps {
   replyPagination?: { page: number; hasMore: boolean };
   isLast?: boolean;
   getRepliesForReview?: (reviewId: string) => Reply[];
+  helpfulCount?: number; // Add helpful count prop
 }
 
 const ReviewItem = memo(({
@@ -42,7 +42,6 @@ const ReviewItem = memo(({
   onToggleReadMore,
   onToggleShowMoreReplies,
   onCommentClick,
-  onShareClick,
   onLikeReview,
   onFollowUser,
   onUnfollowUser,
@@ -62,6 +61,7 @@ const ReviewItem = memo(({
   replyPagination,
   isLast = false,
   getRepliesForReview,
+  helpfulCount = 0, // Default to 0
 }: ReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
@@ -234,10 +234,6 @@ const ReviewItem = memo(({
       onCommentClick?.(id);
     }
   }, [id, onToggleShowMoreReplies, navigate, onCommentClick]);
-
-  const handleShareClick = useCallback(() => {
-    onShareClick?.(id);
-  }, [id, onShareClick]);
 
   const handleMenuAction = useCallback((action: 'report' | 'edit' | 'delete' | 'share') => {
     onMenuAction?.(id, action);
@@ -423,45 +419,26 @@ const ReviewItem = memo(({
             )}
           </button>
 
-          {/* Comment Button */}
+          {/* Comment Button - Updated to match reply button style */}
           <button
             onClick={handleCommentClick}
             className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group"
             aria-label={`Comment on this review. ${comment_count} comments`}
           >
             <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            {comment_count > 0 && <span>{comment_count}</span>}
+            {comment_count > 0 && <span>{comment_count} {comment_count === 1 ? 'reply' : 'replies'}</span>}
+            {comment_count === 0 && <span>reply</span>}
           </button>
 
-          {/* Helpful Button */}
+          {/* Helpful Button with count */}
           <button
             onClick={handleHelpfulClick}
             className="text-sm text-gray-500 hover:text-green-600 transition-colors flex items-center gap-2 font-medium group"
             aria-label="Mark this review as helpful"
           >
             <ThumbsUp className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            {helpfulCount > 0 && <span>{helpfulCount}</span>}
             <span>Helpful</span>
-          </button>
-
-          {/* Share Button */}
-          <button
-            onClick={handleShareClick}
-            className="text-sm text-gray-500 hover:text-purple-600 transition-colors flex items-center gap-2 font-medium group"
-            aria-label="Share this review"
-          >
-            <svg 
-              className="w-5 h-5 group-hover:scale-110 transition-transform" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" 
-              />
-            </svg>
           </button>
         </div>
 
@@ -697,7 +674,4 @@ const MemoizedReplyItem = memo(ReplyItem);
 ReviewItem.displayName = 'ReviewItem';
 
 export { ReviewItem };
-export default ReviewItem; 
-
-
-
+export default ReviewItem;
