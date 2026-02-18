@@ -76,7 +76,13 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     handleImageIndexChange,
   } = useProductDetail(props);
 
-  // Reviews hook with safe defaults
+  // Reviews hook - DON'T add default values here, let the hook return its actual values
+  const reviewsHook = useProductReviews({ 
+    productId: productId || props.productId, 
+    limit: 5 
+  });
+
+  // Now destructure with proper null checks when using the values
   const {
     reviews = [],
     isLoading: reviewsLoading = false,
@@ -87,7 +93,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     replyingTo = null,
     replyText = "",
     itemBeingReplied = null,
-    repliesMap = {},
+    repliesMap = new Map(),
     setReplyText = () => {},
     handleLike = () => {},
     toggleReadMore = () => {},
@@ -99,12 +105,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     handleCancelReply = () => {},
     fetchReviews = () => {},
     summaryStats = null,
-    user: authUser = null,
     userLikes = new Set(),
-  } = useProductReviews({ 
-    productId: productId || props.productId, 
-    limit: 5 
-  }) || {};
+  } = reviewsHook;
 
   // Helper functions
   const getAvatarColor = (name?: string) => {
@@ -150,8 +152,12 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
   const handleReviewSubmit = async (review: string, rating: number) => {
     try {
       console.log("Submitting review:", { review, rating, productId });
-      // Add your API call here
-      alert("Review submitted successfully! Thank you for your feedback!");
+      // Use the submitReview function from the hook
+      if (reviewsHook.submitReview) {
+        await reviewsHook.submitReview({ rating, comment: review });
+      } else {
+        alert("Review submitted successfully! Thank you for your feedback!");
+      }
     } catch (error) {
       console.error("Error submitting review:", error);
       alert("Failed to submit review. Please try again.");
@@ -181,6 +187,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
       );
     }
     setShowFilterDropdown(false);
+    
+    // Here you would apply the filter to the reviews
+    // You might need to add a filter function to your hook
   };
 
   // Close filter dropdown when clicking outside
@@ -209,6 +218,11 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
   // Safe array slicing with null check
   const displayedReviews = Array.isArray(reviews) ? reviews.slice(0, 2) : [];
   const showSkeleton = reviewsLoading && (!reviews || reviews.length === 0);
+
+  // Helper function to get replies for a review
+  const getRepliesForReview = (reviewId: string) => {
+    return repliesMap instanceof Map ? repliesMap.get(reviewId) || [] : [];
+  };
 
   return (
     <>
@@ -307,8 +321,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
             <ReviewsSummary
               averageRating={summaryStats.averageRating || 0}
               totalReviews={summaryStats.totalReviews || 0}
-              ratingCounts={summaryStats.ratingCounts || {}}
-              reviewDistribution={summaryStats.reviewDistribution || summaryStats.ratingCounts || {}}
+              ratingCounts={summaryStats.ratingCounts || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }}
+              reviewDistribution={summaryStats.ratingCounts || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }}
             />
           </div>
         )}
@@ -430,7 +444,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
                   onShareClick={handleReviewShare}
                   onLikeReview={handleLike}
                   onReplyToReply={handleReplyToReply}
-                  getRepliesForReview={(reviewId) => repliesMap?.[reviewId] || []}
+                  getRepliesForReview={getRepliesForReview}
                   isLast={index === displayedReviews.length - 1}
                 />
               ))}
