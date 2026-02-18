@@ -1,22 +1,16 @@
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Plus, Star, AlertCircle, Play, Heart, MessageCircle, MoreHorizontal, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
+import { Plus, Star, AlertCircle } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
 import { useProductReviews } from "@/hooks/useProductReviews";
 import ReviewsSummary from '@/components/product/ReviewsSummary';
+import ReviewItem from '@/components/product/ReviewItem';
 import ReplyBar from '@/components/product/ReplyBar';
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
-import VerificationBadge from "@/components/shared/VerificationBadge";
-import { formatDate } from './DateUtils';
-import { truncateText } from "@/utils/textUtils";
 
-// Import the component itself
-import ReviewItem from '@/components/product/ReviewItem';
-import ReplyItem from '@/components/product/ReplyItem';
-
-import type { Review, Reply } from '@/hooks/useProductReviews';
+import type { Review } from '@/hooks/useProductReviews';
 
 interface CustomerReviewsProps {
   productId?: string;
@@ -62,146 +56,36 @@ const CustomerReviews = React.memo(({
     filters: activeFilters
   });
 
-  // Utility functions
-  const getInitials = useCallback((name?: string) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  }, []);
-
-  const getAvatarColor = useCallback((name?: string) => {
-    const colors = [
-      'bg-blue-500',
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-green-500',
-      'bg-yellow-500',
-      'bg-red-500',
-      'bg-indigo-500',
-      'bg-teal-500',
-    ];
-    const index = name ? name.charCodeAt(0) % colors.length : 0;
-    return colors[index];
-  }, []);
-
-  const renderStars = useCallback((rating: number) => (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className="w-4 h-4"
-          fill={star <= rating ? '#FBBF24' : 'none'}
-          stroke={star <= rating ? '#FBBF24' : '#D1D5DB'}
-          strokeWidth="1.5"
-        />
-      ))}
-    </div>
-  ), []);
-
-  // Icons object to pass down
-  const icons = useMemo(() => ({
-    Play,
-    Heart,
-    MessageCircle,
-    MoreHorizontal,
-    Star,
-    ChevronDown,
-    ChevronUp,
-    ThumbsUp,
-  }), []);
-
-  // Components object to pass down
-  const components = useMemo(() => ({
-    VerificationBadge,
-    ReplyItem,
-  }), []);
-
   // Memoize the displayed reviews
   const displayedReviews = useMemo(() => 
     reviews.slice(0, 2), 
     [reviews]
   );
 
-  // Event handlers for each review
-  const handleLikeReview = useCallback((reviewId: string) => () => {
-    handleLike(reviewId, 'review');
-  }, [handleLike]);
-
-  const handleLikeReply = useCallback((reviewId: string) => (replyId: string) => {
+  // Memoize event handlers
+  const memoizedHandleLike = useCallback((replyId: string, reviewId: string) => {
     handleLike(replyId, 'reply');
   }, [handleLike]);
 
-  const handleToggleReadMore = useCallback((reviewId: string) => () => {
+  const memoizedHandleLikeReview = useCallback((reviewId: string) => {
+    handleLike(reviewId, 'review');
+  }, [handleLike]);
+
+  const memoizedToggleReadMore = useCallback((reviewId: string) => {
     toggleReadMore(reviewId);
   }, [toggleReadMore]);
 
-  const handleToggleShowMoreReplies = useCallback((reviewId: string) => () => {
+  const memoizedToggleShowMoreReplies = useCallback((reviewId: string) => {
     toggleShowMoreReplies(reviewId);
   }, [toggleShowMoreReplies]);
 
-  const handleCommentClickCallback = useCallback((reviewId: string) => () => {
+  const memoizedHandleCommentClick = useCallback((reviewId: string) => {
     handleCommentClick(reviewId);
   }, [handleCommentClick]);
 
-  const handleShareClickCallback = useCallback((reviewId: string) => () => {
-    handleShareClick(reviewId);
-  }, [handleShareClick]);
-
-  const handleReplyToReplyCallback = useCallback((reviewId: string) => (replyId: string, userName: string) => {
+  const memoizedHandleReplyToReply = useCallback((replyId: string, reviewId: string, userName: string) => {
     handleReplyToReply(replyId, reviewId, userName);
   }, [handleReplyToReply]);
-
-  const handleFollowUser = useCallback((userId: string) => () => {
-    console.log('Follow user:', userId);
-    // Implement follow user
-  }, []);
-
-  const handleUnfollowUser = useCallback((userId: string) => () => {
-    console.log('Unfollow user:', userId);
-    // Implement unfollow user
-  }, []);
-
-  const handleMediaClick = useCallback((review: Review) => (index: number) => {
-    if (review.media) {
-      console.log('Media click:', { reviewId: review.id, index, media: review.media[index] });
-    }
-  }, []);
-
-  const handleReviewView = useCallback((reviewId: string) => () => {
-    console.log('Review viewed:', reviewId);
-    // Implement view tracking
-  }, []);
-
-  const handleMarkHelpful = useCallback((reviewId: string) => () => {
-    console.log('Mark helpful:', reviewId);
-    // Implement mark helpful
-  }, []);
-
-  const handleEditReply = useCallback((reviewId: string) => (replyId: string, comment: string) => {
-    console.log('Edit reply:', { replyId, reviewId, comment });
-  }, []);
-
-  const handleDeleteReply = useCallback((reviewId: string) => (replyId: string) => {
-    console.log('Delete reply:', { replyId, reviewId });
-  }, []);
-
-  const handleReportReply = useCallback((reviewId: string) => (replyId: string, reason: string) => {
-    console.log('Report reply:', { replyId, reviewId, reason });
-  }, []);
-
-  const handleMenuAction = useCallback((reviewId: string) => (action: 'report' | 'edit' | 'delete' | 'share') => {
-    console.log('Menu action:', { reviewId, action });
-    // Implement menu actions
-  }, []);
-
-  const handleLoadMoreReplies = useCallback((reviewId: string) => () => {
-    console.log('Load more replies:', reviewId);
-    // Implement load more replies
-  }, []);
 
   const handleViewAllReviews = useCallback(() => {
     navigate(`/product/${productId}/reviews`, { 
@@ -396,39 +280,17 @@ const CustomerReviews = React.memo(({
                 <div key={review.id} className="px-4">
                   <ReviewItem
                     review={review}
-                    isExpanded={expandedReviews.has(review.id)}
-                    isRepliesExpanded={expandedReplies?.has(review.id)}
+                    expandedReviews={expandedReviews}
+                    expandedReplies={expandedReplies}
+                    onToggleReadMore={memoizedToggleReadMore}
+                    onToggleShowMoreReplies={memoizedToggleShowMoreReplies}
+                    onCommentClick={memoizedHandleCommentClick}
+                    onShareClick={() => handleShareClick(review.id)}
+                    onLikeReview={memoizedHandleLikeReview}
+                    onLikeReply={memoizedHandleLike}
+                    onReplyToReply={memoizedHandleReplyToReply}
                     isLast={index === displayedReviews.length - 1}
-                    isFollowing={false}
-                    isOwner={review.user_id === user?.id}
-                    currentUserId={user?.id}
-                    onToggleReadMore={handleToggleReadMore(review.id)}
-                    onToggleShowMoreReplies={handleToggleShowMoreReplies(review.id)}
-                    onCommentClick={handleCommentClickCallback(review.id)}
-                    onShareClick={handleShareClickCallback(review.id)}
-                    onLikeReview={handleLikeReview(review.id)}
-                    onFollowUser={handleFollowUser(review.user_id)}
-                    onUnfollowUser={handleUnfollowUser(review.user_id)}
-                    onLikeReply={handleLikeReply(review.id)}
-                    onReplyToReply={handleReplyToReplyCallback(review.id)}
-                    onMenuAction={handleMenuAction(review.id)}
-                    onMediaClick={handleMediaClick(review)}
-                    onReviewView={handleReviewView(review.id)}
-                    onMarkHelpful={handleMarkHelpful(review.id)}
-                    onEditReply={handleEditReply(review.id)}
-                    onDeleteReply={handleDeleteReply(review.id)}
-                    onReportReply={handleReportReply(review.id)}
-                    loadMoreReplies={handleLoadMoreReplies(review.id)}
-                    hasMoreReplies={false}
-                    replies={getRepliesForReview(review.id)}
-                    getInitials={getInitials}
-                    getAvatarColor={getAvatarColor}
-                    formatDate={formatDate}
-                    truncateText={truncateText}
-                    renderStars={renderStars}
-                    icons={icons}
-                    components={components}
-                    navigate={navigate}
+                    getRepliesForReview={getRepliesForReview}
                   />
                 </div>
               ))
