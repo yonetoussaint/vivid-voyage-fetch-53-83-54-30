@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
-import { Play, MessageCircle, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
+import { Play, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react'; // Removed MessageCircle
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/utils/textUtils";
 import { useNavigate } from 'react-router-dom';
@@ -121,7 +121,7 @@ const ReviewItem = memo(({
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className="w-3.5 h-3.5" // Reduced from w-4 h-4 to w-3.5 h-3.5
+          className="w-3.5 h-3.5"
           fill={star <= ratingNum ? '#FBBF24' : 'none'}
           stroke={star <= ratingNum ? '#FBBF24' : '#D1D5DB'}
           strokeWidth="1.5"
@@ -196,7 +196,6 @@ const ReviewItem = memo(({
         getAvatarColor={getAvatarColor}
         getInitials={getInitials}
         onLikeReply={onLikeReply}
-        onReplyToReply={onReplyToReply}
         onEditReply={onEditReply}
         onDeleteReply={onDeleteReply}
         onReportReply={onReportReply}
@@ -204,7 +203,7 @@ const ReviewItem = memo(({
         isOwner={reply.user_id === currentUserId}
       />
     ));
-  }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onReplyToReply, onEditReply, onDeleteReply, onReportReply, currentUserId]);
+  }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onEditReply, onDeleteReply, onReportReply, currentUserId]);
 
   const handleFollowClick = useCallback(() => {
     if (isFollowing) {
@@ -217,15 +216,6 @@ const ReviewItem = memo(({
   const handleHelpfulClick = useCallback(() => {
     onMarkHelpful?.(id);
   }, [id, onMarkHelpful]);
-
-  const handleCommentClick = useCallback(() => {
-    if (onToggleShowMoreReplies) {
-      onToggleShowMoreReplies(id);
-    } else {
-      navigate(`/reviews/${id}`);
-      onCommentClick?.(id);
-    }
-  }, [id, onToggleShowMoreReplies, navigate, onCommentClick]);
 
   const handleMenuAction = useCallback((action: 'report' | 'edit' | 'delete' | 'share') => {
     onMenuAction?.(id, action);
@@ -293,7 +283,7 @@ const ReviewItem = memo(({
                 <VerificationBadge />
               )}
             </div>
-            {/* Stars now positioned here - exactly where date used to be */}
+            {/* Stars positioned here - where date used to be */}
             {rating && (
               <div className="text-xs text-gray-500 mt-0.5">
                 {renderStars(rating)}
@@ -390,33 +380,20 @@ const ReviewItem = memo(({
         </div>
       )}
 
-      {/* Engagement Section */}
+      {/* Engagement Section - Now only Helpful button and date */}
       <div className="flex items-center justify-between pt-2">
-        <div className="flex items-center gap-6">
-          {/* Comment Button */}
-          <button
-            onClick={handleCommentClick}
-            className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group"
-            aria-label={`Comment on this review. ${comment_count} comments`}
-          >
-            <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            {comment_count > 0 && <span>{comment_count} {comment_count === 1 ? 'reply' : 'replies'}</span>}
-            {comment_count === 0 && <span>reply</span>}
-          </button>
+        {/* Only Helpful Button */}
+        <button
+          onClick={handleHelpfulClick}
+          className="text-sm text-gray-500 hover:text-green-600 transition-colors flex items-center gap-2 font-medium group"
+          aria-label="Mark this review as helpful"
+        >
+          <ThumbsUp className="w-5 h-5 group-hover:scale-110 transition-transform" />
+          {helpfulCount > 0 && <span>{helpfulCount}</span>}
+          <span>Helpful</span>
+        </button>
 
-          {/* Helpful Button with count */}
-          <button
-            onClick={handleHelpfulClick}
-            className="text-sm text-gray-500 hover:text-green-600 transition-colors flex items-center gap-2 font-medium group"
-            aria-label="Mark this review as helpful"
-          >
-            <ThumbsUp className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            {helpfulCount > 0 && <span>{helpfulCount}</span>}
-            <span>Helpful</span>
-          </button>
-        </div>
-
-        {/* Date now positioned here - at the bottom right */}
+        {/* Date at the bottom right */}
         <div className="text-xs text-gray-500">
           {formattedDate}
         </div>
@@ -465,7 +442,6 @@ interface ReplyItemProps {
   getAvatarColor: (name?: string) => string;
   getInitials: (name?: string) => string;
   onLikeReply?: (replyId: string, reviewId: string) => void;
-  onReplyToReply?: (replyId: string, reviewId: string, userName: string) => void;
   onEditReply?: (replyId: string, reviewId: string, comment: string) => void;
   onDeleteReply?: (replyId: string, reviewId: string) => void;
   onReportReply?: (replyId: string, reviewId: string, reason: string) => void;
@@ -479,7 +455,6 @@ const ReplyItem = memo(({
   getAvatarColor,
   getInitials,
   onLikeReply,
-  onReplyToReply,
   onEditReply,
   onDeleteReply,
   onReportReply,
