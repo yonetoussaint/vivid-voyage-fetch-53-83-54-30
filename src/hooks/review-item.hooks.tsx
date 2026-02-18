@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { formatDate } from './DateUtils';
+import { formatDate } from '@/components/product/DateUtils';
 import { truncateText } from "@/utils/textUtils";
 import { Star } from 'lucide-react';
 import type { MediaItem, Reply, Review } from '@/hooks/useProductReviews';
