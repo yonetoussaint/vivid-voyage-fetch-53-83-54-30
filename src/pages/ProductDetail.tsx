@@ -76,35 +76,35 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     handleImageIndexChange,
   } = useProductDetail(props);
 
-  // Reviews hook
+  // Reviews hook with safe defaults
   const {
-    reviews,
-    isLoading: reviewsLoading,
-    error: reviewsError,
-    totalCount,
-    expandedReviews,
-    expandedReplies,
-    replyingTo,
-    replyText,
-    itemBeingReplied,
-    repliesMap,
-    setReplyText,
-    handleLike,
-    toggleReadMore,
-    toggleShowMoreReplies,
-    handleCommentClick,
-    handleReplyToReply,
-    handleShareClick: handleReviewShare,
-    handleSubmitReply,
-    handleCancelReply,
-    fetchReviews,
-    summaryStats,
-    user: authUser,
-    userLikes,
+    reviews = [],
+    isLoading: reviewsLoading = false,
+    error: reviewsError = null,
+    totalCount = 0,
+    expandedReviews = new Set(),
+    expandedReplies = new Set(),
+    replyingTo = null,
+    replyText = "",
+    itemBeingReplied = null,
+    repliesMap = {},
+    setReplyText = () => {},
+    handleLike = () => {},
+    toggleReadMore = () => {},
+    toggleShowMoreReplies = () => {},
+    handleCommentClick = () => {},
+    handleReplyToReply = () => {},
+    handleShareClick: handleReviewShare = () => {},
+    handleSubmitReply = () => {},
+    handleCancelReply = () => {},
+    fetchReviews = () => {},
+    summaryStats = null,
+    user: authUser = null,
+    userLikes = new Set(),
   } = useProductReviews({ 
     productId: productId || props.productId, 
     limit: 5 
-  });
+  }) || {};
 
   // Helper functions
   const getAvatarColor = (name?: string) => {
@@ -122,6 +122,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Unknown date';
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -205,8 +206,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     return <ProductDetailError />;
   }
 
-  const displayedReviews = reviews.slice(0, 2);
-  const showSkeleton = reviewsLoading && reviews.length === 0;
+  // Safe array slicing with null check
+  const displayedReviews = Array.isArray(reviews) ? reviews.slice(0, 2) : [];
+  const showSkeleton = reviewsLoading && (!reviews || reviews.length === 0);
 
   return (
     <>
@@ -230,7 +232,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
         <div className="w-full bg-white">
           <ProductImageGallery
             ref={galleryRef}
-            images={galleryImages}
+            images={galleryImages || []}
             videos={product?.product_videos || []}
             model3dUrl={product?.model_3d_url}
             seller={product?.sellers}
@@ -303,10 +305,10 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
         {summaryStats && (
           <div className="mt-4 px-4">
             <ReviewsSummary
-              averageRating={summaryStats.averageRating}
-              totalReviews={summaryStats.totalReviews}
-              ratingCounts={summaryStats.ratingCounts}
-              reviewDistribution={summaryStats.reviewDistribution || summaryStats.ratingCounts}
+              averageRating={summaryStats.averageRating || 0}
+              totalReviews={summaryStats.totalReviews || 0}
+              ratingCounts={summaryStats.ratingCounts || {}}
+              reviewDistribution={summaryStats.reviewDistribution || summaryStats.ratingCounts || {}}
             />
           </div>
         )}
@@ -315,7 +317,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
         <div className="mt-6 px-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
-              Customer Reviews ({totalCount})
+              Customer Reviews ({totalCount || 0})
             </h2>
             
             {/* Filter Button */}
@@ -388,7 +390,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
         <div className="px-4">
           {showSkeleton ? (
             // Loading Skeletons
-            Array(3).fill(0).map((_, index) => (
+            Array.from({ length: 3 }).map((_, index) => (
               <ReviewSkeleton key={index} />
             ))
           ) : reviewsError ? (
@@ -402,7 +404,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
                 Try Again
               </button>
             </div>
-          ) : reviews.length === 0 ? (
+          ) : !displayedReviews || displayedReviews.length === 0 ? (
             // Empty State
             <div className="text-center py-8">
               <p className="text-gray-500 mb-4">No reviews yet</p>
@@ -418,7 +420,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
             <>
               {displayedReviews.map((review, index) => (
                 <ReviewItem
-                  key={review.id}
+                  key={review?.id || index}
                   review={review}
                   expandedReviews={expandedReviews}
                   expandedReplies={expandedReplies}
@@ -428,7 +430,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
                   onShareClick={handleReviewShare}
                   onLikeReview={handleLike}
                   onReplyToReply={handleReplyToReply}
-                  getRepliesForReview={(reviewId) => repliesMap[reviewId] || []}
+                  getRepliesForReview={(reviewId) => repliesMap?.[reviewId] || []}
                   isLast={index === displayedReviews.length - 1}
                 />
               ))}
@@ -464,7 +466,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
       {replyingTo && (
         <ReplyBar
           replyingTo={replyingTo}
-          replyText={replyText}
+          replyText={replyText || ""}
           itemBeingReplied={itemBeingReplied}
           onSubmit={handleSubmitReply}
           onCancel={handleCancelReply}
@@ -476,7 +478,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
 
       {/* ALWAYS VISIBLE Review Typing Bar */}
       <ReviewTypingBar
-        productName={product.name || "This product"}
+        productName={product?.name || "This product"}
         onSubmit={handleReviewSubmit}
       />
     </>
