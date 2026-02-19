@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
-import { Play, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp, Link } from 'lucide-react';
+import { Play, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp, Link, MessageCircle } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/utils/textUtils";
 import { useNavigate } from 'react-router-dom';
@@ -34,6 +34,8 @@ interface ReviewItemProps {
   getRepliesForReview?: (reviewId: string) => Reply[];
   helpfulCount?: number;
   shareCount?: number;
+  getAvatarColor?: (name?: string) => string;
+  getInitials?: (name?: string) => string;
 }
 
 const ReviewItem = memo(({
@@ -64,6 +66,8 @@ const ReviewItem = memo(({
   getRepliesForReview,
   helpfulCount = 0,
   shareCount = 0,
+  getAvatarColor: propGetAvatarColor,
+  getInitials: propGetInitials,
 }: ReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
@@ -93,6 +97,7 @@ const ReviewItem = memo(({
   }, [id, onReviewView]);
 
   const getInitials = useCallback((name?: string) => {
+    if (propGetInitials) return propGetInitials(name);
     if (!name) return 'U';
     return name
       .split(' ')
@@ -100,9 +105,10 @@ const ReviewItem = memo(({
       .join('')
       .toUpperCase()
       .slice(0, 2);
-  }, []);
+  }, [propGetInitials]);
 
   const getAvatarColor = useCallback((name?: string) => {
+    if (propGetAvatarColor) return propGetAvatarColor(name);
     const colors = [
       'bg-blue-500',
       'bg-purple-500',
@@ -115,7 +121,7 @@ const ReviewItem = memo(({
     ];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
-  }, []);
+  }, [propGetAvatarColor]);
 
   const avatarColor = useMemo(() => getAvatarColor(user_name), [user_name, getAvatarColor]);
   const initials = useMemo(() => getInitials(user_name), [user_name, getInitials]);
@@ -200,6 +206,7 @@ const ReviewItem = memo(({
         getAvatarColor={getAvatarColor}
         getInitials={getInitials}
         onLikeReply={onLikeReply}
+        onReplyToReply={onReplyToReply}
         onEditReply={onEditReply}
         onDeleteReply={onDeleteReply}
         onReportReply={onReportReply}
@@ -207,7 +214,7 @@ const ReviewItem = memo(({
         isOwner={reply.user_id === currentUserId}
       />
     ));
-  }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onEditReply, onDeleteReply, onReportReply, currentUserId]);
+  }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onReplyToReply, onEditReply, onDeleteReply, onReportReply, currentUserId]);
 
   const handleFollowClick = useCallback(() => {
     if (isFollowing) {
@@ -224,6 +231,15 @@ const ReviewItem = memo(({
   const handleShareClick = useCallback(() => {
     onShareClick?.(id);
   }, [id, onShareClick]);
+
+  const handleCommentClick = useCallback(() => {
+    if (onCommentClick) {
+      onCommentClick(id);
+    } else if (onReplyToReply) {
+      // If no comment click handler, trigger reply
+      onReplyToReply(id, id, user_name || '');
+    }
+  }, [id, onCommentClick, onReplyToReply, user_name]);
 
   const handleMenuAction = useCallback((action: 'report' | 'edit' | 'delete' | 'share') => {
     onMenuAction?.(id, action);
@@ -388,9 +404,19 @@ const ReviewItem = memo(({
         </div>
       )}
 
-      {/* Engagement Section - Helpful button with count in parentheses and Share button */}
+      {/* Engagement Section */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-6">
+          {/* Comment/Reply Button */}
+          <button
+            onClick={handleCommentClick}
+            className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group"
+            aria-label={`Reply to this review. ${comment_count} replies`}
+          >
+            <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <span>Reply ({comment_count})</span>
+          </button>
+
           {/* Helpful Button with count in parentheses */}
           <button
             onClick={handleHelpfulClick}
@@ -461,6 +487,7 @@ interface ReplyItemProps {
   getAvatarColor: (name?: string) => string;
   getInitials: (name?: string) => string;
   onLikeReply?: (replyId: string, reviewId: string) => void;
+  onReplyToReply?: (replyId: string, reviewId: string, userName: string) => void;
   onEditReply?: (replyId: string, reviewId: string, comment: string) => void;
   onDeleteReply?: (replyId: string, reviewId: string) => void;
   onReportReply?: (replyId: string, reviewId: string, reason: string) => void;
@@ -474,6 +501,7 @@ const ReplyItem = memo(({
   getAvatarColor,
   getInitials,
   onLikeReply,
+  onReplyToReply,
   onEditReply,
   onDeleteReply,
   onReportReply,
@@ -495,6 +523,10 @@ const ReplyItem = memo(({
   const handleLikeClick = useCallback(() => {
     onLikeReply?.(id, reviewId);
   }, [id, reviewId, onLikeReply]);
+
+  const handleReplyClick = useCallback(() => {
+    onReplyToReply?.(id, reviewId, user_name || '');
+  }, [id, reviewId, user_name, onReplyToReply]);
 
   const handleEditClick = useCallback(() => {
     onEditReply?.(id, reviewId, comment || '');
@@ -577,6 +609,15 @@ const ReplyItem = memo(({
                 )}
               </button>
 
+              {/* Reply Button */}
+              <button
+                onClick={handleReplyClick}
+                className="text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                aria-label={`Reply to ${user_name || 'this user'}`}
+              >
+                Reply
+              </button>
+
               {/* Reply Menu */}
               <div className="relative" ref={replyMenuRef}>
                 <button
@@ -626,6 +667,9 @@ const ReplyItem = memo(({
     </div>
   );
 });
+
+// Need to import Heart for ReplyItem
+import { Heart } from 'lucide-react';
 
 ReplyItem.displayName = 'ReplyItem';
 const MemoizedReplyItem = memo(ReplyItem);
