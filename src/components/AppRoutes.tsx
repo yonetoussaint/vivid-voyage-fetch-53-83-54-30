@@ -9,6 +9,8 @@ import { MiscRoutes } from "../routes/MiscRoutes";
 import MallPage from "@/pages/MallPage";
 import Wallet from "@/pages/Wallet";
 import Messages from "@/pages/Messages";
+// Remove or fix this import if ChatPage doesn't exist
+// import { ChatPage } from "@/pages/Messages";
 import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
@@ -18,21 +20,22 @@ import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
 import AuthCallback from "@/pages/AuthCallback";
 import KGPattisseriePOS from "@/pages/KGPattiseriePOS";
-import GasStationDailyChecklist from "@/pages/GasStationDailyChecklist";
-import VendorPostComments from '@/components/home/VendorPostComments'; // Add this import
+// Import the VendorPostComments component
+import VendorPostComments from '@/components/home/VendorPostComments';
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Google OAuth callback route - OUTSIDE MainLayout */}
+      {/* ✅ Google OAuth callback route - OUTSIDE MainLayout */}
       <Route
         path="auth/callback"
-        element={<AuthCallback />}
+        element={
+          <AuthCallback />
+        }
       />
-      
-      <Route path="/product/:productId/add-review" element={<AddReviewPage />} />
+<Route path="/product/:productId/add-review" element={<AddReviewPage />} />
 
-      {/* Auth error route */}
+      {/* ✅ Error route for auth failures */}
       <Route
         path="auth/error"
         element={
@@ -51,42 +54,124 @@ export function AppRoutes() {
         }
       />
 
-      {/* KG Pâtisserie POS System */}
-      <Route path="pos" element={<KGPattisseriePOS />} />
+      {/* KG Pâtisserie POS System - Now Public */}
+      <Route
+        path="pos"
+        element={
+          <KGPattisseriePOS />
+        }
+      />
 
-      {/* Gas Station System Routes */}
-      <Route path="easy" element={<GasStationSystem />} />
-      <Route path="daily-checklist" element={<GasStationDailyChecklist />} />
+      {/* NEW ROUTE: Vendor Post Comments */}
+      <Route
+        path="comments"
+        element={
+          <VendorPostComments />
+        }
+      />
 
-      {/* NEW ROUTE: Post Comments */}
-      <Route path="comments" element={<VendorPostComments />} />
-      {/* Alternative path if you prefer */}
-      <Route path="post-comments" element={<VendorPostComments />} />
+      {/* Product Detail Routes - OUTSIDE MainLayout for unrestricted scrolling */}
+      <Route
+        path="product/:id/:tab"
+        element={
+          <ProductDetail />
+        }
+      />
 
-      {/* Product Detail Routes */}
-      <Route path="product/:id/:tab" element={<ProductDetail />} />
-      <Route path="portfolio" element={<Portfolio />} />
+      <Route
+        path="portfolio"
+        element={
+          <Portfolio/>
+        }
+      />
+
       <Route path="product/:id" element={<Navigate to="overview" replace />} />
-      <Route path="calculator" element={<Calculator />} />
 
-      {/* Reviews Pages */}
-      <Route path="reviews/:reviewId" element={<ReviewsPage />} />
-      <Route path="reviews" element={<ReviewsPage />} />
+      <Route
+        path="calculator"
+        element={
+          <Calculator/>
+        }
+      />
+
+      {/* Reviews Page - OUTSIDE MainLayout for specific review */}
+      <Route
+        path="reviews/:reviewId"
+        element={
+          <ReviewsPage />
+        }
+      />
+
+      {/* Optional: Keep a general reviews page if needed */}
+      <Route
+        path="reviews"
+        element={
+          <ReviewsPage />
+        }
+      />
+
+      <Route
+        path="easy"
+        element={
+          <GasStationSystem />
+        }
+      />
 
       {/* All other routes - INSIDE MainLayout */}
       <Route path="/" element={<MainLayout />}>
-        <Route index element={<Index />} />
-        <Route path="for-you" element={<Index />} />
-        <Route path="wallet" element={<Wallet />} />
-        <Route path="messages" element={<Messages />} />
-        <Route path="profile/*" element={<ProfilePage />} />
-        
+        <Route
+          index
+          element={
+            <Index />
+          }
+        />
+        <Route
+          path="for-you"
+          element={
+            <Index />
+          }
+        />
+
+        <Route
+          path="wallet"
+          element={
+            <Wallet />
+          }
+        />
+
+        <Route
+          path="messages"
+          element={
+            <Messages />
+          }
+        />
+
+        {/* Comment out or remove this route if ChatPage doesn't exist */}
+        {/* <Route
+          path="messages/:chatId"
+          element={
+            <ChatPage />
+          }
+        /> */}
+
+        <Route
+          path="profile/*"
+          element={
+            <ProfilePage />
+          }
+        />
+
         {CategoryRoutes()}
         {ContentRoutes()}
         {AuthRoutes()}
         {MiscRoutes()}
 
-        <Route path="mall" element={<MallPage />} />
+        <Route 
+          path="mall" 
+          element={
+            <MallPage />
+          } 
+        />
       </Route>
     </Routes>
   );
