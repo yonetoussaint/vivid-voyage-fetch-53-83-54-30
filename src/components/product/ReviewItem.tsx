@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
-import { Play, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp, Link } from 'lucide-react'; // Added Link icon
+import { Play, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp, Link } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/utils/textUtils";
 import { useNavigate } from 'react-router-dom';
@@ -24,7 +24,7 @@ interface ReviewItemProps {
   onMediaClick?: (media: MediaItem[], index: number) => void;
   onReviewView?: (reviewId: string) => void;
   onMarkHelpful?: (reviewId: string) => void;
-  onShareClick?: (reviewId: string) => void; // Added share handler
+  onShareClick?: (reviewId: string) => void;
   onEditReply?: (replyId: string, reviewId: string, comment: string) => void;
   onDeleteReply?: (replyId: string, reviewId: string) => void;
   onReportReply?: (replyId: string, reviewId: string, reason: string) => void;
@@ -33,7 +33,7 @@ interface ReviewItemProps {
   isLast?: boolean;
   getRepliesForReview?: (reviewId: string) => Reply[];
   helpfulCount?: number;
-  shareCount?: number; // Added share count prop
+  shareCount?: number;
 }
 
 const ReviewItem = memo(({
@@ -54,7 +54,7 @@ const ReviewItem = memo(({
   onMediaClick,
   onReviewView,
   onMarkHelpful,
-  onShareClick, // Added share handler
+  onShareClick,
   onEditReply,
   onDeleteReply,
   onReportReply,
@@ -63,7 +63,7 @@ const ReviewItem = memo(({
   isLast = false,
   getRepliesForReview,
   helpfulCount = 0,
-  shareCount = 0, // Default share count to 0
+  shareCount = 0,
 }: ReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
@@ -388,29 +388,27 @@ const ReviewItem = memo(({
         </div>
       )}
 
-      {/* Engagement Section - Helpful button and Share button with counters */}
+      {/* Engagement Section - Helpful button with count in parentheses and Share button */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-6">
-          {/* Helpful Button with counter */}
+          {/* Helpful Button with count in parentheses */}
           <button
             onClick={handleHelpfulClick}
             className="text-sm text-gray-500 hover:text-green-600 transition-colors flex items-center gap-2 font-medium group"
             aria-label={`Mark this review as helpful. ${helpfulCount} people found this helpful`}
           >
             <ThumbsUp className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span>{helpfulCount}</span>
-            <span>Helpful</span>
+            <span>Helpful ({helpfulCount})</span>
           </button>
 
-          {/* Share Button with counter - using Link icon */}
+          {/* Share Button with counter */}
           <button
             onClick={handleShareClick}
             className="text-sm text-gray-500 hover:text-purple-600 transition-colors flex items-center gap-2 font-medium group"
             aria-label={`Share this review. ${shareCount} shares`}
           >
             <Link className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span>{shareCount}</span>
-            <span>Share</span>
+            <span>Share ({shareCount})</span>
           </button>
         </div>
 
