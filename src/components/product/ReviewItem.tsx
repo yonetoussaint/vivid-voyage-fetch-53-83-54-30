@@ -1,10 +1,13 @@
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import VerificationBadge from "@/components/shared/VerificationBadge";
-import { Play, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp, Link, MessageCircle } from 'lucide-react';
+import { Play, MoreHorizontal, Star, ChevronDown, ChevronUp, ThumbsUp, Link, MessageCircle, Send } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/utils/textUtils";
 import { useNavigate } from 'react-router-dom';
 import type { MediaItem, Reply, Review } from '@/hooks/useProductReviews';
+import ReactionButton from '@/components/shared/ReactionButton';
+import StackedReactionIcons from '@/components/shared/StackedReactionIcons';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ReviewItemProps {
   review: Review;
@@ -36,6 +39,7 @@ interface ReviewItemProps {
   shareCount?: number;
   getAvatarColor?: (name?: string) => string;
   getInitials?: (name?: string) => string;
+  formatDate?: (date: string) => string;
 }
 
 const ReviewItem = memo(({
@@ -66,14 +70,19 @@ const ReviewItem = memo(({
   getRepliesForReview,
   helpfulCount = 0,
   shareCount = 0,
-  getAvatarColor: propGetAvatarColor,
-  getInitials: propGetInitials,
+  getAvatarColor: externalGetAvatarColor,
+  getInitials: externalGetInitials,
+  formatDate: externalFormatDate,
 }: ReviewItemProps) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const mediaContainerRef = useRef<HTMLDivElement>(null);
+  const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
   const {
     id,
@@ -96,8 +105,15 @@ const ReviewItem = memo(({
     onReviewView?.(id);
   }, [id, onReviewView]);
 
+  // Focus reply input when replying
+  useEffect(() => {
+    if (replyingTo && replyInputRef.current) {
+      replyInputRef.current.focus();
+    }
+  }, [replyingTo]);
+
   const getInitials = useCallback((name?: string) => {
-    if (propGetInitials) return propGetInitials(name);
+    if (externalGetInitials) return externalGetInitials(name);
     if (!name) return 'U';
     return name
       .split(' ')
@@ -105,10 +121,10 @@ const ReviewItem = memo(({
       .join('')
       .toUpperCase()
       .slice(0, 2);
-  }, [propGetInitials]);
+  }, [externalGetInitials]);
 
   const getAvatarColor = useCallback((name?: string) => {
-    if (propGetAvatarColor) return propGetAvatarColor(name);
+    if (externalGetAvatarColor) return externalGetAvatarColor(name);
     const colors = [
       'bg-blue-500',
       'bg-purple-500',
@@ -121,7 +137,24 @@ const ReviewItem = memo(({
     ];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
-  }, [propGetAvatarColor]);
+  }, [externalGetAvatarColor]);
+
+  const formatDateLocal = useCallback((dateString: string) => {
+    if (externalFormatDate) return externalFormatDate(dateString);
+    if (!dateString) return 'Unknown date';
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+      if (diffInSeconds < 60) return 'Just now';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+      if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (error) {
+      return 'Invalid date';
+    }
+  }, [externalFormatDate]);
 
   const avatarColor = useMemo(() => getAvatarColor(user_name), [user_name, getAvatarColor]);
   const initials = useMemo(() => getInitials(user_name), [user_name, getInitials]);
@@ -140,7 +173,7 @@ const ReviewItem = memo(({
     </div>
   ), []);
 
-  const formattedDate = useMemo(() => formatDate(created_at), [created_at]);
+  const formattedDate = useMemo(() => formatDateLocal(created_at), [created_at, formatDateLocal]);
   const truncatedComment = useMemo(() => truncateText(comment), [comment]);
   const shouldShowReadMore = useMemo(() => comment.length > 120, [comment.length]);
 
@@ -195,6 +228,52 @@ const ReviewItem = memo(({
     [media, id, isMediaLoaded, handleMediaItemClick]
   );
 
+  const handleReplyClick = useCallback((commentId: string) => {
+    setReplyingTo(commentId);
+  }, []);
+
+  const handleCancelReply = useCallback(() => {
+    setReplyingTo(null);
+    setReplyText('');
+  }, []);
+
+  const handleSubmitReply = useCallback(() => {
+    if (!replyText.trim() || !replyingTo) return;
+    
+    if (onReplyToReply) {
+      onReplyToReply(replyingTo, id, user_name || '');
+    }
+    
+    // Clear the reply input
+    setReplyText('');
+    setReplyingTo(null);
+  }, [replyText, replyingTo, id, user_name, onReplyToReply]);
+
+  const handleReaction = useCallback((commentId: string, reactionId: string | null) => {
+    // Find if this is a reply or main comment
+    const isReply = replies.some(r => r.id === commentId);
+    
+    if (isReply && onLikeReply) {
+      // It's a reply
+      if (reactionId === null) {
+        // Handle removing reaction if needed
+      } else {
+        onLikeReply(commentId, id);
+      }
+    }
+  }, [replies, id, onLikeReply]);
+
+  const getReplyingToName = useCallback(() => {
+    if (!replyingTo) return null;
+    
+    // Check if replying to a reply
+    const reply = replies.find(r => r.id === replyingTo);
+    if (reply) return reply.user_name;
+    
+    // Otherwise replying to main comment
+    return user_name;
+  }, [replyingTo, replies, user_name]);
+
   const renderedReplies = useMemo(() => {
     if (!replies.length || !expandedReplies?.has(id)) return null;
 
@@ -205,8 +284,9 @@ const ReviewItem = memo(({
         reviewId={id}
         getAvatarColor={getAvatarColor}
         getInitials={getInitials}
+        formatDate={formatDateLocal}
         onLikeReply={onLikeReply}
-        onReplyToReply={onReplyToReply}
+        onReplyClick={handleReplyClick}
         onEditReply={onEditReply}
         onDeleteReply={onDeleteReply}
         onReportReply={onReportReply}
@@ -214,7 +294,7 @@ const ReviewItem = memo(({
         isOwner={reply.user_id === currentUserId}
       />
     ));
-  }, [replies, expandedReplies, id, getAvatarColor, getInitials, onLikeReply, onReplyToReply, onEditReply, onDeleteReply, onReportReply, currentUserId]);
+  }, [replies, expandedReplies, id, getAvatarColor, getInitials, formatDateLocal, onLikeReply, handleReplyClick, onEditReply, onDeleteReply, onReportReply, currentUserId]);
 
   const handleFollowClick = useCallback(() => {
     if (isFollowing) {
@@ -231,15 +311,6 @@ const ReviewItem = memo(({
   const handleShareClick = useCallback(() => {
     onShareClick?.(id);
   }, [id, onShareClick]);
-
-  const handleCommentClick = useCallback(() => {
-    if (onCommentClick) {
-      onCommentClick(id);
-    } else if (onReplyToReply) {
-      // If no comment click handler, trigger reply
-      onReplyToReply(id, id, user_name || '');
-    }
-  }, [id, onCommentClick, onReplyToReply, user_name]);
 
   const handleMenuAction = useCallback((action: 'report' | 'edit' | 'delete' | 'share') => {
     onMenuAction?.(id, action);
@@ -282,6 +353,11 @@ const ReviewItem = memo(({
   const hasReplies = useMemo(() => replies.length > 0, [replies.length]);
   const hasMedia = useMemo(() => media.length > 0, [media.length]);
   const hasMoreReplies = useMemo(() => replyPagination?.hasMore, [replyPagination?.hasMore]);
+  const totalReactions = useMemo(() => {
+    return replies.reduce((acc, reply) => {
+      return acc + (reply.like_count || 0);
+    }, 0);
+  }, [replies]);
 
   return (
     <div 
@@ -407,42 +483,81 @@ const ReviewItem = memo(({
       {/* Engagement Section */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-6">
-          {/* Comment/Reply Button */}
+          {/* Reaction Button - from VendorPostComments */}
+          <div className="flex-shrink-0">
+            <ReactionButton
+              onReactionChange={(reactionId) => handleReaction(id, reactionId)}
+              initialReaction={undefined} // You can add userReaction to Review type if needed
+              buttonClassName="py-1 px-3 bg-gray-100 hover:bg-gray-200 rounded-full h-8 flex items-center justify-center"
+              size="md"
+            />
+          </div>
+
+          {/* Reply Button */}
           <button
-            onClick={handleCommentClick}
-            className="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group"
-            aria-label={`Reply to this review. ${comment_count} replies`}
+            onClick={() => handleReplyClick(id)}
+            className="text-sm text-gray-500 hover:text-blue-600 transition-colors font-medium"
           >
-            <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span>Reply ({comment_count})</span>
+            Reply
           </button>
 
-          {/* Helpful Button with count in parentheses */}
-          <button
-            onClick={handleHelpfulClick}
-            className="text-sm text-gray-500 hover:text-green-600 transition-colors flex items-center gap-2 font-medium group"
-            aria-label={`Mark this review as helpful. ${helpfulCount} people found this helpful`}
-          >
-            <ThumbsUp className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span>Helpful ({helpfulCount})</span>
-          </button>
-
-          {/* Share Button with counter */}
-          <button
-            onClick={handleShareClick}
-            className="text-sm text-gray-500 hover:text-purple-600 transition-colors flex items-center gap-2 font-medium group"
-            aria-label={`Share this review. ${shareCount} shares`}
-          >
-            <Link className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span>Share ({shareCount})</span>
-          </button>
+          {/* Timestamp */}
+          <span className="text-xs text-gray-500">{formattedDate}</span>
         </div>
 
-        {/* Date at the bottom right */}
-        <div className="text-xs text-gray-500">
-          {formattedDate}
-        </div>
+        {/* Stacked Reactions - from VendorPostComments */}
+        {totalReactions > 0 && (
+          <StackedReactionIcons count={totalReactions} />
+        )}
       </div>
+
+      {/* Reply Input - from VendorPostComments */}
+      {replyingTo && (
+        <div className="mt-3 ml-12">
+          <div className="flex items-center justify-between px-3 py-1.5 mb-1 bg-gray-50 rounded-lg">
+            <span className="text-xs text-gray-600">
+              Replying to <span className="font-semibold text-gray-900">{getReplyingToName()}</span>
+            </span>
+            <button
+              onClick={handleCancelReply}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="relative w-full">
+            <Textarea
+              ref={replyInputRef}
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder="Write a reply..."
+              className="min-h-[36px] max-h-32 w-full text-sm resize-none bg-gray-100 border-none text-gray-900 placeholder:text-gray-400 rounded-full px-4 py-2 pr-10 focus:ring-1 focus:ring-blue-500 transition-all"
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmitReply();
+                }
+              }}
+              rows={1}
+            />
+            <button
+              onClick={handleSubmitReply}
+              disabled={!replyText.trim()}
+              className={`absolute right-2 bottom-2 p-1 rounded-full transition-colors ${
+                replyText.trim() 
+                  ? 'text-blue-500 hover:bg-blue-50' 
+                  : 'text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Replies Section */}
       {hasReplies && (
@@ -486,8 +601,9 @@ interface ReplyItemProps {
   reviewId: string;
   getAvatarColor: (name?: string) => string;
   getInitials: (name?: string) => string;
+  formatDate: (date: string) => string;
   onLikeReply?: (replyId: string, reviewId: string) => void;
-  onReplyToReply?: (replyId: string, reviewId: string, userName: string) => void;
+  onReplyClick?: (replyId: string) => void;
   onEditReply?: (replyId: string, reviewId: string, comment: string) => void;
   onDeleteReply?: (replyId: string, reviewId: string) => void;
   onReportReply?: (replyId: string, reviewId: string, reason: string) => void;
@@ -500,8 +616,9 @@ const ReplyItem = memo(({
   reviewId,
   getAvatarColor,
   getInitials,
+  formatDate,
   onLikeReply,
-  onReplyToReply,
+  onReplyClick,
   onEditReply,
   onDeleteReply,
   onReportReply,
@@ -525,8 +642,8 @@ const ReplyItem = memo(({
   }, [id, reviewId, onLikeReply]);
 
   const handleReplyClick = useCallback(() => {
-    onReplyToReply?.(id, reviewId, user_name || '');
-  }, [id, reviewId, user_name, onReplyToReply]);
+    onReplyClick?.(id);
+  }, [id, onReplyClick]);
 
   const handleEditClick = useCallback(() => {
     onEditReply?.(id, reviewId, comment || '');
@@ -563,7 +680,7 @@ const ReplyItem = memo(({
     };
   }, [showReplyMenu]);
 
-  const formattedDate = useMemo(() => formatDate(created_at), [created_at]);
+  const formattedDate = useMemo(() => formatDate(created_at), [created_at, formatDate]);
   const avatarColor = useMemo(() => getAvatarColor(user_name), [user_name, getAvatarColor]);
   const initials = useMemo(() => getInitials(user_name), [user_name, getInitials]);
 
@@ -577,99 +694,87 @@ const ReplyItem = memo(({
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900 text-sm">
+          <div className="bg-gray-100 rounded-2xl px-3 py-2 w-full">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <p className="font-semibold text-[13px] text-gray-900 break-words">
                 {user_name || 'Anonymous'}
-              </span>
-              <span className="text-xs text-gray-500">
-                {formattedDate}
-              </span>
+              </p>
             </div>
-
-            <div className="flex items-center gap-2">
-              {/* Reply Like Button */}
-              <button
-                onClick={handleLikeClick}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors group"
-                aria-label={`Like this reply. ${like_count} likes`}
-              >
-                <Heart
-                  className={`w-4 h-4 transition-all ${
-                    isLiked 
-                      ? 'fill-red-500 stroke-red-500 scale-110' 
-                      : 'fill-none stroke-current group-hover:scale-110'
-                  }`}
-                  strokeWidth={isLiked ? "2" : "2"}
-                />
-                {like_count > 0 && (
-                  <span className={isLiked ? 'text-red-500 font-semibold' : ''}>
-                    {like_count}
-                  </span>
-                )}
-              </button>
-
-              {/* Reply Button */}
-              <button
-                onClick={handleReplyClick}
-                className="text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
-                aria-label={`Reply to ${user_name || 'this user'}`}
-              >
-                Reply
-              </button>
-
-              {/* Reply Menu */}
-              <div className="relative" ref={replyMenuRef}>
-                <button
-                  onClick={toggleReplyMenu}
-                  className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                  aria-label="Reply options"
-                >
-                  <MoreHorizontal className="w-3.5 h-3.5" />
-                </button>
-
-                {showReplyMenu && (
-                  <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                    {isOwner && (
-                      <>
-                        <button
-                          onClick={handleEditClick}
-                          className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          Edit reply
-                        </button>
-                        <button
-                          onClick={handleDeleteClick}
-                          className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          Delete reply
-                        </button>
-                      </>
-                    )}
-
-                    {!isOwner && (
-                      <button
-                        onClick={handleReportClick}
-                        className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        Report reply
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+            <p className="text-[15px] text-gray-800 break-words">{comment}</p>
           </div>
 
-          <p className="text-gray-700 text-sm mt-1">{comment}</p>
+          <div className="flex items-center gap-3 mt-1 text-[12px]">
+            {/* Reaction Button for reply */}
+            <div className="flex-shrink-0">
+              <ReactionButton
+                onReactionChange={(reactionId) => {
+                  if (reactionId === 'like') {
+                    handleLikeClick();
+                  }
+                }}
+                initialReaction={isLiked ? 'like' : undefined}
+                buttonClassName="py-1 px-3 bg-gray-100 hover:bg-gray-200 rounded-full h-8 flex items-center justify-center"
+                size="sm"
+              />
+            </div>
+
+            {/* Reply button */}
+            <button
+              onClick={handleReplyClick}
+              className="font-semibold text-gray-600 hover:underline text-xs"
+            >
+              Reply
+            </button>
+
+            {/* Timestamp */}
+            <span className="text-gray-500">{formattedDate}</span>
+
+            {/* Reply Menu */}
+            <div className="relative ml-auto" ref={replyMenuRef}>
+              <button
+                onClick={toggleReplyMenu}
+                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Reply options"
+              >
+                <MoreHorizontal className="w-3.5 h-3.5" />
+              </button>
+
+              {showReplyMenu && (
+                <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                  {isOwner && (
+                    <>
+                      <button
+                        onClick={handleEditClick}
+                        className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Edit reply
+                      </button>
+                      <button
+                        onClick={handleDeleteClick}
+                        className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        Delete reply
+                      </button>
+                    </>
+                  )}
+
+                  {!isOwner && (
+                    <button
+                      onClick={handleReportClick}
+                      className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Report reply
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 });
-
-// Need to import Heart for ReplyItem
-import { Heart } from 'lucide-react';
 
 ReplyItem.displayName = 'ReplyItem';
 const MemoizedReplyItem = memo(ReplyItem);
