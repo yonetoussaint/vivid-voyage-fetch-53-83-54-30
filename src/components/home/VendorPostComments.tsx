@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Heart, Smile, Send, MessageCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -6,8 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import StackedReactionIcons from '@/components/shared/StackedReactionIcons';
 import ReactionButton from '@/components/shared/ReactionButton';
 import VerificationBadge from '@/components/shared/VerificationBadge';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Comment {
@@ -36,9 +34,146 @@ interface VendorPostCommentsProps {
   onSortChange?: (sortBy: 'relevant' | 'newest') => void;
 }
 
+// Mock comments data
+const MOCK_COMMENTS: Comment[] = [
+  {
+    id: '1',
+    userName: 'Sarah Johnson',
+    userAvatar: 'https://images.unsplash.com/photo-1494790108777-9f2e6b9f9b9a?w=150',
+    content: 'This is absolutely gorgeous! 😍 I love the color combination and the quality looks amazing.',
+    timestamp: '2 hours ago',
+    reactions: {
+      like: 15,
+      love: 8,
+      haha: 2,
+    },
+    userReaction: 'like',
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150',
+    isTopFan: true,
+    isVerified: true,
+    replies: [
+      {
+        id: '1-1',
+        userName: 'Mike Chen',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        content: 'I got one last week and can confirm it\'s even better in person!',
+        timestamp: '1 hour ago',
+        reactions: {
+          like: 5,
+          love: 2,
+          haha: 0,
+        },
+        userReaction: 'love',
+        isVerified: false,
+      },
+      {
+        id: '1-2',
+        userName: 'Emily Rodriguez',
+        userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
+        content: 'How long did shipping take?',
+        timestamp: '45 mins ago',
+        reactions: {
+          like: 3,
+          love: 1,
+          haha: 0,
+        },
+        isVerified: false,
+      },
+    ],
+  },
+  {
+    id: '2',
+    userName: 'Jessica Williams',
+    userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    content: 'Just ordered mine! Can\'t wait to try it out. The customer service was also super helpful when I had questions about sizing.',
+    timestamp: '5 hours ago',
+    reactions: {
+      like: 23,
+      love: 12,
+      haha: 1,
+    },
+    userReaction: 'love',
+    isTopFan: true,
+    isVerified: true,
+    replies: [
+      {
+        id: '2-1',
+        userName: 'Sarah Johnson',
+        userAvatar: 'https://images.unsplash.com/photo-1494790108777-9f2e6b9f9b9a?w=150',
+        content: 'You\'re going to love it! What color did you get?',
+        timestamp: '4 hours ago',
+        reactions: {
+          like: 4,
+          love: 2,
+          haha: 0,
+        },
+        isVerified: true,
+      },
+      {
+        id: '2-2',
+        userName: 'Jessica Williams',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        content: 'I went with the rose gold! 🌹',
+        timestamp: '3 hours ago',
+        reactions: {
+          like: 8,
+          love: 5,
+          haha: 0,
+        },
+        userReaction: 'like',
+        isVerified: true,
+      },
+    ],
+  },
+  {
+    id: '3',
+    userName: 'David Thompson',
+    userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+    content: 'The quality is outstanding! Definitely worth every penny. I\'ve been using it daily for a month and it still looks brand new.',
+    timestamp: '1 day ago',
+    reactions: {
+      like: 42,
+      love: 18,
+      haha: 3,
+    },
+    isVerified: true,
+    replies: [],
+  },
+  {
+    id: '4',
+    userName: 'Priya Patel',
+    userAvatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150',
+    content: 'Does this come in other sizes? I need a larger one for my collection.',
+    timestamp: '2 days ago',
+    reactions: {
+      like: 7,
+      love: 2,
+      haha: 1,
+    },
+    isVerified: false,
+    replies: [
+      {
+        id: '4-1',
+        userName: 'Vendor Support',
+        userAvatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=150',
+        content: 'Hi Priya! Yes, we offer sizes S, M, L, and XL. Check the size chart in the product description for exact measurements!',
+        timestamp: '1 day ago',
+        reactions: {
+          like: 12,
+          love: 4,
+          haha: 0,
+        },
+        userReaction: 'like',
+        isVerified: true,
+        isTopFan: false,
+      },
+    ],
+  },
+];
+
 const VendorPostComments: React.FC<VendorPostCommentsProps> = ({ 
   postId, 
-  initialComments = [],
+  initialComments = MOCK_COMMENTS, // Use mock data as default
   sortBy = 'relevant',
   onSortChange
 }) => {
@@ -46,288 +181,9 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+  const [comments, setComments] = useState<Comment[]>(initialComments);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const queryClient = useQueryClient();
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  // Get current user
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id || null);
-    };
-    getCurrentUser();
-  }, []);
-
-  // Fetch comments from database
-  const { data: dbComments = [], isLoading } = useQuery({
-    queryKey: ['post-comments', postId, sortBy],
-    queryFn: async () => {
-      // Get current user for fetching reactions
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id;
-      
-      const { data: commentsData, error } = await supabase
-        .from('post_comments')
-        .select(`
-          id,
-          content,
-          image_url,
-          like_count,
-          love_count,
-          haha_count,
-          created_at,
-          parent_comment_id,
-          user_id,
-          profiles!post_comments_user_id_fkey (
-            id,
-            full_name,
-            username,
-            avatar_url
-          )
-        `)
-        .eq('post_id', postId)
-        .is('parent_comment_id', null)
-        .order('created_at', { ascending: sortBy === 'newest' ? false : true });
-
-      if (error) throw error;
-
-      // Fetch user reactions
-      let userReactions = [];
-      if (userId) {
-        const { data: reactionsData } = await supabase
-          .from('comment_reactions')
-          .select('comment_id, reaction_type')
-          .eq('user_id', userId);
-
-        userReactions = reactionsData || [];
-      }
-
-      // Fetch replies for each comment
-      const commentsWithReplies = await Promise.all(
-        commentsData.map(async (comment) => {
-          const { data: repliesData } = await supabase
-            .from('post_comments')
-            .select(`
-              id,
-              content,
-              image_url,
-              like_count,
-              love_count,
-              haha_count,
-              created_at,
-              user_id,
-              profiles!post_comments_user_id_fkey (
-                id,
-                full_name,
-                username,
-                avatar_url
-              )
-            `)
-            .eq('parent_comment_id', comment.id)
-            .order('created_at', { ascending: true });
-
-          const replies = (repliesData || []).map((reply: any) => {
-            const replyReaction = userReactions.find((r: any) => r.comment_id === reply.id);
-            return {
-              id: reply.id,
-              userName: reply.profiles?.full_name || reply.profiles?.username || 'Anonymous',
-              userAvatar: reply.profiles?.avatar_url || '',
-              content: reply.content,
-              timestamp: formatDistanceToNow(new Date(reply.created_at), { addSuffix: true }),
-              reactions: {
-                like: reply.like_count || 0,
-                love: reply.love_count || 0,
-                haha: reply.haha_count || 0,
-              },
-              userReaction: replyReaction?.reaction_type as 'like' | 'love' | 'haha' | undefined,
-              image: reply.image_url || undefined,
-            };
-          });
-
-          const userReaction = userReactions.find((r: any) => r.comment_id === comment.id);
-
-          return {
-            id: comment.id,
-            userName: comment.profiles?.full_name || comment.profiles?.username || 'Anonymous',
-            userAvatar: comment.profiles?.avatar_url || '',
-            content: comment.content,
-            timestamp: formatDistanceToNow(new Date(comment.created_at), { addSuffix: true }),
-            reactions: {
-              like: comment.like_count || 0,
-              love: comment.love_count || 0,
-              haha: comment.haha_count || 0,
-            },
-            userReaction: userReaction?.reaction_type as 'like' | 'love' | 'haha' | undefined,
-            image: comment.image_url || undefined,
-            replies,
-          };
-        })
-      );
-
-      return commentsWithReplies;
-    },
-    enabled: !!postId,
-  });
-
-  const comments = dbComments.length > 0 ? dbComments : initialComments;
-
-  // Mutation to add comment
-  const addCommentMutation = useMutation({
-    mutationFn: async ({ content, parentId }: { content: string; parentId?: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Must be logged in to comment');
-
-      const { data, error } = await supabase
-        .from('post_comments')
-        .insert({
-          post_id: postId,
-          user_id: user.id,
-          content,
-          parent_comment_id: parentId || null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['post-comments', postId, sortBy] });
-      setNewComment('');
-      setReplyingTo(null);
-    },
-  });
-
-  // Mutation to handle reactions
-  const reactionMutation = useMutation({
-    mutationFn: async ({ 
-      commentId, 
-      reactionType 
-    }: { 
-      commentId: string; 
-      reactionType: 'like' | 'love' | 'haha' | null 
-    }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Must be logged in to react');
-
-      // First, get the current reaction (if any)
-      const { data: existingReaction } = await supabase
-        .from('comment_reactions')
-        .select('reaction_type')
-        .eq('comment_id', commentId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      const oldReactionType = existingReaction?.reaction_type;
-
-      if (reactionType === null) {
-        // Remove reaction - trigger will handle count updates
-        const { error: deleteError } = await supabase
-          .from('comment_reactions')
-          .delete()
-          .eq('comment_id', commentId)
-          .eq('user_id', user.id);
-
-        if (deleteError) throw deleteError;
-      } else {
-        // Upsert reaction - trigger will handle count updates
-        const { error: upsertError } = await supabase
-          .from('comment_reactions')
-          .upsert({
-            comment_id: commentId,
-            user_id: user.id,
-            reaction_type: reactionType,
-          }, {
-            onConflict: 'comment_id,user_id',
-          });
-
-        if (upsertError) throw upsertError;
-      }
-    },
-    onMutate: async ({ commentId, reactionType }) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['post-comments', postId, sortBy] });
-
-      // Snapshot the previous value
-      const previousComments = queryClient.getQueryData(['post-comments', postId, sortBy]);
-
-      // Optimistically update the cache
-      queryClient.setQueryData(['post-comments', postId, sortBy], (old: any) => {
-        if (!old) return old;
-
-        return old.map((comment: Comment) => {
-          // Check if this is the comment being reacted to
-          if (comment.id === commentId) {
-            const oldReaction = comment.userReaction;
-            const newReactions = { ...comment.reactions };
-            
-            // Update counts optimistically
-            if (oldReaction) {
-              newReactions[oldReaction] = Math.max(0, (newReactions[oldReaction] || 0) - 1);
-            }
-            if (reactionType) {
-              newReactions[reactionType] = (newReactions[reactionType] || 0) + 1;
-            }
-            
-            return { 
-              ...comment, 
-              userReaction: reactionType || undefined,
-              reactions: newReactions
-            };
-          }
-          
-          // Check if any reply matches
-          if (comment.replies && comment.replies.length > 0) {
-            const hasMatchingReply = comment.replies.some((reply: Comment) => reply.id === commentId);
-            
-            if (hasMatchingReply) {
-              return {
-                ...comment,
-                replies: comment.replies.map((reply: Comment) => {
-                  if (reply.id === commentId) {
-                    const oldReaction = reply.userReaction;
-                    const newReactions = { ...reply.reactions };
-                    
-                    // Update counts optimistically
-                    if (oldReaction) {
-                      newReactions[oldReaction] = Math.max(0, (newReactions[oldReaction] || 0) - 1);
-                    }
-                    if (reactionType) {
-                      newReactions[reactionType] = (newReactions[reactionType] || 0) + 1;
-                    }
-                    
-                    return { 
-                      ...reply, 
-                      userReaction: reactionType || undefined,
-                      reactions: newReactions
-                    };
-                  }
-                  return reply;
-                })
-              };
-            }
-          }
-          
-          // Return unchanged
-          return comment;
-        });
-      });
-
-      return { previousComments };
-    },
-    onError: (err, variables, context) => {
-      // Rollback on error
-      if (context?.previousComments) {
-        queryClient.setQueryData(['post-comments', postId, sortBy], context.previousComments);
-      }
-    },
-    onSuccess: () => {
-      // Only invalidate after successful save to refetch with correct data
-      queryClient.invalidateQueries({ queryKey: ['post-comments', postId, sortBy] });
-    },
-  });
 
   const toggleReplies = (commentId: string) => {
     setExpandedReplies(prev => {
@@ -355,26 +211,133 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
   };
 
   const handleReaction = (commentId: string, reactionId: string | null) => {
-    const comment = comments.find(c => c.id === commentId || c.replies?.some(r => r.id === commentId));
-    const targetComment = comment?.id === commentId ? comment : comment?.replies?.find(r => r.id === commentId);
+    // Find the comment or reply
+    const updateCommentReactions = (commentsList: Comment[]): Comment[] => {
+      return commentsList.map(comment => {
+        // Check if this is the main comment
+        if (comment.id === commentId) {
+          const oldReaction = comment.userReaction;
+          const newReactions = { ...comment.reactions };
 
-    if (!targetComment) return;
+          // Update counts
+          if (oldReaction) {
+            newReactions[oldReaction] = Math.max(0, (newReactions[oldReaction] || 0) - 1);
+          }
+          if (reactionId) {
+            const reactionKey = reactionId as 'like' | 'love' | 'haha';
+            newReactions[reactionKey] = (newReactions[reactionKey] || 0) + 1;
+          }
 
-    // If clicking the same reaction, remove it
-    if (reactionId === targetComment.userReaction) {
-      reactionMutation.mutate({ commentId, reactionType: null });
-    } else if (reactionId) {
-      reactionMutation.mutate({ commentId, reactionType: reactionId as 'like' | 'love' | 'haha' });
-    }
+          return { 
+            ...comment, 
+            userReaction: reactionId as 'like' | 'love' | 'haha' | undefined,
+            reactions: newReactions
+          };
+        }
+
+        // Check replies
+        if (comment.replies && comment.replies.length > 0) {
+          const hasMatchingReply = comment.replies.some(reply => reply.id === commentId);
+          
+          if (hasMatchingReply) {
+            return {
+              ...comment,
+              replies: comment.replies.map(reply => {
+                if (reply.id === commentId) {
+                  const oldReaction = reply.userReaction;
+                  const newReactions = { ...reply.reactions };
+
+                  // Update counts
+                  if (oldReaction) {
+                    newReactions[oldReaction] = Math.max(0, (newReactions[oldReaction] || 0) - 1);
+                  }
+                  if (reactionId) {
+                    const reactionKey = reactionId as 'like' | 'love' | 'haha';
+                    newReactions[reactionKey] = (newReactions[reactionKey] || 0) + 1;
+                  }
+
+                  return { 
+                    ...reply, 
+                    userReaction: reactionId as 'like' | 'love' | 'haha' | undefined,
+                    reactions: newReactions
+                  };
+                }
+                return reply;
+              })
+            };
+          }
+        }
+
+        return comment;
+      });
+    };
+
+    setComments(prevComments => updateCommentReactions(prevComments));
   };
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;
 
-    addCommentMutation.mutate({
+    const newCommentObj: Comment = {
+      id: `mock-${Date.now()}`,
+      userName: 'Current User',
+      userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
       content: newComment,
-      parentId: replyingTo || undefined,
-    });
+      timestamp: 'just now',
+      reactions: {
+        like: 0,
+        love: 0,
+        haha: 0,
+      },
+      isVerified: true,
+      replies: [],
+    };
+
+    if (replyingTo) {
+      // Add as reply
+      setComments(prevComments => 
+        prevComments.map(comment => {
+          if (comment.id === replyingTo) {
+            return {
+              ...comment,
+              replies: [...(comment.replies || []), newCommentObj],
+            };
+          }
+          return comment;
+        })
+      );
+    } else {
+      // Add as new comment
+      setComments(prevComments => [newCommentObj, ...prevComments]);
+    }
+
+    setNewComment('');
+    setReplyingTo(null);
+  };
+
+  const handleSortChange = (newSortBy: 'relevant' | 'newest') => {
+    if (onSortChange) {
+      onSortChange(newSortBy);
+    } else {
+      // Simple mock sorting
+      const sortedComments = [...comments];
+      if (newSortBy === 'newest') {
+        sortedComments.sort((a, b) => {
+          // This is a simplified mock sort - in reality you'd compare actual timestamps
+          if (a.timestamp.includes('hour') && b.timestamp.includes('day')) return -1;
+          if (a.timestamp.includes('day') && b.timestamp.includes('hour')) return 1;
+          return 0;
+        });
+      } else {
+        // Sort by reactions count for "relevant"
+        sortedComments.sort((a, b) => {
+          const aTotal = a.reactions.like + a.reactions.love + a.reactions.haha;
+          const bTotal = b.reactions.like + b.reactions.love + b.reactions.haha;
+          return bTotal - aTotal;
+        });
+      }
+      setComments(sortedComments);
+    }
   };
 
   const CommentItem = ({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) => {
@@ -481,16 +444,33 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500">Loading comments...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-full bg-white relative">
+      {/* Sort options */}
+      <div className="px-3 md:px-4 py-2 border-b border-gray-200 flex items-center gap-2">
+        <span className="text-sm text-gray-500">Sort by:</span>
+        <button
+          onClick={() => handleSortChange('relevant')}
+          className={`text-sm px-3 py-1 rounded-full transition-colors ${
+            sortBy === 'relevant' 
+              ? 'bg-blue-100 text-blue-600 font-medium' 
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          Relevant
+        </button>
+        <button
+          onClick={() => handleSortChange('newest')}
+          className={`text-sm px-3 py-1 rounded-full transition-colors ${
+            sortBy === 'newest' 
+              ? 'bg-blue-100 text-blue-600 font-medium' 
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          Newest
+        </button>
+      </div>
+
       <div className="flex-1 overflow-y-auto px-3 md:px-4 pb-24">
         {comments.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
@@ -547,7 +527,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             />
             <button
               onClick={handleAddComment}
-              disabled={!newComment.trim() || addCommentMutation.isPending}
+              disabled={!newComment.trim()}
               className={`absolute right-2 bottom-2 p-1 rounded-full transition-colors ${
                 newComment.trim() 
                   ? 'text-blue-500 hover:bg-blue-50' 
