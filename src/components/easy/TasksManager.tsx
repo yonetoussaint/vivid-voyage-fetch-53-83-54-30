@@ -1,6 +1,6 @@
-// TasksManager.jsx - Update to use filterType
+// TasksManager.jsx - Using MeetingList component
 import React, { useState, useEffect } from 'react';
-import TaskList from './TaskList';
+import MeetingList from './MeetingList'; // Reusing the same MeetingList component
 
 const TasksManager = ({ shift, date, vendeurs = [], filterType = 'all' }) => {
   const [tasks, setTasks] = useState([]);
@@ -11,7 +11,43 @@ const TasksManager = ({ shift, date, vendeurs = [], filterType = 'all' }) => {
       setTasks(JSON.parse(savedTasks));
     } else {
       // Sample tasks if needed
-      setTasks([]);
+      const sampleTasks = [
+        {
+          id: 1,
+          description: 'Check pump calibration',
+          dueDate: date,
+          dueTime: '08:00',
+          shift: 'AM',
+          status: 'pending',
+          meetingType: 'task', // Using meetingType field to distinguish
+          category: 'inspection',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 2,
+          description: 'Call supplier about fuel delivery',
+          dueDate: date,
+          dueTime: '10:30',
+          shift: 'AM',
+          status: 'pending',
+          meetingType: 'task',
+          category: 'appels',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 3,
+          description: 'Submit incident report',
+          dueDate: date,
+          dueTime: '15:00',
+          shift: 'PM',
+          status: 'pending',
+          meetingType: 'task',
+          category: 'incident',
+          createdAt: new Date().toISOString()
+        }
+      ];
+      setTasks(sampleTasks);
+      localStorage.setItem(`gasStationTasks_${date}`, JSON.stringify(sampleTasks));
     }
   }, [date]);
 
@@ -19,9 +55,8 @@ const TasksManager = ({ shift, date, vendeurs = [], filterType = 'all' }) => {
   const getFilteredTasks = () => {
     switch(filterType) {
       case 'all':
+      case 'tasks': // Show all tasks
         return tasks;
-      case 'tasks':
-        return tasks; // Show all tasks
       case 'incidents':
         return tasks.filter(task => task.category === 'incident');
       case 'inspections':
@@ -31,7 +66,7 @@ const TasksManager = ({ shift, date, vendeurs = [], filterType = 'all' }) => {
       case 'payments':
         return tasks.filter(task => task.category === 'payment');
       case 'appels':
-        return tasks.filter(task => task.category === 'call');
+        return tasks.filter(task => task.category === 'appels' || task.category === 'call');
       case 'messages':
         return tasks.filter(task => task.category === 'message');
       case 'emails':
@@ -74,10 +109,11 @@ const TasksManager = ({ shift, date, vendeurs = [], filterType = 'all' }) => {
         </h2>
       </div>
       
-      <TaskList 
-        tasks={filteredTasks}
+      {/* Using the same MeetingList component */}
+      <MeetingList 
+        meetings={filteredTasks}
         onDelete={handleDeleteTask}
-        onUpdateTask={handleUpdateTask}
+        onUpdateMeeting={handleUpdateTask}
       />
     </div>
   );
