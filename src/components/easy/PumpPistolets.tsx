@@ -4,6 +4,7 @@ import { getCouleurCarburant, getCouleurBadge, calculerGallons } from '@/utils/h
 import { Droplets, DollarSign } from 'lucide-react';
 
 // Phase Summary Card
+// Phase Summary Card
 const PhaseSummary = ({ totals, title, color }) => {
   return (
     <div className="w-full bg-white rounded-lg border border-gray-200 p-3 mb-4">
@@ -11,8 +12,9 @@ const PhaseSummary = ({ totals, title, color }) => {
         <div className={`w-3 h-3 rounded-full mr-2 ${color}`} />
         <h3 className="font-medium text-gray-900">{title} Summary</h3>
       </div>
-      
+
       <div className="space-y-2">
+        {/* First row: Gallons Total and Ventes Total */}
         <div className="flex space-x-2">
           <div className="flex-1 rounded p-2 border border-gray-200">
             <p className="text-xs text-gray-500 mb-0.5">Total Gallons</p>
@@ -40,40 +42,58 @@ const PhaseSummary = ({ totals, title, color }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-orange-50 rounded p-2 border border-orange-100">
-            <p className="text-xs font-medium text-orange-700 mb-1">Gasoline</p>
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center">
-                <p className="text-xs text-orange-900 font-medium">
+        {/* Second row: Gasoline Total and Ventes Gasoline */}
+        <div className="flex space-x-2">
+          <div className="flex-1 bg-orange-50 rounded p-2 border border-orange-200">
+            <p className="text-xs text-gray-500 mb-0.5">Gasoline Total</p>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-1">
+                <Droplets size={12} className="text-orange-500" />
+                <p className="text-sm font-bold text-orange-900">
                   {formaterGallons(totals.totalGasoline || 0)}
                 </p>
-                <span className="text-xs text-orange-600">gallons</span>
               </div>
-              <div className="flex justify-between items-center">
-                <p className="text-xs text-orange-700">
-                  {formaterArgent(totals.salesGasoline || 0)}
-                </p>
-                <span className="text-xs text-orange-500">HTG</span>
-              </div>
+              <span className="text-xs font-medium text-orange-700">gallons</span>
             </div>
           </div>
+          <div className="flex-1 bg-orange-50 rounded p-2 border border-orange-200">
+            <p className="text-xs text-gray-500 mb-0.5">Ventes Gasoline</p>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-1">
+                <DollarSign size={12} className="text-orange-500" />
+                <p className="text-sm font-bold text-orange-900">
+                  {formaterArgent(totals.salesGasoline || 0)}
+                </p>
+              </div>
+              <span className="text-xs font-medium text-orange-700">HTG</span>
+            </div>
+          </div>
+        </div>
 
-          <div className="bg-purple-50 rounded p-2 border border-purple-100">
-            <p className="text-xs font-medium text-purple-700 mb-1">Diesel</p>
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center">
-                <p className="text-xs text-purple-900 font-medium">
+        {/* Third row: Diesel Total and Ventes Diesel */}
+        <div className="flex space-x-2">
+          <div className="flex-1 bg-purple-50 rounded p-2 border border-purple-200">
+            <p className="text-xs text-gray-500 mb-0.5">Diesel Total</p>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-1">
+                <Droplets size={12} className="text-purple-500" />
+                <p className="text-sm font-bold text-purple-900">
                   {formaterGallons(totals.totalDiesel || 0)}
                 </p>
-                <span className="text-xs text-purple-600">gallons</span>
               </div>
-              <div className="flex justify-between items-center">
-                <p className="text-xs text-purple-700">
+              <span className="text-xs font-medium text-purple-700">gallons</span>
+            </div>
+          </div>
+          <div className="flex-1 bg-purple-50 rounded p-2 border border-purple-200">
+            <p className="text-xs text-gray-500 mb-0.5">Ventes Diesel</p>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-1">
+                <DollarSign size={12} className="text-purple-500" />
+                <p className="text-sm font-bold text-purple-900">
                   {formaterArgent(totals.salesDiesel || 0)}
                 </p>
-                <span className="text-xs text-purple-500">HTG</span>
               </div>
+              <span className="text-xs font-medium text-purple-700">HTG</span>
             </div>
           </div>
         </div>
@@ -81,6 +101,7 @@ const PhaseSummary = ({ totals, title, color }) => {
     </div>
   );
 };
+
 
 // Pistolet Card
 const PistoletCard = ({ pistoletKey, donnees, pompe, mettreAJourLecture, prix }) => {
