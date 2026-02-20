@@ -1,99 +1,92 @@
-// components/easy/TaskTypeSelector.jsx
+// TaskTypeSelector.jsx - Unified filter with all requested types
 import React from 'react';
 import { 
-  Filter,
-  Calendar, 
-  Bell, 
-  Target, 
-  CheckSquare,
+  Calendar,
+  ClipboardList,
+  Bell,
   AlertTriangle,
-  CheckCircle,
-  ListTodo,
-  Flag,
-  Users,
-  Clock,
-  BarChart3,
   FileText,
-  AlertCircle
+  DollarSign,
+  CreditCard,
+  Phone,
+  MessageSquare,
+  Mail,
+  Shield,
+  Wrench,
+  Users,
+  ShoppingCart,
+  Package,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Flag,
+  GraduationCap,
+  UserCheck,
+  Briefcase,
+  Truck
 } from 'lucide-react';
 
-const TaskTypeSelector = ({ taskType, setTaskType }) => {
-  const taskTypes = [
-    { 
-      id: 'all', 
-      label: 'All Tasks', 
-      icon: <Filter className="w-4 h-4" />,
-      color: 'bg-blue-600 text-white',
-      borderColor: 'border-blue-600'
-    },
-    { 
-      id: 'meeting', 
-      label: 'Meetings', 
-      icon: <Calendar className="w-4 h-4" />,
-      color: 'bg-purple-600 text-white',
-      borderColor: 'border-purple-600'
-    },
-    { 
-      id: 'reminder', 
-      label: 'Reminders', 
-      icon: <Bell className="w-4 h-4" />,
-      color: 'bg-orange-600 text-white',
-      borderColor: 'border-orange-600'
-    },
-    { 
-      id: 'task', 
-      label: 'Tasks', 
-      icon: <Target className="w-4 h-4" />,
-      color: 'bg-green-600 text-white',
-      borderColor: 'border-green-600'
-    },
-    { 
-      id: 'todo', 
-      label: 'To-Dos', 
-      icon: <CheckSquare className="w-4 h-4" />,
-      color: 'bg-indigo-600 text-white',
-      borderColor: 'border-indigo-600'
-    },
-    { 
-      id: 'pending', 
-      label: 'Pending', 
-      icon: <Clock className="w-4 h-4" />,
-      color: 'bg-yellow-600 text-white',
-      borderColor: 'border-yellow-600'
-    },
-    { 
-      id: 'completed', 
-      label: 'Completed', 
-      icon: <CheckCircle className="w-4 h-4" />,
-      color: 'bg-emerald-600 text-white',
-      borderColor: 'border-emerald-600'
-    },
-    { 
-      id: 'critical', 
-      label: 'Critical', 
-      icon: <AlertTriangle className="w-4 h-4" />,
-      color: 'bg-red-600 text-white',
-      borderColor: 'border-red-600'
-    }
+const TaskTypeSelector = ({ filterType, setFilterType }) => {
+  const filterOptions = [
+    // Core types
+    { id: 'all', label: 'All', icon: ClipboardList },
+    { id: 'tasks', label: 'Tasks', icon: ClipboardList },
+    { id: 'meetings', label: 'Meetings', icon: Calendar },
+    { id: 'reminders', label: 'Reminders', icon: Bell },
+    
+    // New requested types
+    { id: 'incidents', label: 'Incidents', icon: AlertTriangle },
+    { id: 'inspections', label: 'Inspections', icon: FileText },
+    { id: 'dépenses', label: 'Dépenses', icon: DollarSign },
+    { id: 'payments', label: 'Payments', icon: CreditCard },
+    { id: 'appels', label: 'Appels', icon: Phone },
+    { id: 'messages', label: 'Messages', icon: MessageSquare },
+    { id: 'emails', label: 'Emails', icon: Mail },
+    
+    // Additional useful types
+    { id: 'safety', label: 'Safety', icon: Shield },
+    { id: 'maintenance', label: 'Maintenance', icon: Wrench },
+    { id: 'staff', label: 'Staff', icon: Users },
+    { id: 'inventory', label: 'Inventory', icon: ShoppingCart },
+    { id: 'supplies', label: 'Supplies', icon: Package },
+    { id: 'training', label: 'Training', icon: GraduationCap },
+    { id: 'evaluations', label: 'Evaluations', icon: UserCheck },
+    { id: 'deliveries', label: 'Deliveries', icon: Truck },
+    { id: 'shift-handover', label: 'Shift', icon: Users },
+    
+    // Status based
+    { id: 'pending', label: 'Pending', icon: Clock },
+    { id: 'urgent', label: 'Urgent', icon: AlertCircle },
+    { id: 'completed', label: 'Completed', icon: CheckCircle },
+    { id: 'critical', label: 'Critical', icon: Flag },
   ];
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto pb-1 px-2 no-scrollbar">
-      {taskTypes.map((type) => (
-        <button
-          key={type.id}
-          onClick={() => setTaskType(type.id)}
-          className={`px-3 py-1 font-medium text-sm whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5 ${
-            taskType === type.id
-              ? `${type.color} ${type.borderColor}`
-              : 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
-          }`}
-          style={{ borderRadius: '20px !important' }}
-        >
-          {type.icon}
-          {type.label}
-        </button>
-      ))}
+    <div className="bg-white border-b border-slate-200">
+      <div className="flex items-center overflow-x-auto scrollbar-hide px-2 py-1 gap-1">
+        {filterOptions.map((option) => {
+          const Icon = option.icon;
+          const isActive = filterType === option.id;
+          
+          return (
+            <button
+              key={option.id}
+              onClick={() => setFilterType(option.id)}
+              className={`
+                flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0
+                ${isActive 
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+                }
+              `}
+              title={option.label}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
