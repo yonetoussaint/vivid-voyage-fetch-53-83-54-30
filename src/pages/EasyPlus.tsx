@@ -11,7 +11,6 @@ import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
 import Liasse from '@/components/easy/Liasse';
-import MeetingsManager from '@/components/easy/MeetingsManager';
 import { useStationData } from '@/hooks/useStationData';
 
 // Import the layout components
@@ -152,7 +151,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      
+
       case 'tasks':
         return (
           <div className="p-2 sm:p-4">
@@ -164,18 +163,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      
-      case 'meetings':
-        return (
-          <div className="p-2 sm:p-4">
-            <MeetingsManager
-              shift={shift}
-              date={date}
-              vendeurs={vendeurs}
-            />
-          </div>
-        );
-      
+
       case 'vendeurs':
         return (
           <div className="p-2 sm:p-4">
@@ -190,7 +178,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      
+
       case 'conditionnement':
         return (
           <div className="p-2 sm:p-6">
@@ -203,7 +191,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      
+
       case 'depots':
         return (
           <div className="p-2 sm:p-6">
@@ -220,7 +208,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      
+
       case 'stock':
         return (
           <div className="p-2 sm:p-6">
@@ -234,7 +222,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      
+
       case 'usd':
         return (
           <div className="p-2 sm:p-6">
@@ -248,7 +236,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      
+
       case 'report':
         return (
           <div className="p-2 sm:p-6">
@@ -269,7 +257,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      
+
       case 'rapport':
         return (
           <div className="p-2 sm:p-6">
@@ -280,7 +268,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      
+
       case 'liasse':
         return (
           <div className="p-2 sm:p-6">
@@ -291,7 +279,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      
+
       default:
         return (
           <div className="p-2 sm:p-6">
