@@ -11,6 +11,8 @@ import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
 import Liasse from '@/components/easy/Liasse';
+// Import the new ProForma component
+import ProForma from '@/components/easy/ProForma'; 
 import { useStationData } from '@/hooks/useStationData';
 
 // Import the layout components
@@ -277,6 +279,14 @@ const SystemeStationService = () => {
               date={date}
               vendeurs={vendeurs}
             />
+          </div>
+        );
+
+      // New case for the ProForma (Propane Invoice) component
+      case 'proforma':
+        return (
+          <div className="p-2 sm:p-6">
+            <ProForma />
           </div>
         );
 
