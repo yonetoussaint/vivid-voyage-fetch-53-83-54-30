@@ -1,4 +1,4 @@
-// SystemeStationService.jsx (updated section for meetings tab)
+// SystemeStationService.jsx (updated section)
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -11,7 +11,9 @@ import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
 import Liasse from '@/components/easy/Liasse';
-import MeetingsManager from '@/components/easy/MeetingsManager'; // Import MeetingsManager
+import MeetingsManager from '@/components/easy/MeetingsManager';
+import RemindersManager from '@/components/easy/RemindersManager';
+import AllItemsManager from '@/components/easy/AllItemsManager';
 import { useStationData } from '@/hooks/useStationData';
 
 // Import the layout components
@@ -29,8 +31,7 @@ const SystemeStationService = () => {
   const [showContact, setShowContact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [vendeurActif, setVendeurActif] = useState(null);
-  const [taskType, setTaskType] = useState('all');
-  const [meetingType, setMeetingType] = useState('all'); // Add meeting type state
+  const [filterType, setFilterType] = useState('all'); // Unified filter for tasks/meetings/reminders
   const [tasksStats, setTasksStats] = useState(null);
 
   const {
@@ -119,6 +120,8 @@ const SystemeStationService = () => {
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
+    // Reset filter when changing tabs
+    setFilterType('all');
     if (window.innerWidth < 1024) {
       setIsMenuOpen(false);
     }
@@ -151,6 +154,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
+      
       case 'tasks':
         return (
           <div className="p-2 sm:p-4">
@@ -158,22 +162,47 @@ const SystemeStationService = () => {
               shift={shift}
               date={date}
               vendeurs={vendeurs}
-              taskType={taskType}
+              filterType={filterType}
             />
           </div>
         );
-      case 'meetings': // Add meetings case
+      
+      case 'meetings':
         return (
           <div className="p-2 sm:p-4">
             <MeetingsManager
               shift={shift}
               date={date}
               vendeurs={vendeurs}
-              meetingType={meetingType}
-              onMeetingTypeChange={setMeetingType}
+              filterType={filterType}
             />
           </div>
         );
+      
+      case 'reminders':
+        return (
+          <div className="p-2 sm:p-4">
+            <RemindersManager
+              shift={shift}
+              date={date}
+              vendeurs={vendeurs}
+              filterType={filterType}
+            />
+          </div>
+        );
+      
+      case 'all-items':
+        return (
+          <div className="p-2 sm:p-4">
+            <AllItemsManager
+              shift={shift}
+              date={date}
+              vendeurs={vendeurs}
+              filterType={filterType}
+            />
+          </div>
+        );
+      
       case 'vendeurs':
         return (
           <div className="p-2 sm:p-4">
@@ -188,6 +217,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
+      
       case 'conditionnement':
         return (
           <div className="p-2 sm:p-6">
@@ -200,6 +230,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
+      
       case 'depots':
         return (
           <div className="p-2 sm:p-6">
@@ -216,6 +247,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
+      
       case 'stock':
         return (
           <div className="p-2 sm:p-6">
@@ -229,6 +261,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
+      
       case 'usd':
         return (
           <div className="p-2 sm:p-6">
@@ -242,6 +275,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
+      
       case 'report':
         return (
           <div className="p-2 sm:p-6">
@@ -262,6 +296,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
+      
       case 'rapport':
         return (
           <div className="p-2 sm:p-6">
@@ -272,6 +307,7 @@ const SystemeStationService = () => {
             />
           </div>
         );
+      
       case 'liasse':
         return (
           <Liasse
@@ -280,6 +316,7 @@ const SystemeStationService = () => {
             vendeurs={vendeurs}
           />
         );
+      
       default:
         return (
           <div className="p-2 sm:p-6">
@@ -309,12 +346,9 @@ const SystemeStationService = () => {
         pompeEtendue={pompeEtendue}
         setPompeEtendue={setPompeEtendue}
         showPropane={true}
-        // Task props
-        taskType={taskType}
-        setTaskType={setTaskType}
-        // Meeting props
-        meetingType={meetingType}
-        setMeetingType={setMeetingType}
+        // Filter props
+        filterType={filterType}
+        setFilterType={setFilterType}
         // Vendor props
         vendeurs={vendeurs}
         vendeurActif={vendeurActif}
