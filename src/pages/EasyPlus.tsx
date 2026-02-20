@@ -1,4 +1,4 @@
-// SystemeStationService.jsx
+// SystemeStationService.jsx (updated section for meetings tab)
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -10,7 +10,8 @@ import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
-import Liasse from '@/components/easy/Liasse'; // ADD THIS IMPORT
+import Liasse from '@/components/easy/Liasse';
+import MeetingsManager from '@/components/easy/MeetingsManager'; // Import MeetingsManager
 import { useStationData } from '@/hooks/useStationData';
 
 // Import the layout components
@@ -29,6 +30,7 @@ const SystemeStationService = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [vendeurActif, setVendeurActif] = useState(null);
   const [taskType, setTaskType] = useState('all');
+  const [meetingType, setMeetingType] = useState('all'); // Add meeting type state
   const [tasksStats, setTasksStats] = useState(null);
 
   const {
@@ -160,6 +162,18 @@ const SystemeStationService = () => {
             />
           </div>
         );
+      case 'meetings': // Add meetings case
+        return (
+          <div className="p-2 sm:p-4">
+            <MeetingsManager
+              shift={shift}
+              date={date}
+              vendeurs={vendeurs}
+              meetingType={meetingType}
+              onMeetingTypeChange={setMeetingType}
+            />
+          </div>
+        );
       case 'vendeurs':
         return (
           <div className="p-2 sm:p-4">
@@ -258,15 +272,13 @@ const SystemeStationService = () => {
             />
           </div>
         );
-      case 'liasse': // ADD THIS NEW CASE
+      case 'liasse':
         return (
-         
-            <Liasse
-              shift={shift}
-              date={date}
-              vendeurs={vendeurs}
-            />
-          
+          <Liasse
+            shift={shift}
+            date={date}
+            vendeurs={vendeurs}
+          />
         );
       default:
         return (
@@ -300,6 +312,9 @@ const SystemeStationService = () => {
         // Task props
         taskType={taskType}
         setTaskType={setTaskType}
+        // Meeting props
+        meetingType={meetingType}
+        setMeetingType={setMeetingType}
         // Vendor props
         vendeurs={vendeurs}
         vendeurActif={vendeurActif}
