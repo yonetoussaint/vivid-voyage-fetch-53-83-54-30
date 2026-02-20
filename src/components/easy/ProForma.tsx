@@ -23,7 +23,7 @@ const ProForma = () => {
 
   // Company info
   const [companyName, setCompanyName] = useState('Propane Express');
-  const [companyAddress, setCompanyAddress] = useState('Saint-Marc');
+  const [companyAddress, setCompanyAddress] = useState('Saint-Marc, Haïti');
   const [companyPhone, setCompanyPhone] = useState('+509 1234 5678');
   const [companyEmail, setCompanyEmail] = useState('contact@propane.ht');
   const [companyNIF, setCompanyNIF] = useState('123-456-789');
@@ -36,6 +36,9 @@ const ProForma = () => {
   const docNumber = docType === 'facture' 
     ? 'FAC-' + Date.now().toString().slice(-6)
     : 'PRO-' + Date.now().toString().slice(-6);
+  
+  const currentDate = new Date().toLocaleDateString('fr-FR');
+  const currentTime = new Date().toLocaleTimeString('fr-FR');
 
   const handleLogoUpload = (e) => {
     const file = e.target.files[0];
@@ -50,8 +53,14 @@ const ProForma = () => {
   };
 
   const handleGenerate = async (action) => {
-    if (quantity <= 0) return alert('Quantité invalide');
-    if (!customerName.trim()) return alert('Nom client requis');
+    if (quantity <= 0) {
+      alert('La quantité doit être supérieure à 0');
+      return;
+    }
+    if (!customerName.trim()) {
+      alert('Veuillez entrer le nom du client');
+      return;
+    }
 
     action === 'download' ? setIsDownloading(true) : setIsSharing(true);
 
@@ -69,29 +78,385 @@ const ProForma = () => {
     };
 
     try {
-      // Simulate generation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setInvoiceHistory(prev => [document, ...prev].slice(0, 5));
-      
+      // Generate HTML invoice
+      const invoiceHTML = generateInvoiceHTML({ 
+        invoice: document,
+        companyInfo: {
+          name: companyName,
+          address: companyAddress,
+          phone: companyPhone,
+          email: companyEmail,
+          nif: companyNIF,
+          rccm: companyRCCM,
+          logo: logoImage
+        }
+      });
+
       if (action === 'download') {
-        alert('Document généré avec succès!');
+        // Create blob and download
+        const blob = new Blob([invoiceHTML], { type: 'text/html' });
+        const link = document.createElement('a');
+        link.download = `${docType}-${docNumber}.html`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
       } else {
-        alert('Partage simulé - ' + docNumber);
+        // Share HTML file
+        if (navigator.share) {
+          const blob = new Blob([invoiceHTML], { type: 'text/html' });
+          const file = new File([blob], `${docType}-${docNumber}.html`, { type: 'text/html' });
+          
+          await navigator.share({
+            title: `${docType === 'facture' ? 'Facture' : 'Proforma'} ${docNumber}`,
+            text: `${companyName} - ${customerName} - ${quantity} gallons - Total: ${totalAmount} HTG`,
+            files: [file]
+          });
+        } else {
+          // Fallback: Open in new window
+          const newWindow = window.open();
+          newWindow.document.write(invoiceHTML);
+        }
       }
+
+      setInvoiceHistory(prev => [document, ...prev].slice(0, 5));
     } catch (error) {
-      alert('Erreur');
+      console.error('Erreur:', error);
+      alert(`Erreur lors de la génération`);
     } finally {
       setIsDownloading(false);
       setIsSharing(false);
     }
   };
 
+  const generateInvoiceHTML = ({ invoice, companyInfo }) => {
+    const logoHTML = companyInfo.logo 
+      ? `<img src="${companyInfo.logo}" alt="Logo" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px;" />`
+      : `<div style="width: 80px; height: 80px; background: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+          <span style="color: white; font-size: 32px; font-weight: bold;">P</span>
+         </div>`;
+
+    const documentTitle = invoice.type === 'facture' ? 'FACTURE' : 'PROFORMA';
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${documentTitle} ${invoice.number}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f3f4f6;
+    }
+    .invoice {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #f3f4f6;
+    }
+    .company {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .company-info h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 4px 0;
+    }
+    .company-info p {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 2px 0;
+    }
+    .title {
+      text-align: right;
+    }
+    .title h2 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #3b82f6;
+      margin: 0 0 8px 0;
+    }
+    .title p {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 4px 0;
+    }
+    .badge {
+      background: #eff6ff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #1e40af;
+      font-weight: 500;
+    }
+    .section {
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+    .client-card {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .client-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 4px 0;
+    }
+    .client-detail {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 2px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      text-align: left;
+      padding: 12px 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    td {
+      padding: 12px 8px;
+      font-size: 15px;
+      color: #111827;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    td:last-child, th:last-child {
+      text-align: right;
+    }
+    td:nth-child(2), th:nth-child(2) {
+      text-align: center;
+    }
+    .totals {
+      margin-top: 24px;
+      border-top: 2px solid #f3f4f6;
+      padding-top: 16px;
+    }
+    .total-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 24px;
+      padding: 8px 0;
+    }
+    .total-label {
+      font-size: 14px;
+      color: #6b7280;
+    }
+    .total-amount {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+      min-width: 120px;
+      text-align: right;
+    }
+    .grand-total {
+      background: #eff6ff;
+      padding: 16px 24px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 16px 0;
+    }
+    .grand-total .label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e40af;
+    }
+    .grand-total .amount {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1e40af;
+    }
+    .footer {
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      color: #9ca3af;
+      text-align: center;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .info-box {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .info-box h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #6b7280;
+      margin: 0 0 8px 0;
+      text-transform: uppercase;
+    }
+    .info-box p {
+      font-size: 14px;
+      color: #111827;
+      margin: 4px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice">
+    <!-- Header -->
+    <div class="header">
+      <div class="company">
+        ${logoHTML}
+        <div class="company-info">
+          <h1>${companyInfo.name}</h1>
+          <p>📍 ${companyInfo.address}</p>
+          <p>📞 ${companyInfo.phone}</p>
+          <p>✉️ ${companyInfo.email}</p>
+        </div>
+      </div>
+      <div class="title">
+        <h2>${documentTitle}</h2>
+        <div class="badge">
+          <p><strong>N°:</strong> ${invoice.number}</p>
+          <p><strong>Date:</strong> ${invoice.date}</p>
+          <p><strong>Heure:</strong> ${invoice.time}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client -->
+    <div class="section">
+      <div class="section-title">Client</div>
+      <div class="client-card">
+        <p class="client-name">${invoice.customerName}</p>
+        ${invoice.customerPhone ? `<p class="client-detail">📞 ${invoice.customerPhone}</p>` : ''}
+        ${invoice.customerAddress ? `<p class="client-detail">📍 ${invoice.customerAddress}</p>` : ''}
+      </div>
+    </div>
+
+    <!-- Details -->
+    <div class="section">
+      <div class="section-title">Détails</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Quantité</th>
+            <th>Prix unitaire</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Propane domestique</td>
+            <td>${invoice.quantity} gal</td>
+            <td>${invoice.pricePerUnit.toLocaleString()} HTG</td>
+            <td>${invoice.total.toLocaleString()} HTG</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Totals -->
+    <div class="totals">
+      <div class="total-row">
+        <span class="total-label">Sous-total:</span>
+        <span class="total-amount">${invoice.total.toLocaleString()} HTG</span>
+      </div>
+      <div class="total-row">
+        <span class="total-label">TVA (0%):</span>
+        <span class="total-amount">0 HTG</span>
+      </div>
+      <div class="grand-total">
+        <span class="label">TOTAL À PAYER</span>
+        <span class="amount">${invoice.total.toLocaleString()} HTG</span>
+      </div>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="grid-2">
+      <div class="info-box">
+        <h4>Mode de paiement</h4>
+        <p>💵 Espèces</p>
+        <p>💳 Carte</p>
+        <p>📱 Mobile Money</p>
+      </div>
+      <div class="info-box">
+        <h4>Informations</h4>
+        <p>✓ Livraison incluse</p>
+        <p>✓ Qualité premium</p>
+        <p>✓ Paiement comptant</p>
+      </div>
+    </div>
+
+    <!-- Conditions -->
+    <div style="margin: 24px 0; padding: 16px; background: #f9fafb; border-radius: 8px;">
+      <p style="font-size: 13px; color: #6b7280; margin: 0 0 8px 0; font-weight: 600;">Conditions:</p>
+      <p style="font-size: 13px; color: #4b5563; margin: 0;">
+        ${invoice.type === 'facture' 
+          ? 'Paiement comptant à la livraison. Merci de votre confiance.' 
+          : 'Ce document est une estimation. La facture finale sera établie à la livraison.'}
+      </p>
+    </div>
+
+    <!-- Signature -->
+    <div style="display: flex; justify-content: space-between; align-items: end; margin-top: 32px;">
+      <div>
+        <p style="font-size: 13px; color: #6b7280; margin: 0 0 4px 0;">NIF: ${companyInfo.nif}</p>
+        <p style="font-size: 13px; color: #6b7280; margin: 0;">RCCM: ${companyInfo.rccm}</p>
+      </div>
+      <div style="text-align: center;">
+        <p style="font-size: 13px; color: #6b7280; margin: 0 0 8px 0;">Cachet et signature</p>
+        <div style="border-bottom: 2px solid #d1d5db; width: 200px; margin-bottom: 8px;"></div>
+        <p style="font-size: 13px; color: #4b5563;">Pour ${companyInfo.name}</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>${companyInfo.name} - ${companyInfo.address} - ${companyInfo.phone}</p>
+      <p style="margin-top: 4px;">Merci pour votre confiance!</p>
+    </div>
+  </div>
+</body>
+</html>`;
+  };
+
   const quickAmounts = [50, 100, 200, 300, 400, 500];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header - Ultra clean */}
+      {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 py-3 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -116,15 +481,18 @@ const ProForma = () => {
         </div>
       </div>
 
-      {/* History Panel - Slide down */}
+      {/* History Panel */}
       {showHistory && invoiceHistory.length > 0 && (
         <div className="bg-white border-b border-gray-100 px-4 py-3 animate-slideDown">
           <p className="text-xs font-medium text-gray-500 mb-2">RÉCENT</p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {invoiceHistory.map((inv, i) => (
-              <div key={i} className="flex-none bg-gray-50 rounded-lg p-2 min-w-[140px]">
+              <div key={i} className="flex-none bg-gray-50 rounded-lg p-3 min-w-[160px]">
                 <p className="text-xs font-medium text-gray-900">{inv.customerName}</p>
-                <p className="text-xs text-gray-500">{inv.quantity} gal • {inv.total}k HTG</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {inv.quantity} gal • {inv.total.toLocaleString()} HTG
+                </p>
+                <p className="text-xs text-gray-400 mt-1">{inv.number}</p>
               </div>
             ))}
           </div>
@@ -132,7 +500,7 @@ const ProForma = () => {
       )}
 
       {/* Main Content */}
-      <div className="p-4 space-y-3 pb-20">
+      <div className="p-4 space-y-3 pb-24">
         {/* Document Type Selector */}
         <div className="bg-white rounded-xl p-1 flex shadow-xs">
           <button
@@ -225,7 +593,7 @@ const ProForma = () => {
               <button
                 key={amount}
                 onClick={() => setQuantity(amount)}
-                className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`py-3 rounded-lg text-sm font-medium transition-colors ${
                   quantity === amount
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-50 text-gray-600 active:bg-gray-100'
@@ -251,29 +619,6 @@ const ProForma = () => {
           </div>
         </div>
 
-        {/* Action Buttons - Large thumb-friendly */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
-          <div className="flex gap-3 max-w-md mx-auto">
-            <button
-              onClick={() => handleGenerate('share')}
-              disabled={isSharing || isDownloading}
-              className="flex-1 py-4 bg-gray-100 rounded-xl font-medium text-gray-700 active:bg-gray-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {isSharing ? <Loader size={18} className="animate-spin" /> : <Share2 size={18} />}
-              <span>Partager</span>
-            </button>
-            
-            <button
-              onClick={() => handleGenerate('download')}
-              disabled={isDownloading || isSharing}
-              className="flex-1 py-4 bg-blue-500 rounded-xl font-medium text-white active:bg-blue-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
-            >
-              {isDownloading ? <Loader size={18} className="animate-spin" /> : <Download size={18} />}
-              <span>Générer</span>
-            </button>
-          </div>
-        </div>
-
         {/* Company Info - Collapsible */}
         <details className="bg-white rounded-xl shadow-xs">
           <summary className="p-4 flex items-center justify-between cursor-pointer">
@@ -281,7 +626,7 @@ const ProForma = () => {
               <Building size={16} className="text-blue-500" />
               <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Entreprise</span>
             </div>
-            <ChevronRight size={16} className="text-gray-400" />
+            <ChevronRight size={16} className="text-gray-400 transition-transform duration-200" />
           </summary>
           
           <div className="px-4 pb-4 space-y-2 border-t border-gray-100 pt-3">
@@ -290,14 +635,14 @@ const ProForma = () => {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Nom entreprise"
-              className="w-full p-3 bg-gray-50 rounded-lg text-sm"
+              className="w-full p-3 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <input
               type="text"
               value={companyAddress}
               onChange={(e) => setCompanyAddress(e.target.value)}
               placeholder="Adresse"
-              className="w-full p-3 bg-gray-50 rounded-lg text-sm"
+              className="w-full p-3 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <div className="flex gap-2">
               <input
@@ -305,14 +650,14 @@ const ProForma = () => {
                 value={companyPhone}
                 onChange={(e) => setCompanyPhone(e.target.value)}
                 placeholder="Téléphone"
-                className="flex-1 p-3 bg-gray-50 rounded-lg text-sm"
+                className="flex-1 p-3 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               <input
                 type="email"
                 value={companyEmail}
                 onChange={(e) => setCompanyEmail(e.target.value)}
                 placeholder="Email"
-                className="flex-1 p-3 bg-gray-50 rounded-lg text-sm"
+                className="flex-1 p-3 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
             <div className="flex gap-2">
@@ -321,39 +666,64 @@ const ProForma = () => {
                 value={companyNIF}
                 onChange={(e) => setCompanyNIF(e.target.value)}
                 placeholder="NIF"
-                className="flex-1 p-3 bg-gray-50 rounded-lg text-sm"
+                className="flex-1 p-3 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               <input
                 type="text"
                 value={companyRCCM}
                 onChange={(e) => setCompanyRCCM(e.target.value)}
                 placeholder="RCCM"
-                className="flex-1 p-3 bg-gray-50 rounded-lg text-sm"
+                className="flex-1 p-3 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
             
             {/* Logo Upload */}
-            <label className="flex items-center justify-center gap-2 p-3 bg-gray-50 rounded-lg active:bg-gray-100 cursor-pointer">
-              <Upload size={16} className="text-gray-500" />
-              <span className="text-sm text-gray-600">Logo entreprise</span>
-              <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-            </label>
-            {logoPreview && (
-              <div className="relative inline-block">
-                <img src={logoPreview} alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
-                <button
-                  onClick={() => {
-                    setLogoImage(null);
-                    setLogoPreview(null);
-                  }}
-                  className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5"
-                >
-                  <X size={12} className="text-white" />
-                </button>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              <label className="flex-1 flex items-center justify-center gap-2 p-3 bg-gray-50 rounded-lg active:bg-gray-100 cursor-pointer">
+                <Upload size={16} className="text-gray-500" />
+                <span className="text-sm text-gray-600">Logo</span>
+                <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+              </label>
+              {logoPreview && (
+                <div className="relative">
+                  <img src={logoPreview} alt="Logo" className="w-12 h-12 rounded-lg object-cover border border-gray-200" />
+                  <button
+                    onClick={() => {
+                      setLogoImage(null);
+                      setLogoPreview(null);
+                    }}
+                    className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 shadow-sm"
+                  >
+                    <X size={12} className="text-white" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </details>
+      </div>
+
+      {/* Action Buttons - Fixed Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
+        <div className="flex gap-3 max-w-md mx-auto">
+          <button
+            onClick={() => handleGenerate('share')}
+            disabled={isSharing || isDownloading}
+            className="flex-1 py-4 bg-gray-100 rounded-xl font-medium text-gray-700 active:bg-gray-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isSharing ? <Loader size={18} className="animate-spin" /> : <Share2 size={18} />}
+            <span>Partager</span>
+          </button>
+          
+          <button
+            onClick={() => handleGenerate('download')}
+            disabled={isDownloading || isSharing}
+            className="flex-1 py-4 bg-blue-500 rounded-xl font-medium text-white active:bg-blue-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+          >
+            {isDownloading ? <Loader size={18} className="animate-spin" /> : <Download size={18} />}
+            <span>Générer</span>
+          </button>
+        </div>
       </div>
 
       <style jsx>{`
@@ -369,6 +739,9 @@ const ProForma = () => {
         }
         .animate-slideDown {
           animation: slideDown 0.2s ease-out;
+        }
+        details[open] summary svg {
+          transform: rotate(90deg);
         }
       `}</style>
     </div>
