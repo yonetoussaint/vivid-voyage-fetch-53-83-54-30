@@ -1,4 +1,4 @@
-// MainLayout.jsx
+// MainLayout.jsx - Only show filter on tasks tab
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
@@ -49,9 +49,6 @@ const MainLayout = ({
     }
   }, [activeTab, vendeurs, vendeurActif, filterType]);
 
-  // Determine if current tab should show the filter
-  const showFilter = ['tasks', 'meetings', 'reminders', 'all-items'].includes(activeTab);
-
   return (
     <div className="h-screen flex flex-col">
       {/* Fixed Header Container */}
@@ -92,8 +89,8 @@ const MainLayout = ({
           />
         )}
 
-        {/* Unified Filter - For tasks, meetings, reminders, all-items tabs */}
-        {showFilter && (
+        {/* Task Type Selector - Only for tasks tab */}
+        {activeTab === 'tasks' && (
           <TaskTypeSelector
             filterType={filterType}
             setFilterType={setFilterType}
