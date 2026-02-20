@@ -1,134 +1,183 @@
-// MainLayout.jsx (updated with meeting type selector)
-import React, { useRef, useEffect, useState } from 'react';
-import Header from './Header';
-import SidePanel from './SidePanel';
-import VerticalTabs from './VerticalTabs';
-import PumpSelector from './PumpSelector';
-import TaskTypeSelector from './TaskTypeSelector';
-import MeetingTypeSelector from './MeetingTypeSelector'; // Import MeetingTypeSelector
-import VendorTabSelector from './VendorTabSelector';
+// components/layout/MainLayout.tsx
+import React from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import IndexBottomNav from "@/components/layout/IndexBottomNav";
+import AliExpressHeader from "@/components/home/AliExpressHeader";
+import ProfileHeader from "@/components/profile/ProfileHeader"; // NEW IMPORT
+import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
+import LocationScreen from "@/components/home/header/LocationScreen";
+import LocationListScreen from "@/components/home/header/LocationListScreen";
+import LocationsPanel from "@/components/home/header/LocationsPanel";
+import AuthOverlay from "@/components/auth/AuthOverlay";
+import SignInBanner from "@/components/layout/SignInBanner";
+import { useMainLayout } from "@/hooks/main-layout.hooks";
+import { HeaderFilterProvider } from "@/contexts/HeaderFilterContext";
 
-const MainLayout = ({ 
-  date, 
-  shift, 
-  children,
-  onMenuToggle,
-  activeTab,
-  onDateChange,
-  onShiftChange,
-  // Pump props
-  pompes,
-  pompeEtendue,
-  setPompeEtendue,
-  showPropane,
-  // Task props
-  taskType,
-  setTaskType,
-  // Meeting props
-  meetingType,
-  setMeetingType,
-  // Vendor props
-  vendeurs,
-  vendeurActif,
-  setVendeurActif,
-  // Reset functions
-  onResetShift,
-  onResetDay,
-  // Tasks stats
-  tasksStats
-}) => {
-  const headerRef = useRef(null);
-  const [headerHeight, setHeaderHeight] = useState(64);
+function MainLayoutContent() {
+  const location = useLocation();
 
-  useEffect(() => {
-    if (headerRef.current) {
-      const updateHeight = () => {
-        setHeaderHeight(headerRef.current.offsetHeight);
-      };
+  const {
+    // Refs
+    headerRef,
+    bottomNavRef,
+    contentRef,
 
-      updateHeight();
-      window.addEventListener('resize', updateHeight);
+    // Page flags
+    pageFlags,
 
-      return () => window.removeEventListener('resize', updateHeight);
-    }
-  }, [activeTab, vendeurs, vendeurActif, taskType, meetingType]);
+    // Layout
+    layoutHeightStyle,
+    measurements,
+
+    // Configuration
+    headerProps,
+
+    // State setters
+    setShowProductUpload,
+
+    // Context values
+    isAuthOverlayOpen,
+    setIsAuthOverlayOpen,
+    isLocationListScreenOpen,
+    locationListScreenData,
+    setLocationListScreenOpen,
+    isLocationScreenOpen,
+    setLocationScreenOpen,
+
+    // Location panel state
+    isLocationsPanelOpen,
+    setIsLocationsPanelOpen,
+    selectedCity,
+    handleCitySelect
+  } = useMainLayout();
+
+  // Determine if we're on the mall route
+  const isMallRoute = location.pathname === '/mall' || location.pathname.startsWith('/mall/');
+
+  // Determine if we're on the communes route
+  const isCommunesRoute = location.pathname === '/communes';
+
+  // Prepare header props - ONLY override mall-specific props
+  const finalHeaderProps = {
+    ...headerProps,
+    // Only override what's specific to mall route
+    ...(isMallRoute ? {
+      showSearchList: true,    // Show search list on mall
+      // Note: The hook already sets showCategoryTabs to false for mall routes
+      // via !pageFlags.isMallPage in the showCategoryTabs logic
+      searchListItems: [
+        "Luxury watches", 
+        "Designer bags", 
+        "Premium electronics",
+        "High-end fashion",
+        "Luxury cosmetics",
+        "Designer shoes",
+        "Luxury jewelry"
+      ]
+    } : {}),
+    // Pass the function to open locations panel
+    onOpenLocationsPanel: () => setIsLocationsPanelOpen(true)
+  };
+
+  // Debug: Log what's happening with category tabs
+  console.log('MainLayout debug:', {
+    pathname: location.pathname,
+    showCategoryTabs: finalHeaderProps.showCategoryTabs,
+    isMallRoute,
+    isMessagesPage: pageFlags?.isMessagesPage,
+    isProfilePage: pageFlags?.isProfilePage
+  });
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Fixed Header Container */}
-      <div 
-        ref={headerRef}
-        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm"
-      >
-        <Header
-          date={date}
-          shift={shift}
-          activeTab={activeTab}
-          onMenuToggle={onMenuToggle}
-          onDateChange={onDateChange}
-          onShiftChange={onShiftChange}
-          onResetShift={onResetShift}
-          onResetDay={onResetDay}
-          tasksStats={tasksStats}
-        />
+    <div className="app-container">
+      <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle || '' }} />
 
-        {/* Pump Selector - Only for pumps tab */}
-        {activeTab === 'pumps' && (
-          <div className="bg-white border-b border-slate-200">
-            <PumpSelector 
-              pompes={pompes}
-              pompeEtendue={pompeEtendue}
-              setPompeEtendue={setPompeEtendue}
-              showPropane={showPropane}
+      {/* Header - Conditionally render ProfileHeader on profile routes */}
+      {pageFlags?.shouldShowHeader && (
+        <div ref={headerRef} className="app-header">
+          {pageFlags?.isProfilePage ? (
+            <ProfileHeader 
+              showBackButton={!pageFlags.isRootHomePage && location.pathname !== '/profile'}
+              // Note: ProfileHeader will use user data from AuthContext by default
+              // You can pass custom user data here if needed:
+              // user={{ name: "John Doe", avatar: "url", isVerified: true }}
             />
-          </div>
-        )}
-
-        {/* Vendor Tab Selector - For vendeurs tab */}
-        {activeTab === 'vendeurs' && (
-          <VendorTabSelector
-            vendeurs={vendeurs}
-            vendeurActif={vendeurActif}
-            setVendeurActif={setVendeurActif}
-          />
-        )}
-
-        {/* Task Type Selector - Only for tasks tab */}
-        {activeTab === 'tasks' && (
-          <TaskTypeSelector
-            taskType={taskType}
-            setTaskType={setTaskType}
-          />
-        )}
-
-        {/* Meeting Type Selector - Only for meetings tab */}
-        {activeTab === 'meetings' && (
-          <MeetingTypeSelector
-            meetingType={meetingType}
-            setMeetingType={setMeetingType}
-          />
-        )}
-      </div>
-
-      {/* Spacer - Dynamic height based on actual header height */}
-      <div style={{ height: `${headerHeight}px` }}></div>
-
-      {/* Main Content Area */}
-      <div className="flex flex-1 min-h-0">
-        {/* Side Panel for desktop */}
-        <div className="hidden lg:block flex-shrink-0">
-          <SidePanel isOpen={true} onClose={() => {}} isMobile={false}>
-            <VerticalTabs activeTab={activeTab} onTabChange={() => {}} isMobile={false} />
-          </SidePanel>
+          ) : (
+            <AliExpressHeader {...finalHeaderProps} />
+          )}
         </div>
+      )}
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+      {/* Main Content Area - Native-like scrolling */}
+      <div 
+        ref={contentRef} 
+        className="app-content page-transition"
+        style={{
+          height: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
+          maxHeight: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
+          minHeight: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
+        }}
+      >
+        <Outlet />
       </div>
+
+      {/* Bottom Navigation */}
+      {pageFlags?.shouldShowBottomNav && (
+        <div ref={bottomNavRef} className="app-bottom-nav">
+          <IndexBottomNav />
+        </div>
+      )}
+
+      {/* Sign In Banner - Hide on communes route */}
+      {!isCommunesRoute && <SignInBanner />}
+
+      {/* Product Upload Overlay */}
+      <ProductUploadOverlay
+        isOpen={false}
+        onClose={() => setShowProductUpload(false)}
+      />
+
+      {/* Location List Screen */}
+      {isLocationListScreenOpen && locationListScreenData && (
+        <LocationListScreen
+          title={locationListScreenData.title}
+          items={locationListScreenData.items}
+          onSelect={(item) => {
+            locationListScreenData.onSelect(item);
+            setLocationListScreenOpen(false);
+          }}
+          onClose={() => setLocationListScreenOpen(false)}
+          searchPlaceholder={locationListScreenData.searchPlaceholder}
+        />
+      )}
+
+      {/* Location Screen */}
+      {isLocationScreenOpen && (
+        <LocationScreen
+          onClose={() => setLocationScreenOpen(false)}
+          showHeader={true}
+        />
+      )}
+
+      {/* Locations Panel - Only renders when isOpen is true */}
+      <LocationsPanel
+        isOpen={isLocationsPanelOpen}
+        onClose={() => setIsLocationsPanelOpen(false)}
+        currentCity={selectedCity}
+        onCitySelect={handleCitySelect}
+      />
+
+      {/* Auth Overlay */}
+      <AuthOverlay />
     </div>
   );
-};
+}
 
-export default MainLayout;
+// Main export that wraps with provider
+export default function MainLayout() {
+  return (
+    <HeaderFilterProvider>
+      <MainLayoutContent />
+    </HeaderFilterProvider>
+  );
+}
