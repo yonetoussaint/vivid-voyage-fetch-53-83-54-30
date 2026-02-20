@@ -1,4 +1,4 @@
-// components/easy/MainLayout.jsx
+// MainLayout.jsx
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
@@ -20,9 +20,9 @@ const MainLayout = ({
   pompeEtendue,
   setPompeEtendue,
   showPropane,
-  // Task props
-  taskType,
-  setTaskType,
+  // Filter props
+  filterType,
+  setFilterType,
   // Vendor props
   vendeurs,
   vendeurActif,
@@ -47,14 +47,10 @@ const MainLayout = ({
 
       return () => window.removeEventListener('resize', updateHeight);
     }
-  }, [activeTab, vendeurs, vendeurActif]);
+  }, [activeTab, vendeurs, vendeurActif, filterType]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('MainLayout activeTab:', activeTab);
-    console.log('MainLayout vendeurs:', vendeurs);
-    console.log('MainLayout vendeurActif:', vendeurActif);
-  }, [activeTab, vendeurs, vendeurActif]);
+  // Determine if current tab should show the filter
+  const showFilter = ['tasks', 'meetings', 'reminders', 'all-items'].includes(activeTab);
 
   return (
     <div className="h-screen flex flex-col">
@@ -75,13 +71,6 @@ const MainLayout = ({
           tasksStats={tasksStats}
         />
 
-        {/* Debug indicator */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1">
-            Active Tab: {activeTab}
-          </div>
-        )}
-
         {/* Pump Selector - Only for pumps tab */}
         {activeTab === 'pumps' && (
           <div className="bg-white border-b border-slate-200">
@@ -96,23 +85,19 @@ const MainLayout = ({
 
         {/* Vendor Tab Selector - For vendeurs tab */}
         {activeTab === 'vendeurs' && (
-         
-            <VendorTabSelector
-              vendeurs={vendeurs}
-              vendeurActif={vendeurActif}
-              setVendeurActif={setVendeurActif}
-            />
-         
+          <VendorTabSelector
+            vendeurs={vendeurs}
+            vendeurActif={vendeurActif}
+            setVendeurActif={setVendeurActif}
+          />
         )}
 
-        {/* Task Type Selector - Only for tasks tab */}
-        {activeTab === 'tasks' && (
-          
-            <TaskTypeSelector
-              taskType={taskType}
-              setTaskType={setTaskType}
-            />
-          
+        {/* Unified Filter - For tasks, meetings, reminders, all-items tabs */}
+        {showFilter && (
+          <TaskTypeSelector
+            filterType={filterType}
+            setFilterType={setFilterType}
+          />
         )}
       </div>
 
