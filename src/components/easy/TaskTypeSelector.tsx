@@ -1,4 +1,4 @@
-// TaskTypeSelector.jsx - Unified filter with all requested types
+// TaskTypeSelector.jsx - Keep exactly as you have it
 import React from 'react';
 import { 
   Calendar,
@@ -10,31 +10,15 @@ import {
   CreditCard,
   Phone,
   MessageSquare,
-  Mail,
-  Shield,
-  Wrench,
-  Users,
-  ShoppingCart,
-  Package,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-  Flag,
-  GraduationCap,
-  UserCheck,
-  Briefcase,
-  Truck
+  Mail
 } from 'lucide-react';
 
 const TaskTypeSelector = ({ filterType, setFilterType }) => {
   const filterOptions = [
-    // Core types
     { id: 'all', label: 'All', icon: ClipboardList },
     { id: 'tasks', label: 'Tasks', icon: ClipboardList },
     { id: 'meetings', label: 'Meetings', icon: Calendar },
     { id: 'reminders', label: 'Reminders', icon: Bell },
-    
-    // New requested types
     { id: 'incidents', label: 'Incidents', icon: AlertTriangle },
     { id: 'inspections', label: 'Inspections', icon: FileText },
     { id: 'dépenses', label: 'Dépenses', icon: DollarSign },
@@ -42,23 +26,6 @@ const TaskTypeSelector = ({ filterType, setFilterType }) => {
     { id: 'appels', label: 'Appels', icon: Phone },
     { id: 'messages', label: 'Messages', icon: MessageSquare },
     { id: 'emails', label: 'Emails', icon: Mail },
-    
-    // Additional useful types
-    { id: 'safety', label: 'Safety', icon: Shield },
-    { id: 'maintenance', label: 'Maintenance', icon: Wrench },
-    { id: 'staff', label: 'Staff', icon: Users },
-    { id: 'inventory', label: 'Inventory', icon: ShoppingCart },
-    { id: 'supplies', label: 'Supplies', icon: Package },
-    { id: 'training', label: 'Training', icon: GraduationCap },
-    { id: 'evaluations', label: 'Evaluations', icon: UserCheck },
-    { id: 'deliveries', label: 'Deliveries', icon: Truck },
-    { id: 'shift-handover', label: 'Shift', icon: Users },
-    
-    // Status based
-    { id: 'pending', label: 'Pending', icon: Clock },
-    { id: 'urgent', label: 'Urgent', icon: AlertCircle },
-    { id: 'completed', label: 'Completed', icon: CheckCircle },
-    { id: 'critical', label: 'Critical', icon: Flag },
   ];
 
   return (
