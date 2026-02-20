@@ -5,7 +5,8 @@ import {
   CalendarClock,
   MoreVertical,
   Calendar,
-  Clock
+  Clock,
+  Edit2
 } from 'lucide-react';
 import {
   getMeetingTypeColor,
@@ -33,6 +34,7 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting }) => {
       status: 'completed',
       completedAt: new Date().toISOString()
     });
+    setShowMenu(false);
   };
 
   const handlePostponeMeeting = () => {
@@ -46,6 +48,13 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting }) => {
         status: 'postponed'
       });
     }
+    setShowMenu(false);
+  };
+
+  const handleEditMeeting = () => {
+    // This would open an edit modal/form in a real implementation
+    alert('Edit functionality would open a form to edit meeting details');
+    setShowMenu(false);
   };
 
   // Format the title from date and time in French style
@@ -53,115 +62,110 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting }) => {
 
   return (
     <div className={`p-4 bg-white border rounded-xl shadow-sm hover:shadow-md transition-shadow ${meeting.status === 'completed' ? 'border-green-200 bg-green-50/50' : 'border-gray-200'}`}>
-      {/* Header with avatar placeholder and menu - like tweet header */}
-      <div className="flex gap-3">
-        {/* Avatar placeholder - like tweet profile pic */}
-        <div className="flex-shrink-0">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-            {meeting.meetingType?.charAt(0) || 'M'}
-          </div>
+      {/* Top row with title, badges, and menu */}
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-center flex-wrap gap-2">
+          <h3 className={`font-semibold text-gray-900 ${meeting.status === 'completed' ? 'line-through text-gray-500' : ''}`}>
+            {formattedTitle}
+          </h3>
+          <span className={`px-2 py-0.5 text-xs rounded-full ${getMeetingTypeColor(meeting.meetingType)}`}>
+            {meeting.meetingType}
+          </span>
+          {meeting.status === 'completed' && (
+            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full">
+              Completed
+            </span>
+          )}
         </div>
 
-        {/* Main content - like tweet body */}
-        <div className="flex-1 min-w-0">
-          {/* Top row with name, badge, menu - like tweet header */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center flex-wrap gap-2">
-              <h3 className={`font-semibold text-gray-900 ${meeting.status === 'completed' ? 'line-through text-gray-500' : ''}`}>
-                {formattedTitle}
-              </h3>
-              <span className={`px-2 py-0.5 text-xs rounded-full ${getMeetingTypeColor(meeting.meetingType)}`}>
-                {meeting.meetingType}
-              </span>
-              {meeting.status === 'completed' && (
-                <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full">
-                  Completed
-                </span>
-              )}
-            </div>
+        {/* Menu button */}
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors"
+            aria-label="Menu"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+          
+          {/* Dropdown menu */}
+          {showMenu && (
+            <>
+              <div 
+                className="fixed inset-0 z-10"
+                onClick={() => setShowMenu(false)}
+              />
+              <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-1">
+                {/* Edit button */}
+                <button
+                  onClick={handleEditMeeting}
+                  className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  Edit meeting
+                </button>
 
-            {/* Menu button */}
-            <div className="relative flex-shrink-0">
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors"
-                aria-label="Menu"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </button>
-              
-              {/* Dropdown menu */}
-              {showMenu && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowMenu(false)}
-                  />
-                  <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-1">
-                    <button
-                      onClick={() => {
-                        onDelete(meeting.id);
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete meeting
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+                {/* Complete button - only show if not completed */}
+                {meeting.status !== 'completed' && (
+                  <button
+                    onClick={handleCompleteMeeting}
+                    className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                  >
+                    <CheckCheck className="w-4 h-4" />
+                    Mark as completed
+                  </button>
+                )}
 
-          {/* Date and time metadata - like tweet timestamp */}
-          <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {meeting.dueDate}
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {formatTime(meeting.dueTime)}
-            </span>
-          </div>
+                {/* Postpone button - only show if not completed */}
+                {meeting.status !== 'completed' && (
+                  <button
+                    onClick={handlePostponeMeeting}
+                    className="w-full px-4 py-2 text-left text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2"
+                  >
+                    <CalendarClock className="w-4 h-4" />
+                    Postpone meeting
+                  </button>
+                )}
 
-          {/* Description - like tweet text */}
-          {meeting.description && (
-            <p className="mt-2 text-gray-700 text-sm whitespace-pre-wrap break-words">
-              {meeting.description}
-            </p>
-          )}
+                {/* Divider */}
+                <div className="my-1 border-t border-gray-100" />
 
-          {/* Action buttons - like tweet actions */}
-          {meeting.status !== 'completed' && (
-            <div className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-100">
-              <button
-                onClick={handleCompleteMeeting}
-                className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-2 text-sm transition-colors"
-              >
-                <CheckCheck className="w-4 h-4" />
-                <span>Complete</span>
-              </button>
-              <button
-                onClick={handlePostponeMeeting}
-                className="flex-1 px-3 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 active:bg-amber-700 flex items-center justify-center gap-2 text-sm transition-colors"
-              >
-                <CalendarClock className="w-4 h-4" />
-                <span>Postpone</span>
-              </button>
-            </div>
-          )}
-
-          {/* Completion date - like tweet footer */}
-          {meeting.status === 'completed' && meeting.completedAt && (
-            <div className="mt-3 pt-2 border-t border-gray-100 text-xs text-gray-500">
-              <span>Completed {new Date(meeting.completedAt).toLocaleDateString()}</span>
-            </div>
+                {/* Delete button */}
+                <button
+                  onClick={() => {
+                    onDelete(meeting.id);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete meeting
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
+
+      {/* Time metadata - only time shown (date is already in title) */}
+      <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
+        <Clock className="w-3 h-3" />
+        <span>{formatTime(meeting.dueTime)}</span>
+      </div>
+
+      {/* Description - like tweet text */}
+      {meeting.description && (
+        <p className="text-gray-700 text-sm whitespace-pre-wrap break-words mb-3">
+          {meeting.description}
+        </p>
+      )}
+
+      {/* Completion date - shown when completed */}
+      {meeting.status === 'completed' && meeting.completedAt && (
+        <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
+          <span>Completed {new Date(meeting.completedAt).toLocaleDateString()}</span>
+        </div>
+      )}
     </div>
   );
 };
