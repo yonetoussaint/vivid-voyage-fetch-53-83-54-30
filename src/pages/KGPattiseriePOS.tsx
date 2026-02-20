@@ -1,36 +1,35 @@
 import React, { useState } from 'react';
-import { Menu, X, ShoppingCart, Plus, Minus, Trash2, Download, Home, Package, Settings, Receipt, User, Loader, Clock, RotateCcw, Search, Store, Share2, Check, Upload, Image as ImageIcon } from 'lucide-react';
+import { Download, Share2, User, Receipt, Calendar, Package, Building, Loader, Check, Image as ImageIcon, Upload, Phone, Mail, MapPin, FileText, Droplets } from 'lucide-react';
 
-// ==================== COMPOSANT PRINCIPAL ====================
-const KGPattisseriePOS = () => {
-  const [activeTab, setActiveTab] = useState('vente');
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [cart, setCart] = useState([]);
+// ==================== COMPOSANT PRINCIPAL - FACTURE PROPANE ====================
+const PropaneInvoiceGenerator = () => {
   const [customerName, setCustomerName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [invoiceHistory, setInvoiceHistory] = useState([]);
-  const [showCart, setShowCart] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [addingToCart, setAddingToCart] = useState(null);
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [quantity, setQuantity] = useState(400);
+  const [pricePerUnit] = useState(450);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   
   // Logo state
   const [logoImage, setLogoImage] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
+  
+  // Company info
+  const [companyName, setCompanyName] = useState('Entreprise de Propane');
+  const [companyAddress, setCompanyAddress] = useState('Saint-Marc, Haïti');
+  const [companyPhone, setCompanyPhone] = useState('+509 1234 5678');
+  const [companyEmail, setCompanyEmail] = useState('contact@propane.ht');
+  const [companyNIF, setCompanyNIF] = useState('123-456-789-0');
+  const [companyRCCM, setCompanyRCCM] = useState('SA-2024-001234');
+  
+  // Invoice history
+  const [invoiceHistory, setInvoiceHistory] = useState([]);
 
-  const products = [
-    { id: 1, name: '07 OZ - Fraise', price: 300, image: '🍓', category: '07 OZ', flavor: 'Fraise' },
-    { id: 2, name: '07 OZ - Chocolat', price: 300, image: '🍫', category: '07 OZ', flavor: 'Chocolat' },
-    { id: 3, name: '07 OZ - Vanille', price: 300, image: '🍦', category: '07 OZ', flavor: 'Vanille' },
-    { id: 4, name: '07 OZ - Rhum Raisin', price: 300, image: '🍇', category: '07 OZ', flavor: 'Rhum Raisin' },
-    { id: 5, name: '07 OZ - Fruit de la Passion', price: 300, image: '💛', category: '07 OZ', flavor: 'Fruit de la Passion' },
-    { id: 6, name: '16 OZ - Fraise', price: 500, image: '🍓', category: '16 OZ', flavor: 'Fraise' },
-    { id: 7, name: '16 OZ - Chocolat', price: 500, image: '🍫', category: '16 OZ', flavor: 'Chocolat' },
-    { id: 8, name: '16 OZ - Vanille', price: 500, image: '🍦', category: '16 OZ', flavor: 'Vanille' },
-    { id: 9, name: '16 OZ - Rhum Raisin', price: 500, image: '🍇', category: '16 OZ', flavor: 'Rhum Raisin' },
-    { id: 10, name: '16 OZ - Fruit de la Passion', price: 500, image: '💛', category: '16 OZ', flavor: 'Fruit de la Passion' },
-  ];
-
-  const categories = ['07 OZ', '16 OZ'];
+  const totalAmount = quantity * pricePerUnit;
+  const invoiceNumber = 'PRO-' + Date.now().toString().slice(-8);
+  const currentDate = new Date().toLocaleDateString('fr-FR');
+  const currentTime = new Date().toLocaleTimeString('fr-FR');
 
   // Handle logo upload
   const handleLogoUpload = (event) => {
@@ -45,321 +44,14 @@ const KGPattisseriePOS = () => {
     }
   };
 
-  const addToCart = async (product) => {
-    setAddingToCart(product.id);
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const existingItem = cart.find(item => item.id === product.id);
-
-    if (!existingItem) {
-      setCart([...cart, { ...product, quantity: 1 }]);
-    }
-
-    setAddingToCart(null);
-  };
-
-  const updateQuantity = (id, delta) => {
-    setCart(cart.map(item => 
-      item.id === id 
-        ? { ...item, quantity: Math.max(0, item.quantity + delta) }
-        : item
-    ).filter(item => item.quantity > 0));
-  };
-
-  const removeFromCart = (id) => {
-    setCart(cart.filter(item => item.id !== id));
-  };
-
-  const getTotalAmount = () => {
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  };
-
-  const getTotalItems = () => {
-    return cart.reduce((sum, item) => sum + item.quantity, 0);
-  };
-
-  const clearCart = () => {
-    setCart([]);
-  };
-
-  const addToHistory = (invoice) => {
-    setInvoiceHistory(prev => [invoice, ...prev]);
-  };
-
-  const regenerateInvoice = async (invoice) => {
-    setIsLoading(true);
-    try {
-      await generateAndDownloadImage({ 
-        cart: invoice.items, 
-        customerName: invoice.customerName, 
-        total: invoice.total,
-        logo: logoImage // Pass logo to generation
-      });
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la régénération de la facture');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.flavor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <Header 
-        menuOpen={menuOpen} 
-        setMenuOpen={setMenuOpen} 
-        cartCount={getTotalItems()}
-        onCartClick={() => setShowCart(true)}
-        logoPreview={logoPreview} // Pass logo to header
-      />
-
-      <SidebarMenu 
-        menuOpen={menuOpen} 
-        setMenuOpen={setMenuOpen} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-      />
-
-      <div className="flex-1 overflow-hidden">
-        {activeTab === 'vente' ? (
-          <>
-            <StoreView 
-              products={filteredProducts}
-              categories={categories}
-              addToCart={addToCart}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              cartCount={getTotalItems()}
-              onCartClick={() => setShowCart(true)}
-              cart={cart}
-              addingToCart={addingToCart}
-              logoPreview={logoPreview} // Pass logo to store view
-            />
-
-            <CartDrawer 
-              isOpen={showCart}
-              onClose={() => setShowCart(false)}
-              cart={cart}
-              customerName={customerName}
-              setCustomerName={setCustomerName}
-              updateQuantity={updateQuantity}
-              removeFromCart={removeFromCart}
-              getTotalAmount={getTotalAmount}
-              clearCart={clearCart}
-              isLoading={isLoading}
-              setIsLoading={setIsLoading}
-              addToHistory={addToHistory}
-              logoImage={logoImage} // Pass logo to cart drawer
-            />
-          </>
-        ) : (
-          <div className="h-full overflow-y-auto p-3">
-            {activeTab === 'produits' && (
-              <ProductsTab products={products} />
-            )}
-            {activeTab === 'factures' && (
-              <FacturesTab 
-                invoiceHistory={invoiceHistory}
-                onRegenerate={regenerateInvoice}
-                isLoading={isLoading}
-              />
-            )}
-            {activeTab === 'parametres' && (
-              <ParametresTab 
-                logoPreview={logoPreview}
-                onLogoUpload={handleLogoUpload}
-              />
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// ==================== COMPOSANT STORE VIEW (UBER EATS STYLE) ====================
-const StoreView = ({ products, categories, addToCart, searchTerm, setSearchTerm, cartCount, onCartClick, cart, addingToCart, logoPreview }) => {
-  const [selectedCategory, setSelectedCategory] = useState('all');
-
-  const filteredByCategory = selectedCategory === 'all' 
-    ? products 
-    : products.filter(p => p.category === selectedCategory);
-
-  const isInCart = (productId) => {
-    return cart.some(item => item.id === productId);
-  };
-
-  return (
-    <div className="h-full flex flex-col bg-gray-100">
-      <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20">
-        <div className="flex items-center gap-2 mb-3">
-          {logoPreview ? (
-            <img src={logoPreview} alt="Logo" className="w-8 h-8 object-contain" />
-          ) : (
-            <Store size={24} className="text-pink-600" />
-          )}
-          <h1 className="text-xl font-bold text-gray-800">KG Pâtisserie</h1>
-        </div>
-
-        <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher une glace..."
-            className="w-full pl-10 pr-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-
-      <div className="bg-white px-4 py-3 border-b border-gray-200 sticky top-[88px] z-20">
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-              selectedCategory === 'all'
-                ? 'bg-pink-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Tous
-          </button>
-          {categories.map(category => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                selectedCategory === category
-                  ? 'bg-pink-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-3 pb-28">
-          <div className="grid grid-cols-2 gap-3">
-            {filteredByCategory.map(product => (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
-                addToCart={addToCart} 
-                isInCart={isInCart(product.id)}
-                isLoading={addingToCart === product.id}
-              />
-            ))}
-          </div>
-
-          {filteredByCategory.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="text-6xl mb-4">😢</div>
-              <p className="text-gray-500 text-center">Aucun produit trouvé</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {cartCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-          <div className="p-3">
-            <button
-              onClick={onCartClick}
-              className="w-full bg-pink-600 text-white py-4 rounded-xl font-bold flex items-center justify-between px-6 hover:bg-pink-700 transition-colors shadow-md"
-            >
-              <div className="flex items-center gap-3">
-                <ShoppingCart size={24} />
-                <span className="text-lg">{cartCount} article{cartCount > 1 ? 's' : ''}</span>
-              </div>
-              <span className="text-lg">Voir le panier →</span>
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ==================== COMPOSANT PRODUCT CARD ====================
-const ProductCard = ({ product, addToCart, isInCart, isLoading }) => {
-  return (
-    <div className={`bg-white rounded-xl shadow-sm overflow-hidden border ${
-      isInCart ? 'border-pink-400 border-2' : 'border-gray-200'
-    } hover:shadow-md transition-shadow`}>
-      <div className="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center relative">
-        <span className="text-6xl">{product.image}</span>
-        <span className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-bold text-pink-600 border border-pink-200">
-          {product.category}
-        </span>
-        {isInCart && (
-          <span className="absolute bottom-2 left-2 bg-pink-600 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-md">
-            <Check size={12} />
-            Dans le panier
-          </span>
-        )}
-      </div>
-      <div className="p-3">
-        <h3 className="font-semibold text-gray-800 text-sm mb-1 line-clamp-2">
-          {product.flavor}
-        </h3>
-        <div className="flex items-center justify-between mt-2">
-          <span className="font-bold text-pink-600 text-lg">{product.price} HTG</span>
-          {isInCart ? (
-            <div className="bg-green-100 text-green-700 p-2 rounded-full w-10 h-10 flex items-center justify-center">
-              <Check size={20} />
-            </div>
-          ) : (
-            <button
-              onClick={() => addToCart(product)}
-              disabled={isLoading}
-              className="bg-pink-600 text-white p-2 rounded-full hover:bg-pink-700 transition-colors flex items-center justify-center w-10 h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <Loader size={20} className="animate-spin" />
-              ) : (
-                <Plus size={20} />
-              )}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ==================== COMPOSANT CART DRAWER ====================
-const CartDrawer = ({ 
-  isOpen, 
-  onClose, 
-  cart, 
-  customerName, 
-  setCustomerName, 
-  updateQuantity, 
-  removeFromCart, 
-  getTotalAmount, 
-  clearCart, 
-  isLoading, 
-  setIsLoading, 
-  addToHistory,
-  logoImage 
-}) => {
-  const [isSharing, setIsSharing] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-
   const handleGenerateInvoice = async (action = 'download') => {
-    if (cart.length === 0) {
-      alert('Panier vide');
+    if (quantity <= 0) {
+      alert('La quantité doit être supérieure à 0');
+      return;
+    }
+
+    if (!customerName.trim()) {
+      alert('Veuillez entrer le nom du client');
       return;
     }
 
@@ -369,24 +61,30 @@ const CartDrawer = ({
       setIsSharing(true);
     }
 
-    const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
-    const total = getTotalAmount();
-
     const invoice = {
       number: invoiceNumber,
-      date: new Date().toLocaleDateString('fr-FR'),
-      time: new Date().toLocaleTimeString('fr-FR'),
-      items: [...cart],
-      total: total,
-      customerName: customerName || 'Client'
+      date: currentDate,
+      time: currentTime,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      customerAddress: customerAddress,
+      quantity: quantity,
+      pricePerUnit: pricePerUnit,
+      total: totalAmount
     };
 
     try {
       const imageBlob = await generateImageBlob({ 
-        cart, 
-        customerName, 
-        total,
-        logo: logoImage // Pass logo to image generation
+        invoice,
+        companyInfo: {
+          name: companyName,
+          address: companyAddress,
+          phone: companyPhone,
+          email: companyEmail,
+          nif: companyNIF,
+          rccm: companyRCCM,
+          logo: logoImage
+        }
       });
 
       if (action === 'download') {
@@ -401,7 +99,7 @@ const CartDrawer = ({
         if (navigator.share) {
           await navigator.share({
             title: `Facture ${invoice.number}`,
-            text: `Facture KG Pâtisserie - ${customerName || 'Client'} - Total: ${total} HTG`,
+            text: `Facture ${companyName} - ${customerName} - ${quantity} gallons - Total: ${totalAmount} HTG`,
             files: [file]
           });
         } else {
@@ -409,10 +107,14 @@ const CartDrawer = ({
         }
       }
 
-      addToHistory(invoice);
-      clearCart();
-      setCustomerName('');
-      onClose();
+      setInvoiceHistory(prev => [invoice, ...prev].slice(0, 10));
+      
+      if (action === 'download') {
+        // Optionally clear form after successful download
+        // setCustomerName('');
+        // setCustomerPhone('');
+        // setCustomerAddress('');
+      }
     } catch (error) {
       console.error('Erreur:', error);
       alert(`Erreur lors de la ${action === 'download' ? 'génération' : 'génération et du partage'} de la facture`);
@@ -422,143 +124,292 @@ const CartDrawer = ({
     }
   };
 
-  if (!isOpen) return null;
+  const quickAmounts = [100, 200, 300, 400, 500, 1000];
 
   return (
-    <>
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
-        onClick={onClose}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Header */}
+        <header className="bg-gradient-to-r from-blue-800 to-blue-600 text-white rounded-2xl shadow-xl mb-8 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-3">
+              {logoPreview ? (
+                <img src={logoPreview} alt="Logo" className="w-12 h-12 object-contain bg-white rounded-lg p-1" />
+              ) : (
+                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
+                  <Droplets size={28} className="text-blue-600" />
+                </div>
+              )}
+              <div>
+                <h1 className="text-2xl font-bold">Facture Propane</h1>
+                <p className="text-sm text-blue-100">Générateur de factures professionnelles</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-blue-100">{currentDate}</p>
+              <p className="text-xs text-blue-200">N° Facture: {invoiceNumber}</p>
+            </div>
+          </div>
+        </header>
 
-      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform flex flex-col">
-        <div className="px-4 py-4 border-b border-gray-200 flex justify-between items-center bg-white sticky top-0">
-          <div className="flex items-center gap-3">
-            <ShoppingCart size={24} className="text-pink-600" />
-            <h2 className="text-xl font-bold text-gray-800">Votre panier</h2>
-            {cart.length > 0 && (
-              <span className="bg-pink-600 text-white text-sm rounded-full w-6 h-6 flex items-center justify-center">
-                {cart.reduce((sum, item) => sum + item.quantity, 0)}
-              </span>
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Left Column - Company Info & Settings */}
+          <div className="md:col-span-1 space-y-6">
+            {/* Logo Upload */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <ImageIcon size={18} className="text-blue-600" />
+                Logo entreprise
+              </h3>
+              
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center overflow-hidden border-2 border-blue-300">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain" />
+                  ) : (
+                    <Droplets size={48} className="text-blue-600" />
+                  )}
+                </div>
+                
+                <label className="w-full flex flex-col items-center justify-center py-3 border-2 border-blue-300 border-dashed rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition-colors">
+                  <Upload size={20} className="text-blue-600 mb-1" />
+                  <p className="text-sm text-blue-600 font-medium">Télécharger logo</p>
+                  <p className="text-xs text-gray-500">PNG, JPG</p>
+                  <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                </label>
+              </div>
+            </div>
+
+            {/* Company Info */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Building size={18} className="text-blue-600" />
+                Informations entreprise
+              </h3>
+              
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Nom de l'entreprise"
+                  className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  value={companyAddress}
+                  onChange={(e) => setCompanyAddress(e.target.value)}
+                  placeholder="Adresse"
+                  className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  value={companyPhone}
+                  onChange={(e) => setCompanyPhone(e.target.value)}
+                  placeholder="Téléphone"
+                  className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="email"
+                  value={companyEmail}
+                  onChange={(e) => setCompanyEmail(e.target.value)}
+                  placeholder="Email"
+                  className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  value={companyNIF}
+                  onChange={(e) => setCompanyNIF(e.target.value)}
+                  placeholder="NIF"
+                  className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  value={companyRCCM}
+                  onChange={(e) => setCompanyRCCM(e.target.value)}
+                  placeholder="RCCM"
+                  className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Invoice Form */}
+          <div className="md:col-span-2 space-y-6">
+            {/* Customer Info */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <User size={18} className="text-blue-600" />
+                Informations client
+              </h3>
+              
+              <div className="grid gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Jean Dupont"
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                    <input
+                      type="text"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="+509 1234 5678"
+                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                    <input
+                      type="text"
+                      value={customerAddress}
+                      onChange={(e) => setCustomerAddress(e.target.value)}
+                      placeholder="Saint-Marc, Haïti"
+                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Propane Details */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Package size={18} className="text-blue-600" />
+                Détails de la commande
+              </h3>
+              
+              <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">Prix unitaire:</span>
+                  <span className="text-lg font-bold text-blue-800">{pricePerUnit} HTG / gallon</span>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Quantité (gallons)</label>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 0))}
+                  min="1"
+                  className="w-full p-4 text-2xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 text-center"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-6">
+                {quickAmounts.map(amount => (
+                  <button
+                    key={amount}
+                    onClick={() => setQuantity(amount)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      quantity === amount
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {amount} gal
+                  </button>
+                ))}
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-medium text-gray-700">Total à payer:</span>
+                  <span className="text-3xl font-bold text-blue-800">{totalAmount.toLocaleString()} HTG</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex gap-4">
+                <button
+                  onClick={() => handleGenerateInvoice('download')}
+                  disabled={isDownloading || isSharing}
+                  className="flex-1 bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDownloading ? (
+                    <>
+                      <Loader size={20} className="animate-spin" />
+                      <span>Génération...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download size={20} />
+                      <span>Télécharger facture</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleGenerateInvoice('share')}
+                  disabled={isSharing || isDownloading}
+                  className="flex-1 bg-green-600 text-white py-4 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSharing ? (
+                    <>
+                      <Loader size={20} className="animate-spin" />
+                      <span>Préparation...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 size={20} />
+                      <span>Partager facture</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Invoices */}
+            {invoiceHistory.length > 0 && (
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <Receipt size={18} className="text-blue-600" />
+                  Factures récentes
+                </h3>
+                
+                <div className="space-y-3">
+                  {invoiceHistory.map((invoice, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-semibold text-gray-800">{invoice.customerName}</p>
+                          <p className="text-sm text-gray-600">
+                            {invoice.quantity} gal - {invoice.total.toLocaleString()} HTG
+                          </p>
+                          <p className="text-xs text-gray-400">{invoice.number}</p>
+                        </div>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          {invoice.date}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {cart.length > 0 && (
-              <button 
-                onClick={clearCart}
-                className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <Trash2 size={20} />
-              </button>
-            )}
-            <button 
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <X size={24} />
-            </button>
-          </div>
         </div>
-
-        <div className="px-4 py-4 border-b border-gray-200 bg-gray-50">
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <User size={16} />
-            Nom du client
-          </label>
-          <input
-            type="text"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            placeholder="Entrez le nom du client"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-base bg-white"
-          />
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {cart.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
-              <ShoppingCart size={64} className="mb-4 opacity-30" />
-              <p className="text-lg font-medium">Votre panier est vide</p>
-              <p className="text-sm mt-2">Ajoutez des produits depuis la boutique</p>
-              <button
-                onClick={onClose}
-                className="mt-6 bg-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-pink-700 transition-colors"
-              >
-                Parcourir la boutique
-              </button>
-            </div>
-          ) : (
-            cart.map(item => (
-              <CartItem 
-                key={item.id} 
-                item={item} 
-                updateQuantity={updateQuantity} 
-                removeFromCart={removeFromCart} 
-              />
-            ))
-          )}
-        </div>
-
-        {cart.length > 0 && (
-          <div className="px-4 py-4 border-t border-gray-200 bg-white sticky bottom-0">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-gray-700 font-medium">Total</span>
-              <span className="font-bold text-2xl text-pink-600">{getTotalAmount()} HTG</span>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleGenerateInvoice('download')}
-                disabled={isDownloading || isSharing}
-                className="bg-white border-2 border-pink-600 text-pink-600 p-3 rounded-lg hover:bg-pink-50 transition-all flex items-center justify-center w-12 h-12 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Télécharger la facture"
-              >
-                {isDownloading ? (
-                  <Loader size={20} className="animate-spin" />
-                ) : (
-                  <Download size={20} />
-                )}
-              </button>
-
-              <button
-                onClick={() => handleGenerateInvoice('share')}
-                disabled={isSharing || isDownloading}
-                className="flex-1 bg-pink-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-pink-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSharing ? (
-                  <>
-                    <Loader size={20} className="animate-spin" />
-                    <span>Préparation...</span>
-                  </>
-                ) : (
-                  <>
-                    <Share2 size={20} />
-                    <span>Partager Facture</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
-    </>
+    </div>
   );
 };
 
-// ==================== FONCTION DE GÉNÉRATION D'IMAGE BLOB ====================
-const generateImageBlob = async ({ cart, customerName, total, logo }) => {
-  const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
-  const invoice = {
-    number: invoiceNumber,
-    date: new Date().toLocaleDateString('fr-FR'),
-    time: new Date().toLocaleTimeString('fr-FR'),
-    items: [...cart],
-    total: total
-  };
-
+// ==================== FONCTION DE GÉNÉRATION D'IMAGE ====================
+const generateImageBlob = async ({ invoice, companyInfo }) => {
   await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
 
-  const invoiceHTML = generateInvoiceHTML({ invoice, customerName, logo });
+  const invoiceHTML = generateInvoiceHTML({ invoice, companyInfo });
 
   const iframe = document.createElement('iframe');
   iframe.style.position = 'absolute';
@@ -595,373 +446,20 @@ const generateImageBlob = async ({ cart, customerName, total, logo }) => {
   });
 };
 
-// ==================== COMPOSANT ARTICLE DU PANIER ====================
-const CartItem = ({ item, updateQuantity, removeFromCart }) => (
-  <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-    <div className="flex justify-between items-start mb-2">
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{item.image}</span>
-          <div>
-            <p className="font-semibold text-gray-800 text-sm">{item.flavor}</p>
-            <p className="text-xs text-gray-500">{item.category}</p>
-          </div>
-        </div>
-      </div>
-      <button
-        onClick={() => removeFromCart(item.id)}
-        className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded-full transition-colors"
-      >
-        <Trash2 size={18} />
-      </button>
-    </div>
-    <div className="flex items-center justify-between mt-2">
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => updateQuantity(item.id, -1)}
-          className="w-9 h-9 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200 transition-colors"
-        >
-          <Minus size={18} />
-        </button>
-        <span className="w-10 text-center font-bold text-base">{item.quantity}</span>
-        <button
-          onClick={() => updateQuantity(item.id, 1)}
-          className="w-9 h-9 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200 transition-colors"
-        >
-          <Plus size={18} />
-        </button>
-      </div>
-      <p className="font-bold text-pink-600 text-lg">
-        {item.price * item.quantity} HTG
-      </p>
-    </div>
-  </div>
-);
-
-// ==================== COMPOSANT HEADER ====================
-const Header = ({ menuOpen, setMenuOpen, cartCount, onCartClick, logoPreview }) => (
-  <header className="bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-sm sticky top-0 z-30">
-    <div className="flex items-center justify-between px-3 py-2">
-      <button 
-        onClick={() => setMenuOpen(!menuOpen)}
-        className="p-2 hover:bg-pink-700 rounded-lg transition-colors"
-      >
-        {menuOpen ? <X size={22} /> : <Menu size={22} />}
-      </button>
-      <div className="text-center flex-1 flex items-center justify-center gap-2">
-        {logoPreview ? (
-          <img src={logoPreview} alt="Logo" className="w-8 h-8 object-contain rounded-full bg-white p-1" />
-        ) : (
-          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-            <span className="text-pink-600 font-bold text-sm">KG</span>
-          </div>
-        )}
-        <div>
-          <h1 className="text-lg font-bold">KG Pâtisserie</h1>
-          <p className="text-xs text-pink-100">Saint-Marc, Ruelle Désir</p>
-        </div>
-      </div>
-      <button 
-        onClick={onCartClick}
-        className="relative p-2 hover:bg-pink-700 rounded-lg transition-colors"
-      >
-        <ShoppingCart size={22} />
-        {cartCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-            {cartCount}
-          </span>
-        )}
-      </button>
-    </div>
-  </header>
-);
-
-// ==================== COMPOSANT SIDEBAR MENU ====================
-const SidebarMenu = ({ menuOpen, setMenuOpen, activeTab, setActiveTab }) => {
-  const NavItem = ({ icon: Icon, label, tab }) => (
-    <button
-      onClick={() => {
-        setActiveTab(tab);
-        setMenuOpen(false);
-      }}
-      className={`flex items-center gap-3 w-full px-4 py-3 transition-colors ${
-        activeTab === tab 
-          ? 'bg-pink-100 text-pink-700 border-l-4 border-pink-600' 
-          : 'text-gray-700 hover:bg-gray-100'
-      }`}
-    >
-      <Icon size={18} />
-      <span className="font-medium text-sm">{label}</span>
-    </button>
-  );
-
-  return (
-    <div
-      className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity ${
-        menuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}
-      onClick={() => setMenuOpen(false)}
-    >
-      <div
-        className={`fixed left-0 top-0 bottom-0 w-64 bg-white shadow-xl transform transition-transform ${
-          menuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="bg-gradient-to-r from-pink-600 to-pink-500 text-white p-5">
-          <h2 className="text-xl font-bold">KG Pâtisserie</h2>
-          <p className="text-xs text-pink-100 mt-1">Système de Caisse</p>
-        </div>
-        <nav className="py-2">
-          <NavItem icon={Home} label="Vente" tab="vente" />
-          <NavItem icon={Package} label="Produits" tab="produits" />
-          <NavItem icon={Receipt} label="Factures" tab="factures" />
-          <NavItem icon={Settings} label="Paramètres" tab="parametres" />
-        </nav>
-      </div>
-    </div>
-  );
-};
-
-// ==================== COMPOSANT ONGLET PRODUITS ====================
-const ProductsTab = ({ products }) => (
-  <div className="bg-white rounded-lg shadow-sm p-4">
-    <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-      <span className="text-xl">🍦</span> Tous les produits
-    </h2>
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-      {products.map(product => (
-        <div key={product.id} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-3xl">{product.image}</span>
-            <div>
-              <p className="font-medium text-gray-800 text-sm">{product.flavor}</p>
-              <p className="text-xs text-gray-500">{product.category}</p>
-            </div>
-          </div>
-          <p className="font-bold text-pink-600 text-right">{product.price} HTG</p>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// ==================== COMPOSANT ONGLET FACTURES ====================
-const FacturesTab = ({ invoiceHistory, onRegenerate, isLoading }) => {
-  if (invoiceHistory.length === 0) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <span className="text-xl">📋</span> Factures
-        </h2>
-        <div className="text-center py-8 text-gray-400">
-          <Receipt size={40} className="mx-auto mb-2 opacity-30" />
-          <p className="text-sm">Aucune facture</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-4">
-      <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-        <span className="text-xl">📋</span> Factures
-      </h2>
-      <div className="space-y-3">
-        {invoiceHistory.map((invoice, index) => (
-          <div key={index} className="border border-gray-200 rounded-lg p-3">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Receipt size={16} className="text-pink-600" />
-                  <span className="font-bold text-gray-800 text-sm">{invoice.number}</span>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-gray-600 mb-1">
-                  <span className="flex items-center gap-1">
-                    <Clock size={12} />
-                    {invoice.date} à {invoice.time}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <User size={12} />
-                    {invoice.customerName || 'Client'}
-                  </span>
-                </div>
-                <div className="mt-1">
-                  {invoice.items.map((item, i) => (
-                    <span key={i} className="inline-block bg-gray-100 rounded-full px-2 py-0.5 text-xs mr-1 mb-1">
-                      {item.flavor} x{item.quantity}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="text-right flex flex-col items-end gap-1">
-                <span className="font-bold text-pink-600">{invoice.total} HTG</span>
-                <button
-                  onClick={() => onRegenerate(invoice)}
-                  disabled={isLoading}
-                  className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-100 text-xs"
-                >
-                  <RotateCcw size={12} />
-                  Régénérer
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// ==================== COMPOSANT ONGLET PARAMETRES AVEC UPLOAD LOGO ====================
-const ParametresTab = ({ logoPreview, onLogoUpload }) => {
-  const [storeName, setStoreName] = useState('KG Pâtisserie');
-  const [address, setAddress] = useState('Saint-Marc, Ruelle Désir');
-  const [email, setEmail] = useState('kentiagede@gmail.com');
-  const [phone, setPhone] = useState('+509 1234 5678');
-
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-4">
-      <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-        <span className="text-xl">⚙️</span> Paramètres
-      </h2>
-      
-      {/* Section Logo */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <ImageIcon size={18} className="text-pink-600" />
-          Logo de l'entreprise
-        </h3>
-        
-        <div className="flex items-center gap-4">
-          {/* Preview du logo */}
-          <div className="w-20 h-20 bg-gradient-to-br from-pink-100 to-pink-200 rounded-lg flex items-center justify-center overflow-hidden border-2 border-pink-300">
-            {logoPreview ? (
-              <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain" />
-            ) : (
-              <span className="text-3xl font-bold text-pink-600">KG</span>
-            )}
-          </div>
-          
-          {/* Bouton upload */}
-          <div className="flex-1">
-            <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-pink-300 border-dashed rounded-lg cursor-pointer bg-pink-50 hover:bg-pink-100 transition-colors">
-              <div className="flex flex-col items-center justify-center pt-3 pb-2">
-                <Upload size={20} className="text-pink-600 mb-1" />
-                <p className="text-xs text-pink-600 font-medium">Télécharger un logo</p>
-                <p className="text-xs text-gray-500">PNG, JPG (max. 2MB)</p>
-              </div>
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*"
-                onChange={onLogoUpload}
-              />
-            </label>
-          </div>
-        </div>
-        
-        {logoPreview && (
-          <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-            <Check size={12} />
-            Logo téléchargé avec succès
-          </p>
-        )}
-      </div>
-
-      {/* Informations de l'entreprise */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-gray-700 mb-2">Informations de l'entreprise</h3>
-        
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Nom</label>
-          <input 
-            type="text" 
-            value={storeName}
-            onChange={(e) => setStoreName(e.target.value)}
-            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Adresse</label>
-          <input 
-            type="text" 
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
-          <input 
-            type="email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Téléphone</label>
-          <input 
-            type="text" 
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">NIF</label>
-          <input 
-            type="text" 
-            defaultValue="123-456-789-0"
-            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">RCCM</label>
-          <input 
-            type="text" 
-            defaultValue="SA-2024-001234"
-            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-          />
-        </div>
-
-        <button className="w-full bg-pink-600 text-white py-2 rounded-lg font-medium hover:bg-pink-700 transition-colors mt-4">
-          Sauvegarder les modifications
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ==================== FONCTION DE GÉNÉRATION DE FACTURE AVEC LOGO ====================
-const generateInvoiceHTML = ({ invoice, customerName, logo }) => {
-  const itemsHTML = invoice.items.map((item, index) => `
-    <tr style="border-bottom: 1px solid #e5e7eb; ${index % 2 === 0 ? 'background-color: #f9fafb;' : ''}">
-      <td style="padding: 16px 24px; font-size: 16px; color: #1f2937; font-family: 'Inter', Arial, sans-serif;">${item.name}</td>
-      <td style="text-align: center; padding: 16px 24px; font-size: 16px; color: #4b5563; font-family: 'Inter', Arial, sans-serif;">${item.price.toFixed(2)} HTG</td>
-      <td style="text-align: center; padding: 16px 24px; font-size: 16px; color: #4b5563; font-family: 'Inter', Arial, sans-serif;">${item.quantity}</td>
-      <td style="text-align: right; padding: 16px 24px; font-size: 16px; font-weight: bold; color: #1f2937; font-family: 'Inter', Arial, sans-serif;">${(item.price * item.quantity).toFixed(2)} HTG</td>
-    </tr>
-  `).join('');
-
-  // Logo HTML - soit l'image uploadée, soit le texte par défaut
-  const logoHTML = logo 
-    ? `<img src="${logo}" alt="Logo" style="width: 100px; height: 100px; object-fit: contain; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" />`
-    : `<div style="width: 100px; height: 100px; background: linear-gradient(135deg, #db2777, #be185d); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <span style="color: white; font-size: 42px; font-weight: bold;">KG</span>
+// ==================== GÉNÉRATION HTML DE LA FACTURE ====================
+const generateInvoiceHTML = ({ invoice, companyInfo }) => {
+  // Logo HTML
+  const logoHTML = companyInfo.logo 
+    ? `<img src="${companyInfo.logo}" alt="Logo" style="width: 100px; height: 100px; object-fit: contain; border-radius: 12px;" />`
+    : `<div style="width: 100px; height: 100px; background: linear-gradient(135deg, #1e40af, #1e3a8a); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+        <span style="color: white; font-size: 42px; font-weight: bold;">P</span>
        </div>`;
 
   return `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Facture ${invoice.number}</title>
+    <title>Facture Propane ${invoice.number}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -983,30 +481,26 @@ const generateInvoiceHTML = ({ invoice, customerName, logo }) => {
   </head>
   <body>
     <div class="invoice-container">
-      <!-- En-tête avec logo -->
+      <!-- En-tête -->
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 2px solid #e5e7eb;">
         <div>
           ${logoHTML}
-          <h1 style="font-size: 42px; font-weight: 800; color: #1f2937; margin: 0 0 10px 0;">KG Pâtisserie</h1>
-          <p style="font-size: 18px; color: #4b5563; margin: 6px 0;">Saint-Marc, Ruelle Désir</p>
-          <p style="font-size: 18px; color: #4b5563; margin: 6px 0;">Haïti</p>
-          <p style="font-size: 18px; color: #4b5563; margin: 6px 0;">kentiagede@gmail.com</p>
-          <p style="font-size: 18px; color: #4b5563; margin: 6px 0;">Tél: +509 1234 5678</p>
+          <h1 style="font-size: 42px; font-weight: 800; color: #1f2937; margin: 20px 0 10px 0;">${companyInfo.name}</h1>
+          <p style="font-size: 16px; color: #4b5563; margin: 5px 0;"><span style="font-weight: 600;">📍</span> ${companyInfo.address}</p>
+          <p style="font-size: 16px; color: #4b5563; margin: 5px 0;"><span style="font-weight: 600;">📞</span> ${companyInfo.phone}</p>
+          <p style="font-size: 16px; color: #4b5563; margin: 5px 0;"><span style="font-weight: 600;">✉️</span> ${companyInfo.email}</p>
         </div>
         <div style="text-align: right;">
-          <h2 style="font-size: 56px; font-weight: 800; color: #db2777; margin: 0 0 20px 0;">FACTURE</h2>
-          <div style="background: #fdf2f8; padding: 25px 30px; border-radius: 12px; border: 1px solid #fbcfe8;">
-            <p style="font-size: 18px; color: #4b5563; margin: 8px 0; display: flex; justify-content: flex-end; gap: 20px;">
-              <span style="font-weight: 700; color: #1f2937;">N° Facture:</span> 
-              <span style="font-weight: 600;">${invoice.number}</span>
+          <h2 style="font-size: 56px; font-weight: 800; color: #1e40af; margin: 0 0 20px 0;">FACTURE</h2>
+          <div style="background: #eff6ff; padding: 25px 30px; border-radius: 12px; border: 1px solid #bfdbfe;">
+            <p style="font-size: 18px; color: #4b5563; margin: 8px 0;">
+              <span style="font-weight: 700; color: #1f2937;">N° Facture:</span> ${invoice.number}
             </p>
-            <p style="font-size: 18px; color: #4b5563; margin: 8px 0; display: flex; justify-content: flex-end; gap: 20px;">
-              <span style="font-weight: 700; color: #1f2937;">Date:</span> 
-              <span style="font-weight: 600;">${invoice.date}</span>
+            <p style="font-size: 18px; color: #4b5563; margin: 8px 0;">
+              <span style="font-weight: 700; color: #1f2937;">Date:</span> ${invoice.date}
             </p>
-            <p style="font-size: 18px; color: #4b5563; margin: 8px 0; display: flex; justify-content: flex-end; gap: 20px;">
-              <span style="font-weight: 700; color: #1f2937;">Heure:</span> 
-              <span style="font-weight: 600;">${invoice.time}</span>
+            <p style="font-size: 18px; color: #4b5563; margin: 8px 0;">
+              <span style="font-weight: 700; color: #1f2937;">Heure:</span> ${invoice.time}
             </p>
           </div>
         </div>
@@ -1014,136 +508,101 @@ const generateInvoiceHTML = ({ invoice, customerName, logo }) => {
 
       <!-- Client -->
       <div style="margin-bottom: 40px; padding: 25px 30px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
-        <h3 style="font-size: 22px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Facturer à :</h3>
-        <p style="font-size: 18px; color: #374151; margin: 8px 0; font-weight: 600;">${customerName || 'Client'}</p>
-        <p style="font-size: 18px; color: #374151; margin: 8px 0;">Saint-Marc, Haïti</p>
-        <p style="font-size: 18px; color: #374151; margin: 8px 0;">client@email.com</p>
+        <h3 style="font-size: 22px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Client</h3>
+        <p style="font-size: 20px; color: #374151; margin: 8px 0; font-weight: 600;">${invoice.customerName}</p>
+        ${invoice.customerPhone ? `<p style="font-size: 16px; color: #4b5563; margin: 5px 0;">📞 ${invoice.customerPhone}</p>` : ''}
+        ${invoice.customerAddress ? `<p style="font-size: 16px; color: #4b5563; margin: 5px 0;">📍 ${invoice.customerAddress}</p>` : ''}
       </div>
 
-      <!-- Tableau -->
-      <table style="width: 100%; margin-bottom: 40px; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <thead>
-          <tr style="background: linear-gradient(135deg, #db2777, #be185d);">
-            <th style="text-align: left; padding: 18px 24px; font-size: 16px; font-weight: 600; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Description</th>
-            <th style="text-align: center; padding: 18px 24px; font-size: 16px; font-weight: 600; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Prix unitaire</th>
-            <th style="text-align: center; padding: 18px 24px; font-size: 16px; font-weight: 600; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Quantité</th>
-            <th style="text-align: right; padding: 18px 24px; font-size: 16px; font-weight: 600; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsHTML}
-        </tbody>
-      </table>
+      <!-- Détails de la commande -->
+      <div style="margin-bottom: 40px;">
+        <div style="background: linear-gradient(135deg, #1e40af, #1e3a8a); padding: 20px; border-radius: 12px 12px 0 0;">
+          <h3 style="font-size: 22px; font-weight: 700; color: white; margin: 0;">Détails de la commande de propane</h3>
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb;">
+          <thead>
+            <tr style="background: #f3f4f6;">
+              <th style="text-align: left; padding: 16px 20px; font-size: 16px; font-weight: 600; color: #374151;">Description</th>
+              <th style="text-align: center; padding: 16px 20px; font-size: 16px; font-weight: 600; color: #374151;">Quantité (gallons)</th>
+              <th style="text-align: center; padding: 16px 20px; font-size: 16px; font-weight: 600; color: #374151;">Prix unitaire</th>
+              <th style="text-align: right; padding: 16px 20px; font-size: 16px; font-weight: 600; color: #374151;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 16px 20px; font-size: 16px; color: #1f2937;">Propane (gaz domestique)</td>
+              <td style="text-align: center; padding: 16px 20px; font-size: 16px; color: #4b5563;">${invoice.quantity}</td>
+              <td style="text-align: center; padding: 16px 20px; font-size: 16px; color: #4b5563;">${invoice.pricePerUnit.toFixed(2)} HTG</td>
+              <td style="text-align: right; padding: 16px 20px; font-size: 16px; font-weight: bold; color: #1f2937;">${invoice.total.toFixed(2)} HTG</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- Totaux -->
       <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
-        <div style="width: 450px;">
+        <div style="width: 500px;">
           <div style="display: flex; justify-content: space-between; padding: 16px 24px; border-bottom: 2px solid #e5e7eb;">
-            <span style="font-size: 18px; color: #4b5563; font-weight: 500;">Sous-total:</span>
-            <span style="font-size: 18px; font-weight: 700; color: #1f2937;">${invoice.total.toFixed(2)} HTG</span>
+            <span style="font-size: 18px; color: #4b5563;">Sous-total:</span>
+            <span style="font-size: 18px; font-weight: 600; color: #1f2937;">${invoice.total.toFixed(2)} HTG</span>
           </div>
           <div style="display: flex; justify-content: space-between; padding: 16px 24px; border-bottom: 2px solid #e5e7eb;">
-            <span style="font-size: 18px; color: #4b5563; font-weight: 500;">Remise:</span>
-            <span style="font-size: 18px; font-weight: 700; color: #1f2937;">0.00 HTG</span>
+            <span style="font-size: 18px; color: #4b5563;">TVA (0%):</span>
+            <span style="font-size: 18px; font-weight: 600; color: #1f2937;">0.00 HTG</span>
           </div>
-          <div style="display: flex; justify-content: space-between; padding: 16px 24px; border-bottom: 2px solid #e5e7eb;">
-            <span style="font-size: 18px; color: #4b5563; font-weight: 500;">TVA (0%):</span>
-            <span style="font-size: 18px; font-weight: 700; color: #1f2937;">0.00 HTG</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 20px 30px; background: linear-gradient(135deg, #fdf2f8, #fce7f3); border-radius: 12px; margin-top: 16px; border: 1px solid #fbcfe8;">
-            <span style="font-size: 22px; font-weight: 800; color: #9d174d;">TOTAL À PAYER:</span>
-            <span style="font-size: 28px; font-weight: 800; color: #9d174d;">${invoice.total.toFixed(2)} HTG</span>
+          <div style="display: flex; justify-content: space-between; padding: 20px 30px; background: #eff6ff; border-radius: 12px; margin-top: 16px; border: 2px solid #1e40af;">
+            <span style="font-size: 24px; font-weight: 800; color: #1e3a8a;">TOTAL À PAYER:</span>
+            <span style="font-size: 32px; font-weight: 800; color: #1e3a8a;">${invoice.total.toFixed(2)} HTG</span>
           </div>
         </div>
       </div>
 
-      <!-- Mode de paiement et informations supplémentaires -->
+      <!-- Informations supplémentaires -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; padding-top: 30px; border-top: 2px solid #e5e7eb;">
         <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
-          <h4 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Mode de paiement</h4>
-          <p style="font-size: 18px; color: #374151; margin: 8px 0;">💳 Espèces / Carte bancaire</p>
-          <p style="font-size: 16px; color: #6b7280; margin: 12px 0 0 0;">Paiement comptant à la livraison</p>
+          <h4 style="font-size: 18px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Mode de paiement</h4>
+          <p style="font-size: 16px; color: #374151; margin: 8px 0;">💵 Espèces</p>
+          <p style="font-size: 16px; color: #374151; margin: 8px 0;">💳 Carte bancaire</p>
+          <p style="font-size: 16px; color: #374151; margin: 8px 0;">📱 Mobile Money</p>
         </div>
         <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
-          <h4 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Informations</h4>
-          <p style="font-size: 18px; color: #374151; margin: 8px 0;">✓ Marchandise livrée en l'état</p>
-          <p style="font-size: 18px; color: #374151; margin: 8px 0;">✓ Aucun échange ou remboursement</p>
+          <h4 style="font-size: 18px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Informations propane</h4>
+          <p style="font-size: 16px; color: #374151; margin: 8px 0;">✓ Produit: Gaz propane domestique</p>
+          <p style="font-size: 16px; color: #374151; margin: 8px 0;">✓ Qualité: Premium</p>
+          <p style="font-size: 16px; color: #374151; margin: 8px 0;">✓ Livraison incluse</p>
         </div>
       </div>
 
-      <!-- Conditions et signature -->
+      <!-- Conditions -->
       <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 30px; border-top: 2px solid #e5e7eb;">
-        <div style="max-width: 600px;">
-          <p style="font-size: 18px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Conditions générales :</p>
-          <p style="font-size: 15px; color: #6b7280; line-height: 1.8;">
-            Cette facture est payable à réception. Tout retard de paiement entraînera des pénalités 
-            conformément à la législation en vigueur. Merci de votre confiance.
+        <div>
+          <p style="font-size: 14px; font-weight: 600; color: #1f2937; margin: 0 0 10px 0;">Conditions de vente:</p>
+          <p style="font-size: 13px; color: #6b7280; max-width: 600px;">
+            Paiement comptant à la livraison. Le propane est livré en l'état. 
+            Aucun retour ou échange possible après livraison. 
+            Merci de votre confiance.
           </p>
         </div>
         <div style="text-align: center;">
-          <p style="font-size: 18px; color: #374151; font-weight: 600; margin: 0 0 15px 0;">Cachet et signature :</p>
-          <div style="border-bottom: 3px solid #9ca3af; width: 250px; margin-bottom: 12px;"></div>
-          <p style="font-size: 16px; color: #4b5563; margin: 12px 0 4px 0; font-weight: 600;">Pour KG Pâtisserie</p>
-          <p style="font-size: 15px; color: #6b7280; margin: 0;">${invoice.date}</p>
+          <p style="font-size: 16px; color: #374151; font-weight: 600; margin: 0 0 10px 0;">Cachet et signature</p>
+          <div style="border-bottom: 3px solid #9ca3af; width: 250px; margin-bottom: 10px;"></div>
+          <p style="font-size: 14px; color: #4b5563;">Pour ${companyInfo.name}</p>
         </div>
       </div>
       
       <!-- Pied de page -->
-      <div style="margin-top: 50px; text-align: center; padding-top: 30px; border-top: 2px solid #e5e7eb;">
-        <p style="font-size: 15px; color: #6b7280; margin: 0 0 8px 0;">KG Pâtisserie - Saint-Marc, Ruelle Désir - Tél: +509 1234 5678 - Email: kentiagede@gmail.com</p>
-        <p style="font-size: 14px; color: #9ca3af; margin: 8px 0 0 0;">NIF: 123-456-789-0 | RCCM: SA-2024-001234</p>
+      <div style="margin-top: 40px; text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+        <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+          ${companyInfo.name} - ${companyInfo.address} - ${companyInfo.phone} - ${companyInfo.email}
+        </p>
+        <p style="font-size: 12px; color: #9ca3af; margin: 5px 0;">
+          NIF: ${companyInfo.nif} | RCCM: ${companyInfo.rccm}
+        </p>
       </div>
     </div>
   </body>
 </html>`;
 };
 
-const generateAndDownloadImage = async ({ cart, customerName, total, logo }) => {
-  const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
-  const invoice = {
-    number: invoiceNumber,
-    date: new Date().toLocaleDateString('fr-FR'),
-    time: new Date().toLocaleTimeString('fr-FR'),
-    items: [...cart],
-    total: total
-  };
-
-  await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-
-  const invoiceHTML = generateInvoiceHTML({ invoice, customerName, logo });
-
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'absolute';
-  iframe.style.width = '1200px';
-  iframe.style.height = '1600px';
-  iframe.style.left = '-9999px';
-  iframe.style.top = '0';
-  iframe.style.border = 'none';
-
-  document.body.appendChild(iframe);
-
-  iframe.contentDocument.open();
-  iframe.contentDocument.write(invoiceHTML);
-  iframe.contentDocument.close();
-
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  const canvas = await window.html2canvas(iframe.contentDocument.body, { 
-    scale: 2,
-    backgroundColor: '#ffffff',
-    logging: false,
-    allowTaint: true,
-    useCORS: true,
-    windowWidth: 1200,
-    windowHeight: 1600
-  });
-
-  document.body.removeChild(iframe);
-
-  const link = document.createElement('a');
-  link.download = `facture-${invoice.number}.png`;
-  link.href = canvas.toDataURL('image/png', 1.0);
-  link.click();
-};
-
-export default KGPattisseriePOS;
+export default PropaneInvoiceGenerator;
