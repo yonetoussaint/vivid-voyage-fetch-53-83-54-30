@@ -19,7 +19,6 @@ import {
   Pause,
   CheckCheck,
   CalendarClock,
-  Clock as ClockIcon,
   Download,
   Upload,
   Headphones
@@ -29,7 +28,6 @@ import {
   getFileIconComponent,
   getMeetingTypeColor,
   formatTime,
-  getDurationText,
   isVirtualMeeting
 } from './taskUtils';
 
@@ -43,6 +41,19 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
   const [showAudioInput, setShowAudioInput] = useState(false);
   const [audioUrl, setAudioUrl] = useState(meeting.audioUrl || '');
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Function to format date in French style
+  const formatDateFrench = (dateStr) => {
+    const date = new Date(dateStr);
+    const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+    
+    const dayName = days[date.getDay()];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    
+    return `${dayName} ${day} ${month}`;
+  };
 
   const handleAddFile = () => {
     if (newFile.name && newFile.url) {
@@ -98,8 +109,8 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
     }
   };
 
-  // Format the title from date and time
-  const formattedTitle = `${meeting.dueDate} at ${formatTime(meeting.dueTime)}`;
+  // Format the title from date and time in French style
+  const formattedTitle = `${formatDateFrench(meeting.dueDate)} à ${formatTime(meeting.dueTime)}`;
 
   return (
     <div className={`p-4 bg-white border rounded-lg shadow-sm ${meeting.status === 'completed' ? 'border-green-200 bg-green-50' : 'border-blue-100'}`}>
@@ -124,12 +135,7 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
             <p className="text-sm text-gray-600 line-clamp-2 mb-2">{meeting.description}</p>
           )}
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-700">
-            <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              {getDurationText(meeting.duration, meeting.durationUnit)}
-            </span>
-            <span className="hidden sm:inline text-gray-300">•</span>
+          <div className="flex items-center gap-2 text-sm text-gray-700">
             <span className="flex items-center gap-1">
               <MapPin className="w-4 h-4" />
               <span className="truncate">{meeting.location}</span>
@@ -459,39 +465,12 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
         </div>
       )}
 
-      {/* Metadata Footer */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 pt-3 border-t text-xs text-gray-500 gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span>Created: {new Date(meeting.createdAt).toLocaleDateString()}</span>
-          {meeting.status === 'completed' && meeting.completedAt && (
-            <>
-              <span className="hidden sm:inline text-gray-300">•</span>
-              <span>Completed: {new Date(meeting.completedAt).toLocaleDateString()}</span>
-            </>
-          )}
+      {/* Simple Footer with only completion date if completed */}
+      {meeting.status === 'completed' && meeting.completedAt && (
+        <div className="mt-4 pt-3 border-t text-xs text-gray-500">
+          <span>Completed: {new Date(meeting.completedAt).toLocaleDateString()}</span>
         </div>
-        <div className="flex items-center gap-2">
-          {meeting.audioUrl && (
-            <span className="flex items-center gap-1 text-purple-600">
-              <Headphones className="w-3 h-3" />
-              <span className="hidden sm:inline">Recording</span>
-            </span>
-          )}
-          <span className="flex items-center gap-1">
-            {isVirtualMeeting(meeting.location) ? (
-              <>
-                <Video className="w-3 h-3" />
-                <span className="hidden sm:inline">Virtual</span>
-              </>
-            ) : (
-              <>
-                <MapPin className="w-3 h-3" />
-                <span className="hidden sm:inline">In-Person</span>
-              </>
-            )}
-          </span>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
