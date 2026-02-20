@@ -11,7 +11,7 @@ import Wallet from "@/pages/Wallet";
 import Messages from "@/pages/Messages";
 // Remove or fix this import if ChatPage doesn't exist
 // import { ChatPage } from "@/pages/Messages";
-import GasStationSystem from "@/pages/EasyPlus";
+// import GasStationSystem from "@/pages/EasyPlus"; // Commented out EasyPlus import
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
 import ProductDetail from "@/pages/ProductDetail";
@@ -110,12 +110,13 @@ export function AppRoutes() {
         }
       />
 
-      <Route
+      {/* EasyPlus route commented out for now */}
+      {/* <Route
         path="easy"
         element={
           <GasStationSystem />
         }
-      />
+      /> */}
 
       {/* All other routes - INSIDE MainLayout */}
       <Route path="/" element={<MainLayout />}>
