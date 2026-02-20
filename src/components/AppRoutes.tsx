@@ -1,3 +1,4 @@
+comment out easyplus for now 
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
@@ -11,7 +12,7 @@ import Wallet from "@/pages/Wallet";
 import Messages from "@/pages/Messages";
 // Remove or fix this import if ChatPage doesn't exist
 // import { ChatPage } from "@/pages/Messages";
-// import GasStationSystem from "@/pages/EasyPlus"; // Commented out EasyPlus import
+import GasStationSystem from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
 import ProductDetail from "@/pages/ProductDetail";
@@ -110,13 +111,12 @@ export function AppRoutes() {
         }
       />
 
-      {/* EasyPlus route commented out for now */}
-      {/* <Route
+      <Route
         path="easy"
         element={
           <GasStationSystem />
         }
-      /> */}
+      />
 
       {/* All other routes - INSIDE MainLayout */}
       <Route path="/" element={<MainLayout />}>
@@ -177,3 +177,4 @@ export function AppRoutes() {
     </Routes>
   );
 }
+
