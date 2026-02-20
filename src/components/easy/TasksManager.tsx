@@ -1,8 +1,8 @@
+// MeetingsManager.jsx
 import React, { useState, useEffect } from 'react';
-import { Calendar } from 'lucide-react';
 import MeetingList from './MeetingList';
 
-const MeetingsManager = ({ shift, date, vendeurs = [] }) => {
+const MeetingsManager = ({ shift, date, vendeurs = [], meetingType = 'all', onMeetingTypeChange }) => {
   const [meetings, setMeetings] = useState([]);
 
   useEffect(() => {
@@ -52,6 +52,26 @@ const MeetingsManager = ({ shift, date, vendeurs = [] }) => {
         meetingType: 'review',
         completedAt: new Date().toISOString(),
         createdAt: new Date().toISOString()
+      },
+      {
+        id: 4,
+        description: 'Safety equipment inspection and maintenance planning',
+        dueDate: currentDate,
+        dueTime: '10:30',
+        shift: 'AM',
+        status: 'pending',
+        meetingType: 'safety',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 5,
+        description: 'One-on-one performance review with team lead',
+        dueDate: currentDate,
+        dueTime: '15:00',
+        shift: 'PM',
+        status: 'pending',
+        meetingType: 'one-on-one',
+        createdAt: new Date().toISOString()
       }
     ];
   };
@@ -74,34 +94,23 @@ const MeetingsManager = ({ shift, date, vendeurs = [] }) => {
     }));
   };
 
-  return (
-    <div className="p-2 space-y-2 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="p-3 bg-white border rounded-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h1 className="text-lg font-bold">Meetings Manager</h1>
-            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-              <Calendar className="w-4 h-4" />
-              <span>{date}</span>
-              <span>•</span>
-              <span>{shift} Shift</span>
-            </div>
-          </div>
-          <div className="text-sm text-gray-700">
-            <span className="font-semibold">{meetings.length}</span> meetings scheduled
-          </div>
-        </div>
-      </div>
+  // Filter meetings based on meetingType
+  const filteredMeetings = meetingType === 'all' 
+    ? meetings 
+    : meetings.filter(meeting => meeting.meetingType === meetingType);
 
-      {/* Meetings List - Full Width */}
-      <div className="w-full">
-        <MeetingList 
-          meetings={meetings}
-          onDelete={handleDeleteMeeting}
-          onUpdateMeeting={handleUpdateMeeting}
-        />
+  return (
+    <div className="p-2 sm:p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-medium text-gray-700">
+          {filteredMeetings.length} {filteredMeetings.length === 1 ? 'meeting' : 'meetings'}
+        </h2>
       </div>
+      <MeetingList 
+        meetings={filteredMeetings}
+        onDelete={handleDeleteMeeting}
+        onUpdateMeeting={handleUpdateMeeting}
+      />
     </div>
   );
 };
