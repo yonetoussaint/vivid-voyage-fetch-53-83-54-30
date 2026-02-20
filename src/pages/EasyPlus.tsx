@@ -1,4 +1,4 @@
-// SystemeStationService.jsx (updated section)
+// SystemeStationService.jsx
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -12,8 +12,6 @@ import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
 import Liasse from '@/components/easy/Liasse';
 import MeetingsManager from '@/components/easy/MeetingsManager';
-import RemindersManager from '@/components/easy/RemindersManager';
-import AllItemsManager from '@/components/easy/AllItemsManager';
 import { useStationData } from '@/hooks/useStationData';
 
 // Import the layout components
@@ -31,7 +29,7 @@ const SystemeStationService = () => {
   const [showContact, setShowContact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [vendeurActif, setVendeurActif] = useState(null);
-  const [filterType, setFilterType] = useState('all'); // Unified filter for tasks/meetings/reminders
+  const [filterType, setFilterType] = useState('all');
   const [tasksStats, setTasksStats] = useState(null);
 
   const {
@@ -174,31 +172,6 @@ const SystemeStationService = () => {
               shift={shift}
               date={date}
               vendeurs={vendeurs}
-              filterType={filterType}
-            />
-          </div>
-        );
-      
-      case 'reminders':
-        return (
-          <div className="p-2 sm:p-4">
-            <RemindersManager
-              shift={shift}
-              date={date}
-              vendeurs={vendeurs}
-              filterType={filterType}
-            />
-          </div>
-        );
-      
-      case 'all-items':
-        return (
-          <div className="p-2 sm:p-4">
-            <AllItemsManager
-              shift={shift}
-              date={date}
-              vendeurs={vendeurs}
-              filterType={filterType}
             />
           </div>
         );
@@ -310,11 +283,13 @@ const SystemeStationService = () => {
       
       case 'liasse':
         return (
-          <Liasse
-            shift={shift}
-            date={date}
-            vendeurs={vendeurs}
-          />
+          <div className="p-2 sm:p-6">
+            <Liasse
+              shift={shift}
+              date={date}
+              vendeurs={vendeurs}
+            />
+          </div>
         );
       
       default:
