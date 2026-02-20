@@ -35,6 +35,7 @@ import {
 
 const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFile }) => {
   const [expanded, setExpanded] = useState(false);
+  const [attendeesExpanded, setAttendeesExpanded] = useState(true);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notes, setNotes] = useState(meeting.notes || '');
   const [showFileInput, setShowFileInput] = useState(false);
@@ -97,14 +98,17 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
     }
   };
 
+  // Format the title from date and time
+  const formattedTitle = `${meeting.dueDate} at ${formatTime(meeting.dueTime)}`;
+
   return (
     <div className={`p-4 bg-white border rounded-lg shadow-sm ${meeting.status === 'completed' ? 'border-green-200 bg-green-50' : 'border-blue-100'}`}>
-      {/* Header */}
+      {/* Header with date as title */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <h3 className={`text-lg font-semibold truncate ${meeting.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
-              {meeting.title}
+              {formattedTitle}
             </h3>
             <span className={`px-2 py-1 text-xs rounded-full ${getMeetingTypeColor(meeting.meetingType)}`}>
               {meeting.meetingType}
@@ -122,13 +126,8 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-700">
             <span className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              {meeting.dueDate}
-            </span>
-            <span className="hidden sm:inline text-gray-300">•</span>
-            <span className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              {formatTime(meeting.dueTime)} ({getDurationText(meeting.duration, meeting.durationUnit)})
+              {getDurationText(meeting.duration, meeting.durationUnit)}
             </span>
             <span className="hidden sm:inline text-gray-300">•</span>
             <span className="flex items-center gap-1">
@@ -159,50 +158,7 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
         </div>
       </div>
 
-      {/* Action Buttons */}
-      {meeting.status !== 'completed' && (
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <button
-            onClick={handleCompleteMeeting}
-            className="px-3 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-2 text-sm"
-          >
-            <CheckCheck className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">Complete</span>
-          </button>
-          <button
-            onClick={handlePostponeMeeting}
-            className="px-3 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 active:bg-amber-700 flex items-center justify-center gap-2 text-sm"
-          >
-            <CalendarClock className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">Postpone</span>
-          </button>
-        </div>
-      )}
-
-      {/* Attendees List - Simple display only */}
-      {meeting.attendees && meeting.attendees.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Attendees ({meeting.attendees.length})</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {meeting.attendees.map((attendee, idx) => (
-              <span
-                key={idx}
-                className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm border border-gray-200"
-              >
-                {attendee}
-                {attendee === meeting.assignedTo && (
-                  <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Host</span>
-                )}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Audio Recording */}
+      {/* Audio Recording - Always visible */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -296,6 +252,42 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
       {/* Expandable Details */}
       {expanded && (
         <div className="border-t pt-4 space-y-4">
+          {/* Attendees Section - Collapsible */}
+          {meeting.attendees && meeting.attendees.length > 0 && (
+            <div className="border rounded-lg overflow-hidden">
+              <button
+                onClick={() => setAttendeesExpanded(!attendeesExpanded)}
+                className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Attendees ({meeting.attendees.length})
+                  </span>
+                </div>
+                {attendeesExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+              
+              {attendeesExpanded && (
+                <div className="p-3 border-t">
+                  <div className="flex flex-wrap gap-2">
+                    {meeting.attendees.map((attendee, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm border border-gray-200"
+                      >
+                        {attendee}
+                        {attendee === meeting.assignedTo && (
+                          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Host</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Notes Section - Single unified notes field */}
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -444,6 +436,26 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting, onAddFile, onRemoveFi
               </div>
             )}
           </div>
+
+          {/* Complete/Postpone Buttons - Moved to bottom */}
+          {meeting.status !== 'completed' && (
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <button
+                onClick={handleCompleteMeeting}
+                className="px-3 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-2 text-sm"
+              >
+                <CheckCheck className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">Complete</span>
+              </button>
+              <button
+                onClick={handlePostponeMeeting}
+                className="px-3 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 active:bg-amber-700 flex items-center justify-center gap-2 text-sm"
+              >
+                <CalendarClock className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">Postpone</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
