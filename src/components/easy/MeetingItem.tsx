@@ -4,12 +4,9 @@ import {
   CheckCheck,
   CalendarClock,
   MoreVertical,
-  Calendar,
-  Clock,
   Edit2
 } from 'lucide-react';
 import {
-  getMeetingTypeColor,
   formatTime
 } from './taskUtils';
 
@@ -62,21 +59,11 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting }) => {
 
   return (
     <div className={`p-4 bg-white border rounded-xl shadow-sm hover:shadow-md transition-shadow ${meeting.status === 'completed' ? 'border-green-200 bg-green-50/50' : 'border-gray-200'}`}>
-      {/* Top row with title, badges, and menu */}
+      {/* Top row with title and menu */}
       <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex items-center flex-wrap gap-2">
-          <h3 className={`font-semibold text-gray-900 ${meeting.status === 'completed' ? 'line-through text-gray-500' : ''}`}>
-            {formattedTitle}
-          </h3>
-          <span className={`px-2 py-0.5 text-xs rounded-full ${getMeetingTypeColor(meeting.meetingType)}`}>
-            {meeting.meetingType}
-          </span>
-          {meeting.status === 'completed' && (
-            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full">
-              Completed
-            </span>
-          )}
-        </div>
+        <h3 className={`font-semibold text-gray-900 ${meeting.status === 'completed' ? 'line-through text-gray-500' : ''}`}>
+          {formattedTitle}
+        </h3>
 
         {/* Menu button */}
         <div className="relative flex-shrink-0">
@@ -145,12 +132,6 @@ const MeetingItem = ({ meeting, onDelete, onUpdateMeeting }) => {
             </>
           )}
         </div>
-      </div>
-
-      {/* Time metadata - only time shown (date is already in title) */}
-      <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
-        <Clock className="w-3 h-3" />
-        <span>{formatTime(meeting.dueTime)}</span>
       </div>
 
       {/* Description - like tweet text */}
