@@ -1,118 +1,86 @@
-// MeetingsManager.jsx
+// TasksManager.jsx - Update to use filterType
 import React, { useState, useEffect } from 'react';
-import MeetingList from './MeetingList';
+import TaskList from './TaskList';
 
-const MeetingsManager = ({ shift, date, vendeurs = [], meetingType = 'all', onMeetingTypeChange }) => {
-  const [meetings, setMeetings] = useState([]);
+const TasksManager = ({ shift, date, vendeurs = [], filterType = 'all' }) => {
+  const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    const savedMeetings = localStorage.getItem(`meetings_${date}`);
-    if (savedMeetings) {
-      setMeetings(JSON.parse(savedMeetings));
+    const savedTasks = localStorage.getItem(`gasStationTasks_${date}`);
+    if (savedTasks) {
+      setTasks(JSON.parse(savedTasks));
     } else {
-      const sampleMeetings = getSampleMeetings(date, vendeurs);
-      setMeetings(sampleMeetings);
-      localStorage.setItem(`meetings_${date}`, JSON.stringify(sampleMeetings));
+      // Sample tasks if needed
+      setTasks([]);
     }
-  }, [date, vendeurs]);
+  }, [date]);
 
-  useEffect(() => {
-    localStorage.setItem(`meetings_${date}`, JSON.stringify(meetings));
-  }, [meetings, date]);
-
-  const getSampleMeetings = (currentDate, vendeurs) => {
-    return [
-      {
-        id: 1,
-        description: 'Weekly staff meeting to discuss performance, safety protocols, and upcoming schedule',
-        dueDate: currentDate,
-        dueTime: '09:00',
-        shift: 'AM',
-        status: 'pending',
-        meetingType: 'staff',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 2,
-        description: 'Monthly safety training session - mandatory for all staff',
-        dueDate: currentDate,
-        dueTime: '14:00',
-        shift: 'PM',
-        status: 'pending',
-        meetingType: 'training',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 3,
-        description: 'Quick team sync to discuss daily priorities and assignments',
-        dueDate: currentDate,
-        dueTime: '11:30',
-        shift: 'AM',
-        status: 'completed',
-        meetingType: 'review',
-        completedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 4,
-        description: 'Safety equipment inspection and maintenance planning',
-        dueDate: currentDate,
-        dueTime: '10:30',
-        shift: 'AM',
-        status: 'pending',
-        meetingType: 'safety',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 5,
-        description: 'One-on-one performance review with team lead',
-        dueDate: currentDate,
-        dueTime: '15:00',
-        shift: 'PM',
-        status: 'pending',
-        meetingType: 'one-on-one',
-        createdAt: new Date().toISOString()
-      }
-    ];
-  };
-
-  const handleDeleteMeeting = (id) => {
-    if (window.confirm('Delete this meeting?')) {
-      setMeetings(meetings.filter(meeting => meeting.id !== id));
+  // Filter tasks based on filterType
+  const getFilteredTasks = () => {
+    switch(filterType) {
+      case 'all':
+        return tasks;
+      case 'tasks':
+        return tasks; // Show all tasks
+      case 'incidents':
+        return tasks.filter(task => task.category === 'incident');
+      case 'inspections':
+        return tasks.filter(task => task.category === 'inspection');
+      case 'dépenses':
+        return tasks.filter(task => task.category === 'expense');
+      case 'payments':
+        return tasks.filter(task => task.category === 'payment');
+      case 'appels':
+        return tasks.filter(task => task.category === 'call');
+      case 'messages':
+        return tasks.filter(task => task.category === 'message');
+      case 'emails':
+        return tasks.filter(task => task.category === 'email');
+      case 'pending':
+        return tasks.filter(task => task.status === 'pending');
+      case 'completed':
+        return tasks.filter(task => task.status === 'completed');
+      case 'urgent':
+      case 'critical':
+        return tasks.filter(task => task.priority === 'critical' || task.priority === 'high');
+      default:
+        return tasks;
     }
   };
 
-  const handleUpdateMeeting = (id, updates) => {
-    setMeetings(meetings.map(meeting => {
-      if (meeting.id === id) {
-        return {
-          ...meeting,
-          ...updates
-        };
-      }
-      return meeting;
-    }));
+  const filteredTasks = getFilteredTasks();
+
+  const handleDeleteTask = (id) => {
+    if (window.confirm('Delete this task?')) {
+      const updatedTasks = tasks.filter(task => task.id !== id);
+      setTasks(updatedTasks);
+      localStorage.setItem(`gasStationTasks_${date}`, JSON.stringify(updatedTasks));
+    }
   };
 
-  // Filter meetings based on meetingType
-  const filteredMeetings = meetingType === 'all' 
-    ? meetings 
-    : meetings.filter(meeting => meeting.meetingType === meetingType);
+  const handleUpdateTask = (id, updates) => {
+    const updatedTasks = tasks.map(task => 
+      task.id === id ? { ...task, ...updates } : task
+    );
+    setTasks(updatedTasks);
+    localStorage.setItem(`gasStationTasks_${date}`, JSON.stringify(updatedTasks));
+  };
 
   return (
-    <div className="p-2 sm:p-4">
+    <div className="space-y-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-medium text-gray-700">
-          {filteredMeetings.length} {filteredMeetings.length === 1 ? 'meeting' : 'meetings'}
+          {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
         </h2>
       </div>
-      <MeetingList 
-        meetings={filteredMeetings}
-        onDelete={handleDeleteMeeting}
-        onUpdateMeeting={handleUpdateMeeting}
+      
+      <TaskList 
+        tasks={filteredTasks}
+        onDelete={handleDeleteTask}
+        onUpdateTask={handleUpdateTask}
       />
     </div>
   );
 };
 
-export default MeetingsManager;
+export default TasksManager;
