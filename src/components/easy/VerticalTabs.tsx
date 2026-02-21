@@ -11,7 +11,7 @@ import {
   Flame,
   Layers,
   FileSpreadsheet,
-  Sun // ADD THIS IMPORT for Day icon
+  Sun // ADD THIS IMPORT for Daily icon
 } from 'lucide-react';
 
 const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
@@ -52,10 +52,10 @@ const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
       icon: <Layers className="w-5 h-5" />, 
       color: 'bg-emerald-100 text-emerald-700'
     },
-    // ADD THIS NEW TAB for Day
+    // ADD THIS NEW TAB for Daily
     { 
-      id: 'day', 
-      label: 'Day', 
+      id: 'daily', 
+      label: 'Daily', 
       icon: <Sun className="w-5 h-5" />, 
       color: 'bg-amber-100 text-amber-700'
     },
