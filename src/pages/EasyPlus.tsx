@@ -1,4 +1,4 @@
-// SystemeStationService.jsx (updated with secondary navigation)
+// SystemeStationService.jsx (updated with endless/circular navigation)
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -141,12 +141,15 @@ const SystemeStationService = () => {
     }
   };
 
+  // Endless/Circular navigation handlers
   const handlePreviousSecondary = () => {
     const items = getSecondaryItems();
     const currentIndex = getCurrentSecondaryIndex();
     
-    if (currentIndex > 0) {
-      const newValue = items[currentIndex - 1];
+    if (items.length > 0) {
+      // Calculate previous index with wrap-around
+      const previousIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+      const newValue = items[previousIndex];
       
       switch (activeTab) {
         case 'pumps':
@@ -170,8 +173,10 @@ const SystemeStationService = () => {
     const items = getSecondaryItems();
     const currentIndex = getCurrentSecondaryIndex();
     
-    if (currentIndex < items.length - 1) {
-      const newValue = items[currentIndex + 1];
+    if (items.length > 0) {
+      // Calculate next index with wrap-around
+      const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+      const newValue = items[nextIndex];
       
       switch (activeTab) {
         case 'pumps':
@@ -190,9 +195,6 @@ const SystemeStationService = () => {
       }
     }
   };
-
-  const showPreviousSecondary = getCurrentSecondaryIndex() > 0;
-  const showNextSecondary = getCurrentSecondaryIndex() < getSecondaryItems().length - 1;
 
   // Reset active vendor when vendeurs change
   useEffect(() => {
@@ -465,11 +467,11 @@ const SystemeStationService = () => {
         onResetDay={handleReinitialiserJour}
         // Tasks stats
         tasksStats={tasksStats}
-        // Secondary navigation props
+        // Secondary navigation props - both arrows always shown
         onPreviousSecondary={handlePreviousSecondary}
         onNextSecondary={handleNextSecondary}
-        showPreviousSecondary={showPreviousSecondary}
-        showNextSecondary={showNextSecondary}
+        showPreviousSecondary={true}
+        showNextSecondary={true}
         secondaryNavLabel={getSecondaryLabel()}
       >
         {renderActiveTabContent()}
