@@ -1,8 +1,4 @@
 
-
-
-
-// utils/helpers.js
 export const getPriorityColor = (priority) => {
   switch(priority) {
     case 'high': return 'text-red-600 font-semibold';
@@ -38,18 +34,14 @@ export const getRemainingTime = (taskId, timerSeconds, item) => {
   return remaining;
 };
 
-// Get current time position for calendar
 export const getCurrentTimePosition = () => {
   const now = new Date();
   const hours = now.getHours();
   const minutes = now.getMinutes();
   const seconds = now.getSeconds();
   
-  // Total minutes since midnight
   const totalMinutes = hours * 60 + minutes + seconds / 60;
   const totalMinutesInDay = 24 * 60;
-  
-  // Percentage through the day
   const percentageOfDay = (totalMinutes / totalMinutesInDay) * 100;
   
   return {
@@ -60,41 +52,11 @@ export const getCurrentTimePosition = () => {
     timeString: now.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit',
-      second: '2-digit',
       hour12: true 
     }),
     fullDate: now
   };
 };
-
-// Get time label for a given percentage position
-export const getTimeFromPosition = (percentage) => {
-  const totalMinutesInDay = 24 * 60;
-  const minutesSinceMidnight = (percentage / 100) * totalMinutesInDay;
-  const hours = Math.floor(minutesSinceMidnight / 60);
-  const minutes = Math.floor(minutesSinceMidnight % 60);
-  
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-};
-
-// Check if current time is within an event
-export const isCurrentTimeInEvent = (eventStart, eventEnd, currentTime = new Date()) => {
-  const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-  const startMinutes = parseInt(eventStart.split(':')[0]) * 60 + parseInt(eventStart.split(':')[1]);
-  const endMinutes = parseInt(eventEnd.split(':')[0]) * 60 + parseInt(eventEnd.split(':')[1]);
-  
-  return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
-};
-
-// Format time for display
-export const formatTimeDisplay = (date) => {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
-};
-
 
 
 // Calculer gallons
