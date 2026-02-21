@@ -51,7 +51,7 @@ const MainLayout = ({
   }, [activeTab, vendeurs, vendeurActif, filterType]);
 
   // Determine if we should show the vendor selector
-  const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots' || activeTab === 'liasse';
+  const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots' || activeTab === 'conditionnement';
 
   // Color palette for vendor tabs (from original VendorTabSelector)
   const colorPalette = [
