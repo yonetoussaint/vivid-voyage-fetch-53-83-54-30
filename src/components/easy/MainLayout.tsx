@@ -4,7 +4,7 @@ import Header from './Header';
 import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
 import TabSelector from './TabSelector';
-import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User } from 'lucide-react';
+import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User, DollarSign } from 'lucide-react';
 
 const MainLayout = ({ 
   date, 
@@ -26,6 +26,9 @@ const MainLayout = ({
   vendeurs,
   vendeurActif,
   setVendeurActif,
+  // Conditionnement props
+  conditionnementDenom,
+  setConditionnementDenom,
   // Reset functions
   onResetShift,
   onResetDay,
@@ -48,10 +51,10 @@ const MainLayout = ({
 
       return () => window.removeEventListener('resize', updateHeight);
     }
-  }, [activeTab, vendeurs, vendeurActif, filterType]);
+  }, [activeTab, vendeurs, vendeurActif, filterType, conditionnementDenom]);
 
   // Determine if we should show the vendor selector
-  const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots' || activeTab === 'conditionnement';
+  const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots' || activeTab === 'liasse';
 
   // Color palette for vendor tabs (from original VendorTabSelector)
   const colorPalette = [
@@ -108,6 +111,14 @@ const MainLayout = ({
     { id: 'critical', label: 'Critiques' }
   ];
 
+  // Conditionnement denomination tabs
+  const denominationValues = [1000, 500, 250, 100, 50, 25, 10, 5];
+  const conditionnementTabs = denominationValues.map(value => ({
+    id: value,
+    label: `${value} Gdes`,
+    icon: <DollarSign className="w-3 h-3" />
+  }));
+
   return (
     <div className="h-screen flex flex-col">
       {/* Fixed Header Container */}
@@ -152,6 +163,19 @@ const MainLayout = ({
               size="md"
               showBadges={true}
               containerClassName="py-1"
+            />
+          </div>
+        )}
+
+        {/* Conditionnement Denomination Selector - Only for conditionnement tab */}
+        {activeTab === 'conditionnement' && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={conditionnementTabs}
+              activeTab={conditionnementDenom}
+              onTabChange={setConditionnementDenom}
+              size="sm"
+              containerClassName="py-2"
             />
           </div>
         )}
