@@ -17,9 +17,11 @@ export default function Daily() {
   const [activeTimer, setActiveTimer] = useState(null);
   const [timerSeconds, setTimerSeconds] = useState({});
   const [showTimeIndicator, setShowTimeIndicator] = useState(true);
-  const [autoScroll, setAutoScroll] = useState(true);
+  const [autoScroll, setAutoScroll] = useState(false); // Default to false so user can scroll freely
+  const [indicatorStyle, setIndicatorStyle] = useState({});
+
   const sectionsRef = useRef([]);
-  const timeIndicatorRef = useRef(null);
+  const containerRef = useRef(null);
 
   // Update current time every second
   useEffect(() => {
@@ -30,7 +32,49 @@ export default function Daily() {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-scroll to current section
+  // Calculate indicator position based on current time
+  useEffect(() => {
+    if (!showTimeIndicator || !containerRef.current) return;
+
+    const calculatePosition = () => {
+      const timePosition = getCurrentTimePosition();
+      const totalMinutes = timePosition.hours * 60 + timePosition.minutes;
+      const totalMinutesInDay = 24 * 60;
+      const percentageOfDay = (totalMinutes / totalMinutesInDay) * 100;
+      
+      // Get container dimensions
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const scrollTop = window.scrollY;
+      const containerTop = containerRect.top + scrollTop;
+      const containerHeight = containerRect.height;
+      
+      // Calculate position within the container
+      const positionInContainer = (percentageOfDay / 100) * containerHeight;
+      const absolutePosition = containerTop + positionInContainer;
+      
+      setIndicatorStyle({
+        position: 'absolute',
+        top: `${positionInContainer}px`,
+        left: '0',
+        right: '0',
+        pointerEvents: 'none',
+        zIndex: 50
+      });
+    };
+
+    calculatePosition();
+    
+    // Recalculate on scroll and resize
+    window.addEventListener('scroll', calculatePosition);
+    window.addEventListener('resize', calculatePosition);
+    
+    return () => {
+      window.removeEventListener('scroll', calculatePosition);
+      window.removeEventListener('resize', calculatePosition);
+    };
+  }, [currentTime, showTimeIndicator]);
+
+  // Optional auto-scroll (user can toggle)
   useEffect(() => {
     if (autoScroll && showTimeIndicator) {
       const currentSection = getCurrentSection();
@@ -154,7 +198,6 @@ export default function Daily() {
     const hour = timePosition.hours;
     const minute = timePosition.minutes;
 
-    // Map hours to sections
     if (hour >= 3 && hour < 5) return { index: 0, title: 'Morning Self-Care' };
     if (hour >= 5 && hour < 7) return { index: 1, title: 'Opening' };
     if (hour >= 7 && hour < 12) return { index: 2, title: 'Morning Operations' };
@@ -322,12 +365,6 @@ export default function Daily() {
               </div>
             </div>
           </div>
-
-          <div className="space-y-3 text-sm sm:text-base">
-            <p className="font-semibold text-purple-100">
-              If you complete this checklist today, you're not just "getting through the day." You're building an empire.
-            </p>
-          </div>
         </div>
 
         {/* Header */}
@@ -480,29 +517,33 @@ export default function Daily() {
           </div>
         </div>
 
-        {/* Checklist Sections with Time Indicators */}
-        <div className="space-y-4 relative">
-          {/* Global Time Indicator Line */}
-          {showTimeIndicator && currentSection && (
+        {/* Checklist Sections with Floating Time Indicator */}
+        <div 
+          ref={containerRef}
+          className="space-y-4 relative"
+        >
+          {/* Floating Time Indicator Line */}
+          {showTimeIndicator && (
             <div 
-              ref={timeIndicatorRef}
-              className="absolute left-0 right-0 pointer-events-none z-10 transition-all duration-1000"
-              style={{ 
-                top: `${(currentSection.index * 100) / checklistSections.length}%`,
-                transform: 'translateY(-50%)'
-              }}
+              className="absolute pointer-events-none z-50 transition-all duration-1000 ease-linear"
+              style={indicatorStyle}
             >
-              <div className="relative">
+              <div className="relative -ml-4">
                 {/* Red line across the page */}
                 <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-red-500 to-red-300 shadow-lg" />
                 
                 {/* Time bubble */}
-                <div className="absolute -left-2 -top-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg whitespace-nowrap animate-pulse">
-                  ⏰ {timePosition.timeString} - {currentSection.title}
+                <div className="absolute -left-2 -top-6 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg whitespace-nowrap">
+                  ⏰ {timePosition.timeString}
+                </div>
+                
+                {/* Current phase indicator */}
+                <div className="absolute left-1/2 -top-6 transform -translate-x-1/2 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg whitespace-nowrap">
+                  {currentSection?.title || 'Night Security'}
                 </div>
                 
                 {/* Circle indicator */}
-                <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg" />
+                <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg animate-pulse" />
               </div>
             </div>
           )}
@@ -539,7 +580,7 @@ export default function Daily() {
                 ref={el => sectionsRef.current[idx] = el}
                 className={`bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-500 ${
                   isCurrentSection && showTimeIndicator
-                    ? 'ring-4 ring-red-400 ring-opacity-50 scale-101' 
+                    ? 'ring-4 ring-red-400 ring-opacity-50' 
                     : ''
                 }`}
               >
