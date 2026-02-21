@@ -1,4 +1,4 @@
-// SystemeStationService.jsx (updated to pass rapport shift props)
+// SystemeStationService.jsx (updated with correct tab name)
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -32,7 +32,7 @@ const SystemeStationService = () => {
   const [filterType, setFilterType] = useState('all');
   const [conditionnementDenom, setConditionnementDenom] = useState(1000);
   const [tasksStats, setTasksStats] = useState(null);
-  const [rapportShift, setRapportShift] = useState('AM'); // Add state for rapport tab shift
+  const [reportShift, setReportShift] = useState('AM'); // State for report tab shift
 
   const {
     toutesDonnees,
@@ -438,6 +438,7 @@ const SystemeStationService = () => {
               prix={prix}
               prixPropane={prixPropane}
               pompes={pompes}
+              shift={reportShift} // Pass reportShift to ReportView
             />
           </div>
         );
@@ -447,7 +448,7 @@ const SystemeStationService = () => {
           <div className="p-2 sm:p-6">
             <Rapport
               date={date}
-              shift={rapportShift} // Pass rapportShift instead of main shift
+              shift={shift}
               toutesDonnees={toutesDonnees}
             />
           </div>
@@ -511,9 +512,9 @@ const SystemeStationService = () => {
         // Conditionnement props
         conditionnementDenom={conditionnementDenom}
         setConditionnementDenom={setConditionnementDenom}
-        // Rapport shift props
-        rapportShift={rapportShift}
-        setRapportShift={setRapportShift}
+        // Report shift props
+        reportShift={reportShift}
+        setReportShift={setReportShift}
         // Reset functions
         onResetShift={handleReinitialiserShift}
         onResetDay={handleReinitialiserJour}
