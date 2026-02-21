@@ -1,4 +1,4 @@
-// MainLayout.jsx (updated with endless navigation)
+// MainLayout.jsx (corrected)
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
@@ -84,16 +84,12 @@ const MainLayout = ({
     { color: 'bg-red-600 text-white', borderColor: 'border-red-600', badge: 'bg-red-500' },
   ];
 
-  // Build vendor tabs array
+  // Build vendor tabs array - FIXED: Removed duplicate and fixed syntax
   const vendorTabs = [
     {
-    id: null,
-    label: 'Tous',
-    icon: <Users className="w-4 h-4" />,
-    activeColor: 'bg-blue-600 text-white border-blue-600',
-    badge: vendeurs?.length || 0,
-    badgeColor: 'bg-blue-500'
-  },
+      id: null,
+      label: 'Tous',
+      icon: <Users className="w-4 h-4" />,
       activeColor: 'bg-blue-600 text-white border-blue-600',
       badge: vendeurs?.length || 0,
       badgeColor: 'bg-blue-500'
@@ -229,7 +225,7 @@ const MainLayout = ({
         {/* Main Content with Bottom Navigation */}
         <main className="flex-1 overflow-auto relative">
           {children}
-          
+
           {/* Bottom Navigation Chevrons for Secondary Tabs - Endless Navigation */}
           <div 
             className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40"
@@ -250,7 +246,7 @@ const MainLayout = ({
             >
               {/* Background gradient for depth */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/5 to-transparent opacity-50"></div>
-              
+
               {/* Left Chevron - Always visible */}
               <button
                 onClick={onPreviousSecondary}
@@ -259,7 +255,7 @@ const MainLayout = ({
               >
                 <ChevronLeft className="w-5 h-5 text-white/90 group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-200" />
               </button>
-              
+
               {secondaryNavLabel && (
                 <div className="relative px-4 py-1.5">
                   <span className="text-sm font-medium text-white/90 whitespace-nowrap">
@@ -267,7 +263,7 @@ const MainLayout = ({
                   </span>
                 </div>
               )}
-              
+
               {/* Right Chevron - Always visible */}
               <button
                 onClick={onNextSecondary}
