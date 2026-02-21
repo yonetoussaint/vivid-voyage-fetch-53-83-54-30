@@ -1,4 +1,4 @@
-// SystemeStationService.jsx (updated with page navigation)
+// SystemeStationService.jsx (updated with secondary navigation)
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -30,23 +30,8 @@ const SystemeStationService = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [vendeurActif, setVendeurActif] = useState(null);
   const [filterType, setFilterType] = useState('all');
-  const [conditionnementDenom, setConditionnementDenom] = useState(1000); // Default to 1000
+  const [conditionnementDenom, setConditionnementDenom] = useState(1000);
   const [tasksStats, setTasksStats] = useState(null);
-
-  // Define all available tabs in order for navigation
-  const tabOrder = [
-    'pumps',
-    'tasks',
-    'vendeurs',
-    'liasse',
-    'depots',
-    'stock',
-    'usd',
-    'report',
-    'rapport',
-    'conditionnement',
-    'proforma'
-  ];
 
   const {
     toutesDonnees,
@@ -84,26 +69,130 @@ const SystemeStationService = () => {
   } = useStationData(date, shift);
 
   const pompes = ['P1', 'P2', 'P3', 'P4', 'P5'];
+  const denominationValues = [1000, 500, 250, 100, 50, 25, 10, 5];
+  const taskFilters = ['all', 'pending', 'completed', 'critical'];
 
-  // Navigation functions
-  const getCurrentTabIndex = () => tabOrder.indexOf(activeTab);
-  
-  const handleNavigatePrevious = () => {
-    const currentIndex = getCurrentTabIndex();
+  // Secondary navigation based on active tab
+  const getSecondaryItems = () => {
+    switch (activeTab) {
+      case 'pumps':
+        return [...pompes, 'propane'];
+      case 'vendeurs':
+      case 'depots':
+        return [null, ...vendeurs]; // null represents "Tous les Vendeurs"
+      case 'conditionnement':
+        return denominationValues;
+      case 'tasks':
+        return taskFilters;
+      default:
+        return [];
+    }
+  };
+
+  const getCurrentSecondaryIndex = () => {
+    const items = getSecondaryItems();
+    let currentValue;
+    
+    switch (activeTab) {
+      case 'pumps':
+        currentValue = pompeEtendue;
+        break;
+      case 'vendeurs':
+      case 'depots':
+        currentValue = vendeurActif;
+        break;
+      case 'conditionnement':
+        currentValue = conditionnementDenom;
+        break;
+      case 'tasks':
+        currentValue = filterType;
+        break;
+      default:
+        return -1;
+    }
+    
+    return items.indexOf(currentValue);
+  };
+
+  const getSecondaryLabel = () => {
+    const currentIndex = getCurrentSecondaryIndex();
+    const items = getSecondaryItems();
+    
+    if (currentIndex === -1 || !items.length) return '';
+    
+    switch (activeTab) {
+      case 'pumps':
+        return items[currentIndex] === 'propane' ? 'Propane' : `Pompe ${items[currentIndex].replace('P', '')}`;
+      case 'vendeurs':
+      case 'depots':
+        return items[currentIndex] === null ? 'Tous les Vendeurs' : items[currentIndex];
+      case 'conditionnement':
+        return `${items[currentIndex]} Gdes`;
+      case 'tasks':
+        const taskLabels = {
+          all: 'Toutes',
+          pending: 'En attente',
+          completed: 'Terminées',
+          critical: 'Critiques'
+        };
+        return taskLabels[items[currentIndex]];
+      default:
+        return '';
+    }
+  };
+
+  const handlePreviousSecondary = () => {
+    const items = getSecondaryItems();
+    const currentIndex = getCurrentSecondaryIndex();
+    
     if (currentIndex > 0) {
-      setActiveTab(tabOrder[currentIndex - 1]);
+      const newValue = items[currentIndex - 1];
+      
+      switch (activeTab) {
+        case 'pumps':
+          setPompeEtendue(newValue);
+          break;
+        case 'vendeurs':
+        case 'depots':
+          setVendeurActif(newValue);
+          break;
+        case 'conditionnement':
+          setConditionnementDenom(newValue);
+          break;
+        case 'tasks':
+          setFilterType(newValue);
+          break;
+      }
     }
   };
 
-  const handleNavigateNext = () => {
-    const currentIndex = getCurrentTabIndex();
-    if (currentIndex < tabOrder.length - 1) {
-      setActiveTab(tabOrder[currentIndex + 1]);
+  const handleNextSecondary = () => {
+    const items = getSecondaryItems();
+    const currentIndex = getCurrentSecondaryIndex();
+    
+    if (currentIndex < items.length - 1) {
+      const newValue = items[currentIndex + 1];
+      
+      switch (activeTab) {
+        case 'pumps':
+          setPompeEtendue(newValue);
+          break;
+        case 'vendeurs':
+        case 'depots':
+          setVendeurActif(newValue);
+          break;
+        case 'conditionnement':
+          setConditionnementDenom(newValue);
+          break;
+        case 'tasks':
+          setFilterType(newValue);
+          break;
+      }
     }
   };
 
-  const showPreviousNav = getCurrentTabIndex() > 0;
-  const showNextNav = getCurrentTabIndex() < tabOrder.length - 1;
+  const showPreviousSecondary = getCurrentSecondaryIndex() > 0;
+  const showNextSecondary = getCurrentSecondaryIndex() < getSecondaryItems().length - 1;
 
   // Reset active vendor when vendeurs change
   useEffect(() => {
@@ -376,11 +465,12 @@ const SystemeStationService = () => {
         onResetDay={handleReinitialiserJour}
         // Tasks stats
         tasksStats={tasksStats}
-        // Navigation props
-        onNavigatePrevious={handleNavigatePrevious}
-        onNavigateNext={handleNavigateNext}
-        showPrevious={showPreviousNav}
-        showNext={showNextNav}
+        // Secondary navigation props
+        onPreviousSecondary={handlePreviousSecondary}
+        onNextSecondary={handleNextSecondary}
+        showPreviousSecondary={showPreviousSecondary}
+        showNextSecondary={showNextSecondary}
+        secondaryNavLabel={getSecondaryLabel()}
       >
         {renderActiveTabContent()}
       </MainLayout>
