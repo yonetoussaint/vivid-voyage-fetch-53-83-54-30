@@ -1,10 +1,10 @@
-// MainLayout.jsx (updated with correct tab name)
+// MainLayout.jsx (updated with "Toute la journée" tab)
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
 import TabSelector from './TabSelector';
-import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User, DollarSign, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
+import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User, DollarSign, ChevronLeft, ChevronRight, Sun, Moon, Calendar } from 'lucide-react';
 
 const MainLayout = ({ 
   date, 
@@ -75,8 +75,14 @@ const MainLayout = ({
   // Determine if we should show the vendor selector
   const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots';
 
-  // Shift tabs for report
+  // Shift tabs for report with "Toute la journée" as first option
   const reportShiftTabs = [
+    { 
+      id: 'full', 
+      label: 'Toute la journée', 
+      icon: <Calendar className="w-4 h-4" />,
+      activeColor: 'bg-purple-500 text-white border-purple-500'
+    },
     { 
       id: 'AM', 
       label: 'Matin', 
