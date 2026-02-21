@@ -189,7 +189,7 @@ const SystemeStationService = () => {
           </div>
         );
 
-      case 'conditionnement':
+      case 'liasse':
         return (
           <div className="p-2 sm:p-6">
             <ConditionnementManager
@@ -280,7 +280,7 @@ const SystemeStationService = () => {
           </div>
         );
 
-      case 'liasse':
+      case 'conditionnement':
         return (
           <div className="p-2 sm:p-6">
             <LiasseCounter
