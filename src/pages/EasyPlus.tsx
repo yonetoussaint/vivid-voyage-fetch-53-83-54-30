@@ -10,7 +10,7 @@ import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
-import LiasseCounter from '@/components/easy/Liasse'; // Import as LiasseCounter
+import LiasseCounter from '@/components/easy/LiasseCounter'; // Import as LiasseCounter
 import ProForma from '@/components/easy/ProForma'; 
 import { useStationData } from '@/hooks/useStationData';
 
