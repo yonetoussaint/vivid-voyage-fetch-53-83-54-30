@@ -11,7 +11,6 @@ import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
 import Liasse from '@/components/easy/Liasse';
-// Import the new ProForma component
 import ProForma from '@/components/easy/ProForma'; 
 import { useStationData } from '@/hooks/useStationData';
 
@@ -31,6 +30,7 @@ const SystemeStationService = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [vendeurActif, setVendeurActif] = useState(null);
   const [filterType, setFilterType] = useState('all');
+  const [conditionnementDenom, setConditionnementDenom] = useState(1000); // Default to 1000
   const [tasksStats, setTasksStats] = useState(null);
 
   const {
@@ -102,6 +102,14 @@ const SystemeStationService = () => {
       });
     }
   }, [date, activeTab]);
+
+  // Build vendor stats for badges
+  const vendorStats = vendeurs.reduce((acc, vendeur) => {
+    acc[vendeur] = {
+      affectations: getNombreAffectations(vendeur, shift)
+    };
+    return acc;
+  }, {});
 
   const handlePompeSelection = (selection) => {
     setPompeEtendue(selection);
@@ -190,6 +198,7 @@ const SystemeStationService = () => {
               vendeurs={vendeurs}
               tousDepots={tousDepots}
               onConditionnementUpdate={setConditionnements}
+              selectedDenomination={conditionnementDenom}
             />
           </div>
         );
@@ -278,11 +287,12 @@ const SystemeStationService = () => {
               shift={shift}
               date={date}
               vendeurs={vendeurs}
+              vendeurActif={vendeurActif}
+              setVendeurActif={setVendeurActif}
             />
           </div>
         );
 
-      // New case for the ProForma (Propane Invoice) component
       case 'proforma':
         return (
           <div className="p-2 sm:p-6">
@@ -326,6 +336,10 @@ const SystemeStationService = () => {
         vendeurs={vendeurs}
         vendeurActif={vendeurActif}
         setVendeurActif={setVendeurActif}
+        vendorStats={vendorStats}
+        // Conditionnement props
+        conditionnementDenom={conditionnementDenom}
+        setConditionnementDenom={setConditionnementDenom}
         // Reset functions
         onResetShift={handleReinitialiserShift}
         onResetDay={handleReinitialiserJour}
