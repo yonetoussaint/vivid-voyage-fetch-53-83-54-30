@@ -1,8 +1,7 @@
-// src/pages/GasStationDailyChecklist.tsx
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle2, Circle, TrendingUp, AlertCircle, Users, Fuel, DollarSign, Shield, Trash2, Plus, Trophy, Award, Target, Info, Phone, Calendar, ChevronDown, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
 
-export default function GasStationDailyChecklist() {
+export default function Daily() {
   const [checkedItems, setCheckedItems] = useState({});
   const [currentTime, setCurrentTime] = useState(new Date());
   const [customTasks, setCustomTasks] = useState([]);
@@ -17,73 +16,11 @@ export default function GasStationDailyChecklist() {
   const [expandedDateSelector, setExpandedDateSelector] = useState({});
   const [taskHistory, setTaskHistory] = useState({}); // { taskId: { 'YYYY-MM-DD': true/false } }
   const [selectedMonth, setSelectedMonth] = useState({}); // { taskId: 'YYYY-MM' }
-  const [activeTab, setActiveTab] = useState('checklist');
-  const [wardrobeItems, setWardrobeItems] = useState({});
-  const [expandedWardrobeItem, setExpandedWardrobeItem] = useState({});
   const [activeTimer, setActiveTimer] = useState(null); // ID of task with active timer
   const [timerSeconds, setTimerSeconds] = useState({}); // { taskId: seconds }
   const [calendarModalTask, setCalendarModalTask] = useState(null); // Full-screen calendar for task
-  const [callFormData, setCallFormData] = useState({
-    name: '',
-    phone: '',
-    timeSlot: '',
-    priority: 'medium',
-    notes: ''
-  });
-  const [phoneCalls, setPhoneCalls] = useState([
-    {
-      id: 'call-example-1',
-      name: 'Fuel Supplier - John',
-      phone: '+1-555-0123',
-      timeSlot: 'Morning: 8:00-9:00 AM',
-      priority: 'high',
-      notes: 'Negotiate bulk pricing for next quarter',
-      completed: false,
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'call-example-2',
-      name: 'Employee Sarah - Scheduling',
-      phone: '+1-555-0456',
-      timeSlot: 'Midday: 12:30-1:00 PM',
-      priority: 'medium',
-      notes: 'Discuss vacation request for next month',
-      completed: false,
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'call-example-3',
-      name: 'Equipment Repair - ABC Services',
-      phone: '+1-555-0789',
-      timeSlot: 'Afternoon: 3:00-4:00 PM',
-      priority: 'urgent',
-      notes: 'Car wash machine malfunction - needs immediate fix',
-      completed: false,
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'call-example-4',
-      name: 'Accountant - Tax Review',
-      phone: '+1-555-0321',
-      timeSlot: 'Evening: 6:30-7:30 PM',
-      priority: 'medium',
-      notes: 'Quarterly tax planning and expense review',
-      completed: false,
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'call-example-5',
-      name: 'Insurance Agent',
-      phone: '+1-555-0654',
-      timeSlot: 'Morning: 8:00-9:00 AM',
-      priority: 'low',
-      notes: 'Annual policy renewal discussion',
-      completed: false,
-      createdAt: new Date().toISOString()
-    }
-  ]);
 
-  // Update time every minute
+  // Load saved data on mount
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
@@ -127,19 +64,8 @@ export default function GasStationDailyChecklist() {
       setTaskHistory(JSON.parse(savedHistory));
     }
 
-    // Load wardrobe items
-    const savedWardrobe = localStorage.getItem('gasStationWardrobe');
-    if (savedWardrobe) {
-      setWardrobeItems(JSON.parse(savedWardrobe));
     }
 
-    // Load phone calls (only override examples if saved data exists)
-    const savedCalls = localStorage.getItem('gasStationPhoneCalls');
-    if (savedCalls) {
-      const parsed = JSON.parse(savedCalls);
-      // Only load if there's actual saved data (not empty array)
-      if (parsed.length > 0) {
-        setPhoneCalls(parsed);
       }
     }
 
@@ -192,8 +118,6 @@ export default function GasStationDailyChecklist() {
 
   // Save wardrobe items
   useEffect(() => {
-    localStorage.setItem('gasStationWardrobe', JSON.stringify(wardrobeItems));
-  }, [wardrobeItems]);
 
   // Timer effect - runs every second when timer is active
   useEffect(() => {
@@ -211,8 +135,6 @@ export default function GasStationDailyChecklist() {
 
   // Save phone calls
   useEffect(() => {
-    localStorage.setItem('gasStationPhoneCalls', JSON.stringify(phoneCalls));
-  }, [phoneCalls]);
 
   // Save task history
   useEffect(() => {
@@ -350,15 +272,8 @@ export default function GasStationDailyChecklist() {
 
   const handleAddCall = (e) => {
     e.preventDefault();
-    console.log('Form submitted:', callFormData);
     
-    if (callFormData.name && callFormData.timeSlot) {
       addPhoneCall(
-        callFormData.name,
-        callFormData.phone,
-        callFormData.timeSlot,
-        callFormData.priority,
-        callFormData.notes
       );
       // Reset form
       setCallFormData({
@@ -370,8 +285,6 @@ export default function GasStationDailyChecklist() {
       });
     } else {
       console.log('Form validation failed:', { 
-        hasName: !!callFormData.name, 
-        hasTimeSlot: !!callFormData.timeSlot 
       });
     }
   };
@@ -656,64 +569,8 @@ export default function GasStationDailyChecklist() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-2 sm:p-4 md:p-6">
       <div className="max-w-5xl mx-auto">
-        {/* Ultra Clean Pill-Shaped Tab Bar */}
-        <div className="overflow-x-auto -mx-2 sm:-mx-4 md:-mx-6 mb-6">
-          <div className="flex gap-2 min-w-max px-2 sm:px-4 md:px-6">
-            <button
-              onClick={() => setActiveTab('checklist')}
-              className={`px-5 sm:px-7 py-2.5 font-medium text-sm transition-all whitespace-nowrap rounded-full ${
-                activeTab === 'checklist'
-                  ? 'bg-black text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Checklist
-            </button>
-            <button
-              onClick={() => setActiveTab('calls')}
-              className={`px-5 sm:px-7 py-2.5 font-medium text-sm transition-all whitespace-nowrap rounded-full ${
-                activeTab === 'calls'
-                  ? 'bg-black text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Calls
-            </button>
-            <button
-              onClick={() => setActiveTab('finance')}
-              className={`px-5 sm:px-7 py-2.5 font-medium text-sm transition-all whitespace-nowrap rounded-full ${
-                activeTab === 'finance'
-                  ? 'bg-black text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Finance
-            </button>
-            <button
-              onClick={() => setActiveTab('dating')}
-              className={`px-5 sm:px-7 py-2.5 font-medium text-sm transition-all whitespace-nowrap rounded-full ${
-                activeTab === 'dating'
-                  ? 'bg-black text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Dating
-            </button>
-            <button
-              onClick={() => setActiveTab('wardrobe')}
-              className={`px-5 sm:px-7 py-2.5 font-medium text-sm transition-all whitespace-nowrap rounded-full ${
-                activeTab === 'wardrobe'
-                  ? 'bg-black text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Wardrobe
-            </button>
-          </div>
-        </div>
-
         {/* Checklist Tab Content */}
-        {activeTab === 'checklist' && (
+        {(
           <>
         {/* Win The Day - Motivation Banner */}
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl shadow-xl p-4 sm:p-6 mb-6">
@@ -721,6 +578,76 @@ export default function GasStationDailyChecklist() {
             <Trophy className="w-7 h-7" />
             Win Today = Win The Week = Win The Year
           </h2>
+
+          {/* Day Progress Bar */}
+          <div className="mb-4">
+            {(() => {
+              const now = new Date();
+              const hours = now.getHours();
+              const minutes = now.getMinutes();
+              const totalMinutesInDay = 24 * 60;
+              const currentMinutes = hours * 60 + minutes;
+              const progressPercentage = (currentMinutes / totalMinutesInDay) * 100;
+              
+              // Time segments with colors
+              const segments = [
+                { start: 0, end: 6, label: 'Night', color: 'from-indigo-900 to-purple-900' },
+                { start: 6, end: 12, label: 'Morning', color: 'from-orange-400 to-yellow-400' },
+                { start: 12, end: 18, label: 'Afternoon', color: 'from-blue-400 to-cyan-400' },
+                { start: 18, end: 24, label: 'Evening', color: 'from-purple-500 to-pink-500' }
+              ];
+              
+              const currentSegment = segments.find(s => hours >= s.start && hours < s.end);
+              const timeDisplay = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+              
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold opacity-90">Day Progress</span>
+                    <span className="font-bold">{timeDisplay} • {currentSegment?.label}</span>
+                  </div>
+                  
+                  {/* Progress Bar Container */}
+                  <div className="relative h-3 bg-white/20 rounded-full overflow-hidden backdrop-blur">
+                    {/* Filled Progress */}
+                    <div 
+                      className="absolute left-0 top-0 h-full bg-white/40 transition-all duration-1000"
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                    
+                    {/* Current Time Marker */}
+                    <div 
+                      className="absolute top-0 h-full w-1 bg-white shadow-lg transition-all duration-1000"
+                      style={{ left: `${progressPercentage}%` }}
+                    >
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rounded-full shadow-lg animate-pulse" />
+                    </div>
+                    
+                    {/* Time segment markers */}
+                    <div className="absolute inset-0 flex">
+                      {[0, 6, 12, 18, 24].map((hour, idx) => (
+                        <div 
+                          key={hour}
+                          className="absolute top-0 h-full w-px bg-white/30"
+                          style={{ left: `${(hour / 24) * 100}%` }}
+                        >
+                          {idx < 4 && (
+                            <span className="absolute -bottom-5 left-0 -translate-x-1/2 text-xs opacity-75">
+                              {hour === 0 ? '12am' : hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour-12}pm`}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs opacity-75 text-center pt-2">
+                    {Math.round(progressPercentage)}% of the day complete
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
 
           {/* Habit vs Task Legend */}
           <div className="flex flex-wrap gap-3 mb-4 p-3 bg-white/10 rounded-lg backdrop-blur">
@@ -1314,208 +1241,6 @@ export default function GasStationDailyChecklist() {
         </>
         )}
 
-        {/* Phone Calls Tab Content */}
-        {activeTab === 'calls' && (
-          <>
-            <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 mb-4 sm:mb-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
-                  <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
-                  Call Schedule
-                </h2>
-              </div>
-
-              {/* Add Call Form */}
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
-                <h3 className="font-semibold text-gray-800 mb-3 text-sm sm:text-base">Schedule New Call</h3>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      value={callFormData.name}
-                      onChange={(e) => setCallFormData(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Name / Contact"
-                      className="px-3 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-                    />
-                    <input
-                      type="tel"
-                      value={callFormData.phone}
-                      onChange={(e) => setCallFormData(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="Phone Number"
-                      className="px-3 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <select
-                      value={callFormData.timeSlot}
-                      onChange={(e) => setCallFormData(prev => ({ ...prev, timeSlot: e.target.value }))}
-                      className="px-3 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-                    >
-                      <option value="">Select Time Window</option>
-                      <option value="Morning: 8:00-9:00 AM">Morning: 8:00-9:00 AM</option>
-                      <option value="Midday: 12:30-1:00 PM">Midday: 12:30-1:00 PM</option>
-                      <option value="Afternoon: 3:00-4:00 PM">Afternoon: 3:00-4:00 PM</option>
-                      <option value="Evening: 6:30-7:30 PM">Evening: 6:30-7:30 PM</option>
-                      <option value="Custom">Custom Time</option>
-                    </select>
-                    
-                    <select
-                      value={callFormData.priority}
-                      onChange={(e) => setCallFormData(prev => ({ ...prev, priority: e.target.value }))}
-                      className="px-3 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-                    >
-                      <option value="low">Low Priority</option>
-                      <option value="medium">Medium Priority</option>
-                      <option value="high">High Priority</option>
-                      <option value="urgent">Urgent</option>
-                    </select>
-                  </div>
-
-                  <textarea
-                    value={callFormData.notes}
-                    onChange={(e) => setCallFormData(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Notes / Purpose of call (optional)"
-                    rows="2"
-                    className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (callFormData.name && callFormData.timeSlot) {
-                        const newCall = {
-                          id: `call-${Date.now()}`,
-                          name: callFormData.name,
-                          phone: callFormData.phone,
-                          timeSlot: callFormData.timeSlot,
-                          priority: callFormData.priority,
-                          notes: callFormData.notes,
-                          completed: false,
-                          createdAt: new Date().toISOString()
-                        };
-                        setPhoneCalls(prev => [...prev, newCall]);
-                        setCallFormData({
-                          name: '',
-                          phone: '',
-                          timeSlot: '',
-                          priority: 'medium',
-                          notes: ''
-                        });
-                      } else {
-                        alert('Please fill in Name and Time Window');
-                      }
-                    }}
-                    className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-semibold text-sm"
-                  >
-                    + Add Call to Schedule
-                  </button>
-                </div>
-              </div>
-
-              {/* Call Windows Info */}
-              <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
-                <h3 className="font-semibold text-purple-900 mb-2 text-sm sm:text-base">📋 The System:</h3>
-                <ul className="text-xs sm:text-sm text-gray-700 space-y-1">
-                  <li>• <strong>Never say "whenever"</strong> - Always offer 2-3 specific windows</li>
-                  <li>• <strong>If they can't make it</strong> - "Next availability is [time]"</li>
-                  <li>• <strong>Urgent test</strong> - Does this lose money today? Is someone in danger?</li>
-                  <li>• <strong>If not urgent</strong> - "Let's do it at [time]" (no negotiation)</li>
-                  <li>• <strong>People adapt</strong> - Respect follows consistency</li>
-                </ul>
-              </div>
-
-              {/* Calls List */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-gray-800 text-base sm:text-lg">Scheduled Calls</h3>
-                
-                {phoneCalls.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400">
-                    <Phone className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No calls scheduled yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {phoneCalls
-                      .sort((a, b) => {
-                        const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
-                        return priorityOrder[a.priority] - priorityOrder[b.priority];
-                      })
-                      .map((call) => (
-                        <div
-                          key={call.id}
-                          className={`p-3 sm:p-4 rounded-lg border-2 transition-all ${
-                            call.completed
-                              ? 'bg-green-50 border-green-200'
-                              : call.priority === 'urgent'
-                              ? 'bg-red-50 border-red-300'
-                              : call.priority === 'high'
-                              ? 'bg-orange-50 border-orange-300'
-                              : 'bg-white border-gray-200'
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <button
-                              onClick={() => toggleCallComplete(call.id)}
-                              className="mt-1 flex-shrink-0"
-                            >
-                              {call.completed ? (
-                                <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-                              ) : (
-                                <Circle className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
-                              )}
-                            </button>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-1">
-                                <h4 className={`font-semibold text-sm sm:text-base ${call.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-                                  {call.name}
-                                </h4>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  {call.priority === 'urgent' && !call.completed && (
-                                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-semibold">
-                                      🚨 URGENT
-                                    </span>
-                                  )}
-                                  {call.priority === 'high' && !call.completed && (
-                                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">
-                                      High Priority
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-1 text-xs sm:text-sm text-gray-600">
-                                {call.phone && (
-                                  <p>
-                                    📱 <a href={`tel:${call.phone}`} className="text-blue-600 hover:underline">{call.phone}</a>
-                                  </p>
-                                )}
-                                <p>🕐 {call.timeSlot}</p>
-                                {call.notes && (
-                                  <p className="text-gray-500 italic">"{call.notes}"</p>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <button
-                              onClick={() => deletePhoneCall(call.id)}
-                              className="p-1 sm:p-1.5 text-red-500 hover:bg-red-100 rounded transition-colors flex-shrink-0"
-                              title="Delete call"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Finance Tab Content */}
         {activeTab === 'finance' && (
           <>
             <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 mb-4 sm:mb-6">
@@ -1656,184 +1381,6 @@ export default function GasStationDailyChecklist() {
           </>
         )}
 
-        {/* Dating Tab Content */}
-        {activeTab === 'dating' && (
-          <>
-            <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 mb-4 sm:mb-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
-                  Dating System
-                </h2>
-              </div>
-
-              {/* The Reality */}
-              <div className="bg-black text-white p-4 rounded-lg mb-6">
-                <h3 className="font-bold mb-2 text-lg">The Reality</h3>
-                <p className="mb-2">Dating is a numbers game combined with systems.</p>
-                <ul className="text-sm space-y-1 opacity-90">
-                  <li>• Quality comes from quantity - you need volume to find matches</li>
-                  <li>• Most men fail because they focus on one woman at a time</li>
-                  <li>• Dating multiple people keeps you from becoming needy</li>
-                  <li>• Your time is valuable - optimize it</li>
-                </ul>
-              </div>
-
-              {/* The System */}
-              <div className="bg-gradient-to-r from-pink-50 to-rose-50 border-2 border-rose-300 rounded-xl p-4 mb-6">
-                <h3 className="font-bold text-rose-900 mb-3 text-lg">The 4-Phase System</h3>
-                
-                <div className="space-y-4">
-                  {/* Phase 1 */}
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-rose-500">
-                    <h4 className="font-bold text-gray-800 mb-2">Phase 1: Mass Outreach (Volume)</h4>
-                    <p className="text-sm text-gray-700 mb-2">
-                      <strong>Goal:</strong> 20-30 conversations per week minimum
-                    </p>
-                    <ul className="text-sm text-gray-700 space-y-1">
-                      <li>• Apps: Tinder, Hinge, Bumble (all three simultaneously)</li>
-                      <li>• IRL: Coffee shops, gym, grocery stores, events</li>
-                      <li>• Social circle: Friends of friends, group activities</li>
-                      <li>• Time investment: 30 min daily on apps, always open IRL</li>
-                    </ul>
-                    <p className="text-xs text-gray-600 italic mt-2">Rule: Never fixate. Keep swiping even when you have matches.</p>
-                  </div>
-
-                  {/* Phase 2 */}
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-purple-500">
-                    <h4 className="font-bold text-gray-800 mb-2">Phase 2: Filtering (Qualify Fast)</h4>
-                    <p className="text-sm text-gray-700 mb-2">
-                      <strong>Goal:</strong> Spend minimal time on low-potential matches
-                    </p>
-                    <ul className="text-sm text-gray-700 space-y-1">
-                      <li>• Respond rate test: If she's not matching your energy, move on</li>
-                      <li>• 3-message rule: After 3 exchanges, ask to meet or call</li>
-                      <li>• Red flags: Flakiness, one-word answers, attention-seeking</li>
-                      <li>• Green flags: Asks questions, invests effort, shows up</li>
-                    </ul>
-                    <p className="text-xs text-gray-600 italic mt-2">Rule: Don't chase. The right ones make it easy.</p>
-                  </div>
-
-                  {/* Phase 3 */}
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500">
-                    <h4 className="font-bold text-gray-800 mb-2">Phase 3: First Dates (Low Investment)</h4>
-                    <p className="text-sm text-gray-700 mb-2">
-                      <strong>Goal:</strong> Efficient, repeatable, low-cost dates
-                    </p>
-                    <ul className="text-sm text-gray-700 space-y-1">
-                      <li>• Template: Coffee, drinks, or walk (1 hour max)</li>
-                      <li>• Same location every time (logistics mastered)</li>
-                      <li>• Never dinner on first date (too much time/money)</li>
-                      <li>• Schedule multiple per week (Tuesday, Thursday, Saturday)</li>
-                    </ul>
-                    <p className="text-xs text-gray-600 italic mt-2">Rule: First date = chemistry check, not commitment.</p>
-                  </div>
-
-                  {/* Phase 4 */}
-                  <div className="bg-white p-4 rounded-lg border-l-4 border-green-500">
-                    <h4 className="font-bold text-gray-800 mb-2">Phase 4: Rotation Management</h4>
-                    <p className="text-sm text-gray-700 mb-2">
-                      <strong>Goal:</strong> Maintain 3-5 active prospects simultaneously
-                    </p>
-                    <ul className="text-sm text-gray-700 space-y-1">
-                      <li>• Track: Name, interests, last conversation topic, next date</li>
-                      <li>• Spacing: See each person once per week maximum</li>
-                      <li>• Boundaries: Be honest - you're casually dating</li>
-                      <li>• Decision point: After 4-6 dates, evaluate for exclusivity</li>
-                    </ul>
-                    <p className="text-xs text-gray-600 italic mt-2">Rule: Don't commit until you're certain. Options = power.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Conversation Tracker */}
-              <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 mb-6">
-                <h3 className="font-bold text-blue-900 mb-3">Active Pipeline Tracker</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between p-2 bg-white rounded">
-                    <span className="text-gray-600">Conversations Started (This Week)</span>
-                    <span className="font-bold">0 / 20 goal</span>
-                  </div>
-                  <div className="flex justify-between p-2 bg-white rounded">
-                    <span className="text-gray-600">Numbers/Socials Collected</span>
-                    <span className="font-bold">0</span>
-                  </div>
-                  <div className="flex justify-between p-2 bg-white rounded">
-                    <span className="text-gray-600">Dates Scheduled</span>
-                    <span className="font-bold">0</span>
-                  </div>
-                  <div className="flex justify-between p-2 bg-white rounded">
-                    <span className="text-gray-600">Active Rotation</span>
-                    <span className="font-bold">0 / 5 target</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Message Templates */}
-              <div className="bg-gray-50 border-2 border-gray-300 rounded-xl p-4 mb-6">
-                <h3 className="font-bold text-gray-900 mb-3">Proven Message Templates</h3>
-                <div className="space-y-3">
-                  <div className="bg-white p-3 rounded-lg">
-                    <p className="text-xs font-semibold text-gray-600 mb-1">OPENING (Apps):</p>
-                    <p className="text-sm text-gray-800">"[Observation about profile] - what's the story behind that?"</p>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg">
-                    <p className="text-xs font-semibold text-gray-600 mb-1">TRANSITION TO MEET:</p>
-                    <p className="text-sm text-gray-800">"This is fun, but texting is terrible. Coffee this week? Tuesday or Thursday work for you?"</p>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg">
-                    <p className="text-xs font-semibold text-gray-600 mb-1">HANDLING FLAKES:</p>
-                    <p className="text-sm text-gray-800">"No worries! If you change your mind, you know where to find me." (Then move on)</p>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg">
-                    <p className="text-xs font-semibold text-gray-600 mb-1">FOLLOW-UP AFTER DATE:</p>
-                    <p className="text-sm text-gray-800">"Had a great time. Let's do it again - I'll text you this weekend."</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Weekly Action Items */}
-              <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 mb-6">
-                <h3 className="font-bold text-green-900 mb-3">Weekly Minimum Actions</h3>
-                <div className="space-y-2">
-                  <label className="flex items-start gap-3 p-2 hover:bg-green-100 rounded cursor-pointer">
-                    <input type="checkbox" className="mt-1 w-5 h-5" />
-                    <span className="text-sm text-gray-700">30 min daily on dating apps (swipe/message)</span>
-                  </label>
-                  <label className="flex items-start gap-3 p-2 hover:bg-green-100 rounded cursor-pointer">
-                    <input type="checkbox" className="mt-1 w-5 h-5" />
-                    <span className="text-sm text-gray-700">Approach 3-5 women IRL (gym, coffee, etc.)</span>
-                  </label>
-                  <label className="flex items-start gap-3 p-2 hover:bg-green-100 rounded cursor-pointer">
-                    <input type="checkbox" className="mt-1 w-5 h-5" />
-                    <span className="text-sm text-gray-700">Schedule minimum 2 dates this week</span>
-                  </label>
-                  <label className="flex items-start gap-3 p-2 hover:bg-green-100 rounded cursor-pointer">
-                    <input type="checkbox" className="mt-1 w-5 h-5" />
-                    <span className="text-sm text-gray-700">Follow up with existing conversations</span>
-                  </label>
-                  <label className="flex items-start gap-3 p-2 hover:bg-green-100 rounded cursor-pointer">
-                    <input type="checkbox" className="mt-1 w-5 h-5" />
-                    <span className="text-sm text-gray-700">Cut off low-effort/flaky prospects</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* The Mindset */}
-              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
-                <h3 className="font-bold text-yellow-900 mb-2">The Winning Mindset</h3>
-                <div className="text-sm text-yellow-800 space-y-2">
-                  <p><strong>Abundance > Scarcity:</strong> You're choosing, not chasing.</p>
-                  <p><strong>Time = Respect:</strong> Don't waste yours on people who don't invest back.</p>
-                  <p><strong>Outcome Independence:</strong> You're fine alone. Dating is a bonus, not a need.</p>
-                  <p><strong>Volume Creates Options:</strong> The more you date, the better you get, the higher your standards.</p>
-                  <p className="font-semibold mt-3">Remember: The goal isn't to date everyone forever. It's to have enough options to find someone truly exceptional.</p>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Wardrobe Tab Content */}
         {activeTab === 'wardrobe' && (
           <>
             <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 mb-4 sm:mb-6">
@@ -1870,13 +1417,11 @@ export default function GasStationDailyChecklist() {
                           <button
                             onClick={() => toggleWardrobeItem(item.id)}
                             className={`w-full flex items-center justify-between p-3 transition-all ${
-                              wardrobeItems[item.id]
                                 ? 'bg-green-50 border-green-500'
                                 : 'bg-red-50'
                             }`}
                           >
                             <div className="flex items-center gap-3 flex-1">
-                              {wardrobeItems[item.id] ? (
                                 <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
                               ) : (
                                 <X className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -1933,13 +1478,11 @@ export default function GasStationDailyChecklist() {
                           <button
                             onClick={() => toggleWardrobeItem(item.id)}
                             className={`w-full flex items-center justify-between p-3 transition-all ${
-                              wardrobeItems[item.id]
                                 ? 'bg-green-50 border-green-500'
                                 : 'bg-red-50'
                             }`}
                           >
                             <div className="flex items-center gap-3 flex-1">
-                              {wardrobeItems[item.id] ? (
                                 <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
                               ) : (
                                 <X className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -1993,13 +1536,11 @@ export default function GasStationDailyChecklist() {
                           <button
                             onClick={() => toggleWardrobeItem(item.id)}
                             className={`w-full flex items-center justify-between p-3 transition-all ${
-                              wardrobeItems[item.id]
                                 ? 'bg-green-50 border-green-500'
                                 : 'bg-red-50'
                             }`}
                           >
                             <div className="flex items-center gap-3 flex-1">
-                              {wardrobeItems[item.id] ? (
                                 <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
                               ) : (
                                 <X className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -2054,13 +1595,11 @@ export default function GasStationDailyChecklist() {
                           <button
                             onClick={() => toggleWardrobeItem(item.id)}
                             className={`w-full flex items-center justify-between p-3 transition-all ${
-                              wardrobeItems[item.id]
                                 ? 'bg-green-50 border-green-500'
                                 : 'bg-red-50'
                             }`}
                           >
                             <div className="flex items-center gap-3 flex-1">
-                              {wardrobeItems[item.id] ? (
                                 <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
                               ) : (
                                 <X className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -2116,13 +1655,11 @@ export default function GasStationDailyChecklist() {
                           <button
                             onClick={() => toggleWardrobeItem(item.id)}
                             className={`w-full flex items-center justify-between p-3 transition-all ${
-                              wardrobeItems[item.id]
                                 ? 'bg-green-50 border-green-500'
                                 : 'bg-red-50'
                             }`}
                           >
                             <div className="flex items-center gap-3 flex-1">
-                              {wardrobeItems[item.id] ? (
                                 <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
                               ) : (
                                 <X className="w-5 h-5 text-red-500 flex-shrink-0" />
