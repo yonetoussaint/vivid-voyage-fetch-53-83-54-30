@@ -215,7 +215,7 @@ const buildInvoiceHTML = ({ invoice, company, logo, theme, options }) => {
   body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#fff; color:#111; line-height:1.5; }
 </style>
 </head><body>
-<div style="max-width:760px;margin:0 auto;padding:40px;background:#fff;position:relative;min-height:1050px;">
+<div style="width:100%;padding:28px 28px;background:#fff;position:relative;min-height:1050px;">
   ${watermarkHTML}
   <div style="position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,${primary},${secondary});"></div>
 
@@ -346,7 +346,7 @@ const generateImageBlob = async ({ invoice, company, logo, theme, options }) => 
   const html = buildInvoiceHTML({ invoice, company, logo, theme, options });
   const iframe = document.createElement('iframe');
   Object.assign(iframe.style, {
-    position: 'absolute', width: '860px', height: '1200px',
+    position: 'absolute', width: '800px', height: '1200px',
     left: '-9999px', top: '0', border: 'none', background: 'white',
   });
   document.body.appendChild(iframe);
@@ -356,7 +356,7 @@ const generateImageBlob = async ({ invoice, company, logo, theme, options }) => 
     await new Promise(r => setTimeout(r, 1200));
     const canvas = await html2canvas(iDoc.body, {
       scale: 1.5, backgroundColor: '#fff', logging: false,
-      allowTaint: true, useCORS: true, windowWidth: 860, windowHeight: 1200,
+      allowTaint: true, useCORS: true, windowWidth: 800, windowHeight: 1200,
     });
     return new Promise(r => canvas.toBlob(r, 'image/png', 1.0));
   } finally {
