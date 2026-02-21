@@ -1,10 +1,10 @@
-// MainLayout.jsx (updated)
+// MainLayout.jsx (updated with page navigation chevrons)
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
 import TabSelector from './TabSelector';
-import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User, DollarSign } from 'lucide-react';
+import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MainLayout = ({ 
   date, 
@@ -35,7 +35,12 @@ const MainLayout = ({
   // Tasks stats
   tasksStats,
   // Optional vendor stats for badges
-  vendorStats = {}
+  vendorStats = {},
+  // Navigation props
+  onNavigatePrevious,
+  onNavigateNext,
+  showPrevious = false,
+  showNext = false
 }) => {
   const headerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(64);
@@ -197,14 +202,35 @@ const MainLayout = ({
       {/* Spacer - Dynamic height based on actual header height */}
       <div style={{ height: `${headerHeight}px` }}></div>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 min-h-0">
+      {/* Main Content Area with Page Navigation Chevrons */}
+      <div className="flex flex-1 min-h-0 relative">
         {/* Side Panel for desktop */}
         <div className="hidden lg:block flex-shrink-0">
           <SidePanel isOpen={true} onClose={() => {}} isMobile={false}>
             <VerticalTabs activeTab={activeTab} onTabChange={() => {}} isMobile={false} />
           </SidePanel>
         </div>
+
+        {/* Page Navigation Chevrons */}
+        {showPrevious && (
+          <button
+            onClick={onNavigatePrevious}
+            className="fixed left-4 lg:left-72 top-1/2 transform -translate-y-1/2 z-40 flex items-center justify-center w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-lg hover:bg-white transition-all duration-200 border border-gray-200 group"
+            aria-label="Navigate to previous tab"
+          >
+            <ChevronLeft className="w-6 h-6 text-gray-600 group-hover:text-gray-900" />
+          </button>
+        )}
+
+        {showNext && (
+          <button
+            onClick={onNavigateNext}
+            className="fixed right-4 lg:right-8 top-1/2 transform -translate-y-1/2 z-40 flex items-center justify-center w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-lg hover:bg-white transition-all duration-200 border border-gray-200 group"
+            aria-label="Navigate to next tab"
+          >
+            <ChevronRight className="w-6 h-6 text-gray-600 group-hover:text-gray-900" />
+          </button>
+        )}
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto">
