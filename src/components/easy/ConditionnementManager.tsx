@@ -1,272 +1,417 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, RotateCcw, Check, X } from 'lucide-react';
+// ConditionnementManager.jsx
+import React, { useState, useEffect } from 'react';
+import { Save, Plus, Trash2, DollarSign } from 'lucide-react';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DEPARTAGE ALGORITHM v3 — "Anchor + Fill"
-//
-// Per liasse:
-//   1. Pick the LARGEST remaining pile as the "anchor".
-//   2. If anchor ≥ 100 → take exactly 100 from it, done.
-//   3. Otherwise anchor contributes its full amount.
-//      Fill the remainder (100 − anchor) by consuming the SMALLEST piles first,
-//      exhausting each one fully before touching the next larger one.
-//      At most ONE pile gets partially split — always the last one needed.
-//
-// Example: piles [58, 36, 74, 38, 14]
-//   Liasse 1 → anchor=74, need 26 more → smallest others: 14(full)+12 from 36 → done
-//   Wait: 14 < 26, so take all 14, need 12 more → take 12 from 36 (next smallest)
-//   → 74 + 14 + 12 = 100 ✓  (36 has 24 left, 58 untouched)
-// ─────────────────────────────────────────────────────────────────────────────
+const ConditionnementManager = ({ 
+  shift, 
+  date, 
+  vendeurs, 
+  tousDepots,
+  onConditionnementUpdate,
+  selectedDenomination = 1000
+}) => {
+  const [conditionnementData, setConditionnementData] = useState({});
+  const [newEntry, setNewEntry] = useState({
+    vendeur: vendeurs[0] || '',
+    depot: '',
+    quantité: '',
+    montant: ''
+  });
+  const [editingId, setEditingId] = useState(null);
+  const [totals, setTotals] = useState({
+    totalQuantite: 0,
+    totalMontant: 0,
+    parVendeur: {},
+    parDepot: {}
+  });
 
-const TARGET = 100;
+  // Load data when denomination changes
+  useEffect(() => {
+    const storageKey = `conditionnement_${date}_${shift}_${selectedDenomination}`;
+    const saved = localStorage.getItem(storageKey);
+    
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setConditionnementData(parsed);
+      calculateTotals(parsed.entries || []);
+    } else {
+      const initialData = {
+        denomination: selectedDenomination,
+        shift: shift,
+        date: date,
+        entries: []
+      };
+      setConditionnementData(initialData);
+      calculateTotals([]);
+    }
+  }, [date, shift, selectedDenomination]);
 
-function buildLiasse(activePiles) {
-  const byDesc = [...activePiles].sort((a, b) => b.amount - a.amount);
-  const anchor = byDesc[0];
+  // Calculate totals whenever entries change
+  const calculateTotals = (entries) => {
+    const totals = {
+      totalQuantite: 0,
+      totalMontant: 0,
+      parVendeur: {},
+      parDepot: {}
+    };
 
-  // Anchor alone covers 100
-  if (anchor.amount >= TARGET) {
-    return [{ originalIndex: anchor.originalIndex, take: TARGET }];
-  }
-
-  // Anchor contributes in full; fill remainder with smallest-first
-  const steps = [{ originalIndex: anchor.originalIndex, take: anchor.amount }];
-  let rem = TARGET - anchor.amount;
-
-  const others = byDesc.slice(1).sort((a, b) => a.amount - b.amount); // ascending
-  for (const p of others) {
-    if (rem <= 0) break;
-    const take = Math.min(p.amount, rem);
-    steps.push({ originalIndex: p.originalIndex, take });
-    rem -= take;
-  }
-
-  return steps; // rem may be > 0 only for the final partial liasse
-}
-
-function getInstructions(sequences) {
-  if (sequences.length === 0) return [];
-
-  const piles = sequences.map((amount, i) => ({ originalIndex: i, amount }));
-  const instructions = [];
-  let liasseNum = 1;
-
-  while (piles.some(p => p.amount > 0)) {
-    const activePiles = piles.filter(p => p.amount > 0);
-    if (!activePiles.length) break;
-
-    const rawSteps = buildLiasse(activePiles);
-
-    // Apply takes and build display steps
-    let total = 0;
-    const displaySteps = rawSteps.map(({ originalIndex, take }) => {
-      const pile = piles.find(p => p.originalIndex === originalIndex);
-      const from = pile.amount;
-      pile.amount -= take;
-      total += take;
-      return { sequenceNum: originalIndex + 1, take, from, remaining: pile.amount };
+    entries.forEach(entry => {
+      const quantite = Number(entry.quantité) || 0;
+      const montant = Number(entry.montant) || 0;
+      
+      totals.totalQuantite += quantite;
+      totals.totalMontant += montant;
+      
+      // Par vendeur
+      if (!totals.parVendeur[entry.vendeur]) {
+        totals.parVendeur[entry.vendeur] = { quantite: 0, montant: 0 };
+      }
+      totals.parVendeur[entry.vendeur].quantite += quantite;
+      totals.parVendeur[entry.vendeur].montant += montant;
+      
+      // Par dépôt
+      if (!totals.parDepot[entry.depot]) {
+        totals.parDepot[entry.depot] = { quantite: 0, montant: 0 };
+      }
+      totals.parDepot[entry.depot].quantite += quantite;
+      totals.parDepot[entry.depot].montant += montant;
     });
 
-    if (total > 0) {
-      instructions.push({ liasseNum, steps: displaySteps, total, isComplete: total === TARGET });
-      liasseNum++;
-    } else break;
-  }
-
-  return instructions;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-export default function LiasseCounter() {
-  const [sequences, setSequences] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('liasseCounterSequences')) || []; }
-    catch { return []; }
-  });
-  const [currentInput, setCurrentInput] = useState('');
-  const [buttonState, setButtonState] = useState('default');
-  const timeoutRef = useRef(null);
-
-  useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
-  useEffect(() => {
-    try { localStorage.setItem('liasseCounterSequences', JSON.stringify(sequences)); } catch {}
-  }, [sequences]);
-
-  const resetButtonState = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setButtonState('default'), 2000);
+    setTotals(totals);
   };
 
-  const addSequence = () => {
-    const value = parseInt(currentInput);
-    if (currentInput === '' || isNaN(value) || value <= 0) {
-      setButtonState('error'); resetButtonState(); return;
-    }
-    setButtonState('loading');
-    setTimeout(() => {
-      setSequences(prev => [...prev, value]);
-      setCurrentInput('');
-      setButtonState('success');
-      resetButtonState();
-    }, 300);
-  };
-
-  const removeSequence = (i) => setSequences(prev => prev.filter((_, j) => j !== i));
-  const resetAll = () => {
-    if (window.confirm('Êtes-vous sûr de vouloir tout réinitialiser ?')) {
-      setSequences([]); setCurrentInput('');
+  // Save data to localStorage
+  const saveData = (newData) => {
+    const storageKey = `conditionnement_${date}_${shift}_${selectedDenomination}`;
+    localStorage.setItem(storageKey, JSON.stringify(newData));
+    setConditionnementData(newData);
+    calculateTotals(newData.entries || []);
+    
+    if (onConditionnementUpdate) {
+      onConditionnementUpdate(newData);
     }
   };
 
-  const total = sequences.reduce((s, v) => s + v, 0);
-  const liasseInfo = { complete: Math.floor(total / 100), remaining: total % 100 };
-  const instructions = getInstructions(sequences);
-
-  const getButtonConfig = () => {
-    const val = parseInt(currentInput);
-    if (currentInput === '' || val === 0 || isNaN(val)) {
-      return { icon: Plus, text: 'Ajouter', bgColor: 'bg-slate-300', hoverColor: '', textColor: 'text-slate-500', disabled: true };
+  // Add new entry
+  const handleAddEntry = () => {
+    if (!newEntry.vendeur || !newEntry.depot || !newEntry.quantité) {
+      alert('Veuillez remplir tous les champs');
+      return;
     }
-    return {
-      default: { icon: Plus,  text: 'Ajouter',  bgColor: 'bg-emerald-500', hoverColor: 'hover:bg-emerald-600 active:bg-emerald-700', textColor: 'text-white', disabled: false },
-      loading: { icon: null,  text: 'Ajout...',  bgColor: 'bg-emerald-500', hoverColor: '', textColor: 'text-white', disabled: true },
-      success: { icon: Check, text: 'Ajouté !', bgColor: 'bg-emerald-600', hoverColor: '', textColor: 'text-white', disabled: true },
-      error:   { icon: X,    text: 'Invalide',  bgColor: 'bg-red-500',     hoverColor: '', textColor: 'text-white', disabled: true },
-    }[buttonState];
+
+    const updatedEntries = [...(conditionnementData.entries || [])];
+    
+    if (editingId !== null) {
+      // Update existing entry
+      updatedEntries[editingId] = {
+        ...newEntry,
+        quantité: Number(newEntry.quantité),
+        montant: Number(newEntry.montant) || (Number(newEntry.quantité) * selectedDenomination)
+      };
+    } else {
+      // Add new entry
+      updatedEntries.push({
+        ...newEntry,
+        id: Date.now(),
+        quantité: Number(newEntry.quantité),
+        montant: Number(newEntry.montant) || (Number(newEntry.quantité) * selectedDenomination)
+      });
+    }
+
+    const updatedData = {
+      ...conditionnementData,
+      entries: updatedEntries
+    };
+
+    saveData(updatedData);
+    
+    // Reset form
+    setNewEntry({
+      vendeur: vendeurs[0] || '',
+      depot: '',
+      quantité: '',
+      montant: ''
+    });
+    setEditingId(null);
   };
-  const bc = getButtonConfig();
+
+  // Edit entry
+  const handleEditEntry = (index) => {
+    const entry = conditionnementData.entries[index];
+    setNewEntry({
+      vendeur: entry.vendeur,
+      depot: entry.depot,
+      quantité: entry.quantité.toString(),
+      montant: entry.montant.toString()
+    });
+    setEditingId(index);
+  };
+
+  // Delete entry
+  const handleDeleteEntry = (index) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette entrée?')) {
+      const updatedEntries = conditionnementData.entries.filter((_, i) => i !== index);
+      const updatedData = {
+        ...conditionnementData,
+        entries: updatedEntries
+      };
+      saveData(updatedData);
+    }
+  };
+
+  // Calculate montant automatically when quantité changes
+  const handleQuantiteChange = (e) => {
+    const quantite = e.target.value;
+    const montantCalculated = quantite ? Number(quantite) * selectedDenomination : '';
+    
+    setNewEntry({
+      ...newEntry,
+      quantité: quantite,
+      montant: montantCalculated
+    });
+  };
+
+  // Get available depots from tousDepots or use default
+  const availableDepots = tousDepots?.length > 0 
+    ? tousDepots 
+    : ['Dépôt 1', 'Dépôt 2', 'Dépôt 3', 'Dépôt 4'];
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-4 sm:mb-6 px-2 sm:px-0 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-        <div>
-          <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 mb-1 sm:mb-2">Compteur de Liasses</h1>
-          <p className="text-xs sm:text-base text-slate-600">Calculez vos liasses (100 billets = 1 liasse)</p>
+    <div className="space-y-6">
+      {/* Header with denomination info */}
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <h2 className="text-xl font-semibold text-blue-800 flex items-center">
+          <DollarSign className="w-5 h-5 mr-2" />
+          Conditionnement {selectedDenomination} Gdes - {shift === 'AM' ? 'Matin' : 'Soir'}
+        </h2>
+        <p className="text-sm text-blue-600 mt-1">
+          Date: {new Date(date).toLocaleDateString('fr-FR')}
+        </p>
+      </div>
+
+      {/* Add/Edit Form */}
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <h3 className="text-lg font-medium mb-4">
+          {editingId !== null ? 'Modifier' : 'Ajouter'} une entrée
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Vendeur
+            </label>
+            <select
+              value={newEntry.vendeur}
+              onChange={(e) => setNewEntry({...newEntry, vendeur: e.target.value})}
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="">Sélectionner</option>
+              {vendeurs.map(v => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Dépôt
+            </label>
+            <select
+              value={newEntry.depot}
+              onChange={(e) => setNewEntry({...newEntry, depot: e.target.value})}
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="">Sélectionner</option>
+              {availableDepots.map(depot => (
+                <option key={depot} value={depot}>{depot}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Quantité
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={newEntry.quantité}
+              onChange={handleQuantiteChange}
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              placeholder="Nombre de paquets"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Montant (Gdes)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={newEntry.montant}
+              onChange={(e) => setNewEntry({...newEntry, montant: e.target.value})}
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              placeholder="Montant total"
+              readOnly={!newEntry.montant} // Optional: make it read-only since it's auto-calculated
+            />
+          </div>
         </div>
-        {sequences.length > 0 && (
-          <button onClick={resetAll} className="bg-white text-red-600 hover:bg-red-50 active:bg-red-100 border border-red-200 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-sm font-medium shadow-sm w-full sm:w-auto">
-            <RotateCcw size={16} /><span>Tout réinitialiser</span>
+        
+        <button
+          onClick={handleAddEntry}
+          className="mt-4 flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          {editingId !== null ? (
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              Mettre à jour
+            </>
+          ) : (
+            <>
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter
+            </>
+          )}
+        </button>
+        
+        {editingId !== null && (
+          <button
+            onClick={() => {
+              setNewEntry({
+                vendeur: vendeurs[0] || '',
+                depot: '',
+                quantité: '',
+                montant: ''
+              });
+              setEditingId(null);
+            }}
+            className="mt-4 ml-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+          >
+            Annuler
           </button>
         )}
       </div>
 
-      <div className="bg-white rounded-lg sm:rounded-2xl shadow-sm p-3 sm:p-6 border border-slate-200">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-          {[
-            { label: 'Total Billets', value: total, from: 'from-slate-50', to: 'to-slate-100', border: 'border-slate-200', lc: 'text-slate-600', vc: 'text-slate-900' },
-            { label: 'Liasses',       value: liasseInfo.complete,  from: 'from-emerald-50', to: 'to-emerald-100', border: 'border-emerald-200', lc: 'text-emerald-700', vc: 'text-emerald-900' },
-            { label: 'Reste',         value: liasseInfo.remaining, from: 'from-amber-50',   to: 'to-amber-100',   border: 'border-amber-200',   lc: 'text-amber-700',   vc: 'text-amber-900' },
-          ].map(({ label, value, from, to, border, lc, vc }) => (
-            <div key={label} className={`bg-gradient-to-br ${from} ${to} rounded-lg sm:rounded-xl p-2 sm:p-4 border ${border}`}>
-              <div className={`text-[10px] sm:text-xs ${lc} font-medium mb-0.5 sm:mb-1`}>{label}</div>
-              <div className={`text-lg sm:text-2xl font-bold ${vc}`}>{value}</div>
-            </div>
-          ))}
+      {/* Totals Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-green-50 p-4 rounded-lg">
+          <h4 className="font-semibold text-green-800 mb-2">Totaux Généraux</h4>
+          <div className="space-y-1">
+            <p className="text-sm">
+              <span className="font-medium">Quantité totale:</span>{' '}
+              {totals.totalQuantite} paquets
+            </p>
+            <p className="text-sm">
+              <span className="font-medium">Montant total:</span>{' '}
+              {totals.totalMontant.toLocaleString()} Gdes
+            </p>
+            <p className="text-sm text-green-600">
+              <span className="font-medium">Valeur par paquet:</span>{' '}
+              {selectedDenomination} Gdes
+            </p>
+          </div>
         </div>
 
-        {/* Input */}
-        <div className="flex gap-2 mb-4 sm:mb-6">
-          <input
-            type="number"
-            value={currentInput}
-            onChange={(e) => {
-              setCurrentInput(e.target.value);
-              if (buttonState !== 'default') { if (timeoutRef.current) clearTimeout(timeoutRef.current); setButtonState('default'); }
-            }}
-            onKeyPress={(e) => e.key === 'Enter' && addSequence()}
-            placeholder="Nombre de billets..."
-            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-white border border-slate-200 rounded-lg sm:rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
-          />
-          <button
-            onClick={addSequence}
-            disabled={bc.disabled}
-            className={`${bc.bgColor} ${bc.hoverColor} ${bc.textColor} px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-2 text-sm sm:text-base font-medium shadow-sm min-w-[120px] disabled:opacity-90 disabled:cursor-not-allowed relative`}
-          >
-            {buttonState === 'loading' && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              </div>
+        <div className="bg-purple-50 p-4 rounded-lg">
+          <h4 className="font-semibold text-purple-800 mb-2">Par Vendeur</h4>
+          <div className="space-y-1 max-h-40 overflow-y-auto">
+            {Object.entries(totals.parVendeur).map(([vendeur, data]) => (
+              <p key={vendeur} className="text-sm">
+                <span className="font-medium">{vendeur}:</span>{' '}
+                {data.quantite} paquets ({data.montant.toLocaleString()} Gdes)
+              </p>
+            ))}
+            {Object.keys(totals.parVendeur).length === 0 && (
+              <p className="text-sm text-gray-500">Aucune donnée</p>
             )}
-            <div className={`flex items-center gap-2 ${buttonState === 'loading' ? 'opacity-0' : ''}`}>
-              {bc.icon && <bc.icon size={18} />}
-              <span>{bc.text}</span>
-            </div>
-          </button>
+          </div>
         </div>
 
-        {/* Sequences */}
-        {sequences.length > 0 && (
-          <div className="mb-4 sm:mb-6">
-            <div className="flex justify-between items-center mb-2 sm:mb-3">
-              <div className="text-[10px] sm:text-xs font-semibold text-slate-700 uppercase tracking-wide">Séquences ({sequences.length})</div>
-              <div className="text-[10px] sm:text-xs text-slate-500">Sauvegardé automatiquement</div>
-            </div>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {sequences.map((count, idx) => (
-                <div key={idx} className="bg-slate-100 border border-slate-200 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 hover:bg-slate-200 transition-colors group">
-                  <span className="text-[10px] sm:text-sm font-medium text-slate-700">#{idx + 1}</span>
-                  <span className="text-xs sm:text-sm font-bold text-slate-900">{count}</span>
-                  <button onClick={() => removeSequence(idx)} className="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
+        <div className="bg-orange-50 p-4 rounded-lg md:col-span-2">
+          <h4 className="font-semibold text-orange-800 mb-2">Par Dépôt</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+            {Object.entries(totals.parDepot).map(([depot, data]) => (
+              <p key={depot} className="text-sm">
+                <span className="font-medium">{depot}:</span>{' '}
+                {data.quantite} paquets ({data.montant.toLocaleString()} Gdes)
+              </p>
+            ))}
+            {Object.keys(totals.parDepot).length === 0 && (
+              <p className="text-sm text-gray-500">Aucune donnée</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Entries List */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <h3 className="text-lg font-medium p-4 border-b bg-gray-50">
+          Liste des entrées
+        </h3>
+        
+        {conditionnementData.entries?.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Vendeur</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Dépôt</th>
+                  <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Quantité</th>
+                  <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Montant (Gdes)</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {conditionnementData.entries.map((entry, index) => (
+                  <tr key={entry.id || index} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 text-sm">{entry.vendeur}</td>
+                    <td className="px-4 py-2 text-sm">{entry.depot}</td>
+                    <td className="px-4 py-2 text-sm text-right">{entry.quantité}</td>
+                    <td className="px-4 py-2 text-sm text-right">
+                      {entry.montant?.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-center">
+                      <button
+                        onClick={() => handleEditEntry(index)}
+                        className="text-blue-600 hover:text-blue-800 mr-2"
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEntry(index)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4 inline" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-gray-50 font-medium">
+                <tr>
+                  <td colSpan="2" className="px-4 py-2 text-sm">Total</td>
+                  <td className="px-4 py-2 text-sm text-right">{totals.totalQuantite}</td>
+                  <td className="px-4 py-2 text-sm text-right">{totals.totalMontant.toLocaleString()}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        ) : (
+          <div className="p-8 text-center text-gray-500">
+            Aucune entrée pour cette dénomination
           </div>
         )}
+      </div>
 
-        {/* Instructions */}
-        {instructions.length > 0 && (
-          <div>
-            <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">Instructions de départage</div>
-            <div className="space-y-2 sm:space-y-3">
-              {instructions.map((inst) => (
-                <div key={inst.liasseNum} className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 ${inst.isComplete ? 'bg-emerald-50 border-emerald-300' : 'bg-amber-50 border-amber-300'}`}>
-                  <div className="flex items-center justify-between mb-2 sm:mb-3">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-slate-900">Liasse {inst.liasseNum}</span>
-                      <span className={`text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium text-white ${inst.isComplete ? 'bg-emerald-500' : 'bg-amber-500'}`}>
-                        {inst.isComplete ? 'Complète' : 'Incomplète'}
-                      </span>
-                    </div>
-                    <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
-                  </div>
-
-                  <div className="space-y-1.5 sm:space-y-2">
-                    {inst.steps.map((step, idx) => (
-                      <div key={idx} className={`text-[11px] sm:text-sm rounded-lg p-2 border ${idx === 0 ? 'bg-blue-50 border-blue-200' : 'bg-white/70 border-slate-200'}`}>
-                        {idx === 0 && (
-                          <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wider mr-1.5">Ancre</span>
-                        )}
-                        <span className="font-semibold text-slate-800">Séq. #{step.sequenceNum}:</span>{' '}
-                        Prenez <span className="font-bold text-emerald-700">{step.take}</span> sur {step.from}
-                        {step.remaining > 0
-                          ? <span className="text-amber-700 font-semibold"> → reste {step.remaining}</span>
-                          : <span className="text-slate-400"> ✓</span>
-                        }
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {sequences.length === 0 && (
-          <div className="text-center py-8 sm:py-12">
-            <div className="text-slate-400 mb-2">
-              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <p className="text-sm sm:text-base text-slate-500">Ajoutez des séquences de billets pour commencer</p>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">Une liasse = 100 billets • Les données sont sauvegardées automatiquement</p>
-          </div>
-        )}
+      {/* Save Status */}
+      <div className="text-sm text-gray-500 text-right">
+        Dernière sauvegarde: {new Date().toLocaleTimeString()}
       </div>
     </div>
   );
-}
+};
+
+export default ConditionnementManager;
