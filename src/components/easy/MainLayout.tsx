@@ -1,357 +1,218 @@
-// SystemeStationService.jsx
-import React, { useState, useEffect } from 'react';
-import ShiftManager from '@/components/easy/ShiftManager';
-import ConditionnementManager from '@/components/easy/ConditionnementManager';
-import VendeursManager from '@/components/easy/VendeursManager';
-import DepotsManager from '@/components/easy/DepotsManager';
-import USDManager from '@/components/easy/USDManager';
-import StockRestant from '@/components/easy/StockRestant';
-import ReportView from '@/components/easy/ReportView';
-import PumpInputView from '@/components/easy/PumpInputView';
-import Rapport from '@/components/easy/Rapport';
-import TasksManager from '@/components/easy/TasksManager';
-import Liasse from '@/components/easy/Liasse';
-import ProForma from '@/components/easy/ProForma'; 
-import { useStationData } from '@/hooks/useStationData';
+// MainLayout.jsx
+import React, { useRef, useEffect, useState } from 'react';
+import Header from './Header';
+import SidePanel from './SidePanel';
+import VerticalTabs from './VerticalTabs';
+import TabSelector from './TabSelector';
+import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User, DollarSign } from 'lucide-react';
 
-// Import the layout components
-import MainLayout from '@/components/easy/MainLayout';
-import VerticalTabs from '@/components/easy/VerticalTabs';
-import SidePanel from '@/components/easy/SidePanel';
-import ContactModal from '@/components/easy/ContactModal';
+const MainLayout = ({ 
+  date, 
+  shift, 
+  children,
+  onMenuToggle,
+  activeTab,
+  onDateChange,
+  onShiftChange,
+  // Pump props
+  pompes,
+  pompeEtendue,
+  setPompeEtendue,
+  showPropane,
+  // Filter props
+  filterType,
+  setFilterType,
+  // Vendor props
+  vendeurs,
+  vendeurActif,
+  setVendeurActif,
+  // Conditionnement props
+  conditionnementDenom,
+  setConditionnementDenom,
+  // Reset functions
+  onResetShift,
+  onResetDay,
+  // Tasks stats
+  tasksStats,
+  // Optional vendor stats for badges
+  vendorStats = {}
+}) => {
+  const headerRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(64);
 
-const SystemeStationService = () => {
-  const [shift, setShift] = useState('AM');
-  const [conditionnements, setConditionnements] = useState([]);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [activeTab, setActiveTab] = useState('pumps');
-  const [pompeEtendue, setPompeEtendue] = useState('P1');
-  const [showContact, setShowContact] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [vendeurActif, setVendeurActif] = useState(null);
-  const [filterType, setFilterType] = useState('all');
-  const [conditionnementDenom, setConditionnementDenom] = useState(1000); // Default to 1000
-  const [tasksStats, setTasksStats] = useState(null);
-
-  const {
-    toutesDonnees,
-    propaneDonnees,
-    vendeurs,
-    tousDepots,
-    ventesUSD,
-    nouveauVendeur,
-    setNouveauVendeur,
-    reinitialiserShift,
-    reinitialiserJour,
-    ajouterVendeur,
-    supprimerVendeur,
-    mettreAJourLecture,
-    mettreAJourAffectationVendeur,
-    mettreAJourPropane,
-    mettreAJourDepot,
-    ajouterDepot,
-    supprimerDepot,
-    ajouterUSD,
-    mettreAJourUSD,
-    supprimerUSD,
-    getNombreAffectations,
-    totaux,
-    totauxVendeurs,
-    totauxVendeursCourants,
-    totauxAM,
-    totauxPM,
-    totauxQuotidiens,
-    calculerGallons,
-    obtenirLecturesCourantes,
-    prix,
-    tauxUSD,
-    prixPropane
-  } = useStationData(date, shift);
-
-  const pompes = ['P1', 'P2', 'P3', 'P4', 'P5'];
-
-  // Reset active vendor when vendeurs change
   useEffect(() => {
-    if (vendeurs.length > 0 && (!vendeurActif || !vendeurs.includes(vendeurActif))) {
-      setVendeurActif(vendeurs[0]);
-    } else if (vendeurs.length === 0) {
-      setVendeurActif(null);
-    }
-  }, [vendeurs]);
-
-  // Load tasks stats
-  useEffect(() => {
-    const savedTasks = localStorage.getItem(`gasStationTasks_${date}`);
-    if (savedTasks) {
-      const tasks = JSON.parse(savedTasks);
-      const stats = {
-        total: tasks.length,
-        pending: tasks.filter(t => t.status === 'pending').length,
-        critical: tasks.filter(t => t.priority === 'critical').length,
-        completed: tasks.filter(t => t.status === 'completed').length,
-        overdue: tasks.filter(t => new Date(t.dueDate) < new Date(date) && t.status !== 'completed').length
+    if (headerRef.current) {
+      const updateHeight = () => {
+        setHeaderHeight(headerRef.current.offsetHeight);
       };
-      setTasksStats(stats);
-    } else {
-      setTasksStats({
-        total: 0,
-        pending: 0,
-        critical: 0,
-        completed: 0,
-        overdue: 0
-      });
+
+      updateHeight();
+      window.addEventListener('resize', updateHeight);
+
+      return () => window.removeEventListener('resize', updateHeight);
     }
-  }, [date, activeTab]);
+  }, [activeTab, vendeurs, vendeurActif, filterType, conditionnementDenom]);
 
-  // Build vendor stats for badges
-  const vendorStats = vendeurs.reduce((acc, vendeur) => {
-    acc[vendeur] = {
-      affectations: getNombreAffectations(vendeur, shift)
-    };
-    return acc;
-  }, {});
+  // Determine if we should show the vendor selector
+  const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots' || activeTab === 'conditionnement';
 
-  const handlePompeSelection = (selection) => {
-    setPompeEtendue(selection);
-  };
+  // Color palette for vendor tabs (from original VendorTabSelector)
+  const colorPalette = [
+    { color: 'bg-blue-600 text-white', borderColor: 'border-blue-600', badge: 'bg-blue-500' },
+    { color: 'bg-purple-600 text-white', borderColor: 'border-purple-600', badge: 'bg-purple-500' },
+    { color: 'bg-orange-600 text-white', borderColor: 'border-orange-600', badge: 'bg-orange-500' },
+    { color: 'bg-green-600 text-white', borderColor: 'border-green-600', badge: 'bg-green-500' },
+    { color: 'bg-indigo-600 text-white', borderColor: 'border-indigo-600', badge: 'bg-indigo-500' },
+    { color: 'bg-yellow-600 text-white', borderColor: 'border-yellow-600', badge: 'bg-yellow-500' },
+    { color: 'bg-emerald-600 text-white', borderColor: 'border-emerald-600', badge: 'bg-emerald-500' },
+    { color: 'bg-red-600 text-white', borderColor: 'border-red-600', badge: 'bg-red-500' },
+  ];
 
-  const handleReinitialiserShift = () => {
-    reinitialiserShift(shift);
-    setPompeEtendue('P1');
-  };
+  // Build vendor tabs array
+  const vendorTabs = [
+    {
+      id: null,
+      label: 'Tous les Vendeurs',
+      icon: <Users className="w-4 h-4" />,
+      activeColor: 'bg-blue-600 text-white border-blue-600',
+      badge: vendeurs?.length || 0,
+      badgeColor: 'bg-blue-500'
+    },
+    ...vendeurs.map((vendeur, index) => {
+      const colorIndex = index % colorPalette.length;
+      const stats = vendorStats[vendeur] || {};
+      
+      return {
+        id: vendeur,
+        label: vendeur,
+        icon: <User className="w-4 h-4" />,
+        activeColor: colorPalette[colorIndex].color + ' border-' + colorPalette[colorIndex].borderColor.replace('border-', ''),
+        badge: stats.affectations || 0,
+        badgeColor: colorPalette[colorIndex].badge
+      };
+    })
+  ];
 
-  const handleReinitialiserJour = () => {
-    reinitialiserJour();
-    setPompeEtendue('P1');
-  };
+  // Pump icons mapping (from original PumpSelector)
+  const pumpIcons = [<Droplets size={14} />, <Fuel size={14} />, <Gauge size={14} />, <Zap size={14} />];
 
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
-    // Reset filter when changing tabs
-    setFilterType('all');
-    if (window.innerWidth < 1024) {
-      setIsMenuOpen(false);
-    }
-  };
+  // Build pump tabs array
+  const pumpTabs = pompes.map((pompe, index) => ({
+    id: pompe,
+    label: `Pompe ${index + 1}`,
+    icon: pumpIcons[index] || <Circle size={14} />
+  }));
 
-  const renderActiveTabContent = () => {
-    switch (activeTab) {
-      case 'pumps':
-        return (
-          <div className="p-2 sm:p-4">
-            <PumpInputView
-              shift={shift}
-              pompeEtendue={pompeEtendue}
-              setPompeEtendue={handlePompeSelection}
-              pompes={pompes}
-              toutesDonnees={toutesDonnees}
-              vendeurs={vendeurs}
-              totaux={totaux}
-              tauxUSD={tauxUSD}
-              mettreAJourLecture={mettreAJourLecture}
-              mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
-              prix={prix}
-              calculerGallons={calculerGallons}
-              obtenirLecturesCourantes={obtenirLecturesCourantes}
-              propaneDonnees={propaneDonnees}
-              mettreAJourPropane={mettreAJourPropane}
-              prixPropane={prixPropane}
-              showPropane={true}
-              tousDepots={tousDepots}
-            />
-          </div>
-        );
+  // Task filter tabs
+  const taskTabs = [
+    { id: 'all', label: 'Toutes' },
+    { id: 'pending', label: 'En attente' },
+    { id: 'completed', label: 'Terminées' },
+    { id: 'critical', label: 'Critiques' }
+  ];
 
-      case 'tasks':
-        return (
-          <div className="p-2 sm:p-4">
-            <TasksManager
-              shift={shift}
-              date={date}
-              vendeurs={vendeurs}
-              filterType={filterType}
-            />
-          </div>
-        );
-
-      case 'vendeurs':
-        return (
-          <div className="p-2 sm:p-4">
-            <VendeursManager
-              vendeurs={vendeurs}
-              nouveauVendeur={nouveauVendeur}
-              setNouveauVendeur={setNouveauVendeur}
-              ajouterVendeur={ajouterVendeur}
-              supprimerVendeur={supprimerVendeur}
-              getNombreAffectations={getNombreAffectations}
-              vendeurActif={vendeurActif}
-            />
-          </div>
-        );
-
-      case 'conditionnement':
-        return (
-          <div className="p-2 sm:p-6">
-            <ConditionnementManager
-              shift={shift}
-              date={date}
-              vendeurs={vendeurs}
-              tousDepots={tousDepots}
-              onConditionnementUpdate={setConditionnements}
-              selectedDenomination={conditionnementDenom}
-            />
-          </div>
-        );
-
-      case 'depots':
-        return (
-          <div className="p-2 sm:p-6">
-            <DepotsManager
-              shift={shift}
-              vendeurs={vendeurs}
-              totauxVendeurs={totauxVendeursCourants}
-              tousDepots={tousDepots}
-              mettreAJourDepot={mettreAJourDepot}
-              ajouterDepot={ajouterDepot}
-              supprimerDepot={supprimerDepot}
-              vendeurActif={vendeurActif}
-              setVendeurActif={setVendeurActif}
-            />
-          </div>
-        );
-
-      case 'stock':
-        return (
-          <div className="p-2 sm:p-6">
-            <StockRestant
-              date={date}
-              shift={shift}
-              toutesDonnees={toutesDonnees}
-              propaneDonnees={propaneDonnees}
-              pompes={pompes}
-              prix={prix}
-            />
-          </div>
-        );
-
-      case 'usd':
-        return (
-          <div className="p-2 sm:p-6">
-            <USDManager
-              shift={shift}
-              usdVentes={ventesUSD}
-              ajouterUSD={ajouterUSD}
-              mettreAJourUSD={mettreAJourUSD}
-              supprimerUSD={supprimerUSD}
-              tauxUSD={tauxUSD}
-            />
-          </div>
-        );
-
-      case 'report':
-        return (
-          <div className="p-2 sm:p-6">
-            <ReportView
-              date={date}
-              totauxAM={totauxAM}
-              totauxPM={totauxPM}
-              totauxQuotidiens={totauxQuotidiens}
-              toutesDonnees={toutesDonnees}
-              propaneDonnees={propaneDonnees}
-              ventesUSD={ventesUSD}
-              vendeurs={vendeurs}
-              totauxVendeurs={totauxVendeurs}
-              tauxUSD={tauxUSD}
-              prix={prix}
-              prixPropane={prixPropane}
-              pompes={pompes}
-            />
-          </div>
-        );
-
-      case 'rapport':
-        return (
-          <div className="p-2 sm:p-6">
-            <Rapport
-              date={date}
-              shift={shift}
-              toutesDonnees={toutesDonnees}
-            />
-          </div>
-        );
-
-      case 'liasse':
-        return (
-          <div className="p-2 sm:p-6">
-            <Liasse
-              shift={shift}
-              date={date}
-              vendeurs={vendeurs}
-              vendeurActif={vendeurActif}
-              setVendeurActif={setVendeurActif}
-            />
-          </div>
-        );
-
-      case 'proforma':
-        return (
-          <div className="p-2 sm:p-6">
-            <ProForma />
-          </div>
-        );
-
-      default:
-        return (
-          <div className="p-2 sm:p-6">
-            <p className="text-gray-600 text-sm sm:text-base">Sélectionnez une application</p>
-          </div>
-        );
-    }
-  };
+  // Conditionnement denomination tabs
+  const denominationValues = [1000, 500, 250, 100, 50, 25, 10, 5];
+  const conditionnementTabs = denominationValues.map(value => ({
+    id: value,
+    label: `${value} Gdes`,
+    icon: <DollarSign className="w-3 h-3" />
+  }));
 
   return (
-    <>
-      {/* Mobile Side Panel */}
-      <SidePanel isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} isMobile={true}>
-        <VerticalTabs activeTab={activeTab} onTabChange={handleTabChange} isMobile={true} />
-      </SidePanel>
-
-      {/* Main Layout */}
-      <MainLayout
-        date={date}
-        shift={shift}
-        activeTab={activeTab}
-        onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
-        onDateChange={(newDate) => setDate(newDate)}
-        onShiftChange={(newShift) => setShift(newShift)}
-        // Pump props
-        pompes={pompes}
-        pompeEtendue={pompeEtendue}
-        setPompeEtendue={setPompeEtendue}
-        showPropane={true}
-        // Filter props
-        filterType={filterType}
-        setFilterType={setFilterType}
-        // Vendor props
-        vendeurs={vendeurs}
-        vendeurActif={vendeurActif}
-        setVendeurActif={setVendeurActif}
-        vendorStats={vendorStats}
-        // Conditionnement props
-        conditionnementDenom={conditionnementDenom}
-        setConditionnementDenom={setConditionnementDenom}
-        // Reset functions
-        onResetShift={handleReinitialiserShift}
-        onResetDay={handleReinitialiserJour}
-        // Tasks stats
-        tasksStats={tasksStats}
+    <div className="h-screen flex flex-col">
+      {/* Fixed Header Container */}
+      <div 
+        ref={headerRef}
+        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm"
       >
-        {renderActiveTabContent()}
-      </MainLayout>
+        <Header
+          date={date}
+          shift={shift}
+          activeTab={activeTab}
+          onMenuToggle={onMenuToggle}
+          onDateChange={onDateChange}
+          onShiftChange={onShiftChange}
+          onResetShift={onResetShift}
+          onResetDay={onResetDay}
+          tasksStats={tasksStats}
+        />
 
-      <ContactModal showContact={showContact} setShowContact={setShowContact} />
-    </>
+        {/* Pump Selector - Only for pumps tab */}
+        {activeTab === 'pumps' && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={pumpTabs}
+              activeTab={pompeEtendue}
+              onTabChange={setPompeEtendue}
+              size="md"
+              showPropane={showPropane}
+              onPropaneClick={() => setPompeEtendue('propane')}
+              containerClassName="py-1"
+            />
+          </div>
+        )}
+
+        {/* Vendor Tab Selector - For vendeurs, depots, and liasse tabs */}
+        {showVendorSelector && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={vendorTabs}
+              activeTab={vendeurActif}
+              onTabChange={setVendeurActif}
+              size="md"
+              showBadges={true}
+              containerClassName="py-1"
+            />
+          </div>
+        )}
+
+        {/* Conditionnement Denomination Selector - Only for conditionnement tab */}
+        {activeTab === 'conditionnement' && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={conditionnementTabs}
+              activeTab={conditionnementDenom}
+              onTabChange={setConditionnementDenom}
+              size="sm"
+              containerClassName="py-2"
+            />
+          </div>
+        )}
+
+        {/* Task Type Selector - Only for tasks tab */}
+        {activeTab === 'tasks' && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={taskTabs}
+              activeTab={filterType}
+              onTabChange={setFilterType}
+              size="sm"
+              containerClassName="py-2"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Spacer - Dynamic height based on actual header height */}
+      <div style={{ height: `${headerHeight}px` }}></div>
+
+      {/* Main Content Area */}
+      <div className="flex flex-1 min-h-0">
+        {/* Side Panel for desktop */}
+        <div className="hidden lg:block flex-shrink-0">
+          <SidePanel isOpen={true} onClose={() => {}} isMobile={false}>
+            <VerticalTabs activeTab={activeTab} onTabChange={() => {}} isMobile={false} />
+          </SidePanel>
+        </div>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+      </div>
+    </div>
   );
 };
 
-export default SystemeStationService;
+export default MainLayout;
