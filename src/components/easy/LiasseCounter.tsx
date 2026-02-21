@@ -1,4 +1,4 @@
-// LiasseCounter.jsx (fixed version)
+// LiasseCounter.jsx (updated - removed Gourdes values from instructions)
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, RotateCcw, Check, X, DollarSign } from 'lucide-react';
 
@@ -309,11 +309,11 @@ export default function LiasseCounter({
           </div>
         )}
 
-        {/* Instructions - Show Gourdes values */}
+        {/* Instructions - WITHOUT Gourdes values */}
         {instructions.length > 0 && (
           <div>
             <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">
-              Instructions de départage ({denomination} Gdes)
+              Instructions de départage
             </div>
             <div className="space-y-2 sm:space-y-3">
               {instructions.map((inst) => (
@@ -327,9 +327,6 @@ export default function LiasseCounter({
                     </div>
                     <div className="text-right">
                       <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
-                      <div className="text-[8px] sm:text-xs text-slate-600">
-                        {inst.total * denomination} / {100 * denomination} Gdes
-                      </div>
                     </div>
                   </div>
 
@@ -340,9 +337,9 @@ export default function LiasseCounter({
                           <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wider mr-1.5">Ancre</span>
                         )}
                         <span className="font-semibold text-slate-800">Séq. #{step.sequenceNum}:</span>{' '}
-                        Prenez <span className="font-bold text-emerald-700">{step.take}</span> billet{step.take > 1 ? 's' : ''} ({step.take * denomination} Gdes) sur {step.from}
+                        Prenez <span className="font-bold text-emerald-700">{step.take}</span> billet{step.take > 1 ? 's' : ''} sur {step.from}
                         {step.remaining > 0
-                          ? <span className="text-amber-700 font-semibold"> → reste {step.remaining} ({step.remaining * denomination} Gdes)</span>
+                          ? <span className="text-amber-700 font-semibold"> → reste {step.remaining}</span>
                           : <span className="text-slate-400"> ✓</span>
                         }
                       </div>
