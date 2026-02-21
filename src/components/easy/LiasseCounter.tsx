@@ -1,4 +1,4 @@
-// LiasseCounter.jsx (updated with denomination prop)
+// LiasseCounter.jsx (fixed version)
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, RotateCcw, Check, X, DollarSign } from 'lucide-react';
 
@@ -82,17 +82,34 @@ function getInstructions(sequences) {
 export default function LiasseCounter({ 
   denomination = 1000 // Default to 1000 Gourdes
 }) {
+  // Use a key that includes denomination to force re-render when denomination changes
   const [sequences, setSequences] = useState(() => {
     try { 
-      // Use denomination in the storage key to separate data by denomination
       const saved = localStorage.getItem(`liasseCounterSequences_${denomination}`);
       return saved ? JSON.parse(saved) : []; 
     }
-    catch { return []; }
+    catch { 
+      return []; 
+    }
   });
+
   const [currentInput, setCurrentInput] = useState('');
   const [buttonState, setButtonState] = useState('default');
   const timeoutRef = useRef(null);
+
+  // Reset sequences when denomination changes
+  useEffect(() => {
+    try { 
+      const saved = localStorage.getItem(`liasseCounterSequences_${denomination}`);
+      setSequences(saved ? JSON.parse(saved) : []);
+    }
+    catch { 
+      setSequences([]); 
+    }
+    // Reset input when denomination changes
+    setCurrentInput('');
+    setButtonState('default');
+  }, [denomination]);
 
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
   
@@ -111,7 +128,9 @@ export default function LiasseCounter({
   const addSequence = () => {
     const value = parseInt(currentInput);
     if (currentInput === '' || isNaN(value) || value <= 0) {
-      setButtonState('error'); resetButtonState(); return;
+      setButtonState('error'); 
+      resetButtonState(); 
+      return;
     }
     setButtonState('loading');
     setTimeout(() => {
@@ -236,7 +255,10 @@ export default function LiasseCounter({
             value={currentInput}
             onChange={(e) => {
               setCurrentInput(e.target.value);
-              if (buttonState !== 'default') { if (timeoutRef.current) clearTimeout(timeoutRef.current); setButtonState('default'); }
+              if (buttonState !== 'default') { 
+                if (timeoutRef.current) clearTimeout(timeoutRef.current); 
+                setButtonState('default'); 
+              }
             }}
             onKeyPress={(e) => e.key === 'Enter' && addSequence()}
             placeholder={`Nombre de billets de ${denomination} Gdes...`}
