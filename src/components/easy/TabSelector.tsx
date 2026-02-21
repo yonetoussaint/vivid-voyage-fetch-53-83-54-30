@@ -1,6 +1,6 @@
-// components/easy/UniversalTabSelector.jsx
+// components/easy/TabSelector.jsx
 import React from 'react';
-import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User } from 'lucide-react';
+import { Flame } from 'lucide-react';
 
 const TabSelector = ({ 
   // Core props
@@ -8,8 +8,7 @@ const TabSelector = ({
   activeTab,
   onTabChange,
   
-  // Styling props
-  variant = 'default', // 'default', 'pills', 'underline', 'rounded'
+  // Size
   size = 'md', // 'sm', 'md', 'lg'
   
   // Badge configuration
@@ -23,7 +22,6 @@ const TabSelector = ({
   propaneId = 'propane',
   propaneLabel = 'Propane',
   propaneIcon = <Flame size={16} />,
-  propaneColor = 'bg-red-500 text-white border-red-500',
   onPropaneClick
 }) => {
   
@@ -49,50 +47,7 @@ const TabSelector = ({
     }
   };
 
-  // Variant styles
-  const variantClasses = {
-    default: {
-      tab: 'border transition-all duration-200',
-      active: 'bg-slate-900 text-white border-slate-900',
-      inactive: 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
-    },
-    pills: {
-      tab: 'rounded-full transition-all duration-200',
-      active: 'bg-slate-900 text-white shadow-sm',
-      inactive: 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-    },
-    underline: {
-      tab: 'border-b-2 transition-all duration-200',
-      active: 'border-slate-900 text-slate-900',
-      inactive: 'border-transparent text-slate-600 hover:border-slate-300'
-    },
-    rounded: {
-      tab: 'border rounded-xl transition-all duration-200',
-      active: 'bg-slate-900 text-white border-slate-900',
-      inactive: 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
-    }
-  };
-
   const currentSize = sizeClasses[size];
-  const currentVariant = variantClasses[variant];
-
-  // Default icon mapping for string-based icons
-  const getIconFromString = (icon) => {
-    if (typeof icon !== 'string') return icon;
-    
-    const iconMap = {
-      users: <Users className={currentSize.icon} />,
-      user: <User className={currentSize.icon} />,
-      flame: <Flame className={currentSize.icon} />,
-      droplets: <Droplets className={currentSize.icon} />,
-      fuel: <Fuel className={currentSize.icon} />,
-      zap: <Zap className={currentSize.icon} />,
-      gauge: <Gauge className={currentSize.icon} />,
-      circle: <Circle className={currentSize.icon} />
-    };
-    
-    return iconMap[icon] || icon;
-  };
 
   // Handle propane click
   const handlePropaneClick = () => {
@@ -112,20 +67,17 @@ const TabSelector = ({
           onClick={() => onTabChange(tab.id)}
           className={`
             ${currentSize.tab}
-            ${currentVariant.tab}
+            font-medium whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5
             ${activeTab === tab.id 
-              ? tab.activeColor || currentVariant.active 
-              : tab.inactiveColor || currentVariant.inactive
+              ? tab.activeColor || 'bg-slate-900 text-white border-slate-900'
+              : tab.inactiveColor || 'bg-transparent text-slate-600 border-slate-200 hover:bg-slate-100'
             }
-            flex items-center gap-1.5 whitespace-nowrap
             ${tab.className || ''}
           `}
-          style={{ borderRadius: tab.rounded ? '20px' : undefined, ...tab.style }}
+          style={{ borderRadius: '20px', ...tab.style }}
         >
           {tab.icon && (
-            <span className={currentSize.icon}>
-              {getIconFromString(tab.icon)}
-            </span>
+            <span className={currentSize.icon}>{tab.icon}</span>
           )}
           {tab.label}
           {showBadges && tab.badge !== undefined && (
@@ -142,9 +94,11 @@ const TabSelector = ({
           onClick={handlePropaneClick}
           className={`
             ${currentSize.tab}
-            ${currentVariant.tab}
-            ${activeTab === propaneId ? propaneColor : currentVariant.inactive}
-            flex items-center gap-1.5 whitespace-nowrap
+            font-medium whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5
+            ${activeTab === propaneId 
+              ? 'bg-red-500 text-white border-red-500'
+              : 'bg-transparent text-slate-600 border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+            }
           `}
           style={{ borderRadius: '20px' }}
         >
