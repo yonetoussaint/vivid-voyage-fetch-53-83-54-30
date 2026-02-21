@@ -1,183 +1,321 @@
-// components/layout/MainLayout.tsx
-import React from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import IndexBottomNav from "@/components/layout/IndexBottomNav";
-import AliExpressHeader from "@/components/home/AliExpressHeader";
-import ProfileHeader from "@/components/profile/ProfileHeader"; // NEW IMPORT
-import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
-import LocationScreen from "@/components/home/header/LocationScreen";
-import LocationListScreen from "@/components/home/header/LocationListScreen";
-import LocationsPanel from "@/components/home/header/LocationsPanel";
-import AuthOverlay from "@/components/auth/AuthOverlay";
-import SignInBanner from "@/components/layout/SignInBanner";
-import { useMainLayout } from "@/hooks/main-layout.hooks";
-import { HeaderFilterProvider } from "@/contexts/HeaderFilterContext";
+// MainLayout.jsx (updated with "Toute la journée" tab)
+import React, { useRef, useEffect, useState } from 'react';
+import Header from './Header';
+import SidePanel from './SidePanel';
+import VerticalTabs from './VerticalTabs';
+import TabSelector from './TabSelector';
+import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User, DollarSign, ChevronLeft, ChevronRight, Sun, Moon, Calendar } from 'lucide-react';
 
-function MainLayoutContent() {
-  const location = useLocation();
+const MainLayout = ({ 
+  date, 
+  shift, 
+  children,
+  onMenuToggle,
+  activeTab,
+  onDateChange,
+  onShiftChange,
+  // Pump props
+  pompes,
+  pompeEtendue,
+  setPompeEtendue,
+  showPropane,
+  // Filter props
+  filterType,
+  setFilterType,
+  // Vendor props
+  vendeurs,
+  vendeurActif,
+  setVendeurActif,
+  // Conditionnement props
+  conditionnementDenom,
+  setConditionnementDenom,
+  // Report shift props
+  reportShift,
+  setReportShift,
+  // Reset functions
+  onResetShift,
+  onResetDay,
+  // Tasks stats
+  tasksStats,
+  // Optional vendor stats for badges
+  vendorStats = {},
+  // Secondary navigation props
+  onPreviousSecondary,
+  onNextSecondary,
+  showPreviousSecondary = false,
+  showNextSecondary = false,
+  secondaryNavLabel = ''
+}) => {
+  const headerRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(64);
+  const navContainerRef = useRef(null);
+  const [navWidth, setNavWidth] = useState('auto');
 
-  const {
-    // Refs
-    headerRef,
-    bottomNavRef,
-    contentRef,
+  useEffect(() => {
+    if (headerRef.current) {
+      const updateHeight = () => {
+        setHeaderHeight(headerRef.current.offsetHeight);
+      };
 
-    // Page flags
-    pageFlags,
+      updateHeight();
+      window.addEventListener('resize', updateHeight);
 
-    // Layout
-    layoutHeightStyle,
-    measurements,
+      return () => window.removeEventListener('resize', updateHeight);
+    }
+  }, [activeTab, vendeurs, vendeurActif, filterType, conditionnementDenom, reportShift]);
 
-    // Configuration
-    headerProps,
+  // Update nav width based on content
+  useEffect(() => {
+    if (navContainerRef.current) {
+      const width = navContainerRef.current.scrollWidth;
+      setNavWidth(`${width}px`);
+    }
+  }, [secondaryNavLabel]);
 
-    // State setters
-    setShowProductUpload,
+  // Determine if we should show the vendor selector
+  const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots';
 
-    // Context values
-    isAuthOverlayOpen,
-    setIsAuthOverlayOpen,
-    isLocationListScreenOpen,
-    locationListScreenData,
-    setLocationListScreenOpen,
-    isLocationScreenOpen,
-    setLocationScreenOpen,
+  // Shift tabs for report with "Toute la journée" as first option
+  const reportShiftTabs = [
+    { 
+      id: 'full', 
+      label: 'Toute la journée', 
+      icon: <Calendar className="w-4 h-4" />,
+      activeColor: 'bg-purple-500 text-white border-purple-500'
+    },
+    { 
+      id: 'AM', 
+      label: 'Matin', 
+      icon: <Sun className="w-4 h-4" />,
+      activeColor: 'bg-amber-500 text-white border-amber-500'
+    },
+    { 
+      id: 'PM', 
+      label: 'Soir', 
+      icon: <Moon className="w-4 h-4" />,
+      activeColor: 'bg-indigo-500 text-white border-indigo-500'
+    }
+  ];
 
-    // Location panel state
-    isLocationsPanelOpen,
-    setIsLocationsPanelOpen,
-    selectedCity,
-    handleCitySelect
-  } = useMainLayout();
+  // Color palette for vendor tabs
+  const colorPalette = [
+    { color: 'bg-blue-600 text-white', borderColor: 'border-blue-600', badge: 'bg-blue-500' },
+    { color: 'bg-purple-600 text-white', borderColor: 'border-purple-600', badge: 'bg-purple-500' },
+    { color: 'bg-orange-600 text-white', borderColor: 'border-orange-600', badge: 'bg-orange-500' },
+    { color: 'bg-green-600 text-white', borderColor: 'border-green-600', badge: 'bg-green-500' },
+    { color: 'bg-indigo-600 text-white', borderColor: 'border-indigo-600', badge: 'bg-indigo-500' },
+    { color: 'bg-yellow-600 text-white', borderColor: 'border-yellow-600', badge: 'bg-yellow-500' },
+    { color: 'bg-emerald-600 text-white', borderColor: 'border-emerald-600', badge: 'bg-emerald-500' },
+    { color: 'bg-red-600 text-white', borderColor: 'border-red-600', badge: 'bg-red-500' },
+  ];
 
-  // Determine if we're on the mall route
-  const isMallRoute = location.pathname === '/mall' || location.pathname.startsWith('/mall/');
+  // Build vendor tabs array
+  const vendorTabs = [
+    {
+      id: null,
+      label: 'Tous',
+      icon: <Users className="w-4 h-4" />,
+      activeColor: 'bg-blue-600 text-white border-blue-600',
+      badge: vendeurs?.length || 0,
+      badgeColor: 'bg-blue-500'
+    },
+    ...vendeurs.map((vendeur, index) => {
+      const colorIndex = index % colorPalette.length;
+      const stats = vendorStats[vendeur] || {};
 
-  // Determine if we're on the communes route
-  const isCommunesRoute = location.pathname === '/communes';
+      return {
+        id: vendeur,
+        label: vendeur,
+        icon: <User className="w-4 h-4" />,
+        activeColor: colorPalette[colorIndex].color + ' border-' + colorPalette[colorIndex].borderColor.replace('border-', ''),
+        badge: stats.affectations || 0,
+        badgeColor: colorPalette[colorIndex].badge
+      };
+    })
+  ];
 
-  // Prepare header props - ONLY override mall-specific props
-  const finalHeaderProps = {
-    ...headerProps,
-    // Only override what's specific to mall route
-    ...(isMallRoute ? {
-      showSearchList: true,    // Show search list on mall
-      // Note: The hook already sets showCategoryTabs to false for mall routes
-      // via !pageFlags.isMallPage in the showCategoryTabs logic
-      searchListItems: [
-        "Luxury watches", 
-        "Designer bags", 
-        "Premium electronics",
-        "High-end fashion",
-        "Luxury cosmetics",
-        "Designer shoes",
-        "Luxury jewelry"
-      ]
-    } : {}),
-    // Pass the function to open locations panel
-    onOpenLocationsPanel: () => setIsLocationsPanelOpen(true)
-  };
+  // Pump icons mapping
+  const pumpIcons = [<Droplets size={14} />, <Fuel size={14} />, <Gauge size={14} />, <Zap size={14} />];
 
-  // Debug: Log what's happening with category tabs
-  console.log('MainLayout debug:', {
-    pathname: location.pathname,
-    showCategoryTabs: finalHeaderProps.showCategoryTabs,
-    isMallRoute,
-    isMessagesPage: pageFlags?.isMessagesPage,
-    isProfilePage: pageFlags?.isProfilePage
-  });
+  // Build pump tabs array
+  const pumpTabs = pompes.map((pompe, index) => ({
+    id: pompe,
+    label: `Pompe ${index + 1}`,
+    icon: pumpIcons[index] || <Circle size={14} />
+  }));
+
+  // Task filter tabs
+  const taskTabs = [
+    { id: 'all', label: 'Toutes' },
+    { id: 'pending', label: 'En attente' },
+    { id: 'completed', label: 'Terminées' },
+    { id: 'critical', label: 'Critiques' }
+  ];
+
+  // Conditionnement denomination tabs
+  const denominationValues = [1000, 500, 250, 100, 50, 25, 10, 5];
+  const conditionnementTabs = denominationValues.map(value => ({
+    id: value,
+    label: `${value} Gdes`,
+    icon: <DollarSign className="w-3 h-3" />
+  }));
 
   return (
-    <div className="app-container">
-      <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle || '' }} />
-
-      {/* Header - Conditionally render ProfileHeader on profile routes */}
-      {pageFlags?.shouldShowHeader && (
-        <div ref={headerRef} className="app-header">
-          {pageFlags?.isProfilePage ? (
-            <ProfileHeader 
-              showBackButton={!pageFlags.isRootHomePage && location.pathname !== '/profile'}
-              // Note: ProfileHeader will use user data from AuthContext by default
-              // You can pass custom user data here if needed:
-              // user={{ name: "John Doe", avatar: "url", isVerified: true }}
-            />
-          ) : (
-            <AliExpressHeader {...finalHeaderProps} />
-          )}
-        </div>
-      )}
-
-      {/* Main Content Area - Native-like scrolling */}
+    <div className="h-screen flex flex-col">
+      {/* Fixed Header Container */}
       <div 
-        ref={contentRef} 
-        className="app-content page-transition"
-        style={{
-          height: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
-          maxHeight: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
-          minHeight: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
-        }}
+        ref={headerRef}
+        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm"
       >
-        <Outlet />
+        <Header
+          date={date}
+          shift={shift}
+          activeTab={activeTab}
+          onMenuToggle={onMenuToggle}
+          onDateChange={onDateChange}
+          onShiftChange={onShiftChange}
+          onResetShift={onResetShift}
+          onResetDay={onResetDay}
+          tasksStats={tasksStats}
+        />
+
+        {/* Pump Selector - Only for pumps tab */}
+        {activeTab === 'pumps' && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={pumpTabs}
+              activeTab={pompeEtendue}
+              onTabChange={setPompeEtendue}
+              size="md"
+              showPropane={showPropane}
+              onPropaneClick={() => setPompeEtendue('propane')}
+              containerClassName="py-1"
+            />
+          </div>
+        )}
+
+        {/* Vendor Tab Selector */}
+        {showVendorSelector && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={vendorTabs}
+              activeTab={vendeurActif}
+              onTabChange={setVendeurActif}
+              size="md"
+              showBadges={true}
+              containerClassName="py-1"
+            />
+          </div>
+        )}
+
+        {/* Conditionnement Denomination Selector */}
+        {activeTab === 'conditionnement' && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={conditionnementTabs}
+              activeTab={conditionnementDenom}
+              onTabChange={setConditionnementDenom}
+              size="md"
+              containerClassName="py-2"
+            />
+          </div>
+        )}
+
+        {/* Task Type Selector */}
+        {activeTab === 'tasks' && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={taskTabs}
+              activeTab={filterType}
+              onTabChange={setFilterType}
+              size="sm"
+              containerClassName="py-2"
+            />
+          </div>
+        )}
+
+        {/* Report Shift Selector - Only for report tab */}
+        {activeTab === 'report' && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={reportShiftTabs}
+              activeTab={reportShift}
+              onTabChange={setReportShift}
+              size="md"
+              containerClassName="py-2"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Bottom Navigation */}
-      {pageFlags?.shouldShowBottomNav && (
-        <div ref={bottomNavRef} className="app-bottom-nav">
-          <IndexBottomNav />
+      {/* Spacer - Dynamic height based on actual header height */}
+      <div style={{ height: `${headerHeight}px` }}></div>
+
+      {/* Main Content Area */}
+      <div className="flex flex-1 min-h-0">
+        {/* Side Panel for desktop */}
+        <div className="hidden lg:block flex-shrink-0">
+          <SidePanel isOpen={true} onClose={() => {}} isMobile={false}>
+            <VerticalTabs activeTab={activeTab} onTabChange={() => {}} isMobile={false} />
+          </SidePanel>
         </div>
-      )}
 
-      {/* Sign In Banner - Hide on communes route */}
-      {!isCommunesRoute && <SignInBanner />}
+        {/* Main Content with Bottom Navigation */}
+        <main className="flex-1 overflow-auto relative">
+          {children}
 
-      {/* Product Upload Overlay */}
-      <ProductUploadOverlay
-        isOpen={false}
-        onClose={() => setShowProductUpload(false)}
-      />
+          {/* Bottom Navigation Chevrons for Secondary Tabs - Endless Navigation */}
+          <div 
+            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40"
+            style={{ width: navWidth }}
+          >
+            <div
+              ref={navContainerRef}
+              className={`
+                flex items-center gap-1 px-2 py-1.5
+                backdrop-blur-xl bg-black/40
+                rounded-2xl
+                shadow-[0_8px_32px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.1)_inset]
+                hover:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.15)_inset]
+                transition-all duration-300
+                border border-white/10
+                w-max
+              `}
+            >
+              {/* Background gradient for depth */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/5 to-transparent opacity-50"></div>
 
-      {/* Location List Screen */}
-      {isLocationListScreenOpen && locationListScreenData && (
-        <LocationListScreen
-          title={locationListScreenData.title}
-          items={locationListScreenData.items}
-          onSelect={(item) => {
-            locationListScreenData.onSelect(item);
-            setLocationListScreenOpen(false);
-          }}
-          onClose={() => setLocationListScreenOpen(false)}
-          searchPlaceholder={locationListScreenData.searchPlaceholder}
-        />
-      )}
+              {/* Left Chevron - Always visible */}
+              <button
+                onClick={onPreviousSecondary}
+                className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/10 transition-all duration-200 group/btn"
+                aria-label="Previous item"
+              >
+                <ChevronLeft className="w-5 h-5 text-white/90 group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-200" />
+              </button>
 
-      {/* Location Screen */}
-      {isLocationScreenOpen && (
-        <LocationScreen
-          onClose={() => setLocationScreenOpen(false)}
-          showHeader={true}
-        />
-      )}
+              {secondaryNavLabel && (
+                <div className="relative px-4 py-1.5">
+                  <span className="text-sm font-medium text-white/90 whitespace-nowrap">
+                    {secondaryNavLabel}
+                  </span>
+                </div>
+              )}
 
-      {/* Locations Panel - Only renders when isOpen is true */}
-      <LocationsPanel
-        isOpen={isLocationsPanelOpen}
-        onClose={() => setIsLocationsPanelOpen(false)}
-        currentCity={selectedCity}
-        onCitySelect={handleCitySelect}
-      />
-
-      {/* Auth Overlay */}
-      <AuthOverlay />
+              {/* Right Chevron - Always visible */}
+              <button
+                onClick={onNextSecondary}
+                className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/10 transition-all duration-200 group/btn"
+                aria-label="Next item"
+              >
+                <ChevronRight className="w-5 h-5 text-white/90 group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-200" />
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
-}
+};
 
-// Main export that wraps with provider
-export default function MainLayout() {
-  return (
-    <HeaderFilterProvider>
-      <MainLayoutContent />
-    </HeaderFilterProvider>
-  );
-}
+export default MainLayout;
