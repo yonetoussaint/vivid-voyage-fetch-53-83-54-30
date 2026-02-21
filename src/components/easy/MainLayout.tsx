@@ -1,4 +1,4 @@
-// MainLayout.jsx (updated with rapport shift selector)
+// MainLayout.jsx (updated with correct tab name)
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
@@ -29,9 +29,9 @@ const MainLayout = ({
   // Conditionnement props
   conditionnementDenom,
   setConditionnementDenom,
-  // Rapport shift props
-  rapportShift,
-  setRapportShift,
+  // Report shift props
+  reportShift,
+  setReportShift,
   // Reset functions
   onResetShift,
   onResetDay,
@@ -62,7 +62,7 @@ const MainLayout = ({
 
       return () => window.removeEventListener('resize', updateHeight);
     }
-  }, [activeTab, vendeurs, vendeurActif, filterType, conditionnementDenom, rapportShift]);
+  }, [activeTab, vendeurs, vendeurActif, filterType, conditionnementDenom, reportShift]);
 
   // Update nav width based on content
   useEffect(() => {
@@ -75,8 +75,8 @@ const MainLayout = ({
   // Determine if we should show the vendor selector
   const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots';
 
-  // Shift tabs for rapport
-  const rapportShiftTabs = [
+  // Shift tabs for report
+  const reportShiftTabs = [
     { 
       id: 'AM', 
       label: 'Matin', 
@@ -228,13 +228,13 @@ const MainLayout = ({
           </div>
         )}
 
-        {/* Rapport Shift Selector - Only for rapport tab */}
-        {activeTab === 'rapport' && (
+        {/* Report Shift Selector - Only for report tab */}
+        {activeTab === 'report' && (
           <div className="bg-white border-b border-slate-200">
             <TabSelector
-              tabs={rapportShiftTabs}
-              activeTab={rapportShift}
-              onTabChange={setRapportShift}
+              tabs={reportShiftTabs}
+              activeTab={reportShift}
+              onTabChange={setReportShift}
               size="md"
               containerClassName="py-2"
             />
