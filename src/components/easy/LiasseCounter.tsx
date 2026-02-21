@@ -1,5 +1,6 @@
+// LiasseCounter.jsx (updated)
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, RotateCcw, Check, X } from 'lucide-react';
+import { Plus, Trash2, RotateCcw, Check, X, User, Users } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEPARTAGE ALGORITHM v3 — "Anchor + Fill"
@@ -78,19 +79,37 @@ function getInstructions(sequences) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function LiasseCounter() {
-  const [sequences, setSequences] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('liasseCounterSequences')) || []; }
-    catch { return []; }
+export default function LiasseCounter({ 
+  vendeurs = [], 
+  vendeurActif = null, 
+  setVendeurActif = () => {} 
+}) {
+  // Store sequences per vendor
+  const [vendorData, setVendorData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('liasseCounterVendorData');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
   });
+  
   const [currentInput, setCurrentInput] = useState('');
   const [buttonState, setButtonState] = useState('default');
   const timeoutRef = useRef(null);
 
+  // Get current vendor's sequences
+  const currentVendorKey = vendeurActif || 'all';
+  const sequences = vendorData[currentVendorKey] || [];
+
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
+  
+  // Save to localStorage
   useEffect(() => {
-    try { localStorage.setItem('liasseCounterSequences', JSON.stringify(sequences)); } catch {}
-  }, [sequences]);
+    try { 
+      localStorage.setItem('liasseCounterVendorData', JSON.stringify(vendorData)); 
+    } catch {}
+  }, [vendorData]);
 
   const resetButtonState = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -104,17 +123,30 @@ export default function LiasseCounter() {
     }
     setButtonState('loading');
     setTimeout(() => {
-      setSequences(prev => [...prev, value]);
+      setVendorData(prev => ({
+        ...prev,
+        [currentVendorKey]: [...(prev[currentVendorKey] || []), value]
+      }));
       setCurrentInput('');
       setButtonState('success');
       resetButtonState();
     }, 300);
   };
 
-  const removeSequence = (i) => setSequences(prev => prev.filter((_, j) => j !== i));
+  const removeSequence = (indexToRemove) => {
+    setVendorData(prev => ({
+      ...prev,
+      [currentVendorKey]: prev[currentVendorKey].filter((_, idx) => idx !== indexToRemove)
+    }));
+  };
+
   const resetAll = () => {
     if (window.confirm('Êtes-vous sûr de vouloir tout réinitialiser ?')) {
-      setSequences([]); setCurrentInput('');
+      setVendorData(prev => ({
+        ...prev,
+        [currentVendorKey]: []
+      }));
+      setCurrentInput('');
     }
   };
 
@@ -136,6 +168,15 @@ export default function LiasseCounter() {
   };
   const bc = getButtonConfig();
 
+  // Color palette for vendor tabs
+  const colorPalette = [
+    { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200', hover: 'hover:bg-blue-200' },
+    { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200', hover: 'hover:bg-purple-200' },
+    { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', hover: 'hover:bg-orange-200' },
+    { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200', hover: 'hover:bg-green-200' },
+    { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-200', hover: 'hover:bg-indigo-200' },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-4 sm:mb-6 px-2 sm:px-0 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
@@ -143,14 +184,84 @@ export default function LiasseCounter() {
           <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 mb-1 sm:mb-2">Compteur de Liasses</h1>
           <p className="text-xs sm:text-base text-slate-600">Calculez vos liasses (100 billets = 1 liasse)</p>
         </div>
+        
+        {/* Vendor Selector (Mobile/Tablet) - Only shown when not using MainLayout's selector */}
+        {vendeurs.length > 0 && (
+          <div className="sm:hidden w-full mt-2">
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setVendeurActif(null)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+                  vendeurActif === null
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <Users size={14} />
+                <span>Tous</span>
+                <span className="ml-1 text-xs opacity-75">
+                  ({Object.values(vendorData).flat().length})
+                </span>
+              </button>
+              {vendeurs.map((vendeur, idx) => {
+                const colors = colorPalette[idx % colorPalette.length];
+                const vendorSequenceCount = vendorData[vendeur]?.length || 0;
+                return (
+                  <button
+                    key={vendeur}
+                    onClick={() => setVendeurActif(vendeur)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+                      vendeurActif === vendeur
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : `${colors.bg} ${colors.text} ${colors.hover}`
+                    }`}
+                  >
+                    <User size={14} />
+                    <span>{vendeur}</span>
+                    {vendorSequenceCount > 0 && (
+                      <span className={`ml-1 text-xs px-1.5 rounded-full ${
+                        vendeurActif === vendeur
+                          ? 'bg-white/20'
+                          : 'bg-white/50'
+                      }`}>
+                        {vendorSequenceCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {sequences.length > 0 && (
-          <button onClick={resetAll} className="bg-white text-red-600 hover:bg-red-50 active:bg-red-100 border border-red-200 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-sm font-medium shadow-sm w-full sm:w-auto">
+          <button 
+            onClick={resetAll} 
+            className="bg-white text-red-600 hover:bg-red-50 active:bg-red-100 border border-red-200 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-sm font-medium shadow-sm w-full sm:w-auto"
+          >
             <RotateCcw size={16} /><span>Tout réinitialiser</span>
           </button>
         )}
       </div>
 
       <div className="bg-white rounded-lg sm:rounded-2xl shadow-sm p-3 sm:p-6 border border-slate-200">
+        {/* Current Vendor Indicator */}
+        <div className="mb-4 pb-3 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-slate-500">Vendeur actif:</span>
+            <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
+              vendeurActif === null 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'bg-purple-100 text-purple-700'
+            }`}>
+              {vendeurActif === null ? 'Tous les vendeurs' : vendeurActif}
+            </span>
+          </div>
+          <span className="text-xs text-slate-400">
+            {sequences.length} séquence{sequences.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
           {[
@@ -262,7 +373,12 @@ export default function LiasseCounter() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
-            <p className="text-sm sm:text-base text-slate-500">Ajoutez des séquences de billets pour commencer</p>
+            <p className="text-sm sm:text-base text-slate-500">
+              {vendeurActif === null 
+                ? 'Ajoutez des séquences de billets pour tous les vendeurs'
+                : `Ajoutez des séquences de billets pour ${vendeurActif}`
+              }
+            </p>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">Une liasse = 100 billets • Les données sont sauvegardées automatiquement</p>
           </div>
         )}
