@@ -1,4 +1,4 @@
-// MainLayout.jsx - Only show filter on tasks tab
+// MainLayout.jsx - Updated
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
@@ -49,6 +49,9 @@ const MainLayout = ({
     }
   }, [activeTab, vendeurs, vendeurActif, filterType]);
 
+  // Determine if we should show the vendor tab selector
+  const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots';
+
   return (
     <div className="h-screen flex flex-col">
       {/* Fixed Header Container */}
@@ -80,8 +83,8 @@ const MainLayout = ({
           </div>
         )}
 
-        {/* Vendor Tab Selector - For vendeurs tab */}
-        {activeTab === 'vendeurs' && (
+        {/* Vendor Tab Selector - For vendeurs and depots tabs */}
+        {showVendorSelector && (
           <VendorTabSelector
             vendeurs={vendeurs}
             vendeurActif={vendeurActif}
