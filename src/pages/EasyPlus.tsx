@@ -1,4 +1,4 @@
-// SystemeStationService.jsx (complete updated version)
+// SystemeStationService.jsx (updated with page navigation)
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -32,6 +32,21 @@ const SystemeStationService = () => {
   const [filterType, setFilterType] = useState('all');
   const [conditionnementDenom, setConditionnementDenom] = useState(1000); // Default to 1000
   const [tasksStats, setTasksStats] = useState(null);
+
+  // Define all available tabs in order for navigation
+  const tabOrder = [
+    'pumps',
+    'tasks',
+    'vendeurs',
+    'liasse',
+    'depots',
+    'stock',
+    'usd',
+    'report',
+    'rapport',
+    'conditionnement',
+    'proforma'
+  ];
 
   const {
     toutesDonnees,
@@ -69,6 +84,26 @@ const SystemeStationService = () => {
   } = useStationData(date, shift);
 
   const pompes = ['P1', 'P2', 'P3', 'P4', 'P5'];
+
+  // Navigation functions
+  const getCurrentTabIndex = () => tabOrder.indexOf(activeTab);
+  
+  const handleNavigatePrevious = () => {
+    const currentIndex = getCurrentTabIndex();
+    if (currentIndex > 0) {
+      setActiveTab(tabOrder[currentIndex - 1]);
+    }
+  };
+
+  const handleNavigateNext = () => {
+    const currentIndex = getCurrentTabIndex();
+    if (currentIndex < tabOrder.length - 1) {
+      setActiveTab(tabOrder[currentIndex + 1]);
+    }
+  };
+
+  const showPreviousNav = getCurrentTabIndex() > 0;
+  const showNextNav = getCurrentTabIndex() < tabOrder.length - 1;
 
   // Reset active vendor when vendeurs change
   useEffect(() => {
@@ -341,6 +376,11 @@ const SystemeStationService = () => {
         onResetDay={handleReinitialiserJour}
         // Tasks stats
         tasksStats={tasksStats}
+        // Navigation props
+        onNavigatePrevious={handleNavigatePrevious}
+        onNavigateNext={handleNavigateNext}
+        showPrevious={showPreviousNav}
+        showNext={showNextNav}
       >
         {renderActiveTabContent()}
       </MainLayout>
