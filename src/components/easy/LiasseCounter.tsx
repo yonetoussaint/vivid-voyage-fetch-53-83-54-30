@@ -1,4 +1,4 @@
-// LiasseCounter.jsx (with completed liasses feature)
+// LiasseCounter.jsx (updated to accept external sequences)
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, RotateCcw, Check, X, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -86,7 +86,9 @@ function getInstructions(sequences) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function LiasseCounter({ 
-  denomination = 1000 // Default to 1000 Gourdes
+  denomination = 1000,
+  externalSequences = [], // New prop for sequences from deposits
+  isExternal = false // Flag to indicate if using external data
 }) {
   // State for active sequences
   const [sequences, setSequences] = useState(() => {
@@ -112,45 +114,57 @@ export default function LiasseCounter({
 
   // State for showing/hiding completed liasses
   const [showCompleted, setShowCompleted] = useState(false);
-
   const [currentInput, setCurrentInput] = useState('');
   const [buttonState, setButtonState] = useState('default');
   const timeoutRef = useRef(null);
 
+  // Use external sequences if provided, otherwise use internal state
+  useEffect(() => {
+    if (isExternal && externalSequences.length > 0) {
+      setSequences(externalSequences);
+    }
+  }, [externalSequences, isExternal]);
+
   // Reset sequences when denomination changes
   useEffect(() => {
-    try { 
-      const saved = localStorage.getItem(`liasseCounterSequences_${denomination}`);
-      setSequences(saved ? JSON.parse(saved) : []);
-      
-      const savedCompleted = localStorage.getItem(`liasseCounterCompleted_${denomination}`);
-      setCompletedLiasses(savedCompleted ? JSON.parse(savedCompleted) : []);
-    }
-    catch { 
-      setSequences([]); 
-      setCompletedLiasses([]);
+    if (!isExternal) {
+      try { 
+        const saved = localStorage.getItem(`liasseCounterSequences_${denomination}`);
+        setSequences(saved ? JSON.parse(saved) : []);
+
+        const savedCompleted = localStorage.getItem(`liasseCounterCompleted_${denomination}`);
+        setCompletedLiasses(savedCompleted ? JSON.parse(savedCompleted) : []);
+      }
+      catch { 
+        setSequences([]); 
+        setCompletedLiasses([]);
+      }
     }
     // Reset input when denomination changes
     setCurrentInput('');
     setButtonState('default');
     setShowCompleted(false);
-  }, [denomination]);
+  }, [denomination, isExternal]);
 
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
-  
-  // Save to localStorage with denomination-specific key
-  useEffect(() => {
-    try { 
-      localStorage.setItem(`liasseCounterSequences_${denomination}`, JSON.stringify(sequences)); 
-    } catch {}
-  }, [sequences, denomination]);
 
-  // Save completed liasses to localStorage
+  // Save to localStorage with denomination-specific key (only if not external)
   useEffect(() => {
-    try { 
-      localStorage.setItem(`liasseCounterCompleted_${denomination}`, JSON.stringify(completedLiasses)); 
-    } catch {}
-  }, [completedLiasses, denomination]);
+    if (!isExternal) {
+      try { 
+        localStorage.setItem(`liasseCounterSequences_${denomination}`, JSON.stringify(sequences)); 
+      } catch {}
+    }
+  }, [sequences, denomination, isExternal]);
+
+  // Save completed liasses to localStorage (only if not external)
+  useEffect(() => {
+    if (!isExternal) {
+      try { 
+        localStorage.setItem(`liasseCounterCompleted_${denomination}`, JSON.stringify(completedLiasses)); 
+      } catch {}
+    }
+  }, [completedLiasses, denomination, isExternal]);
 
   const resetButtonState = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -158,6 +172,8 @@ export default function LiasseCounter({
   };
 
   const addSequence = () => {
+    if (isExternal) return; // Cannot add sequences in external mode
+    
     const value = parseInt(currentInput);
     if (currentInput === '' || isNaN(value) || value <= 0) {
       setButtonState('error'); 
@@ -173,9 +189,14 @@ export default function LiasseCounter({
     }, 300);
   };
 
-  const removeSequence = (i) => setSequences(prev => prev.filter((_, j) => j !== i));
-  
+  const removeSequence = (i) => {
+    if (isExternal) return; // Cannot remove sequences in external mode
+    setSequences(prev => prev.filter((_, j) => j !== i));
+  };
+
   const resetAll = () => {
+    if (isExternal) return; // Cannot reset in external mode
+    
     if (window.confirm('Êtes-vous sûr de vouloir tout réinitialiser ?')) {
       setSequences([]);
       setCompletedLiasses([]);
@@ -184,6 +205,8 @@ export default function LiasseCounter({
   };
 
   const completeLiasse = (liasse) => {
+    if (isExternal) return; // Cannot modify in external mode
+    
     setCompletedLiasses(prev => [liasse, ...prev]);
     // Remove the used amounts from sequences
     const newSequences = [...sequences];
@@ -198,9 +221,11 @@ export default function LiasseCounter({
   };
 
   const undoCompleteLiasse = (liasse) => {
+    if (isExternal) return; // Cannot modify in external mode
+    
     // Remove from completed
     setCompletedLiasses(prev => prev.filter(l => l.timestamp !== liasse.timestamp));
-    
+
     // Restore the amounts to sequences
     const newSequences = [...sequences];
     liasse.steps.forEach(step => {
@@ -223,6 +248,10 @@ export default function LiasseCounter({
   const instructions = getInstructions(sequences);
 
   const getButtonConfig = () => {
+    if (isExternal) {
+      return { icon: null, text: 'Lecture seule', bgColor: 'bg-slate-300', hoverColor: '', textColor: 'text-slate-500', disabled: true };
+    }
+    
     const val = parseInt(currentInput);
     if (currentInput === '' || val === 0 || isNaN(val)) {
       return { icon: Plus, text: 'Ajouter', bgColor: 'bg-slate-300', hoverColor: '', textColor: 'text-slate-500', disabled: true };
@@ -256,12 +285,20 @@ export default function LiasseCounter({
               <DollarSign size={16} />
               <span>{denomination} Gdes</span>
             </div>
+            {isExternal && (
+              <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
+                Dépôts
+              </div>
+            )}
           </div>
           <p className="text-xs sm:text-base text-slate-600">
-            Calculez vos liasses de {denomination} Gourdes (100 billets = 1 liasse)
+            {isExternal 
+              ? `Liasses à partir des dépôts (${denomination} Gdes)`
+              : `Calculez vos liasses de ${denomination} Gourdes (100 billets = 1 liasse)`
+            }
           </p>
         </div>
-        {(sequences.length > 0 || completedLiasses.length > 0) && (
+        {(sequences.length > 0 || completedLiasses.length > 0) && !isExternal && (
           <button 
             onClick={resetAll} 
             className="bg-white text-red-600 hover:bg-red-50 active:bg-red-100 border border-red-200 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-sm font-medium shadow-sm w-full sm:w-auto"
@@ -316,38 +353,50 @@ export default function LiasseCounter({
           ))}
         </div>
 
-        {/* Input */}
-        <div className="flex gap-2 mb-4 sm:mb-6">
-          <input
-            type="number"
-            value={currentInput}
-            onChange={(e) => {
-              setCurrentInput(e.target.value);
-              if (buttonState !== 'default') { 
-                if (timeoutRef.current) clearTimeout(timeoutRef.current); 
-                setButtonState('default'); 
-              }
-            }}
-            onKeyPress={(e) => e.key === 'Enter' && addSequence()}
-            placeholder={`Nombre de billets de ${denomination} Gdes...`}
-            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-white border border-slate-200 rounded-lg sm:rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
-          />
-          <button
-            onClick={addSequence}
-            disabled={bc.disabled}
-            className={`${bc.bgColor} ${bc.hoverColor} ${bc.textColor} px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-2 text-sm sm:text-base font-medium shadow-sm min-w-[120px] disabled:opacity-90 disabled:cursor-not-allowed relative`}
-          >
-            {buttonState === 'loading' && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        {/* Input - Only show if not external */}
+        {!isExternal && (
+          <div className="flex gap-2 mb-4 sm:mb-6">
+            <input
+              type="number"
+              value={currentInput}
+              onChange={(e) => {
+                setCurrentInput(e.target.value);
+                if (buttonState !== 'default') { 
+                  if (timeoutRef.current) clearTimeout(timeoutRef.current); 
+                  setButtonState('default'); 
+                }
+              }}
+              onKeyPress={(e) => e.key === 'Enter' && addSequence()}
+              placeholder={`Nombre de billets de ${denomination} Gdes...`}
+              className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-white border border-slate-200 rounded-lg sm:rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
+            />
+            <button
+              onClick={addSequence}
+              disabled={bc.disabled}
+              className={`${bc.bgColor} ${bc.hoverColor} ${bc.textColor} px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-2 text-sm sm:text-base font-medium shadow-sm min-w-[120px] disabled:opacity-90 disabled:cursor-not-allowed relative`}
+            >
+              {buttonState === 'loading' && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              <div className={`flex items-center gap-2 ${buttonState === 'loading' ? 'opacity-0' : ''}`}>
+                {bc.icon && <bc.icon size={18} />}
+                <span>{bc.text}</span>
               </div>
-            )}
-            <div className={`flex items-center gap-2 ${buttonState === 'loading' ? 'opacity-0' : ''}`}>
-              {bc.icon && <bc.icon size={18} />}
-              <span>{bc.text}</span>
-            </div>
-          </button>
-        </div>
+            </button>
+          </div>
+        )}
+
+        {/* External data notice */}
+        {isExternal && (
+          <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <p className="text-sm text-purple-700">
+              <span className="font-semibold">Mode lecture seule :</span> Les séquences proviennent des dépôts.
+              Pour modifier, utilisez la section Dépôts.
+            </p>
+          </div>
+        )}
 
         {/* Sequences */}
         {sequences.length > 0 && (
@@ -357,7 +406,7 @@ export default function LiasseCounter({
                 Séquences ({sequences.length})
               </div>
               <div className="text-[10px] sm:text-xs text-slate-500">
-                Sauvegardé automatiquement • {denomination} Gdes
+                {isExternal ? 'Depuis les dépôts' : 'Sauvegardé automatiquement'} • {denomination} Gdes
               </div>
             </div>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -368,9 +417,11 @@ export default function LiasseCounter({
                   <span className="text-[8px] sm:text-xs text-slate-500">
                     ({count * denomination} Gdes)
                   </span>
-                  <button onClick={() => removeSequence(idx)} className="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                    <Trash2 size={12} />
-                  </button>
+                  {!isExternal && (
+                    <button onClick={() => removeSequence(idx)} className="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                      <Trash2 size={12} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -395,7 +446,7 @@ export default function LiasseCounter({
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
-                      {inst.isComplete && (
+                      {inst.isComplete && !isExternal && (
                         <button
                           onClick={() => completeLiasse(inst)}
                           className="bg-emerald-500 hover:bg-emerald-600 text-white p-1.5 rounded-lg transition-colors"
@@ -457,13 +508,15 @@ export default function LiasseCounter({
                           Complétée
                         </span>
                       </div>
-                      <button
-                        onClick={() => undoCompleteLiasse(liasse)}
-                        className="text-amber-600 hover:text-amber-700 p-1 hover:bg-amber-50 rounded transition-colors"
-                        title="Annuler"
-                      >
-                        <RotateCcw size={14} />
-                      </button>
+                      {!isExternal && (
+                        <button
+                          onClick={() => undoCompleteLiasse(liasse)}
+                          className="text-amber-600 hover:text-amber-700 p-1 hover:bg-amber-50 rounded transition-colors"
+                          title="Annuler"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
                     </div>
                     <div className="text-xs text-slate-600">
                       {liasse.total} billets • {formatGourdes(liasse.total).replace('HTG', '')} Gdes
@@ -487,10 +540,13 @@ export default function LiasseCounter({
               </svg>
             </div>
             <p className="text-sm sm:text-base text-slate-500">
-              Ajoutez des séquences de billets de {denomination} Gourdes
+              {isExternal 
+                ? "Aucune séquence trouvée dans les dépôts"
+                : `Ajoutez des séquences de billets de ${denomination} Gourdes`
+              }
             </p>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Une liasse = 100 billets ({100 * denomination} Gdes) • Les données sont sauvegardées automatiquement
+              Une liasse = 100 billets ({100 * denomination} Gdes)
             </p>
           </div>
         )}
