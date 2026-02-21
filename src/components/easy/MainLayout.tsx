@@ -4,7 +4,7 @@ import Header from './Header';
 import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
 import TabSelector from './TabSelector';
-import { Flame, Droplets, Fuel, Zap, Gauge, Circle } from 'lucide-react';
+import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User } from 'lucide-react';
 
 const MainLayout = ({ 
   date, 
@@ -53,16 +53,16 @@ const MainLayout = ({
   // Determine if we should show the vendor selector
   const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots' || activeTab === 'liasse';
 
-  // Color palette for vendor tabs
+  // Color palette for vendor tabs (from original VendorTabSelector)
   const colorPalette = [
-    { bg: 'bg-blue-600', border: 'border-blue-600', badge: 'bg-blue-500' },
-    { bg: 'bg-purple-600', border: 'border-purple-600', badge: 'bg-purple-500' },
-    { bg: 'bg-orange-600', border: 'border-orange-600', badge: 'bg-orange-500' },
-    { bg: 'bg-green-600', border: 'border-green-600', badge: 'bg-green-500' },
-    { bg: 'bg-indigo-600', border: 'border-indigo-600', badge: 'bg-indigo-500' },
-    { bg: 'bg-yellow-600', border: 'border-yellow-600', badge: 'bg-yellow-500' },
-    { bg: 'bg-emerald-600', border: 'border-emerald-600', badge: 'bg-emerald-500' },
-    { bg: 'bg-red-600', border: 'border-red-600', badge: 'bg-red-500' },
+    { color: 'bg-blue-600 text-white', borderColor: 'border-blue-600', badge: 'bg-blue-500' },
+    { color: 'bg-purple-600 text-white', borderColor: 'border-purple-600', badge: 'bg-purple-500' },
+    { color: 'bg-orange-600 text-white', borderColor: 'border-orange-600', badge: 'bg-orange-500' },
+    { color: 'bg-green-600 text-white', borderColor: 'border-green-600', badge: 'bg-green-500' },
+    { color: 'bg-indigo-600 text-white', borderColor: 'border-indigo-600', badge: 'bg-indigo-500' },
+    { color: 'bg-yellow-600 text-white', borderColor: 'border-yellow-600', badge: 'bg-yellow-500' },
+    { color: 'bg-emerald-600 text-white', borderColor: 'border-emerald-600', badge: 'bg-emerald-500' },
+    { color: 'bg-red-600 text-white', borderColor: 'border-red-600', badge: 'bg-red-500' },
   ];
 
   // Build vendor tabs array
@@ -70,7 +70,8 @@ const MainLayout = ({
     {
       id: null,
       label: 'Tous les Vendeurs',
-      icon: 'users',
+      icon: <Users className="w-4 h-4" />,
+      activeColor: 'bg-blue-600 text-white border-blue-600',
       badge: vendeurs?.length || 0,
       badgeColor: 'bg-blue-500'
     },
@@ -81,23 +82,22 @@ const MainLayout = ({
       return {
         id: vendeur,
         label: vendeur,
-        icon: 'user',
-        activeColor: `${colorPalette[colorIndex].bg} text-white border-${colorPalette[colorIndex].border.replace('border-', '')}`,
+        icon: <User className="w-4 h-4" />,
+        activeColor: colorPalette[colorIndex].color + ' border-' + colorPalette[colorIndex].borderColor.replace('border-', ''),
         badge: stats.affectations || 0,
         badgeColor: colorPalette[colorIndex].badge
       };
     })
   ];
 
-  // Pump icons mapping
-  const pumpIcons = [<Droplets size={16} />, <Fuel size={16} />, <Gauge size={16} />, <Zap size={16} />];
+  // Pump icons mapping (from original PumpSelector)
+  const pumpIcons = [<Droplets size={14} />, <Fuel size={14} />, <Gauge size={14} />, <Zap size={14} />];
 
   // Build pump tabs array
   const pumpTabs = pompes.map((pompe, index) => ({
     id: pompe,
     label: `Pompe ${index + 1}`,
-    icon: pumpIcons[index] || <Circle size={16} />,
-    rounded: true
+    icon: pumpIcons[index] || <Circle size={14} />
   }));
 
   // Task filter tabs
@@ -134,10 +134,8 @@ const MainLayout = ({
               tabs={pumpTabs}
               activeTab={pompeEtendue}
               onTabChange={setPompeEtendue}
-              variant="default"
               size="md"
               showPropane={showPropane}
-              propaneActive={pompeEtendue === 'propane'}
               onPropaneClick={() => setPompeEtendue('propane')}
               containerClassName="py-1"
             />
@@ -151,7 +149,6 @@ const MainLayout = ({
               tabs={vendorTabs}
               activeTab={vendeurActif}
               onTabChange={setVendeurActif}
-              variant="default"
               size="md"
               showBadges={true}
               containerClassName="py-1"
@@ -166,7 +163,6 @@ const MainLayout = ({
               tabs={taskTabs}
               activeTab={filterType}
               onTabChange={setFilterType}
-              variant="pills"
               size="sm"
               containerClassName="py-2"
             />
