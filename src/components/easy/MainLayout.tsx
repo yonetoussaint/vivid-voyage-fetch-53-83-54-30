@@ -1,4 +1,4 @@
-// MainLayout.jsx (updated with liquid glass transparent effect)
+// MainLayout.jsx (updated with dark glass, no dots, flexible width)
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
@@ -45,7 +45,8 @@ const MainLayout = ({
 }) => {
   const headerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(64);
-  const [scrolled, setScrolled] = useState(false);
+  const navContainerRef = useRef(null);
+  const [navWidth, setNavWidth] = useState('auto');
 
   useEffect(() => {
     if (headerRef.current) {
@@ -60,21 +61,13 @@ const MainLayout = ({
     }
   }, [activeTab, vendeurs, vendeurActif, filterType, conditionnementDenom]);
 
-  // Track scroll for glass effect intensity
+  // Update nav width based on content
   useEffect(() => {
-    const handleScroll = () => {
-      const mainContent = document.querySelector('main');
-      if (mainContent) {
-        setScrolled(mainContent.scrollTop > 50);
-      }
-    };
-
-    const mainContent = document.querySelector('main');
-    if (mainContent) {
-      mainContent.addEventListener('scroll', handleScroll);
-      return () => mainContent.removeEventListener('scroll', handleScroll);
+    if (navContainerRef.current) {
+      const width = navContainerRef.current.scrollWidth;
+      setNavWidth(`${width}px`);
     }
-  }, []);
+  }, [secondaryNavLabel, showPreviousSecondary, showNextSecondary]);
 
   // Determine if we should show the vendor selector
   const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots';
@@ -233,58 +226,56 @@ const MainLayout = ({
         <main className="flex-1 overflow-auto relative">
           {children}
           
-          {/* Bottom Navigation Chevrons for Secondary Tabs - Liquid Glass Effect */}
+          {/* Bottom Navigation Chevrons for Secondary Tabs - Dark Glass with Flexible Width */}
           {(showPreviousSecondary || showNextSecondary) && (
-            <div className={`
-              fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 
-              flex items-center gap-3 px-2 py-1.5
-              backdrop-blur-xl bg-white/10 
-              ${scrolled ? 'bg-white/20 backdrop-blur-2xl' : 'bg-white/5 backdrop-blur-lg'}
-              rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] 
-              border border-white/30 hover:border-white/40
-              transition-all duration-500 ease-out
-              hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)]
-              hover:bg-white/20
-              group
-            `}>
-              {/* Background shine effect */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/5 via-white/20 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-              
-              {showPreviousSecondary && (
-                <button
-                  onClick={onPreviousSecondary}
-                  className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/20 transition-all duration-300 group/btn"
-                  aria-label="Previous item"
-                >
-                  <ChevronLeft className="w-5 h-5 text-white/90 drop-shadow-lg group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-300" />
-                  <span className="absolute inset-0 rounded-xl bg-white/0 group-hover/btn:bg-white/10 transition-all duration-300"></span>
-                </button>
-              )}
-              
-              {secondaryNavLabel && (
-                <div className="relative px-4 py-1.5">
-                  <span className="text-sm font-medium text-white/90 drop-shadow-lg tracking-wide">
-                    {secondaryNavLabel}
-                  </span>
-                  {/* Glowing dot indicator */}
-                  <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full bg-white/60 animate-pulse"></span>
-                </div>
-              )}
-              
-              {showNextSecondary && (
-                <button
-                  onClick={onNextSecondary}
-                  className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/20 transition-all duration-300 group/btn"
-                  aria-label="Next item"
-                >
-                  <ChevronRight className="w-5 h-5 text-white/90 drop-shadow-lg group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-300" />
-                  <span className="absolute inset-0 rounded-xl bg-white/0 group-hover/btn:bg-white/10 transition-all duration-300"></span>
-                </button>
-              )}
-              
-              {/* Edge highlights */}
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
-              <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+            <div 
+              className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40"
+              style={{ width: navWidth }}
+            >
+              <div
+                ref={navContainerRef}
+                className={`
+                  flex items-center gap-1 px-2 py-1.5
+                  backdrop-blur-xl bg-black/40
+                  rounded-2xl
+                  shadow-[0_8px_32px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.1)_inset]
+                  hover:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.15)_inset]
+                  transition-all duration-300
+                  border border-white/10
+                  w-max
+                `}
+              >
+                {/* Background gradient for depth */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/5 to-transparent opacity-50"></div>
+                
+                {showPreviousSecondary && (
+                  <button
+                    onClick={onPreviousSecondary}
+                    className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/10 transition-all duration-200 group/btn"
+                    aria-label="Previous item"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-white/90 group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-200" />
+                  </button>
+                )}
+                
+                {secondaryNavLabel && (
+                  <div className="relative px-4 py-1.5">
+                    <span className="text-sm font-medium text-white/90 whitespace-nowrap">
+                      {secondaryNavLabel}
+                    </span>
+                  </div>
+                )}
+                
+                {showNextSecondary && (
+                  <button
+                    onClick={onNextSecondary}
+                    className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/10 transition-all duration-200 group/btn"
+                    aria-label="Next item"
+                  >
+                    <ChevronRight className="w-5 h-5 text-white/90 group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-200" />
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </main>
