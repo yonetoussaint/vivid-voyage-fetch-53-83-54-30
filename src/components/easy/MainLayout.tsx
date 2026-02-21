@@ -1,10 +1,10 @@
-// MainLayout.jsx (corrected)
+// MainLayout.jsx (updated with rapport shift selector)
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
 import VerticalTabs from './VerticalTabs';
 import TabSelector from './TabSelector';
-import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Flame, Droplets, Fuel, Zap, Gauge, Circle, Users, User, DollarSign, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
 
 const MainLayout = ({ 
   date, 
@@ -29,6 +29,9 @@ const MainLayout = ({
   // Conditionnement props
   conditionnementDenom,
   setConditionnementDenom,
+  // Rapport shift props
+  rapportShift,
+  setRapportShift,
   // Reset functions
   onResetShift,
   onResetDay,
@@ -59,7 +62,7 @@ const MainLayout = ({
 
       return () => window.removeEventListener('resize', updateHeight);
     }
-  }, [activeTab, vendeurs, vendeurActif, filterType, conditionnementDenom]);
+  }, [activeTab, vendeurs, vendeurActif, filterType, conditionnementDenom, rapportShift]);
 
   // Update nav width based on content
   useEffect(() => {
@@ -71,6 +74,22 @@ const MainLayout = ({
 
   // Determine if we should show the vendor selector
   const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots';
+
+  // Shift tabs for rapport
+  const rapportShiftTabs = [
+    { 
+      id: 'AM', 
+      label: 'Matin', 
+      icon: <Sun className="w-4 h-4" />,
+      activeColor: 'bg-amber-500 text-white border-amber-500'
+    },
+    { 
+      id: 'PM', 
+      label: 'Soir', 
+      icon: <Moon className="w-4 h-4" />,
+      activeColor: 'bg-indigo-500 text-white border-indigo-500'
+    }
+  ];
 
   // Color palette for vendor tabs
   const colorPalette = [
@@ -84,7 +103,7 @@ const MainLayout = ({
     { color: 'bg-red-600 text-white', borderColor: 'border-red-600', badge: 'bg-red-500' },
   ];
 
-  // Build vendor tabs array - FIXED: Removed duplicate and fixed syntax
+  // Build vendor tabs array
   const vendorTabs = [
     {
       id: null,
@@ -204,6 +223,19 @@ const MainLayout = ({
               activeTab={filterType}
               onTabChange={setFilterType}
               size="sm"
+              containerClassName="py-2"
+            />
+          </div>
+        )}
+
+        {/* Rapport Shift Selector - Only for rapport tab */}
+        {activeTab === 'rapport' && (
+          <div className="bg-white border-b border-slate-200">
+            <TabSelector
+              tabs={rapportShiftTabs}
+              activeTab={rapportShift}
+              onTabChange={setRapportShift}
+              size="md"
               containerClassName="py-2"
             />
           </div>
