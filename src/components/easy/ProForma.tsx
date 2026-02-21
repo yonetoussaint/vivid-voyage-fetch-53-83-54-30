@@ -1,10 +1,24 @@
 import React, { useState } from 'react';
 import { 
   Download, Share2, User, Package, Building, Loader, 
-  Image as ImageIcon, Upload, Phone, Mail, MapPin, 
-  Droplets, FileText, ChevronRight, History, Plus,
-  Minus, X, Check, Settings, CreditCard, Clock
+  Upload, Droplets, ChevronRight, History, Plus,
+  Minus, X
 } from 'lucide-react';
+
+// Load html2canvas script
+const loadHtml2Canvas = () => {
+  return new Promise((resolve, reject) => {
+    if (window.html2canvas) {
+      resolve(window.html2canvas);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = () => resolve(window.html2canvas);
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+};
 
 const ProForma = () => {
   const [docType, setDocType] = useState('facture');
@@ -78,7 +92,7 @@ const ProForma = () => {
     };
 
     try {
-      // Generate PNG image using html2canvas (original functionality)
+      // Generate PNG image using html2canvas
       const imageBlob = await generateImageBlob({ 
         invoice: document,
         companyInfo: {
@@ -115,216 +129,286 @@ const ProForma = () => {
       setInvoiceHistory(prev => [document, ...prev].slice(0, 10));
     } catch (error) {
       console.error('Erreur:', error);
-      alert(`Erreur lors de la génération`);
+      alert(`Erreur lors de la génération: ${error.message}`);
     } finally {
       setIsDownloading(false);
       setIsSharing(false);
     }
   };
 
-  // Original generateImageBlob function with html2canvas
+  // Fixed generateImageBlob function
   const generateImageBlob = async ({ invoice, companyInfo }) => {
-    // Load html2canvas dynamically
-    await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    try {
+      // Load html2canvas
+      const html2canvas = await loadHtml2Canvas();
 
-    const invoiceHTML = generateInvoiceHTML({ invoice, companyInfo });
+      const invoiceHTML = generateInvoiceHTML({ invoice, companyInfo });
 
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'absolute';
-    iframe.style.width = '1200px';
-    iframe.style.height = '1600px';
-    iframe.style.left = '-9999px';
-    iframe.style.top = '0';
-    iframe.style.border = 'none';
+      // Create iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.width = '800px';
+      iframe.style.height = '1100px';
+      iframe.style.left = '-9999px';
+      iframe.style.top = '0';
+      iframe.style.border = 'none';
+      iframe.style.background = 'white';
 
-    document.body.appendChild(iframe);
+      document.body.appendChild(iframe);
 
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(invoiceHTML);
-    iframe.contentDocument.close();
+      // Write content to iframe
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write(invoiceHTML);
+      iframeDoc.close();
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for images to load
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const canvas = await window.html2canvas(iframe.contentDocument.body, { 
-      scale: 2,
-      backgroundColor: '#ffffff',
-      logging: false,
-      allowTaint: true,
-      useCORS: true,
-      windowWidth: 1200,
-      windowHeight: 1600
-    });
+      // Capture canvas
+      const canvas = await html2canvas(iframeDoc.body, { 
+        scale: 1.5,
+        backgroundColor: '#ffffff',
+        logging: false,
+        allowTaint: true,
+        useCORS: true,
+        windowWidth: 800,
+        windowHeight: 1100
+      });
 
-    document.body.removeChild(iframe);
+      // Clean up
+      document.body.removeChild(iframe);
 
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        resolve(blob);
-      }, 'image/png', 1.0);
-    });
+      // Convert to blob
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/png', 1.0);
+      });
+    } catch (error) {
+      console.error('Error in generateImageBlob:', error);
+      throw error;
+    }
   };
 
-  // Original generateInvoiceHTML function with full styling
+  // Original generateInvoiceHTML function
   const generateInvoiceHTML = ({ invoice, companyInfo }) => {
     const logoHTML = companyInfo.logo 
-      ? `<img src="${companyInfo.logo}" alt="Logo" style="width: 100px; height: 100px; object-fit: contain; border-radius: 12px;" />`
-      : `<div style="width: 100px; height: 100px; background: linear-gradient(135deg, #1e40af, #1e3a8a); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-          <span style="color: white; font-size: 42px; font-weight: bold;">P</span>
+      ? `<img src="${companyInfo.logo}" alt="Logo" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px;" />`
+      : `<div style="width: 80px; height: 80px; background: linear-gradient(135deg, #2563eb, #1e40af); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+          <span style="color: white; font-size: 32px; font-weight: bold;">P</span>
          </div>`;
 
     const documentTitle = invoice.type === 'facture' ? 'FACTURE' : 'PROFORMA';
 
     return `<!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>${documentTitle} ${invoice.number}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { 
-        margin: 0; 
-        padding: 0; 
-        background: white; 
-        font-family: 'Inter', Arial, sans-serif;
-        line-height: 1.5;
-      }
-      .invoice-container {
-        width: 1200px;
-        max-width: 1200px;
-        margin: 0 auto;
-        background: white;
-        padding: 40px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="invoice-container">
-      <!-- En-tête -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 2px solid #e5e7eb;">
+<head>
+  <meta charset="UTF-8">
+  <title>${documentTitle} ${invoice.number}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: white;
+      padding: 30px;
+      line-height: 1.5;
+    }
+    .invoice {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    .company {
+      display: flex;
+      gap: 15px;
+    }
+    .company h1 {
+      font-size: 24px;
+      font-weight: bold;
+      color: #111827;
+      margin-bottom: 5px;
+    }
+    .company p {
+      font-size: 13px;
+      color: #6b7280;
+      margin: 2px 0;
+    }
+    .title h2 {
+      font-size: 36px;
+      font-weight: 800;
+      color: #2563eb;
+      margin-bottom: 10px;
+    }
+    .badge {
+      background: #eff6ff;
+      padding: 15px 20px;
+      border-radius: 8px;
+      border: 1px solid #bfdbfe;
+    }
+    .badge p {
+      font-size: 14px;
+      color: #4b5563;
+      margin: 5px 0;
+    }
+    .client {
+      background: #f9fafb;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .client h3 {
+      font-size: 16px;
+      color: #1f2937;
+      margin-bottom: 10px;
+    }
+    .client .name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+    th {
+      background: #f3f4f6;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      text-align: left;
+    }
+    td {
+      padding: 12px;
+      font-size: 14px;
+      color: #1f2937;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    td:last-child, th:last-child {
+      text-align: right;
+    }
+    .totals {
+      width: 400px;
+      margin-left: auto;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 15px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .grand-total {
+      background: #eff6ff;
+      padding: 15px 20px;
+      border-radius: 8px;
+      border: 2px solid #2563eb;
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .grand-total span {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1e40af;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice">
+    <!-- Header -->
+    <div class="header">
+      <div class="company">
+        ${logoHTML}
         <div>
-          ${logoHTML}
-          <h1 style="font-size: 42px; font-weight: 800; color: #1f2937; margin: 20px 0 10px 0;">${companyInfo.name}</h1>
-          <p style="font-size: 16px; color: #4b5563; margin: 5px 0;"><span style="font-weight: 600;">📍</span> ${companyInfo.address}</p>
-          <p style="font-size: 16px; color: #4b5563; margin: 5px 0;"><span style="font-weight: 600;">📞</span> ${companyInfo.phone}</p>
-          <p style="font-size: 16px; color: #4b5563; margin: 5px 0;"><span style="font-weight: 600;">✉️</span> ${companyInfo.email}</p>
-        </div>
-        <div style="text-align: right;">
-          <h2 style="font-size: 56px; font-weight: 800; color: #1e40af; margin: 0 0 20px 0;">${documentTitle}</h2>
-          <div style="background: #eff6ff; padding: 25px 30px; border-radius: 12px; border: 1px solid #bfdbfe;">
-            <p style="font-size: 18px; color: #4b5563; margin: 8px 0;">
-              <span style="font-weight: 700; color: #1f2937;">N°:</span> ${invoice.number}
-            </p>
-            <p style="font-size: 18px; color: #4b5563; margin: 8px 0;">
-              <span style="font-weight: 700; color: #1f2937;">Date:</span> ${invoice.date}
-            </p>
-            <p style="font-size: 18px; color: #4b5563; margin: 8px 0;">
-              <span style="font-weight: 700; color: #1f2937;">Heure:</span> ${invoice.time}
-            </p>
-          </div>
+          <h1>${companyInfo.name}</h1>
+          <p>📍 ${companyInfo.address}</p>
+          <p>📞 ${companyInfo.phone}</p>
+          <p>✉️ ${companyInfo.email}</p>
         </div>
       </div>
-
-      <!-- Client -->
-      <div style="margin-bottom: 40px; padding: 25px 30px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
-        <h3 style="font-size: 22px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Client</h3>
-        <p style="font-size: 20px; color: #374151; margin: 8px 0; font-weight: 600;">${invoice.customerName}</p>
-        ${invoice.customerPhone ? `<p style="font-size: 16px; color: #4b5563; margin: 5px 0;">📞 ${invoice.customerPhone}</p>` : ''}
-        ${invoice.customerAddress ? `<p style="font-size: 16px; color: #4b5563; margin: 5px 0;">📍 ${invoice.customerAddress}</p>` : ''}
-      </div>
-
-      <!-- Détails de la commande -->
-      <div style="margin-bottom: 40px;">
-        <div style="background: linear-gradient(135deg, #1e40af, #1e3a8a); padding: 20px; border-radius: 12px 12px 0 0;">
-          <h3 style="font-size: 22px; font-weight: 700; color: white; margin: 0;">Détails de la commande de propane</h3>
+      <div class="title">
+        <h2>${documentTitle}</h2>
+        <div class="badge">
+          <p><strong>N°:</strong> ${invoice.number}</p>
+          <p><strong>Date:</strong> ${invoice.date}</p>
+          <p><strong>Heure:</strong> ${invoice.time}</p>
         </div>
-        
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb;">
-          <thead>
-            <tr style="background: #f3f4f6;">
-              <th style="text-align: left; padding: 16px 20px; font-size: 16px; font-weight: 600; color: #374151;">Description</th>
-              <th style="text-align: center; padding: 16px 20px; font-size: 16px; font-weight: 600; color: #374151;">Quantité (gallons)</th>
-              <th style="text-align: center; padding: 16px 20px; font-size: 16px; font-weight: 600; color: #374151;">Prix unitaire</th>
-              <th style="text-align: right; padding: 16px 20px; font-size: 16px; font-weight: 600; color: #374151;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding: 16px 20px; font-size: 16px; color: #1f2937;">Propane (gaz domestique)</td>
-              <td style="text-align: center; padding: 16px 20px; font-size: 16px; color: #4b5563;">${invoice.quantity}</td>
-              <td style="text-align: center; padding: 16px 20px; font-size: 16px; color: #4b5563;">${invoice.pricePerUnit.toFixed(2)} HTG</td>
-              <td style="text-align: right; padding: 16px 20px; font-size: 16px; font-weight: bold; color: #1f2937;">${invoice.total.toFixed(2)} HTG</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Totaux -->
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
-        <div style="width: 500px;">
-          <div style="display: flex; justify-content: space-between; padding: 16px 24px; border-bottom: 2px solid #e5e7eb;">
-            <span style="font-size: 18px; color: #4b5563;">Sous-total:</span>
-            <span style="font-size: 18px; font-weight: 600; color: #1f2937;">${invoice.total.toFixed(2)} HTG</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 16px 24px; border-bottom: 2px solid #e5e7eb;">
-            <span style="font-size: 18px; color: #4b5563;">TVA (0%):</span>
-            <span style="font-size: 18px; font-weight: 600; color: #1f2937;">0.00 HTG</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 20px 30px; background: #eff6ff; border-radius: 12px; margin-top: 16px; border: 2px solid #1e40af;">
-            <span style="font-size: 24px; font-weight: 800; color: #1e3a8a;">TOTAL À PAYER:</span>
-            <span style="font-size: 32px; font-weight: 800; color: #1e3a8a;">${invoice.total.toFixed(2)} HTG</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Informations supplémentaires -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; padding-top: 30px; border-top: 2px solid #e5e7eb;">
-        <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
-          <h4 style="font-size: 18px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Mode de paiement</h4>
-          <p style="font-size: 16px; color: #374151; margin: 8px 0;">💵 Espèces</p>
-          <p style="font-size: 16px; color: #374151; margin: 8px 0;">💳 Carte bancaire</p>
-          <p style="font-size: 16px; color: #374151; margin: 8px 0;">📱 Mobile Money</p>
-        </div>
-        <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
-          <h4 style="font-size: 18px; font-weight: 700; color: #1f2937; margin: 0 0 15px 0;">Informations propane</h4>
-          <p style="font-size: 16px; color: #374151; margin: 8px 0;">✓ Produit: Gaz propane domestique</p>
-          <p style="font-size: 16px; color: #374151; margin: 8px 0;">✓ Qualité: Premium</p>
-          <p style="font-size: 16px; color: #374151; margin: 8px 0;">✓ Livraison incluse</p>
-        </div>
-      </div>
-
-      <!-- Conditions -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 30px; border-top: 2px solid #e5e7eb;">
-        <div>
-          <p style="font-size: 14px; font-weight: 600; color: #1f2937; margin: 0 0 10px 0;">Conditions:</p>
-          <p style="font-size: 13px; color: #6b7280; max-width: 600px;">
-            ${invoice.type === 'facture' 
-              ? 'Paiement comptant à la livraison. Le propane est livré en l\'état. Aucun retour ou échange possible après livraison. Merci de votre confiance.'
-              : 'Ce document est une proforma (estimation). La facture finale sera établie à la livraison. Sous réserve de disponibilité du stock.'}
-          </p>
-        </div>
-        <div style="text-align: center;">
-          <p style="font-size: 16px; color: #374151; font-weight: 600; margin: 0 0 10px 0;">Cachet et signature</p>
-          <div style="border-bottom: 3px solid #9ca3af; width: 250px; margin-bottom: 10px;"></div>
-          <p style="font-size: 14px; color: #4b5563;">Pour ${companyInfo.name}</p>
-        </div>
-      </div>
-      
-      <!-- Pied de page -->
-      <div style="margin-top: 40px; text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-        <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-          ${companyInfo.name} - ${companyInfo.address} - ${companyInfo.phone} - ${companyInfo.email}
-        </p>
-        <p style="font-size: 12px; color: #9ca3af; margin: 5px 0;">
-          NIF: ${companyInfo.nif} | RCCM: ${companyInfo.rccm}
-        </p>
       </div>
     </div>
-  </body>
+
+    <!-- Client -->
+    <div class="client">
+      <h3>CLIENT</h3>
+      <p class="name">${invoice.customerName}</p>
+      ${invoice.customerPhone ? `<p>📞 ${invoice.customerPhone}</p>` : ''}
+      ${invoice.customerAddress ? `<p>📍 ${invoice.customerAddress}</p>` : ''}
+    </div>
+
+    <!-- Details -->
+    <table>
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Quantité</th>
+          <th>Prix unitaire</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Propane domestique</td>
+          <td>${invoice.quantity} gal</td>
+          <td>${invoice.pricePerUnit.toLocaleString()} HTG</td>
+          <td>${invoice.total.toLocaleString()} HTG</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div class="totals">
+      <div class="total-row">
+        <span>Sous-total:</span>
+        <span>${invoice.total.toLocaleString()} HTG</span>
+      </div>
+      <div class="total-row">
+        <span>TVA (0%):</span>
+        <span>0 HTG</span>
+      </div>
+      <div class="grand-total">
+        <span>TOTAL À PAYER:</span>
+        <span>${invoice.total.toLocaleString()} HTG</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>${companyInfo.name} - ${companyInfo.address} - ${companyInfo.phone}</p>
+      <p>NIF: ${companyInfo.nif} | RCCM: ${companyInfo.rccm}</p>
+      <p style="margin-top: 10px;">Merci pour votre confiance!</p>
+    </div>
+  </div>
+</body>
 </html>`;
   };
 
-  const quickAmounts = [100, 200, 300, 400, 500, 1000];
+  const quickAmounts = [50, 100, 200, 300, 400, 500];
 
   return (
     <div className="min-h-screen bg-gray-50">
