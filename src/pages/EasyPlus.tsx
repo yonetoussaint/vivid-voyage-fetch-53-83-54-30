@@ -189,19 +189,19 @@ const SystemeStationService = () => {
           </div>
         );
 
-      case 'conditionnement':
-        return (
-          <div className="p-2 sm:p-6">
-            <ConditionnementManager
-              shift={shift}
-              date={date}
-              vendeurs={vendeurs}
-              tousDepots={tousDepots}
-              onConditionnementUpdate={setConditionnements}
-              selectedDenomination={conditionnementDenom}
-            />
-          </div>
-        );
+case 'conditionnement':
+  return (
+    <div className="p-2 sm:p-6">
+      <ConditionnementManager
+        shift={shift}
+        date={date}
+        vendeurs={vendeurs}
+        tousDepots={tousDepots}
+        onConditionnementUpdate={setConditionnements}
+        selectedDenomination={conditionnementDenom}
+      />
+    </div>
+  );
 
       case 'depots':
         return (
