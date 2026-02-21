@@ -88,7 +88,7 @@ const DepotsManager = ({
   // Check if we're in "Tous" mode (read-only)
   const isTousMode = vendeurActif === null;
 
-  // Calculate totals for all vendors (for Tous mode)
+  // Calculate totals for all vendors (for summary card in Tous mode)
   const calculateTotalsForAllVendors = () => {
     let totalVentes = 0;
     let totalDepots = 0;
@@ -97,7 +97,7 @@ const DepotsManager = ({
     vendeurs.forEach(vendeur => {
       const donneesVendeur = totauxVendeurs[vendeur];
       if (donneesVendeur) {
-        totalVentes += donneesVendeur.totalVentes || 0;
+        totalVentes += donneesVendeur.ventesTotales || 0;
         totalAttendues += donneesVendeur.especesAttendues || 0;
       }
       
@@ -118,62 +118,109 @@ const DepotsManager = ({
 
   const totals = calculateTotalsForAllVendors();
 
-  // DepotsManager.jsx (updated section for VendorDepositCard)
-return (
-  <VendorDepositCard
-    key={vendeur}
-    vendeur={vendeur} // Pass vendor name
-    donneesVendeur={donneesVendeur}
-    especesAttendues={especesAttendues}
-    totalDepotHTG={totalDepotHTG}
-    hideStats={isTousMode} // Hide stats cards in Tous mode
-    isReadOnly={isTousMode}
-  >
-    {/* Only show SequenceSection when NOT in Tous mode */}
-    {!isTousMode && (
-      <SequenceSection
-        vendeur={vendeur}
-        isEditingMode={isEditingMode}
-        editingDeposit={editingDeposit}
-        vendorState={vendorState}
-        sequences={sequences}
-        sequencesTotal={sequencesTotal}
-        sequencesTotalByCurrency={sequencesTotalByCurrency}
-        totalSequencesHTG={totalSequencesHTG}
-        vendorInputs={vendorInputs}
-        currentPresets={currentPresets}
-        handleClearSequences={handleClearSequences}
-        handleRemoveSequence={handleRemoveSequence}
-        handleUpdateSequence={handleUpdateSequence}
-        handlePresetSelect={handlePresetSelect}
-        handleInputChange={handleInputChange}
-        handleAddSequence={handleAddSequence}
-        handleAddCompleteDeposit={isEditingMode ? 
-          () => saveEditedDeposit(vendeur) : 
-          () => handleAddCompleteDeposit(vendeur)}
-        calculatePresetAmount={calculatePresetAmount}
-        onCancelEdit={() => cancelEdit(vendeur)}
-        TAUX_DE_CHANGE={TAUX_DE_CHANGE}
-      />
-    )}
+  return (
+    <div className="space-y-4">
+      {/* Summary Card for All Vendors - Only show in Tous mode */}
+      {isTousMode && (
+        <VendorDepositCard
+          vendeur="Tous les vendeurs"
+          donneesVendeur={{ ventesTotales: totals.totalVentes }}
+          especesAttendues={totals.totalAttendues}
+          totalDepotHTG={totals.totalDepots}
+          isSummary={true} // Special prop to indicate this is a summary card
+          hideStats={false} // Show stats for summary
+        >
+          {/* No children for summary card */}
+        </VendorDepositCard>
+      )}
 
-    {/* Deposits Summary - always show */}
-    <DepositsSummary
-      vendeur={vendeur}
-      depots={depots}
-      isRecentlyAdded={isRecentlyAdded}
-      getMontantHTG={getMontantHTG}
-      isUSDDepot={isUSDDepot}
-      getOriginalDepotAmount={getOriginalDepotAmount}
-      getDepositDisplay={getDepositDisplay}
-      onEditDeposit={handleEditDeposit}
-      onDeleteDeposit={supprimerDepot}
-      editingDeposit={editingDeposit}
-      isEditingThisDeposit={isEditingThisDeposit}
-      exchangeRate={TAUX_DE_CHANGE}
-      isReadOnly={isTousMode}
-    />
-  </VendorDepositCard>
-);
+      {/* Vendor cards section */}
+      <div className="space-y-3">
+        {displayVendeurs.length === 0 ? (
+          <div className="text-center py-6 text-gray-500">
+            Aucun vendeur ajouté
+          </div>
+        ) : (
+          displayVendeurs.map(vendeur => {
+            const donneesVendeur = totauxVendeurs[vendeur];
+            const totalDepotHTG = calculateTotalDepotsHTG(vendeur);
+            const especesAttendues = donneesVendeur ? donneesVendeur.especesAttendues : 0;
+            const depots = depotsActuels[vendeur] || [];
+
+            // Only initialize state if not in Tous mode and state doesn't exist
+            if (!isTousMode && !vendorPresets[vendeur]) {
+              initializeVendorState(vendeur, 'HTG');
+            }
+
+            const vendorState = !isTousMode ? vendorPresets[vendeur] : null;
+            const currentPresets = !isTousMode ? getCurrentPresets(vendeur) : [];
+            const sequences = !isTousMode ? (depositSequences[vendeur] || []) : [];
+            const sequencesTotal = !isTousMode ? calculateSequencesTotal(vendeur) : 0;
+            const sequencesTotalByCurrency = !isTousMode ? calculateSequencesTotalByCurrency(vendeur) : { usd: 0, htg: 0 };
+            const totalSequencesHTG = !isTousMode ? calculateTotalSequencesHTG(vendeur) : 0;
+            const isEditingMode = !isTousMode && editingDeposit?.vendeur === vendeur;
+
+            return (
+              <VendorDepositCard
+                key={vendeur}
+                vendeur={vendeur}
+                donneesVendeur={donneesVendeur}
+                especesAttendues={especesAttendues}
+                totalDepotHTG={totalDepotHTG}
+                hideStats={isTousMode} // Hide individual stats in Tous mode
+                isReadOnly={isTousMode}
+              >
+                {/* Only show SequenceSection (input section) when NOT in Tous mode */}
+                {!isTousMode && (
+                  <SequenceSection
+                    vendeur={vendeur}
+                    isEditingMode={isEditingMode}
+                    editingDeposit={editingDeposit}
+                    vendorState={vendorState}
+                    sequences={sequences}
+                    sequencesTotal={sequencesTotal}
+                    sequencesTotalByCurrency={sequencesTotalByCurrency}
+                    totalSequencesHTG={totalSequencesHTG}
+                    vendorInputs={vendorInputs}
+                    currentPresets={currentPresets}
+                    handleClearSequences={handleClearSequences}
+                    handleRemoveSequence={handleRemoveSequence}
+                    handleUpdateSequence={handleUpdateSequence}
+                    handlePresetSelect={handlePresetSelect}
+                    handleInputChange={handleInputChange}
+                    handleAddSequence={handleAddSequence}
+                    handleAddCompleteDeposit={isEditingMode ? 
+                      () => saveEditedDeposit(vendeur) : 
+                      () => handleAddCompleteDeposit(vendeur)}
+                    calculatePresetAmount={calculatePresetAmount}
+                    onCancelEdit={() => cancelEdit(vendeur)}
+                    TAUX_DE_CHANGE={TAUX_DE_CHANGE}
+                  />
+                )}
+
+                {/* Deposits Summary - always show */}
+                <DepositsSummary
+                  vendeur={vendeur}
+                  depots={depots}
+                  isRecentlyAdded={isRecentlyAdded}
+                  getMontantHTG={getMontantHTG}
+                  isUSDDepot={isUSDDepot}
+                  getOriginalDepotAmount={getOriginalDepotAmount}
+                  getDepositDisplay={getDepositDisplay}
+                  onEditDeposit={handleEditDeposit}
+                  onDeleteDeposit={supprimerDepot}
+                  editingDeposit={editingDeposit}
+                  isEditingThisDeposit={isEditingThisDeposit}
+                  exchangeRate={TAUX_DE_CHANGE}
+                  isReadOnly={isTousMode}
+                />
+              </VendorDepositCard>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default DepotsManager;
