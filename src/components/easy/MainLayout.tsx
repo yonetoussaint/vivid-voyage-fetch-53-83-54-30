@@ -1,4 +1,4 @@
-// MainLayout.jsx (updated with page navigation chevrons)
+// MainLayout.jsx (updated with bottom navigation for secondary tabs)
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
@@ -36,11 +36,12 @@ const MainLayout = ({
   tasksStats,
   // Optional vendor stats for badges
   vendorStats = {},
-  // Navigation props
-  onNavigatePrevious,
-  onNavigateNext,
-  showPrevious = false,
-  showNext = false
+  // Secondary navigation props
+  onPreviousSecondary,
+  onNextSecondary,
+  showPreviousSecondary = false,
+  showNextSecondary = false,
+  secondaryNavLabel = ''
 }) => {
   const headerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(64);
@@ -58,10 +59,10 @@ const MainLayout = ({
     }
   }, [activeTab, vendeurs, vendeurActif, filterType, conditionnementDenom]);
 
-  // Determine if we should show the vendor selector - REMOVED 'conditionnement' FROM THIS LIST
+  // Determine if we should show the vendor selector
   const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots';
 
-  // Color palette for vendor tabs (from original VendorTabSelector)
+  // Color palette for vendor tabs
   const colorPalette = [
     { color: 'bg-blue-600 text-white', borderColor: 'border-blue-600', badge: 'bg-blue-500' },
     { color: 'bg-purple-600 text-white', borderColor: 'border-purple-600', badge: 'bg-purple-500' },
@@ -98,7 +99,7 @@ const MainLayout = ({
     })
   ];
 
-  // Pump icons mapping (from original PumpSelector)
+  // Pump icons mapping
   const pumpIcons = [<Droplets size={14} />, <Fuel size={14} />, <Gauge size={14} />, <Zap size={14} />];
 
   // Build pump tabs array
@@ -158,7 +159,7 @@ const MainLayout = ({
           </div>
         )}
 
-        {/* Vendor Tab Selector - Now only for vendeurs and depots tabs */}
+        {/* Vendor Tab Selector */}
         {showVendorSelector && (
           <div className="bg-white border-b border-slate-200">
             <TabSelector
@@ -172,7 +173,7 @@ const MainLayout = ({
           </div>
         )}
 
-        {/* Conditionnement Denomination Selector - Only for conditionnement tab */}
+        {/* Conditionnement Denomination Selector */}
         {activeTab === 'conditionnement' && (
           <div className="bg-white border-b border-slate-200">
             <TabSelector
@@ -185,7 +186,7 @@ const MainLayout = ({
           </div>
         )}
 
-        {/* Task Type Selector - Only for tasks tab */}
+        {/* Task Type Selector */}
         {activeTab === 'tasks' && (
           <div className="bg-white border-b border-slate-200">
             <TabSelector
@@ -202,8 +203,8 @@ const MainLayout = ({
       {/* Spacer - Dynamic height based on actual header height */}
       <div style={{ height: `${headerHeight}px` }}></div>
 
-      {/* Main Content Area with Page Navigation Chevrons */}
-      <div className="flex flex-1 min-h-0 relative">
+      {/* Main Content Area */}
+      <div className="flex flex-1 min-h-0">
         {/* Side Panel for desktop */}
         <div className="hidden lg:block flex-shrink-0">
           <SidePanel isOpen={true} onClose={() => {}} isMobile={false}>
@@ -211,30 +212,40 @@ const MainLayout = ({
           </SidePanel>
         </div>
 
-        {/* Page Navigation Chevrons */}
-        {showPrevious && (
-          <button
-            onClick={onNavigatePrevious}
-            className="fixed left-4 lg:left-72 top-1/2 transform -translate-y-1/2 z-40 flex items-center justify-center w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-lg hover:bg-white transition-all duration-200 border border-gray-200 group"
-            aria-label="Navigate to previous tab"
-          >
-            <ChevronLeft className="w-6 h-6 text-gray-600 group-hover:text-gray-900" />
-          </button>
-        )}
-
-        {showNext && (
-          <button
-            onClick={onNavigateNext}
-            className="fixed right-4 lg:right-8 top-1/2 transform -translate-y-1/2 z-40 flex items-center justify-center w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-lg hover:bg-white transition-all duration-200 border border-gray-200 group"
-            aria-label="Navigate to next tab"
-          >
-            <ChevronRight className="w-6 h-6 text-gray-600 group-hover:text-gray-900" />
-          </button>
-        )}
-
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto">
+        {/* Main Content with Bottom Navigation */}
+        <main className="flex-1 overflow-auto relative pb-16">
           {children}
+          
+          {/* Bottom Navigation Chevrons for Secondary Tabs */}
+          {(showPreviousSecondary || showNextSecondary) && (
+            <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40 flex items-center gap-4 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-gray-200 px-2 py-1">
+              {showPreviousSecondary && (
+                <button
+                  onClick={onPreviousSecondary}
+                  className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-all duration-200 group"
+                  aria-label="Previous item"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
+                </button>
+              )}
+              
+              {secondaryNavLabel && (
+                <span className="text-sm font-medium text-gray-700 px-2">
+                  {secondaryNavLabel}
+                </span>
+              )}
+              
+              {showNextSecondary && (
+                <button
+                  onClick={onNextSecondary}
+                  className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-all duration-200 group"
+                  aria-label="Next item"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
+                </button>
+              )}
+            </div>
+          )}
         </main>
       </div>
     </div>
