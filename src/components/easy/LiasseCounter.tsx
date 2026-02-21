@@ -1,6 +1,6 @@
-// LiasseCounter.jsx (updated)
+// LiasseCounter.jsx (updated with denomination prop)
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, RotateCcw, Check, X, User, Users } from 'lucide-react';
+import { Plus, Trash2, RotateCcw, Check, X, DollarSign } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEPARTAGE ALGORITHM v3 — "Anchor + Fill"
@@ -80,36 +80,28 @@ function getInstructions(sequences) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function LiasseCounter({ 
-  vendeurs = [], 
-  vendeurActif = null, 
-  setVendeurActif = () => {} 
+  denomination = 1000 // Default to 1000 Gourdes
 }) {
-  // Store sequences per vendor
-  const [vendorData, setVendorData] = useState(() => {
-    try {
-      const saved = localStorage.getItem('liasseCounterVendorData');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
+  const [sequences, setSequences] = useState(() => {
+    try { 
+      // Use denomination in the storage key to separate data by denomination
+      const saved = localStorage.getItem(`liasseCounterSequences_${denomination}`);
+      return saved ? JSON.parse(saved) : []; 
     }
+    catch { return []; }
   });
-  
   const [currentInput, setCurrentInput] = useState('');
   const [buttonState, setButtonState] = useState('default');
   const timeoutRef = useRef(null);
 
-  // Get current vendor's sequences
-  const currentVendorKey = vendeurActif || 'all';
-  const sequences = vendorData[currentVendorKey] || [];
-
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
   
-  // Save to localStorage
+  // Save to localStorage with denomination-specific key
   useEffect(() => {
     try { 
-      localStorage.setItem('liasseCounterVendorData', JSON.stringify(vendorData)); 
+      localStorage.setItem(`liasseCounterSequences_${denomination}`, JSON.stringify(sequences)); 
     } catch {}
-  }, [vendorData]);
+  }, [sequences, denomination]);
 
   const resetButtonState = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -123,29 +115,18 @@ export default function LiasseCounter({
     }
     setButtonState('loading');
     setTimeout(() => {
-      setVendorData(prev => ({
-        ...prev,
-        [currentVendorKey]: [...(prev[currentVendorKey] || []), value]
-      }));
+      setSequences(prev => [...prev, value]);
       setCurrentInput('');
       setButtonState('success');
       resetButtonState();
     }, 300);
   };
 
-  const removeSequence = (indexToRemove) => {
-    setVendorData(prev => ({
-      ...prev,
-      [currentVendorKey]: prev[currentVendorKey].filter((_, idx) => idx !== indexToRemove)
-    }));
-  };
-
+  const removeSequence = (i) => setSequences(prev => prev.filter((_, j) => j !== i));
+  
   const resetAll = () => {
     if (window.confirm('Êtes-vous sûr de vouloir tout réinitialiser ?')) {
-      setVendorData(prev => ({
-        ...prev,
-        [currentVendorKey]: []
-      }));
+      setSequences([]);
       setCurrentInput('');
     }
   };
@@ -168,72 +149,31 @@ export default function LiasseCounter({
   };
   const bc = getButtonConfig();
 
-  // Color palette for vendor tabs
-  const colorPalette = [
-    { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200', hover: 'hover:bg-blue-200' },
-    { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200', hover: 'hover:bg-purple-200' },
-    { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', hover: 'hover:bg-orange-200' },
-    { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200', hover: 'hover:bg-green-200' },
-    { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-200', hover: 'hover:bg-indigo-200' },
-  ];
+  // Format amount in Gourdes
+  const formatGourdes = (amount) => {
+    return new Intl.NumberFormat('fr-HT', {
+      style: 'currency',
+      currency: 'HTG',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount * denomination);
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-4 sm:mb-6 px-2 sm:px-0 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
         <div>
-          <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 mb-1 sm:mb-2">Compteur de Liasses</h1>
-          <p className="text-xs sm:text-base text-slate-600">Calculez vos liasses (100 billets = 1 liasse)</p>
-        </div>
-        
-        {/* Vendor Selector (Mobile/Tablet) - Only shown when not using MainLayout's selector */}
-        {vendeurs.length > 0 && (
-          <div className="sm:hidden w-full mt-2">
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => setVendeurActif(null)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-                  vendeurActif === null
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                <Users size={14} />
-                <span>Tous</span>
-                <span className="ml-1 text-xs opacity-75">
-                  ({Object.values(vendorData).flat().length})
-                </span>
-              </button>
-              {vendeurs.map((vendeur, idx) => {
-                const colors = colorPalette[idx % colorPalette.length];
-                const vendorSequenceCount = vendorData[vendeur]?.length || 0;
-                return (
-                  <button
-                    key={vendeur}
-                    onClick={() => setVendeurActif(vendeur)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-                      vendeurActif === vendeur
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : `${colors.bg} ${colors.text} ${colors.hover}`
-                    }`}
-                  >
-                    <User size={14} />
-                    <span>{vendeur}</span>
-                    {vendorSequenceCount > 0 && (
-                      <span className={`ml-1 text-xs px-1.5 rounded-full ${
-                        vendeurActif === vendeur
-                          ? 'bg-white/20'
-                          : 'bg-white/50'
-                      }`}>
-                        {vendorSequenceCount}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl sm:text-4xl font-bold text-slate-900">Compteur de Liasses</h1>
+            <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
+              <DollarSign size={16} />
+              <span>{denomination} Gdes</span>
             </div>
           </div>
-        )}
-
+          <p className="text-xs sm:text-base text-slate-600">
+            Calculez vos liasses de {denomination} Gourdes (100 billets = 1 liasse)
+          </p>
+        </div>
         {sequences.length > 0 && (
           <button 
             onClick={resetAll} 
@@ -245,38 +185,51 @@ export default function LiasseCounter({
       </div>
 
       <div className="bg-white rounded-lg sm:rounded-2xl shadow-sm p-3 sm:p-6 border border-slate-200">
-        {/* Current Vendor Indicator */}
-        <div className="mb-4 pb-3 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-500">Vendeur actif:</span>
-            <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
-              vendeurActif === null 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'bg-purple-100 text-purple-700'
-            }`}>
-              {vendeurActif === null ? 'Tous les vendeurs' : vendeurActif}
-            </span>
-          </div>
-          <span className="text-xs text-slate-400">
-            {sequences.length} séquence{sequences.length !== 1 ? 's' : ''}
-          </span>
-        </div>
-
-        {/* Stats */}
+        {/* Stats with Gourdes values */}
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
           {[
-            { label: 'Total Billets', value: total, from: 'from-slate-50', to: 'to-slate-100', border: 'border-slate-200', lc: 'text-slate-600', vc: 'text-slate-900' },
-            { label: 'Liasses',       value: liasseInfo.complete,  from: 'from-emerald-50', to: 'to-emerald-100', border: 'border-emerald-200', lc: 'text-emerald-700', vc: 'text-emerald-900' },
-            { label: 'Reste',         value: liasseInfo.remaining, from: 'from-amber-50',   to: 'to-amber-100',   border: 'border-amber-200',   lc: 'text-amber-700',   vc: 'text-amber-900' },
-          ].map(({ label, value, from, to, border, lc, vc }) => (
+            { 
+              label: 'Total Billets', 
+              value: total, 
+              gdesValue: total * denomination,
+              from: 'from-slate-50', 
+              to: 'to-slate-100', 
+              border: 'border-slate-200', 
+              lc: 'text-slate-600', 
+              vc: 'text-slate-900' 
+            },
+            { 
+              label: 'Liasses', 
+              value: liasseInfo.complete,
+              gdesValue: liasseInfo.complete * 100 * denomination,
+              from: 'from-emerald-50', 
+              to: 'to-emerald-100', 
+              border: 'border-emerald-200', 
+              lc: 'text-emerald-700', 
+              vc: 'text-emerald-900' 
+            },
+            { 
+              label: 'Reste', 
+              value: liasseInfo.remaining,
+              gdesValue: liasseInfo.remaining * denomination,
+              from: 'from-amber-50', 
+              to: 'to-amber-100', 
+              border: 'border-amber-200', 
+              lc: 'text-amber-700', 
+              vc: 'text-amber-900' 
+            },
+          ].map(({ label, value, gdesValue, from, to, border, lc, vc }) => (
             <div key={label} className={`bg-gradient-to-br ${from} ${to} rounded-lg sm:rounded-xl p-2 sm:p-4 border ${border}`}>
               <div className={`text-[10px] sm:text-xs ${lc} font-medium mb-0.5 sm:mb-1`}>{label}</div>
               <div className={`text-lg sm:text-2xl font-bold ${vc}`}>{value}</div>
+              <div className="text-[10px] sm:text-xs text-slate-500 mt-1">
+                {formatGourdes(gdesValue/denomination).replace('HTG', '')} Gdes
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Input */}
+        {/* Input - Updated placeholder to show denomination */}
         <div className="flex gap-2 mb-4 sm:mb-6">
           <input
             type="number"
@@ -286,7 +239,7 @@ export default function LiasseCounter({
               if (buttonState !== 'default') { if (timeoutRef.current) clearTimeout(timeoutRef.current); setButtonState('default'); }
             }}
             onKeyPress={(e) => e.key === 'Enter' && addSequence()}
-            placeholder="Nombre de billets..."
+            placeholder={`Nombre de billets de ${denomination} Gdes...`}
             className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-white border border-slate-200 rounded-lg sm:rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
           />
           <button
@@ -306,18 +259,25 @@ export default function LiasseCounter({
           </button>
         </div>
 
-        {/* Sequences */}
+        {/* Sequences - Show Gourdes value */}
         {sequences.length > 0 && (
           <div className="mb-4 sm:mb-6">
             <div className="flex justify-between items-center mb-2 sm:mb-3">
-              <div className="text-[10px] sm:text-xs font-semibold text-slate-700 uppercase tracking-wide">Séquences ({sequences.length})</div>
-              <div className="text-[10px] sm:text-xs text-slate-500">Sauvegardé automatiquement</div>
+              <div className="text-[10px] sm:text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                Séquences ({sequences.length})
+              </div>
+              <div className="text-[10px] sm:text-xs text-slate-500">
+                Sauvegardé automatiquement • {denomination} Gdes
+              </div>
             </div>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {sequences.map((count, idx) => (
                 <div key={idx} className="bg-slate-100 border border-slate-200 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 hover:bg-slate-200 transition-colors group">
                   <span className="text-[10px] sm:text-sm font-medium text-slate-700">#{idx + 1}</span>
                   <span className="text-xs sm:text-sm font-bold text-slate-900">{count}</span>
+                  <span className="text-[8px] sm:text-xs text-slate-500">
+                    ({count * denomination} Gdes)
+                  </span>
                   <button onClick={() => removeSequence(idx)} className="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
                     <Trash2 size={12} />
                   </button>
@@ -327,10 +287,12 @@ export default function LiasseCounter({
           </div>
         )}
 
-        {/* Instructions */}
+        {/* Instructions - Show Gourdes values */}
         {instructions.length > 0 && (
           <div>
-            <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">Instructions de départage</div>
+            <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">
+              Instructions de départage ({denomination} Gdes)
+            </div>
             <div className="space-y-2 sm:space-y-3">
               {instructions.map((inst) => (
                 <div key={inst.liasseNum} className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 ${inst.isComplete ? 'bg-emerald-50 border-emerald-300' : 'bg-amber-50 border-amber-300'}`}>
@@ -341,7 +303,12 @@ export default function LiasseCounter({
                         {inst.isComplete ? 'Complète' : 'Incomplète'}
                       </span>
                     </div>
-                    <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
+                    <div className="text-right">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
+                      <div className="text-[8px] sm:text-xs text-slate-600">
+                        {inst.total * denomination} / {100 * denomination} Gdes
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
@@ -351,9 +318,9 @@ export default function LiasseCounter({
                           <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wider mr-1.5">Ancre</span>
                         )}
                         <span className="font-semibold text-slate-800">Séq. #{step.sequenceNum}:</span>{' '}
-                        Prenez <span className="font-bold text-emerald-700">{step.take}</span> sur {step.from}
+                        Prenez <span className="font-bold text-emerald-700">{step.take}</span> billet{step.take > 1 ? 's' : ''} ({step.take * denomination} Gdes) sur {step.from}
                         {step.remaining > 0
-                          ? <span className="text-amber-700 font-semibold"> → reste {step.remaining}</span>
+                          ? <span className="text-amber-700 font-semibold"> → reste {step.remaining} ({step.remaining * denomination} Gdes)</span>
                           : <span className="text-slate-400"> ✓</span>
                         }
                       </div>
@@ -374,12 +341,11 @@ export default function LiasseCounter({
               </svg>
             </div>
             <p className="text-sm sm:text-base text-slate-500">
-              {vendeurActif === null 
-                ? 'Ajoutez des séquences de billets pour tous les vendeurs'
-                : `Ajoutez des séquences de billets pour ${vendeurActif}`
-              }
+              Ajoutez des séquences de billets de {denomination} Gourdes
             </p>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">Une liasse = 100 billets • Les données sont sauvegardées automatiquement</p>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+              Une liasse = 100 billets ({100 * denomination} Gdes) • Les données sont sauvegardées automatiquement
+            </p>
           </div>
         )}
       </div>
