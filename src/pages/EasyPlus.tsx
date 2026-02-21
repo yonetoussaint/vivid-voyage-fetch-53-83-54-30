@@ -92,7 +92,7 @@ const SystemeStationService = () => {
   const getCurrentSecondaryIndex = () => {
     const items = getSecondaryItems();
     let currentValue;
-    
+
     switch (activeTab) {
       case 'pumps':
         currentValue = pompeEtendue;
@@ -110,16 +110,16 @@ const SystemeStationService = () => {
       default:
         return -1;
     }
-    
+
     return items.indexOf(currentValue);
   };
 
   const getSecondaryLabel = () => {
     const currentIndex = getCurrentSecondaryIndex();
     const items = getSecondaryItems();
-    
+
     if (currentIndex === -1 || !items.length) return '';
-    
+
     switch (activeTab) {
       case 'pumps':
         return items[currentIndex] === 'propane' ? 'Propane' : `Pompe ${items[currentIndex].replace('P', '')}`;
@@ -145,12 +145,12 @@ const SystemeStationService = () => {
   const handlePreviousSecondary = () => {
     const items = getSecondaryItems();
     const currentIndex = getCurrentSecondaryIndex();
-    
+
     if (items.length > 0) {
       // Calculate previous index with wrap-around
       const previousIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
       const newValue = items[previousIndex];
-      
+
       switch (activeTab) {
         case 'pumps':
           setPompeEtendue(newValue);
@@ -172,12 +172,12 @@ const SystemeStationService = () => {
   const handleNextSecondary = () => {
     const items = getSecondaryItems();
     const currentIndex = getCurrentSecondaryIndex();
-    
+
     if (items.length > 0) {
       // Calculate next index with wrap-around
       const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
       const newValue = items[nextIndex];
-      
+
       switch (activeTab) {
         case 'pumps':
           setPompeEtendue(newValue);
@@ -236,6 +236,52 @@ const SystemeStationService = () => {
     };
     return acc;
   }, {});
+
+  // Extract bill sequences from deposits for the current shift
+  const extractBillSequencesFromDeposits = () => {
+    const sequences = [];
+    const currentShiftDepots = tousDepots[shift] || {};
+    
+    Object.values(currentShiftDepots).forEach(vendorDepots => {
+      vendorDepots.forEach(depot => {
+        // Check if deposit has breakdown (bill sequences)
+        if (depot && typeof depot === 'object' && depot.breakdown) {
+          const breakdown = depot.breakdown;
+          if (typeof breakdown === 'string') {
+            // Parse the breakdown to extract bill counts
+            const parts = breakdown.split(',');
+            parts.forEach(part => {
+              const trimmed = part.trim();
+              
+              // Look for patterns like "5 × 1000 HTG" or "1000 HTG"
+              const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+)\s*HTG/i);
+              if (multiplierMatch) {
+                // It's a multiplier pattern (multiple bills)
+                const multiplier = parseInt(multiplierMatch[1]);
+                const billValue = parseInt(multiplierMatch[2]);
+                
+                // Only include if bill value matches current denomination
+                if (billValue === conditionnementDenom) {
+                  sequences.push(multiplier);
+                }
+              } else {
+                // Single bill
+                const singleMatch = trimmed.match(/(\d+)\s*HTG/i);
+                if (singleMatch) {
+                  const billValue = parseInt(singleMatch[1]);
+                  if (billValue === conditionnementDenom) {
+                    sequences.push(1);
+                  }
+                }
+              }
+            });
+          }
+        }
+      });
+    });
+    
+    return sequences;
+  };
 
   const handlePompeSelection = (selection) => {
     setPompeEtendue(selection);
@@ -411,6 +457,8 @@ const SystemeStationService = () => {
           <div className="p-2 sm:p-6">
             <LiasseCounter
               denomination={conditionnementDenom}
+              externalSequences={extractBillSequencesFromDeposits()}
+              isExternal={true}
             />
           </div>
         );
