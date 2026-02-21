@@ -1,4 +1,4 @@
-// SystemeStationService.jsx (updated with endless/circular navigation)
+// SystemeStationService.jsx (updated to pass rapport shift props)
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -32,6 +32,7 @@ const SystemeStationService = () => {
   const [filterType, setFilterType] = useState('all');
   const [conditionnementDenom, setConditionnementDenom] = useState(1000);
   const [tasksStats, setTasksStats] = useState(null);
+  const [rapportShift, setRapportShift] = useState('AM'); // Add state for rapport tab shift
 
   const {
     toutesDonnees,
@@ -241,7 +242,7 @@ const SystemeStationService = () => {
   const extractBillSequencesFromDeposits = () => {
     const sequences = [];
     const currentShiftDepots = tousDepots[shift] || {};
-    
+
     Object.values(currentShiftDepots).forEach(vendorDepots => {
       vendorDepots.forEach(depot => {
         // Check if deposit has breakdown (bill sequences)
@@ -252,14 +253,14 @@ const SystemeStationService = () => {
             const parts = breakdown.split(',');
             parts.forEach(part => {
               const trimmed = part.trim();
-              
+
               // Look for patterns like "5 × 1000 HTG" or "1000 HTG"
               const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+)\s*HTG/i);
               if (multiplierMatch) {
                 // It's a multiplier pattern (multiple bills)
                 const multiplier = parseInt(multiplierMatch[1]);
                 const billValue = parseInt(multiplierMatch[2]);
-                
+
                 // Only include if bill value matches current denomination
                 if (billValue === conditionnementDenom) {
                   sequences.push(multiplier);
@@ -279,7 +280,7 @@ const SystemeStationService = () => {
         }
       });
     });
-    
+
     return sequences;
   };
 
@@ -446,7 +447,7 @@ const SystemeStationService = () => {
           <div className="p-2 sm:p-6">
             <Rapport
               date={date}
-              shift={shift}
+              shift={rapportShift} // Pass rapportShift instead of main shift
               toutesDonnees={toutesDonnees}
             />
           </div>
@@ -510,6 +511,9 @@ const SystemeStationService = () => {
         // Conditionnement props
         conditionnementDenom={conditionnementDenom}
         setConditionnementDenom={setConditionnementDenom}
+        // Rapport shift props
+        rapportShift={rapportShift}
+        setRapportShift={setRapportShift}
         // Reset functions
         onResetShift={handleReinitialiserShift}
         onResetDay={handleReinitialiserJour}
