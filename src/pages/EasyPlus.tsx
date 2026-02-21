@@ -1,4 +1,4 @@
-// SystemeStationService.jsx (updated - only showing the relevant part for conditionnement tab)
+// SystemeStationService.jsx (complete updated version)
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -10,7 +10,7 @@ import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
-import LiasseCounter from '@/components/easy/LiasseCounter'; 
+import LiasseCounter from '@/components/easy/LiasseCounter';
 import ProForma from '@/components/easy/ProForma'; 
 import { useStationData } from '@/hooks/useStationData';
 
@@ -284,9 +284,7 @@ const SystemeStationService = () => {
         return (
           <div className="p-2 sm:p-6">
             <LiasseCounter
-              vendeurs={vendeurs}
-              vendeurActif={vendeurActif}
-              setVendeurActif={setVendeurActif}
+              denomination={conditionnementDenom}
             />
           </div>
         );
