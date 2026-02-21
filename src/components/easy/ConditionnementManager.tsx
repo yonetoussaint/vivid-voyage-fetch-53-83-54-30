@@ -2,23 +2,114 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, RotateCcw, Check, X, Sparkles } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// OPTIMAL DEPARTAGE ALGORITHM
-// Strategy:
-//   1. Find subsets of sequences whose totals sum exactly to 100 (perfect liasses)
-//   2. Among those, prefer combos that use the fewest sequences (cleaner)
-//   3. Repeat greedily on remaining sequences
-//   4. For whatever's left that can't form 100, output final partial liasse
+// OPTIMAL DEPARTAGE ALGORITHM v2
 //
-// We treat each sequence as a "pile" we can partially take from.
-// Each step we pick from the remaining amounts.
+// Core principle: MAXIMIZE full exhaustions per liasse.
+// A combo is scored by how many sequences it fully exhausts (higher = better).
+// Ties broken by fewest sequences touched (less physical handling).
+//
+// Algorithm per liasse:
+//   1. Enumerate all candidate combos (subsets of sequences) that can reach 100.
+//   2. Score each combo: +10 per fully-exhausted sequence, -1 per sequence used.
+//   3. Pick the highest-scoring combo.
+//   4. If no combo reaches exactly 100 (partial last liasse), greedy largest-first.
 // ─────────────────────────────────────────────────────────────────────────────
+
+const TARGET = 100;
+
+function scoreCombо(combo, target) {
+  // combo: array of { originalIndex, amount }
+  // Returns { score, takes } where takes[i] = how much to take from combo[i]
+  const totalAvail = combo.reduce((s, p) => s + p.amount, 0);
+  if (totalAvail < target) return null; // can't reach target
+
+  // Distribute `target` across combo, SMALLEST first.
+  // Rationale: exhaust small piles fully before touching large ones.
+  // e.g. need 26 more after 74: prefer taking 26 from pile-of-38 (leaves 12)
+  //      over taking 26 from pile-of-58 (leaves 32, wastes a big pile).
+  const sorted = [...combo].map((p, i) => ({ ...p, idx: i }))
+    .sort((a, b) => a.amount - b.amount);
+
+  const takes = new Array(combo.length).fill(0);
+  let rem = target;
+  for (const p of sorted) {
+    if (rem <= 0) break;
+    const take = Math.min(p.amount, rem);
+    takes[p.idx] = take;
+    rem -= take;
+  }
+
+  // Score: +10 per fully exhausted pile, -1 per pile used
+  // Tiebreaker: prefer combos where the partial-take pile is small (low waste on big piles)
+  // We subtract a fraction of the max partial take to penalize splitting large piles.
+  let score = 0;
+  let pilesUsed = 0;
+  let maxPartialAmount = 0; // the size of the pile we split (not fully exhausted)
+  for (let i = 0; i < combo.length; i++) {
+    if (takes[i] > 0) {
+      pilesUsed++;
+      if (takes[i] === combo[i].amount) {
+        score += 10;
+      } else {
+        // partial split — track size of split pile (bigger = worse)
+        if (combo[i].amount > maxPartialAmount) maxPartialAmount = combo[i].amount;
+      }
+    }
+  }
+  score -= pilesUsed;
+  score -= maxPartialAmount / 10000; // small penalty to prefer splitting smaller piles
+
+  return { score, takes };
+}
+
+function findBestCombo(activePiles, target) {
+  const n = activePiles.length;
+  let bestScore = -Infinity;
+  let bestTakes = null;
+  let bestSubset = null;
+
+  // Try all subsets up to size min(n, 7) for performance
+  const maxSize = Math.min(n, 7);
+
+  function enumerate(start, chosen) {
+    // Prune: even taking all remaining can't reach target
+    const availSoFar = chosen.reduce((s, p) => s + p.amount, 0);
+    const availRemaining = activePiles.slice(start).reduce((s, p) => s + p.amount, 0);
+    if (availSoFar + availRemaining < target) return;
+
+    if (chosen.length > 0) {
+      const result = scoreCombо(chosen, target);
+      if (result) {
+        if (result.score > bestScore) {
+          bestScore = result.score;
+          bestTakes = result.takes;
+          bestSubset = [...chosen];
+        }
+      }
+    }
+
+    if (chosen.length >= maxSize) return;
+
+    for (let i = start; i < n; i++) {
+      enumerate(i + 1, [...chosen, activePiles[i]]);
+    }
+  }
+
+  enumerate(0, []);
+
+  if (!bestSubset) return null;
+
+  // Build result: { originalIndex, take }
+  return bestSubset.map((p, i) => ({
+    originalIndex: p.originalIndex,
+    take: bestTakes[i],
+  })).filter(x => x.take > 0);
+}
 
 function getOptimalInstructions(sequences) {
   if (sequences.length === 0) return [];
 
-  // Working copy: array of { originalIndex, amount }
   let piles = sequences.map((amount, i) => ({ originalIndex: i, amount }));
-
   const instructions = [];
   let liasseNum = 1;
 
@@ -26,84 +117,59 @@ function getOptimalInstructions(sequences) {
     const activePiles = piles.filter(p => p.amount > 0);
     if (activePiles.length === 0) break;
 
-    // Try to find an exact subset summing to 100
-    const exactCombo = findExactSubset(activePiles, 100);
-
+    const totalAvail = activePiles.reduce((s, p) => s + p.amount, 0);
     let steps = [];
     let total = 0;
+    let isPerfectCombo = false;
 
-    if (exactCombo) {
-      // Perfect liasse: take exactly from each pile in the combo
-      for (const item of exactCombo) {
-        const pile = piles.find(p => p.originalIndex === item.originalIndex);
-        const take = item.take;
-        steps.push({
-          sequenceNum: pile.originalIndex + 1,
-          take,
-          from: pile.amount,
-          remaining: pile.amount - take,
-        });
-        pile.amount -= take;
-        total += take;
+    if (totalAvail >= TARGET) {
+      // Find optimal combo
+      const combo = findBestCombo(activePiles, TARGET);
+      if (combo) {
+        const exhausted = combo.filter(c => {
+          const pile = activePiles.find(p => p.originalIndex === c.originalIndex);
+          return c.take === pile.amount;
+        }).length;
+        isPerfectCombo = exhausted > 0; // at least one sequence fully used
+
+        for (const item of combo) {
+          const pile = piles.find(p => p.originalIndex === item.originalIndex);
+          steps.push({
+            sequenceNum: pile.originalIndex + 1,
+            take: item.take,
+            from: pile.amount,
+            remaining: pile.amount - item.take,
+          });
+          pile.amount -= item.take;
+          total += item.take;
+        }
       }
     } else {
-      // No exact combo – use greedy from largest piles to minimize fragmentation
-      // Sort active piles by amount descending for a smarter greedy
-      const sorted = [...activePiles].sort((a, b) => b.amount - a.amount);
-      let needed = 100;
-
-      for (const item of sorted) {
-        if (needed <= 0) break;
-        const pile = piles.find(p => p.originalIndex === item.originalIndex);
-        if (pile.amount <= 0) continue;
-
-        const take = Math.min(pile.amount, needed);
+      // Last partial liasse: take everything remaining
+      for (const p of activePiles) {
+        const pile = piles.find(pp => pp.originalIndex === p.originalIndex);
         steps.push({
           sequenceNum: pile.originalIndex + 1,
-          take,
+          take: pile.amount,
           from: pile.amount,
-          remaining: pile.amount - take,
+          remaining: 0,
         });
-        pile.amount -= take;
-        needed -= take;
-        total += take;
+        total += pile.amount;
+        pile.amount = 0;
       }
     }
 
     if (total > 0) {
-      instructions.push({
-        liasseNum,
-        steps,
-        total,
-        isComplete: total === 100,
-        isPerfectCombo: !!exactCombo,
-      });
+      instructions.push({ liasseNum, steps, total, isComplete: total === TARGET, isPerfectCombo });
       liasseNum++;
-    } else {
-      break;
-    }
+    } else break;
   }
 
   return instructions;
 }
 
-/**
- * Find a subset of piles (possibly taking partial amounts from each)
- * whose contributions sum to exactly `target`.
- *
- * We model this as: for each pile, we can take 0..amount from it.
- * We want to pick takes t_i ∈ [0, pile.amount] such that Σt_i = target.
- *
- * This is a bounded integer knapsack. For practical sizes (sequences < 20,
- * amounts < a few thousand) we use a smart subset search:
- *
- * Phase 1: Can any single pile cover target exactly? (take exactly 100)
- * Phase 2: Can any two piles combine to exactly 100?
- * Phase 3: Subset-sum on floored piles (integer, bounded)
- *
- * Returns array of { originalIndex, take } or null.
- */
-function findExactSubset(activePiles, target) {
+// Dead code kept for reference — replaced by findBestCombo above
+function _findExactSubset_UNUSED(activePiles, target) {
   // Phase 1: single pile ≥ target → take exactly target from it
   for (const p of activePiles) {
     if (p.amount >= target) {
