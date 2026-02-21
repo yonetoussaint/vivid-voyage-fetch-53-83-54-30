@@ -88,7 +88,7 @@ const MainLayout = ({
   const vendorTabs = [
     {
     id: null,
-    label: 'Tous', // Changed from 'Tous les Vendeurs'
+    label: 'Tous',
     icon: <Users className="w-4 h-4" />,
     activeColor: 'bg-blue-600 text-white border-blue-600',
     badge: vendeurs?.length || 0,
