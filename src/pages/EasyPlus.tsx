@@ -10,7 +10,7 @@ import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
-import Liasse from '@/components/easy/Liasse';
+import LiasseCounter from '@/components/easy/Liasse'; // Import as LiasseCounter
 import ProForma from '@/components/easy/ProForma'; 
 import { useStationData } from '@/hooks/useStationData';
 
@@ -189,19 +189,19 @@ const SystemeStationService = () => {
           </div>
         );
 
-case 'conditionnement':
-  return (
-    <div className="p-2 sm:p-6">
-      <ConditionnementManager
-        shift={shift}
-        date={date}
-        vendeurs={vendeurs}
-        tousDepots={tousDepots}
-        onConditionnementUpdate={setConditionnements}
-        selectedDenomination={conditionnementDenom}
-      />
-    </div>
-  );
+      case 'conditionnement':
+        return (
+          <div className="p-2 sm:p-6">
+            <ConditionnementManager
+              shift={shift}
+              date={date}
+              vendeurs={vendeurs}
+              tousDepots={tousDepots}
+              onConditionnementUpdate={setConditionnements}
+              selectedDenomination={conditionnementDenom}
+            />
+          </div>
+        );
 
       case 'depots':
         return (
@@ -283,7 +283,7 @@ case 'conditionnement':
       case 'liasse':
         return (
           <div className="p-2 sm:p-6">
-            <Liasse
+            <LiasseCounter
               shift={shift}
               date={date}
               vendeurs={vendeurs}
