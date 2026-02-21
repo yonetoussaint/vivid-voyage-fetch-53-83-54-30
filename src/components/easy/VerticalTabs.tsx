@@ -10,7 +10,8 @@ import {
   FileText,
   Flame,
   Layers,
-  FileSpreadsheet // ADD THIS IMPORT for ProForma icon
+  FileSpreadsheet,
+  Sun // ADD THIS IMPORT for Day icon
 } from 'lucide-react';
 
 const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
@@ -51,7 +52,13 @@ const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
       icon: <Layers className="w-5 h-5" />, 
       color: 'bg-emerald-100 text-emerald-700'
     },
-    // ADD THIS NEW TAB for ProForma/Invoice
+    // ADD THIS NEW TAB for Day
+    { 
+      id: 'day', 
+      label: 'Day', 
+      icon: <Sun className="w-5 h-5" />, 
+      color: 'bg-amber-100 text-amber-700'
+    },
     { 
       id: 'proforma', 
       label: 'Facture Propane', 
@@ -114,7 +121,8 @@ const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
                      tab.color.includes('yellow') ? 'border-yellow-500' :
                      tab.color.includes('orange') ? 'border-orange-500' :
                      tab.color.includes('emerald') ? 'border-emerald-500' :
-                     tab.color.includes('cyan') ? 'border-cyan-500' : // ADD THIS LINE
+                     tab.color.includes('amber') ? 'border-amber-500' : // ADD THIS LINE
+                     tab.color.includes('cyan') ? 'border-cyan-500' :
                      tab.color.includes('red') ? 'border-red-500' :
                      tab.color.includes('teal') ? 'border-teal-500' :
                      tab.color.includes('indigo') ? 'border-indigo-500' : 'border-pink-500'}`
@@ -131,7 +139,8 @@ const VerticalTabs = ({ activeTab, onTabChange, isMobile }) => {
                     tab.color.includes('yellow') ? 'bg-yellow-500' :
                     tab.color.includes('orange') ? 'bg-orange-500' :
                     tab.color.includes('emerald') ? 'bg-emerald-500' :
-                    tab.color.includes('cyan') ? 'bg-cyan-500' : // ADD THIS LINE
+                    tab.color.includes('amber') ? 'bg-amber-500' : // ADD THIS LINE
+                    tab.color.includes('cyan') ? 'bg-cyan-500' :
                     tab.color.includes('red') ? 'bg-red-500' :
                     tab.color.includes('teal') ? 'bg-teal-500' :
                     tab.color.includes('indigo') ? 'bg-indigo-500' : 'bg-pink-500'
