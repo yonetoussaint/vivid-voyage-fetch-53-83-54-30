@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, CheckCircle2, TrendingUp, AlertCircle, Users, Fuel, DollarSign, Shield, Trash2, Plus, Trophy, Award, Target, Info, Check, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Clock, CheckCircle2, TrendingUp, AlertCircle, Users, Fuel, DollarSign, Shield, Trash2, Plus, Trophy, Award, Target, Info, Check, X } from 'lucide-react';
 import { checklistSections } from '@/data/checklistData';
-import { getPriorityColor, formatTime, getEstimatedTime, getRemainingTime, getCurrentTimePosition, getTimeFromPosition, isCurrentTimeInEvent, formatTimeDisplay } from '@/utils/helpers';
+import { getPriorityColor, formatTime, getEstimatedTime, getRemainingTime, getCurrentTimePosition } from '@/utils/helpers';
 
 export default function Daily() {
   const [checkedItems, setCheckedItems] = useState({});
@@ -18,33 +18,30 @@ export default function Daily() {
   const [timerSeconds, setTimerSeconds] = useState({});
   const [showTimeIndicator, setShowTimeIndicator] = useState(true);
   const [autoScroll, setAutoScroll] = useState(true);
-  const calendarRef = useRef(null);
+  const sectionsRef = useRef([]);
   const timeIndicatorRef = useRef(null);
 
-  // Update current time every second for smooth indicator movement
+  // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 1000); // Update every second for smooth movement
+    }, 1000);
     
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-scroll to keep time indicator visible
+  // Auto-scroll to current section
   useEffect(() => {
-    if (autoScroll && calendarRef.current && timeIndicatorRef.current) {
-      const calendarRect = calendarRef.current.getBoundingClientRect();
-      const indicatorRect = timeIndicatorRef.current.getBoundingClientRect();
-      
-      // Check if indicator is outside visible area
-      if (indicatorRect.top < calendarRect.top || indicatorRect.bottom > calendarRect.bottom) {
-        timeIndicatorRef.current.scrollIntoView({
+    if (autoScroll && showTimeIndicator) {
+      const currentSection = getCurrentSection();
+      if (currentSection && sectionsRef.current[currentSection.index]) {
+        sectionsRef.current[currentSection.index].scrollIntoView({
           behavior: 'smooth',
           block: 'center'
         });
       }
     }
-  }, [currentTime, autoScroll]);
+  }, [currentTime, autoScroll, showTimeIndicator]);
 
   // Load saved data on mount
   useEffect(() => {
@@ -151,6 +148,24 @@ export default function Daily() {
     }
   };
 
+  // Get current section based on time
+  const getCurrentSection = () => {
+    const timePosition = getCurrentTimePosition();
+    const hour = timePosition.hours;
+    const minute = timePosition.minutes;
+
+    // Map hours to sections
+    if (hour >= 3 && hour < 5) return { index: 0, title: 'Morning Self-Care' };
+    if (hour >= 5 && hour < 7) return { index: 1, title: 'Opening' };
+    if (hour >= 7 && hour < 12) return { index: 2, title: 'Morning Operations' };
+    if (hour >= 12 && hour < 15) return { index: 3, title: 'Midday' };
+    if (hour >= 15 && hour < 18) return { index: 4, title: 'Afternoon' };
+    if (hour >= 18 && hour < 21) return { index: 5, title: 'Evening' };
+    if (hour >= 21 || hour < 3) return { index: 6, title: 'Night Security' };
+    
+    return null;
+  };
+
   const toggleItem = (id) => {
     setCheckedItems(prev => ({
       ...prev,
@@ -240,42 +255,84 @@ export default function Daily() {
   const completedItems = Object.values(checkedItems).filter(Boolean).length;
   const completionPercentage = Math.round((completedItems / totalItems) * 100);
   
-  // Get current time position for the indicator
   const timePosition = getCurrentTimePosition();
-
-  // Group tasks by hour for the calendar view
-  const getTasksByHour = () => {
-    const tasksByHour = {};
-    
-    getAllTasks().forEach(task => {
-      // Extract estimated time or assign default hour based on section
-      let hour = 0;
-      if (task.id.includes('selfcare')) hour = 3; // Morning self-care starts at 3:30
-      else if (task.id.includes('opening')) hour = 5;
-      else if (task.id.includes('morning')) hour = 7;
-      else if (task.id.includes('midday')) hour = 12;
-      else if (task.id.includes('afternoon')) hour = 15;
-      else if (task.id.includes('evening')) hour = 18;
-      else if (task.id.includes('night')) hour = 21;
-      else hour = 12; // Default
-      
-      if (!tasksByHour[hour]) {
-        tasksByHour[hour] = [];
-      }
-      tasksByHour[hour].push(task);
-    });
-    
-    return tasksByHour;
-  };
-
-  const tasksByHour = getTasksByHour();
+  const currentSection = getCurrentSection();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-2 sm:p-4 md:p-6">
       <div className="max-w-5xl mx-auto">
-        {/* Header with Time Controls */}
+        {/* Win The Day - Motivation Banner */}
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl shadow-xl p-4 sm:p-6 mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 flex items-center gap-2">
+            <Trophy className="w-7 h-7" />
+            Win Today = Win The Week = Win The Year
+          </h2>
+
+          {/* Real-Time Header */}
+          <div className="mb-4 p-4 bg-black/30 rounded-lg backdrop-blur">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                  <span className="text-xl font-bold">{timePosition.timeString}</span>
+                </div>
+                <div className="h-8 w-px bg-white/30" />
+                <div>
+                  <span className="text-sm opacity-90">Current Phase:</span>
+                  <span className="ml-2 font-bold text-yellow-300">
+                    {currentSection?.title || 'Night Security'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowTimeIndicator(!showTimeIndicator)}
+                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                    showTimeIndicator 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  {showTimeIndicator ? 'Hide Time Guide' : 'Show Time Guide'}
+                </button>
+                <button
+                  onClick={() => setAutoScroll(!autoScroll)}
+                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                    autoScroll 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  {autoScroll ? 'Auto-Follow On' : 'Auto-Follow Off'}
+                </button>
+              </div>
+            </div>
+
+            {/* Day Progress Bar */}
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-sm mb-1">
+                <span className="opacity-90">Day Progress</span>
+                <span className="font-bold">{Math.round(timePosition.percentage)}%</span>
+              </div>
+              <div className="relative h-2 bg-white/20 rounded-full overflow-hidden">
+                <div 
+                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-yellow-400 to-red-500 transition-all duration-1000"
+                  style={{ width: `${timePosition.percentage}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-sm sm:text-base">
+            <p className="font-semibold text-purple-100">
+              If you complete this checklist today, you're not just "getting through the day." You're building an empire.
+            </p>
+          </div>
+        </div>
+
+        {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 mb-4 sm:mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div className="flex-1 min-w-0">
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
                 Gas Station CEO Daily Checklist
@@ -321,43 +378,6 @@ export default function Daily() {
             </div>
           </div>
 
-          {/* Real-Time Indicator Controls */}
-          <div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                <span className="text-sm font-medium text-gray-700">
-                  Current Time: {timePosition.timeString}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowTimeIndicator(!showTimeIndicator)}
-                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                    showTimeIndicator 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  {showTimeIndicator ? 'Hide Indicator' : 'Show Indicator'}
-                </button>
-                <button
-                  onClick={() => setAutoScroll(!autoScroll)}
-                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                    autoScroll 
-                      ? 'bg-green-500 text-white' 
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  {autoScroll ? 'Auto-Scroll On' : 'Auto-Scroll Off'}
-                </button>
-              </div>
-            </div>
-            <div className="text-xs text-gray-500">
-              {Math.round(timePosition.percentage)}% through day
-            </div>
-          </div>
-
           {/* Next Task Indicator - Focus Mode */}
           {focusMode && getNextTask() && (
             <div className="mb-4 p-4 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg text-white">
@@ -377,7 +397,7 @@ export default function Daily() {
           )}
 
           {/* Progress Bar */}
-          <div className="mt-4">
+          <div className="mt-6">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-700">Daily Progress</span>
               <span className="text-sm font-bold text-gray-800">{completedItems} / {totalItems} tasks</span>
@@ -426,16 +446,6 @@ export default function Daily() {
                   🎉 Perfect!
                 </div>
               )}
-              {completionPercentage >= 90 && completionPercentage < 100 && (
-                <div className="mt-1 sm:mt-2 text-xs font-semibold text-blue-600">
-                  ⭐ Almost!
-                </div>
-              )}
-              {completionPercentage >= 80 && completionPercentage < 90 && (
-                <div className="mt-1 sm:mt-2 text-xs font-semibold text-amber-600">
-                  💪 Great!
-                </div>
-              )}
             </div>
 
             {/* Current Streak */}
@@ -450,19 +460,6 @@ export default function Daily() {
               <div className="mt-1 sm:mt-2 text-xs text-gray-500 hidden md:block">
                 {streak === 0 ? '80%+ to start' : 'days of 80%+'}
               </div>
-              <div className="mt-1 text-xs text-gray-500 md:hidden">
-                {streak === 0 ? 'Get 80%+' : 'days'}
-              </div>
-              {streak >= 7 && (
-                <div className="mt-1 sm:mt-2 text-xs font-semibold text-orange-600">
-                  🔥 Fire!
-                </div>
-              )}
-              {streak >= 30 && (
-                <div className="mt-1 sm:mt-2 text-xs font-semibold text-red-600">
-                  🚀 Beast!
-                </div>
-              )}
             </div>
 
             {/* Personal Best */}
@@ -474,12 +471,6 @@ export default function Daily() {
               <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-600">
                 {bestScore}%
               </div>
-              <div className="mt-1 sm:mt-2 text-xs text-gray-500 hidden md:block">
-                {bestScore === completionPercentage && completionPercentage > 0 ? 'New record! 🎯' : 'Your highest'}
-              </div>
-              <div className="mt-1 text-xs text-gray-500 md:hidden">
-                {bestScore === completionPercentage && completionPercentage > 0 ? '🎯 New!' : 'Record'}
-              </div>
               {bestScore === 100 && (
                 <div className="mt-1 sm:mt-2 text-xs font-semibold text-purple-600">
                   👑 Champ!
@@ -487,140 +478,35 @@ export default function Daily() {
               )}
             </div>
           </div>
-
-          {/* Motivational Message */}
-          <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg text-white text-center">
-            <p className="font-semibold text-xs sm:text-sm md:text-base">
-              {completionPercentage >= 100 ? '🏆 Perfect execution! You\'re a champion!' :
-               completionPercentage >= 90 ? '🌟 Outstanding! Keep pushing!' :
-               completionPercentage >= 80 ? '💪 You\'re doing great! Finish strong!' :
-               completionPercentage >= 50 ? '📈 Good progress! Keep going!' :
-               completionPercentage >= 25 ? '🎯 You\'re on your way! Stay focused!' :
-               '🚀 Let\'s get started! Every task counts!'}
-            </p>
-          </div>
         </div>
 
-        {/* Calendar Day View with Real-Time Indicator */}
-        <div 
-          ref={calendarRef}
-          className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 mb-6 relative overflow-hidden"
-          style={{ height: '600px', overflowY: 'auto' }}
-        >
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-blue-500" />
-            Day Timeline
-            <span className="text-sm font-normal text-gray-500 ml-2">
-              ({timePosition.timeString})
-            </span>
-          </h2>
-
-          {/* Time Labels Column */}
-          <div className="relative">
-            {/* Hour markers */}
-            {Array.from({ length: 24 }, (_, i) => {
-              const hour = i;
-              const label = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
-              const topPosition = (hour / 24) * 100;
-              
-              return (
-                <div
-                  key={hour}
-                  className="absolute left-0 w-full border-t border-gray-200"
-                  style={{ top: `${topPosition}%` }}
-                >
-                  <span className="absolute -top-3 left-2 text-xs text-gray-500 bg-white px-1">
-                    {label}
-                  </span>
-                </div>
-              );
-            })}
-
-            {/* Real-Time Indicator Line */}
-            {showTimeIndicator && (
-              <div
-                ref={timeIndicatorRef}
-                className="absolute left-0 right-0 pointer-events-none z-20 transition-all duration-1000 ease-linear"
-                style={{ top: `${timePosition.percentage}%` }}
-              >
-                {/* Red line */}
-                <div className="relative w-full">
-                  <div className="absolute left-0 right-0 h-0.5 bg-red-500 shadow-lg" />
-                  
-                  {/* Time bubble */}
-                  <div className="absolute -left-2 -top-3 transform -translate-x-full bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap">
-                    {timePosition.timeString}
-                  </div>
-                  
-                  {/* Circle on the line */}
-                  <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg" />
-                </div>
-              </div>
-            )}
-
-            {/* Task blocks */}
-            <div className="relative ml-16" style={{ height: '2400px' }}> {/* 100px per hour */}
-              {Object.entries(tasksByHour).map(([hour, tasks]) => {
-                const topPosition = (parseInt(hour) / 24) * 100;
-                const hourNum = parseInt(hour);
-                const isCurrentHour = hourNum === timePosition.hours;
+        {/* Checklist Sections with Time Indicators */}
+        <div className="space-y-4 relative">
+          {/* Global Time Indicator Line */}
+          {showTimeIndicator && currentSection && (
+            <div 
+              ref={timeIndicatorRef}
+              className="absolute left-0 right-0 pointer-events-none z-10 transition-all duration-1000"
+              style={{ 
+                top: `${(currentSection.index * 100) / checklistSections.length}%`,
+                transform: 'translateY(-50%)'
+              }}
+            >
+              <div className="relative">
+                {/* Red line across the page */}
+                <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-red-500 to-red-300 shadow-lg" />
                 
-                return (
-                  <div
-                    key={hour}
-                    className={`absolute left-0 right-0 p-2 rounded-lg transition-all ${
-                      isCurrentHour ? 'bg-blue-50 border-2 border-blue-300' : ''
-                    }`}
-                    style={{ top: `${topPosition}%`, minHeight: '80px' }}
-                  >
-                    <div className="text-xs font-semibold text-gray-500 mb-1">
-                      {hourNum === 0 ? '12 AM' : hourNum < 12 ? `${hourNum} AM` : hourNum === 12 ? '12 PM' : `${hourNum - 12} PM`}
-                    </div>
-                    <div className="space-y-1">
-                      {tasks.map(task => (
-                        <div
-                          key={task.id}
-                          className={`text-xs p-1 rounded ${
-                            checkedItems[task.id]
-                              ? 'bg-green-100 line-through text-gray-500'
-                              : task.priority === 'high'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100'
-                          }`}
-                        >
-                          {task.task}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+                {/* Time bubble */}
+                <div className="absolute -left-2 -top-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg whitespace-nowrap animate-pulse">
+                  ⏰ {timePosition.timeString} - {currentSection.title}
+                </div>
+                
+                {/* Circle indicator */}
+                <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg" />
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Scroll Controls */}
-          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-2">
-            <button
-              onClick={() => {
-                calendarRef.current?.scrollBy({ top: -100, behavior: 'smooth' });
-              }}
-              className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100"
-            >
-              <ChevronUp className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => {
-                calendarRef.current?.scrollBy({ top: 100, behavior: 'smooth' });
-              }}
-              className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Checklist Sections */}
-        <div className="space-y-4">
           {checklistSections.map((section, idx) => {
             const sectionCustomTasks = customTasks.filter(task => task.section === idx);
             const allItems = [...section.items, ...sectionCustomTasks];
@@ -628,25 +514,70 @@ export default function Daily() {
             const sectionCompleted = allItems.filter(item => checkedItems[item.id]).length;
             const sectionTotal = allItems.length;
             const Icon = section.icon;
+            
+            // Check if this is the current section
+            const isCurrentSection = currentSection?.index === idx;
+            
+            // Get section time range
+            const getTimeRange = () => {
+              switch(idx) {
+                case 0: return '3:30 AM - 4:30 AM';
+                case 1: return '5:00 AM - 7:00 AM';
+                case 2: return '7:00 AM - 12:00 PM';
+                case 3: return '12:00 PM - 3:00 PM';
+                case 4: return '3:00 PM - 6:00 PM';
+                case 5: return '6:00 PM - 9:00 PM';
+                case 6: return '9:00 PM - 12:00 AM';
+                case 7: return 'Weekly';
+                default: return '';
+              }
+            };
 
             return (
-              <div key={idx} className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <div className={`${section.color} p-3 md:p-4 text-white flex items-center justify-between gap-2`}>
-                  <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-                    <Icon className="w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
-                    <h2 className="text-sm md:text-xl font-bold truncate">{section.title}</h2>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => setAddingToSection(addingToSection === idx ? null : idx)}
-                      className="p-1 md:p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-                      title="Add custom task"
-                    >
-                      <Plus className="w-4 h-4 md:w-5 md:h-5" />
-                    </button>
-                    <div className="bg-white/20 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-semibold">
-                      {sectionCompleted}/{sectionTotal}
+              <div
+                key={idx}
+                ref={el => sectionsRef.current[idx] = el}
+                className={`bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-500 ${
+                  isCurrentSection && showTimeIndicator
+                    ? 'ring-4 ring-red-400 ring-opacity-50 scale-101' 
+                    : ''
+                }`}
+              >
+                <div className={`${section.color} p-3 md:p-4 text-white`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                      <Icon className="w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h2 className="text-sm md:text-xl font-bold truncate">{section.title}</h2>
+                        <p className="text-xs opacity-90 mt-0.5">{getTimeRange()}</p>
+                      </div>
                     </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {isCurrentSection && showTimeIndicator && (
+                        <div className="px-2 py-1 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold animate-pulse flex items-center gap-1">
+                          <div className="w-2 h-2 bg-red-600 rounded-full animate-ping" />
+                          <span>NOW</span>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setAddingToSection(addingToSection === idx ? null : idx)}
+                        className="p-1 md:p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                        title="Add custom task"
+                      >
+                        <Plus className="w-4 h-4 md:w-5 md:h-5" />
+                      </button>
+                      <div className="bg-white/20 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-semibold">
+                        {sectionCompleted}/{sectionTotal}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Section Progress Bar */}
+                  <div className="mt-2 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-white transition-all duration-500"
+                      style={{ width: `${(sectionCompleted / sectionTotal) * 100}%` }}
+                    />
                   </div>
                 </div>
 
@@ -697,8 +628,6 @@ export default function Daily() {
                             ? 'bg-purple-100 border-2 border-purple-500 shadow-lg scale-101'
                             : checkedItems[item.id]
                             ? 'bg-green-50 border-2 border-green-200'
-                            : section.title.includes('Self-Care')
-                            ? 'bg-gray-50 hover:bg-green-50 border-2 border-green-300'
                             : 'bg-gray-50 hover:bg-blue-50 border-2 border-blue-300'
                         }`}
                       >
@@ -720,19 +649,6 @@ export default function Daily() {
 
                             {/* Tags Row */}
                             <div className="flex flex-wrap gap-1.5 mt-2">
-                              {/* Type Badge - Habit vs Task */}
-                              {idx === 0 && section.title.includes('Self-Care') && !checkedItems[item.id] && (
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1">
-                                  <TrendingUp className="w-3 h-3" />
-                                  <span>Habit</span>
-                                </span>
-                              )}
-                              {idx === 0 && !section.title.includes('Self-Care') && !section.title.includes('Weekly') && !checkedItems[item.id] && (
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  <span>Task</span>
-                                </span>
-                              )}
                               {item.priority === 'high' && !checkedItems[item.id] && !isNextTask && (
                                 <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                                   <AlertCircle className="w-3 h-3" />
@@ -751,24 +667,16 @@ export default function Daily() {
                                 (() => {
                                   const remaining = getRemainingTime(item.id, timerSeconds, item);
                                   const estimated = getEstimatedTime(item);
-                                  const percentLeft = (remaining / estimated) * 100;
-                                  const isWarning = percentLeft <= 50 && percentLeft > 20;
-                                  const isUrgent = percentLeft <= 20;
                                   const isOvertime = remaining === 0;
                                   
                                   return (
                                     <span className={`text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 animate-pulse ${
                                       isOvertime 
                                         ? 'bg-red-100 text-red-700 border border-red-300' 
-                                        : isUrgent 
-                                        ? 'bg-orange-100 text-orange-700 border border-orange-300'
-                                        : isWarning
-                                        ? 'bg-yellow-100 text-yellow-700 border border-yellow-300'
                                         : 'bg-purple-100 text-purple-700 border border-purple-300'
                                     }`}>
                                       <Clock className="w-3 h-3" />
                                       <span>{isOvertime ? '+' : ''}{formatTime(isOvertime ? (timerSeconds[item.id] || 0) - estimated : remaining)}</span>
-                                      {isOvertime && <span className="text-xs">OVER</span>}
                                     </span>
                                   );
                                 })()
@@ -780,7 +688,6 @@ export default function Daily() {
                         {/* Action Buttons */}
                         <div className="px-2 sm:px-3 pb-2 sm:pb-3">
                           <div className="flex flex-wrap gap-1.5">
-                            {/* Mark Complete Button */}
                             {!checkedItems[item.id] ? (
                               <button
                                 onClick={() => {
@@ -805,7 +712,6 @@ export default function Daily() {
                               </button>
                             )}
 
-                            {/* Info Button */}
                             {item.why && (
                               <button
                                 onClick={() => toggleWhy(item.id)}
@@ -820,7 +726,6 @@ export default function Daily() {
                               </button>
                             )}
 
-                            {/* Delete Button - Custom Tasks Only */}
                             {isCustomTask && (
                               <button
                                 onClick={() => deleteCustomTask(item.id)}
@@ -837,7 +742,6 @@ export default function Daily() {
                         {showWhy && item.why && (
                           <div className="px-3 pb-3 pt-0">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                              {/* Why */}
                               <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded text-sm text-gray-700">
                                 <p className="font-semibold text-blue-900 mb-1 flex items-center gap-2">
                                   <Info className="w-4 h-4" />
@@ -846,7 +750,6 @@ export default function Daily() {
                                 <p>{item.why}</p>
                               </div>
                               
-                              {/* Advice */}
                               {item.advice && (
                                 <div className="p-3 bg-green-50 border-l-4 border-green-500 rounded text-sm text-gray-700">
                                   <p className="font-semibold text-green-900 mb-1 flex items-center gap-1">
@@ -854,20 +757,9 @@ export default function Daily() {
                                     How to do it right:
                                   </p>
                                   <p>{item.advice}</p>
-                                  {item.adviceSteps && item.adviceSteps.length > 0 && (
-                                    <ol className="mt-2 space-y-1 text-xs">
-                                      {item.adviceSteps.map((step, idx) => (
-                                        <li key={idx} className="flex gap-2">
-                                          <span className="font-semibold text-green-800">{idx + 1}.</span>
-                                          <span>{step}</span>
-                                        </li>
-                                      ))}
-                                    </ol>
-                                  )}
                                 </div>
                               )}
                               
-                              {/* Tools Needed */}
                               {item.tools && (
                                 <div className="p-3 bg-amber-50 border-l-4 border-amber-500 rounded text-sm text-gray-700">
                                   <p className="font-semibold text-amber-900 mb-1 flex items-center gap-1">
@@ -891,27 +783,22 @@ export default function Daily() {
 
         {/* Footer */}
         <div className="mt-6 sm:mt-8 space-y-4">
-          {/* Completion Victory Message */}
           {completionPercentage === 100 && (
             <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl p-6 text-center shadow-xl animate-pulse">
               <h3 className="text-2xl sm:text-3xl font-bold mb-2">🏆 YOU WON TODAY 🏆</h3>
               <p className="text-lg mb-2">100% Complete. Perfect Execution.</p>
-              <p className="text-sm opacity-90">Tomorrow, you'll do it again. That's how champions are built.</p>
             </div>
           )}
           
-          {/* Progress Encouragement */}
           {completionPercentage >= 80 && completionPercentage < 100 && (
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-4 text-center shadow-lg">
               <p className="font-bold text-lg">🔥 {completionPercentage}% - You're Almost There!</p>
-              <p className="text-sm opacity-90 mt-1">Finish strong. Winners don't leave things 90% done.</p>
             </div>
           )}
 
           <div className="text-center text-gray-500 text-sm space-y-1">
             <p>Click any task to mark it complete. Progress saves automatically.</p>
-            <p className="font-semibold text-purple-600">💡 Enable Focus Mode for a no-willpower system - auto-highlights your next task!</p>
-            <p>Checklist resets daily at midnight.</p>
+            <p className="font-semibold text-purple-600">💡 The red line shows you what you should be doing RIGHT NOW</p>
           </div>
         </div>
       </div>
