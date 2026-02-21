@@ -14,7 +14,8 @@ const DepositsSummary = ({
   onDeleteDeposit,
   editingDeposit,
   isEditingThisDeposit,
-  exchangeRate = 132
+  exchangeRate = 132,
+  isReadOnly = false // Add this prop with default false
 }) => {
   if (!depots || depots.length === 0) return null;
 
@@ -34,7 +35,7 @@ const DepositsSummary = ({
   // Helper function to format timestamp as "12:34 AM"
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
-    
+
     try {
       if (typeof timestamp === 'string') {
         const timeMatch = timestamp.match(/(\d{1,2}):(\d{2})/);
@@ -45,7 +46,7 @@ const DepositsSummary = ({
           const displayHours = hours % 12 || 12;
           return `${displayHours}:${minutes} ${ampm}`;
         }
-        
+
         const hMatch = timestamp.match(/(\d{1,2})h(\d{2})/);
         if (hMatch) {
           const hours = parseInt(hMatch[1]);
@@ -54,13 +55,13 @@ const DepositsSummary = ({
           const displayHours = hours % 12 || 12;
           return `${displayHours}:${minutes} ${ampm}`;
         }
-        
+
         const ampmMatch = timestamp.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
         if (ampmMatch) {
           return timestamp;
         }
       }
-      
+
       const date = new Date(timestamp);
       if (!isNaN(date.getTime())) {
         return date.toLocaleTimeString('en-US', {
@@ -69,7 +70,7 @@ const DepositsSummary = ({
           hour12: true
         });
       }
-      
+
       return timestamp;
     } catch (error) {
       console.error('Error formatting timestamp:', error, timestamp);
@@ -309,13 +310,13 @@ const DepositsSummary = ({
   // Helper function to get timestamp from deposit
   const getDepositTimestamp = (depot) => {
     if (!depot || typeof depot !== 'object') return null;
-    
+
     const timestamp = depot.timestamp || depot.createdAt || depot.date || depot.time;
-    
+
     if (!timestamp && depot.sequences && Array.isArray(depot.sequences) && depot.sequences.length > 0) {
       return depot.sequences[0].timestamp;
     }
-    
+
     return timestamp;
   };
 
@@ -444,7 +445,7 @@ const DepositsSummary = ({
                               </div>
                             )}
                           </div>
-                          
+
                           {/* Timestamp */}
                           {formattedTime && (
                             <span className="text-[11px] text-gray-500 dark:text-gray-400">
@@ -455,29 +456,31 @@ const DepositsSummary = ({
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => onEditDeposit?.(vendeur, originalIndex)}
-                        className={`
-                          p-2 rounded-lg transition-colors shadow-sm
-                          ${isEditing
-                            ? 'bg-amber-500 text-white'
-                            : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30'
-                          }
-                        `}
-                        title="Éditer ce dépôt"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        onClick={() => onDeleteDeposit?.(vendeur, originalIndex)}
-                        className="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors shadow-sm"
-                        title="Supprimer ce dépôt"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                    {/* Action Buttons - Only show if not in read-only mode */}
+                    {!isReadOnly && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => onEditDeposit?.(vendeur, originalIndex)}
+                          className={`
+                            p-2 rounded-lg transition-colors shadow-sm
+                            ${isEditing
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                            }
+                          `}
+                          title="Éditer ce dépôt"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => onDeleteDeposit?.(vendeur, originalIndex)}
+                          className="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors shadow-sm"
+                          title="Supprimer ce dépôt"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Breakdown */}
