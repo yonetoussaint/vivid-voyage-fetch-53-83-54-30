@@ -74,7 +74,7 @@ const TabSelector = ({
             }
             ${tab.className || ''}
           `}
-          style={{ borderRadius: '20px', ...tab.style }}
+          style={tab.style}
         >
           {tab.icon && (
             <span className={currentSize.icon}>{tab.icon}</span>
@@ -100,7 +100,6 @@ const TabSelector = ({
               : 'bg-transparent text-slate-600 border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
             }
           `}
-          style={{ borderRadius: '20px' }}
         >
           <span className={currentSize.icon}>{propaneIcon}</span>
           {propaneLabel}
