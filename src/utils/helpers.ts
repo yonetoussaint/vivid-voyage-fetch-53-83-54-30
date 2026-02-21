@@ -19,17 +19,16 @@ export const formatTime = (seconds) => {
 };
 
 export const getEstimatedTime = (item) => {
-  // Default estimated times based on task type
-  if (item.estimatedMinutes) return item.estimatedMinutes * 60; // Convert to seconds
-  if (item.task.includes('Brush teeth')) return 120; // 2 minutes
-  if (item.task.includes('Floss')) return 60; // 1 minute
-  if (item.task.includes('Shower')) return 600; // 10 minutes
-  if (item.task.includes('Shampoo')) return 180; // 3 minutes
-  if (item.task.includes('Shave')) return 300; // 5 minutes
-  if (item.task.includes('Check') || item.task.includes('Verify')) return 180; // 3 minutes
-  if (item.task.includes('Review')) return 300; // 5 minutes
-  if (item.task.includes('Wash')) return 60; // 1 minute
-  return 300; // Default 5 minutes
+  if (item.estimatedMinutes) return item.estimatedMinutes * 60;
+  if (item.task.includes('Brush teeth')) return 120;
+  if (item.task.includes('Floss')) return 60;
+  if (item.task.includes('Shower')) return 600;
+  if (item.task.includes('Shampoo')) return 180;
+  if (item.task.includes('Shave')) return 300;
+  if (item.task.includes('Check') || item.task.includes('Verify')) return 180;
+  if (item.task.includes('Review')) return 300;
+  if (item.task.includes('Wash')) return 60;
+  return 300;
 };
 
 export const getRemainingTime = (taskId, timerSeconds, item) => {
@@ -39,27 +38,62 @@ export const getRemainingTime = (taskId, timerSeconds, item) => {
   return remaining;
 };
 
-export const getDayProgress = () => {
+// Get current time position for calendar
+export const getCurrentTimePosition = () => {
   const now = new Date();
   const hours = now.getHours();
   const minutes = now.getMinutes();
+  const seconds = now.getSeconds();
+  
+  // Total minutes since midnight
+  const totalMinutes = hours * 60 + minutes + seconds / 60;
   const totalMinutesInDay = 24 * 60;
-  const currentMinutes = hours * 60 + minutes;
-  const progressPercentage = (currentMinutes / totalMinutesInDay) * 100;
   
-  const segments = [
-    { start: 0, end: 6, label: 'Night', color: 'from-indigo-900 to-purple-900' },
-    { start: 6, end: 12, label: 'Morning', color: 'from-orange-400 to-yellow-400' },
-    { start: 12, end: 18, label: 'Afternoon', color: 'from-blue-400 to-cyan-400' },
-    { start: 18, end: 24, label: 'Evening', color: 'from-purple-500 to-pink-500' }
-  ];
+  // Percentage through the day
+  const percentageOfDay = (totalMinutes / totalMinutesInDay) * 100;
   
-  const currentSegment = segments.find(s => hours >= s.start && hours < s.end);
-  const timeDisplay = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-  
-  return { progressPercentage, currentSegment, timeDisplay };
+  return {
+    percentage: percentageOfDay,
+    hours,
+    minutes,
+    seconds,
+    timeString: now.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true 
+    }),
+    fullDate: now
+  };
 };
 
+// Get time label for a given percentage position
+export const getTimeFromPosition = (percentage) => {
+  const totalMinutesInDay = 24 * 60;
+  const minutesSinceMidnight = (percentage / 100) * totalMinutesInDay;
+  const hours = Math.floor(minutesSinceMidnight / 60);
+  const minutes = Math.floor(minutesSinceMidnight % 60);
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+};
+
+// Check if current time is within an event
+export const isCurrentTimeInEvent = (eventStart, eventEnd, currentTime = new Date()) => {
+  const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+  const startMinutes = parseInt(eventStart.split(':')[0]) * 60 + parseInt(eventStart.split(':')[1]);
+  const endMinutes = parseInt(eventEnd.split(':')[0]) * 60 + parseInt(eventEnd.split(':')[1]);
+  
+  return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+};
+
+// Format time for display
+export const formatTimeDisplay = (date) => {
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+};
 
 
 
