@@ -1,4 +1,4 @@
-// LiasseCounter.jsx (updated to accept external sequences)
+// LiasseCounter.jsx (with fix for denomination switching)
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, RotateCcw, Check, X, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -91,64 +91,45 @@ export default function LiasseCounter({
   isExternal = false // Flag to indicate if using external data
 }) {
   // State for active sequences
-  const [sequences, setSequences] = useState(() => {
-    try { 
-      const saved = localStorage.getItem(`liasseCounterSequences_${denomination}`);
-      return saved ? JSON.parse(saved) : []; 
-    }
-    catch { 
-      return []; 
-    }
-  });
-
-  // State for completed liasses
-  const [completedLiasses, setCompletedLiasses] = useState(() => {
-    try { 
-      const saved = localStorage.getItem(`liasseCounterCompleted_${denomination}`);
-      return saved ? JSON.parse(saved) : []; 
-    }
-    catch { 
-      return []; 
-    }
-  });
-
-  // State for showing/hiding completed liasses
+  const [sequences, setSequences] = useState([]);
+  const [completedLiasses, setCompletedLiasses] = useState([]);
   const [showCompleted, setShowCompleted] = useState(false);
   const [currentInput, setCurrentInput] = useState('');
   const [buttonState, setButtonState] = useState('default');
   const timeoutRef = useRef(null);
 
-  // Use external sequences if provided, otherwise use internal state
+  // Reset state when denomination changes
   useEffect(() => {
-    if (isExternal && externalSequences.length > 0) {
-      setSequences(externalSequences);
-    }
-  }, [externalSequences, isExternal]);
-
-  // Reset sequences when denomination changes
-  useEffect(() => {
-    if (!isExternal) {
+    if (isExternal) {
+      // In external mode: clear internal state, then externalSequences will update
+      setSequences([]);
+      setCompletedLiasses([]);
+    } else {
+      // Load from localStorage for internal mode
       try { 
         const saved = localStorage.getItem(`liasseCounterSequences_${denomination}`);
         setSequences(saved ? JSON.parse(saved) : []);
-
         const savedCompleted = localStorage.getItem(`liasseCounterCompleted_${denomination}`);
         setCompletedLiasses(savedCompleted ? JSON.parse(savedCompleted) : []);
-      }
-      catch { 
+      } catch { 
         setSequences([]); 
         setCompletedLiasses([]);
       }
     }
-    // Reset input when denomination changes
+    // Reset UI state
     setCurrentInput('');
     setButtonState('default');
     setShowCompleted(false);
   }, [denomination, isExternal]);
 
-  useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
+  // Update sequences from external source when they change
+  useEffect(() => {
+    if (isExternal) {
+      setSequences(externalSequences);
+    }
+  }, [externalSequences, isExternal]);
 
-  // Save to localStorage with denomination-specific key (only if not external)
+  // Save to localStorage only in internal mode
   useEffect(() => {
     if (!isExternal) {
       try { 
@@ -157,7 +138,6 @@ export default function LiasseCounter({
     }
   }, [sequences, denomination, isExternal]);
 
-  // Save completed liasses to localStorage (only if not external)
   useEffect(() => {
     if (!isExternal) {
       try { 
@@ -165,6 +145,8 @@ export default function LiasseCounter({
       } catch {}
     }
   }, [completedLiasses, denomination, isExternal]);
+
+  useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
 
   const resetButtonState = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -285,7 +267,7 @@ export default function LiasseCounter({
               <DollarSign size={16} />
               <span>{denomination} Gdes</span>
             </div>
-            {isExternal && (
+            {isExternal && sequences.length > 0 && (
               <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
                 Dépôts
               </div>
@@ -388,8 +370,8 @@ export default function LiasseCounter({
           </div>
         )}
 
-        {/* External data notice */}
-        {isExternal && (
+        {/* External data notice - only show when there are sequences */}
+        {isExternal && sequences.length > 0 && (
           <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
             <p className="text-sm text-purple-700">
               <span className="font-semibold">Mode lecture seule :</span> Les séquences proviennent des dépôts.
@@ -541,7 +523,7 @@ export default function LiasseCounter({
             </div>
             <p className="text-sm sm:text-base text-slate-500">
               {isExternal 
-                ? "Aucune séquence trouvée dans les dépôts"
+                ? "Aucune séquence trouvée dans les dépôts pour cette dénomination"
                 : `Ajoutez des séquences de billets de ${denomination} Gourdes`
               }
             </p>
