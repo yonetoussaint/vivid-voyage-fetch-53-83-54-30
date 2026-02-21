@@ -1,4 +1,4 @@
-// MainLayout.jsx
+// MainLayout.jsx (updated)
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
@@ -53,8 +53,8 @@ const MainLayout = ({
     }
   }, [activeTab, vendeurs, vendeurActif, filterType, conditionnementDenom]);
 
-  // Determine if we should show the vendor selector
-  const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots' || activeTab === 'conditionnement';
+  // Determine if we should show the vendor selector - REMOVED 'conditionnement' FROM THIS LIST
+  const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots';
 
   // Color palette for vendor tabs (from original VendorTabSelector)
   const colorPalette = [
@@ -81,7 +81,7 @@ const MainLayout = ({
     ...vendeurs.map((vendeur, index) => {
       const colorIndex = index % colorPalette.length;
       const stats = vendorStats[vendeur] || {};
-      
+
       return {
         id: vendeur,
         label: vendeur,
@@ -153,7 +153,7 @@ const MainLayout = ({
           </div>
         )}
 
-        {/* Vendor Tab Selector - For vendeurs, depots, and liasse tabs */}
+        {/* Vendor Tab Selector - Now only for vendeurs and depots tabs */}
         {showVendorSelector && (
           <div className="bg-white border-b border-slate-200">
             <TabSelector
