@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, RotateCcw, Check, X } from 'lucide-react';
 
