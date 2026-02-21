@@ -1,4 +1,4 @@
-// MainLayout.jsx (updated with dark glass, no dots, flexible width)
+// MainLayout.jsx (updated with endless navigation)
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import SidePanel from './SidePanel';
@@ -67,7 +67,7 @@ const MainLayout = ({
       const width = navContainerRef.current.scrollWidth;
       setNavWidth(`${width}px`);
     }
-  }, [secondaryNavLabel, showPreviousSecondary, showNextSecondary]);
+  }, [secondaryNavLabel]);
 
   // Determine if we should show the vendor selector
   const showVendorSelector = activeTab === 'vendeurs' || activeTab === 'depots';
@@ -226,58 +226,54 @@ const MainLayout = ({
         <main className="flex-1 overflow-auto relative">
           {children}
           
-          {/* Bottom Navigation Chevrons for Secondary Tabs - Dark Glass with Flexible Width */}
-          {(showPreviousSecondary || showNextSecondary) && (
-            <div 
-              className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40"
-              style={{ width: navWidth }}
+          {/* Bottom Navigation Chevrons for Secondary Tabs - Endless Navigation */}
+          <div 
+            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40"
+            style={{ width: navWidth }}
+          >
+            <div
+              ref={navContainerRef}
+              className={`
+                flex items-center gap-1 px-2 py-1.5
+                backdrop-blur-xl bg-black/40
+                rounded-2xl
+                shadow-[0_8px_32px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.1)_inset]
+                hover:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.15)_inset]
+                transition-all duration-300
+                border border-white/10
+                w-max
+              `}
             >
-              <div
-                ref={navContainerRef}
-                className={`
-                  flex items-center gap-1 px-2 py-1.5
-                  backdrop-blur-xl bg-black/40
-                  rounded-2xl
-                  shadow-[0_8px_32px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.1)_inset]
-                  hover:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.15)_inset]
-                  transition-all duration-300
-                  border border-white/10
-                  w-max
-                `}
+              {/* Background gradient for depth */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/5 to-transparent opacity-50"></div>
+              
+              {/* Left Chevron - Always visible */}
+              <button
+                onClick={onPreviousSecondary}
+                className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/10 transition-all duration-200 group/btn"
+                aria-label="Previous item"
               >
-                {/* Background gradient for depth */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/5 to-transparent opacity-50"></div>
-                
-                {showPreviousSecondary && (
-                  <button
-                    onClick={onPreviousSecondary}
-                    className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/10 transition-all duration-200 group/btn"
-                    aria-label="Previous item"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-white/90 group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-200" />
-                  </button>
-                )}
-                
-                {secondaryNavLabel && (
-                  <div className="relative px-4 py-1.5">
-                    <span className="text-sm font-medium text-white/90 whitespace-nowrap">
-                      {secondaryNavLabel}
-                    </span>
-                  </div>
-                )}
-                
-                {showNextSecondary && (
-                  <button
-                    onClick={onNextSecondary}
-                    className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/10 transition-all duration-200 group/btn"
-                    aria-label="Next item"
-                  >
-                    <ChevronRight className="w-5 h-5 text-white/90 group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-200" />
-                  </button>
-                )}
-              </div>
+                <ChevronLeft className="w-5 h-5 text-white/90 group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-200" />
+              </button>
+              
+              {secondaryNavLabel && (
+                <div className="relative px-4 py-1.5">
+                  <span className="text-sm font-medium text-white/90 whitespace-nowrap">
+                    {secondaryNavLabel}
+                  </span>
+                </div>
+              )}
+              
+              {/* Right Chevron - Always visible */}
+              <button
+                onClick={onNextSecondary}
+                className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/10 transition-all duration-200 group/btn"
+                aria-label="Next item"
+              >
+                <ChevronRight className="w-5 h-5 text-white/90 group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-200" />
+              </button>
             </div>
-          )}
+          </div>
         </main>
       </div>
     </div>
