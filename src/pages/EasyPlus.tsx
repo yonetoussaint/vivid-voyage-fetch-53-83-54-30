@@ -12,7 +12,7 @@ import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
 import LiasseCounter from '@/components/easy/LiasseCounter';
 import ProForma from '@/components/easy/ProForma';
-import Daily from '@/components/easy/Daily'; // IMPORT the Daily component (Daily.tsx)
+import Daily from '@/pages/Daily'; // IMPORT the Daily component (Daily.tsx)
 import { useStationData } from '@/hooks/useStationData';
 
 // Import the layout components
