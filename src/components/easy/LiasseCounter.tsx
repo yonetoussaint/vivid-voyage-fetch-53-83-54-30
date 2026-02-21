@@ -1,6 +1,6 @@
-// LiasseCounter.jsx (updated - removed Gourdes values from instructions)
+// LiasseCounter.jsx (with completed liasses feature)
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, RotateCcw, Check, X, DollarSign } from 'lucide-react';
+import { Plus, Trash2, RotateCcw, Check, X, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEPARTAGE ALGORITHM v3 — "Anchor + Fill"
@@ -69,7 +69,13 @@ function getInstructions(sequences) {
     });
 
     if (total > 0) {
-      instructions.push({ liasseNum, steps: displaySteps, total, isComplete: total === TARGET });
+      instructions.push({ 
+        liasseNum, 
+        steps: displaySteps, 
+        total, 
+        isComplete: total === TARGET,
+        timestamp: Date.now()
+      });
       liasseNum++;
     } else break;
   }
@@ -82,7 +88,7 @@ function getInstructions(sequences) {
 export default function LiasseCounter({ 
   denomination = 1000 // Default to 1000 Gourdes
 }) {
-  // Use a key that includes denomination to force re-render when denomination changes
+  // State for active sequences
   const [sequences, setSequences] = useState(() => {
     try { 
       const saved = localStorage.getItem(`liasseCounterSequences_${denomination}`);
@@ -93,6 +99,20 @@ export default function LiasseCounter({
     }
   });
 
+  // State for completed liasses
+  const [completedLiasses, setCompletedLiasses] = useState(() => {
+    try { 
+      const saved = localStorage.getItem(`liasseCounterCompleted_${denomination}`);
+      return saved ? JSON.parse(saved) : []; 
+    }
+    catch { 
+      return []; 
+    }
+  });
+
+  // State for showing/hiding completed liasses
+  const [showCompleted, setShowCompleted] = useState(false);
+
   const [currentInput, setCurrentInput] = useState('');
   const [buttonState, setButtonState] = useState('default');
   const timeoutRef = useRef(null);
@@ -102,13 +122,18 @@ export default function LiasseCounter({
     try { 
       const saved = localStorage.getItem(`liasseCounterSequences_${denomination}`);
       setSequences(saved ? JSON.parse(saved) : []);
+      
+      const savedCompleted = localStorage.getItem(`liasseCounterCompleted_${denomination}`);
+      setCompletedLiasses(savedCompleted ? JSON.parse(savedCompleted) : []);
     }
     catch { 
       setSequences([]); 
+      setCompletedLiasses([]);
     }
     // Reset input when denomination changes
     setCurrentInput('');
     setButtonState('default');
+    setShowCompleted(false);
   }, [denomination]);
 
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
@@ -119,6 +144,13 @@ export default function LiasseCounter({
       localStorage.setItem(`liasseCounterSequences_${denomination}`, JSON.stringify(sequences)); 
     } catch {}
   }, [sequences, denomination]);
+
+  // Save completed liasses to localStorage
+  useEffect(() => {
+    try { 
+      localStorage.setItem(`liasseCounterCompleted_${denomination}`, JSON.stringify(completedLiasses)); 
+    } catch {}
+  }, [completedLiasses, denomination]);
 
   const resetButtonState = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -146,8 +178,44 @@ export default function LiasseCounter({
   const resetAll = () => {
     if (window.confirm('Êtes-vous sûr de vouloir tout réinitialiser ?')) {
       setSequences([]);
+      setCompletedLiasses([]);
       setCurrentInput('');
     }
+  };
+
+  const completeLiasse = (liasse) => {
+    setCompletedLiasses(prev => [liasse, ...prev]);
+    // Remove the used amounts from sequences
+    const newSequences = [...sequences];
+    liasse.steps.forEach(step => {
+      const index = step.sequenceNum - 1;
+      if (newSequences[index] !== undefined) {
+        newSequences[index] = step.remaining;
+      }
+    });
+    // Filter out sequences that are now 0
+    setSequences(newSequences.filter(amount => amount > 0));
+  };
+
+  const undoCompleteLiasse = (liasse) => {
+    // Remove from completed
+    setCompletedLiasses(prev => prev.filter(l => l.timestamp !== liasse.timestamp));
+    
+    // Restore the amounts to sequences
+    const newSequences = [...sequences];
+    liasse.steps.forEach(step => {
+      const index = step.sequenceNum - 1;
+      if (newSequences[index] !== undefined) {
+        newSequences[index] += step.take;
+      } else {
+        // If the sequence was completely used up, add it back
+        while (newSequences.length < step.sequenceNum) {
+          newSequences.push(0);
+        }
+        newSequences[step.sequenceNum - 1] = step.take;
+      }
+    });
+    setSequences(newSequences.filter(amount => amount > 0));
   };
 
   const total = sequences.reduce((s, v) => s + v, 0);
@@ -193,7 +261,7 @@ export default function LiasseCounter({
             Calculez vos liasses de {denomination} Gourdes (100 billets = 1 liasse)
           </p>
         </div>
-        {sequences.length > 0 && (
+        {(sequences.length > 0 || completedLiasses.length > 0) && (
           <button 
             onClick={resetAll} 
             className="bg-white text-red-600 hover:bg-red-50 active:bg-red-100 border border-red-200 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-sm font-medium shadow-sm w-full sm:w-auto"
@@ -248,7 +316,7 @@ export default function LiasseCounter({
           ))}
         </div>
 
-        {/* Input - Updated placeholder to show denomination */}
+        {/* Input */}
         <div className="flex gap-2 mb-4 sm:mb-6">
           <input
             type="number"
@@ -281,7 +349,7 @@ export default function LiasseCounter({
           </button>
         </div>
 
-        {/* Sequences - Show Gourdes value */}
+        {/* Sequences */}
         {sequences.length > 0 && (
           <div className="mb-4 sm:mb-6">
             <div className="flex justify-between items-center mb-2 sm:mb-3">
@@ -309,11 +377,11 @@ export default function LiasseCounter({
           </div>
         )}
 
-        {/* Instructions - WITHOUT Gourdes values */}
+        {/* Pending Instructions - with Complete button */}
         {instructions.length > 0 && (
-          <div>
+          <div className="mb-6">
             <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">
-              Instructions de départage
+              Liasses à compléter
             </div>
             <div className="space-y-2 sm:space-y-3">
               {instructions.map((inst) => (
@@ -325,8 +393,17 @@ export default function LiasseCounter({
                         {inst.isComplete ? 'Complète' : 'Incomplète'}
                       </span>
                     </div>
-                    <div className="text-right">
+                    <div className="flex items-center gap-2">
                       <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
+                      {inst.isComplete && (
+                        <button
+                          onClick={() => completeLiasse(inst)}
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white p-1.5 rounded-lg transition-colors"
+                          title="Marquer comme complétée"
+                        >
+                          <Check size={16} />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -351,8 +428,58 @@ export default function LiasseCounter({
           </div>
         )}
 
+        {/* Completed Liasses Section */}
+        {completedLiasses.length > 0 && (
+          <div className="border-t border-slate-200 pt-4">
+            <button
+              onClick={() => setShowCompleted(!showCompleted)}
+              className="w-full flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-semibold text-slate-700">
+                  Liasses complétées
+                </span>
+                <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                  {completedLiasses.length}
+                </span>
+              </div>
+              {showCompleted ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+
+            {showCompleted && (
+              <div className="mt-3 space-y-2">
+                {completedLiasses.map((liasse) => (
+                  <div key={liasse.timestamp} className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900">Liasse {liasse.liasseNum}</span>
+                        <span className="bg-emerald-100 text-emerald-700 text-[9px] px-2 py-0.5 rounded-full">
+                          Complétée
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => undoCompleteLiasse(liasse)}
+                        className="text-amber-600 hover:text-amber-700 p-1 hover:bg-amber-50 rounded transition-colors"
+                        title="Annuler"
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      {liasse.total} billets • {formatGourdes(liasse.total).replace('HTG', '')} Gdes
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-1">
+                      {new Date(liasse.timestamp).toLocaleTimeString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Empty state */}
-        {sequences.length === 0 && (
+        {sequences.length === 0 && completedLiasses.length === 0 && (
           <div className="text-center py-8 sm:py-12">
             <div className="text-slate-400 mb-2">
               <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
