@@ -476,7 +476,7 @@ const SystemeStationService = () => {
       // ADD THIS NEW CASE for Daily tab
       case 'daily':
         return (
-          <div className="p-2 sm:p-6">
+          <div className="">
             <Daily
               date={date}
               shift={shift}
