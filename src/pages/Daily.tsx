@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, CheckCircle2, TrendingUp, AlertCircle, Users, Fuel, DollarSign, Shield, Trash2, Plus, Trophy, Award, Target, Info, Check, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Clock, CheckCircle2, TrendingUp, AlertCircle, Users, Fuel, DollarSign, Shield, Trash2, Plus, Trophy, Award, Target, Info, Check, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { checklistSections } from '@/data/checklistData';
-import { getPriorityColor, formatTime, getEstimatedTime, getRemainingTime, getDayProgress } from '@/utils/helpers';
+import { getPriorityColor, formatTime, getEstimatedTime, getRemainingTime, getCurrentTimePosition, getTimeFromPosition, isCurrentTimeInEvent, formatTimeDisplay } from '@/utils/helpers';
 
 export default function Daily() {
   const [checkedItems, setCheckedItems] = useState({});
@@ -16,14 +16,37 @@ export default function Daily() {
   const [expandedWhy, setExpandedWhy] = useState({});
   const [activeTimer, setActiveTimer] = useState(null);
   const [timerSeconds, setTimerSeconds] = useState({});
+  const [showTimeIndicator, setShowTimeIndicator] = useState(true);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const calendarRef = useRef(null);
+  const timeIndicatorRef = useRef(null);
 
-  // Load saved data on mount
+  // Update current time every second for smooth indicator movement
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000); // Update every second for smooth movement
+    
     return () => clearInterval(timer);
   }, []);
 
-  // Load checked items from localStorage
+  // Auto-scroll to keep time indicator visible
+  useEffect(() => {
+    if (autoScroll && calendarRef.current && timeIndicatorRef.current) {
+      const calendarRect = calendarRef.current.getBoundingClientRect();
+      const indicatorRect = timeIndicatorRef.current.getBoundingClientRect();
+      
+      // Check if indicator is outside visible area
+      if (indicatorRect.top < calendarRect.top || indicatorRect.bottom > calendarRect.bottom) {
+        timeIndicatorRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+    }
+  }, [currentTime, autoScroll]);
+
+  // Load saved data on mount
   useEffect(() => {
     const saved = localStorage.getItem('gasStationChecklist');
     if (saved) {
@@ -216,164 +239,43 @@ export default function Daily() {
   const totalItems = getAllTasks().length;
   const completedItems = Object.values(checkedItems).filter(Boolean).length;
   const completionPercentage = Math.round((completedItems / totalItems) * 100);
+  
+  // Get current time position for the indicator
+  const timePosition = getCurrentTimePosition();
+
+  // Group tasks by hour for the calendar view
+  const getTasksByHour = () => {
+    const tasksByHour = {};
+    
+    getAllTasks().forEach(task => {
+      // Extract estimated time or assign default hour based on section
+      let hour = 0;
+      if (task.id.includes('selfcare')) hour = 3; // Morning self-care starts at 3:30
+      else if (task.id.includes('opening')) hour = 5;
+      else if (task.id.includes('morning')) hour = 7;
+      else if (task.id.includes('midday')) hour = 12;
+      else if (task.id.includes('afternoon')) hour = 15;
+      else if (task.id.includes('evening')) hour = 18;
+      else if (task.id.includes('night')) hour = 21;
+      else hour = 12; // Default
+      
+      if (!tasksByHour[hour]) {
+        tasksByHour[hour] = [];
+      }
+      tasksByHour[hour].push(task);
+    });
+    
+    return tasksByHour;
+  };
+
+  const tasksByHour = getTasksByHour();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-2 sm:p-4 md:p-6">
       <div className="max-w-5xl mx-auto">
-        {/* Win The Day - Motivation Banner */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl shadow-xl p-4 sm:p-6 mb-6">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3 flex items-center gap-2">
-            <Trophy className="w-7 h-7" />
-            Win Today = Win The Week = Win The Year
-          </h2>
-
-          {/* Day Progress Bar */}
-          <div className="mb-4">
-            {(() => {
-              const { progressPercentage, currentSegment, timeDisplay } = getDayProgress();
-              
-              return (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-semibold opacity-90">Day Progress</span>
-                    <span className="font-bold">{timeDisplay} • {currentSegment?.label}</span>
-                  </div>
-                  
-                  <div className="relative h-3 bg-white/20 rounded-full overflow-hidden backdrop-blur">
-                    <div 
-                      className="absolute left-0 top-0 h-full bg-white/40 transition-all duration-1000"
-                      style={{ width: `${progressPercentage}%` }}
-                    />
-                    
-                    <div 
-                      className="absolute top-0 h-full w-1 bg-white shadow-lg transition-all duration-1000"
-                      style={{ left: `${progressPercentage}%` }}
-                    >
-                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rounded-full shadow-lg animate-pulse" />
-                    </div>
-                    
-                    <div className="absolute inset-0 flex">
-                      {[0, 6, 12, 18, 24].map((hour, idx) => (
-                        <div 
-                          key={hour}
-                          className="absolute top-0 h-full w-px bg-white/30"
-                          style={{ left: `${(hour / 24) * 100}%` }}
-                        >
-                          {idx < 4 && (
-                            <span className="absolute -bottom-5 left-0 -translate-x-1/2 text-xs opacity-75">
-                              {hour === 0 ? '12am' : hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour-12}pm`}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="text-xs opacity-75 text-center pt-2">
-                    {Math.round(progressPercentage)}% of the day complete
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-
-          {/* Habit vs Task Legend */}
-          <div className="flex flex-wrap gap-3 mb-4 p-3 bg-white/10 rounded-lg backdrop-blur">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border-2 border-green-400 bg-green-100 flex items-center justify-center">
-                <TrendingUp className="w-3 h-3 text-green-600" />
-              </div>
-              <span className="text-sm font-medium">
-                <span className="text-green-300 inline-flex items-center gap-1">
-                  <TrendingUp className="w-4 h-4" />
-                  Habits
-                </span> = Daily repeated actions (self-care, routines)
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border-2 border-blue-400 bg-blue-100 flex items-center justify-center">
-                <CheckCircle2 className="w-3 h-3 text-blue-600" />
-              </div>
-              <span className="text-sm font-medium">
-                <span className="text-blue-300 inline-flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Tasks
-                </span> = Specific work items (check, verify, review)
-              </span>
-            </div>
-          </div>
-          
-          <div className="space-y-3 text-sm sm:text-base">
-            <p className="font-semibold text-purple-100">
-              If you complete this checklist today, you're not just "getting through the day." You're building an empire.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
-                <p className="font-bold mb-1">🎯 TODAY You Win By:</p>
-                <ul className="text-sm space-y-1 opacity-90">
-                  <li>• Opening strong (no lazy mornings)</li>
-                  <li>• Running a tight operation (zero chaos)</li>
-                  <li>• Making smart decisions (not reactive ones)</li>
-                  <li>• Closing clean (no loose ends)</li>
-                </ul>
-              </div>
-
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
-                <p className="font-bold mb-1">📈 THIS WEEK Compounds Into:</p>
-                <ul className="text-sm space-y-1 opacity-90">
-                  <li>• 7 perfect days = unstoppable momentum</li>
-                  <li>• Staff respects systems, not emotions</li>
-                  <li>• Problems get solved before they blow up</li>
-                  <li>• Business runs without you micromanaging</li>
-                </ul>
-              </div>
-
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
-                <p className="font-bold mb-1">🚀 THIS YEAR Transforms Into:</p>
-                <ul className="text-sm space-y-1 opacity-90">
-                  <li>• 365 days of discipline = financial freedom</li>
-                  <li>• Predictable profit (not hoping for luck)</li>
-                  <li>• Time for relationships, dating, growth</li>
-                  <li>• Wardrobe upgraded, finances fixed, life leveled up</li>
-                </ul>
-              </div>
-
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
-                <p className="font-bold mb-1">💎 THE MATH IS SIMPLE:</p>
-                <ul className="text-sm space-y-1 opacity-90">
-                  <li>• 1 perfect day = 1% better</li>
-                  <li>• 7 perfect days = 7% better</li>
-                  <li>• 52 perfect weeks = 3,700% ROI</li>
-                  <li>• You're literally unstoppable</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="mt-4 p-4 bg-black/30 rounded-lg border-2 border-white/20">
-              <p className="font-bold text-lg mb-2">⚡ The Real Truth:</p>
-              <p className="text-purple-100">
-                Most people lose because they break the chain. One lazy morning becomes a lazy week. One skipped task becomes a pattern. One "I'll do it tomorrow" becomes a year of mediocrity.
-              </p>
-              <p className="font-bold mt-3 text-white text-lg">
-                You're different. You finish this list. Every. Single. Day.
-              </p>
-              <p className="mt-2 italic text-purple-200">
-                "Success is nothing more than a few simple disciplines, practiced every day." — Jim Rohn
-              </p>
-            </div>
-
-            <div className="mt-4 text-center">
-              <p className="text-xl sm:text-2xl font-bold text-yellow-300">
-                Check every box today. Win the day. Repeat tomorrow. Dominate the year.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Header */}
+        {/* Header with Time Controls */}
         <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 mb-4 sm:mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
                 Gas Station CEO Daily Checklist
@@ -419,6 +321,43 @@ export default function Daily() {
             </div>
           </div>
 
+          {/* Real-Time Indicator Controls */}
+          <div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                <span className="text-sm font-medium text-gray-700">
+                  Current Time: {timePosition.timeString}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowTimeIndicator(!showTimeIndicator)}
+                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                    showTimeIndicator 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {showTimeIndicator ? 'Hide Indicator' : 'Show Indicator'}
+                </button>
+                <button
+                  onClick={() => setAutoScroll(!autoScroll)}
+                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                    autoScroll 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {autoScroll ? 'Auto-Scroll On' : 'Auto-Scroll Off'}
+                </button>
+              </div>
+            </div>
+            <div className="text-xs text-gray-500">
+              {Math.round(timePosition.percentage)}% through day
+            </div>
+          </div>
+
           {/* Next Task Indicator - Focus Mode */}
           {focusMode && getNextTask() && (
             <div className="mb-4 p-4 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg text-white">
@@ -438,7 +377,7 @@ export default function Daily() {
           )}
 
           {/* Progress Bar */}
-          <div className="mt-6">
+          <div className="mt-4">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-700">Daily Progress</span>
               <span className="text-sm font-bold text-gray-800">{completedItems} / {totalItems} tasks</span>
@@ -562,6 +501,124 @@ export default function Daily() {
           </div>
         </div>
 
+        {/* Calendar Day View with Real-Time Indicator */}
+        <div 
+          ref={calendarRef}
+          className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 mb-6 relative overflow-hidden"
+          style={{ height: '600px', overflowY: 'auto' }}
+        >
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-blue-500" />
+            Day Timeline
+            <span className="text-sm font-normal text-gray-500 ml-2">
+              ({timePosition.timeString})
+            </span>
+          </h2>
+
+          {/* Time Labels Column */}
+          <div className="relative">
+            {/* Hour markers */}
+            {Array.from({ length: 24 }, (_, i) => {
+              const hour = i;
+              const label = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+              const topPosition = (hour / 24) * 100;
+              
+              return (
+                <div
+                  key={hour}
+                  className="absolute left-0 w-full border-t border-gray-200"
+                  style={{ top: `${topPosition}%` }}
+                >
+                  <span className="absolute -top-3 left-2 text-xs text-gray-500 bg-white px-1">
+                    {label}
+                  </span>
+                </div>
+              );
+            })}
+
+            {/* Real-Time Indicator Line */}
+            {showTimeIndicator && (
+              <div
+                ref={timeIndicatorRef}
+                className="absolute left-0 right-0 pointer-events-none z-20 transition-all duration-1000 ease-linear"
+                style={{ top: `${timePosition.percentage}%` }}
+              >
+                {/* Red line */}
+                <div className="relative w-full">
+                  <div className="absolute left-0 right-0 h-0.5 bg-red-500 shadow-lg" />
+                  
+                  {/* Time bubble */}
+                  <div className="absolute -left-2 -top-3 transform -translate-x-full bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                    {timePosition.timeString}
+                  </div>
+                  
+                  {/* Circle on the line */}
+                  <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg" />
+                </div>
+              </div>
+            )}
+
+            {/* Task blocks */}
+            <div className="relative ml-16" style={{ height: '2400px' }}> {/* 100px per hour */}
+              {Object.entries(tasksByHour).map(([hour, tasks]) => {
+                const topPosition = (parseInt(hour) / 24) * 100;
+                const hourNum = parseInt(hour);
+                const isCurrentHour = hourNum === timePosition.hours;
+                
+                return (
+                  <div
+                    key={hour}
+                    className={`absolute left-0 right-0 p-2 rounded-lg transition-all ${
+                      isCurrentHour ? 'bg-blue-50 border-2 border-blue-300' : ''
+                    }`}
+                    style={{ top: `${topPosition}%`, minHeight: '80px' }}
+                  >
+                    <div className="text-xs font-semibold text-gray-500 mb-1">
+                      {hourNum === 0 ? '12 AM' : hourNum < 12 ? `${hourNum} AM` : hourNum === 12 ? '12 PM' : `${hourNum - 12} PM`}
+                    </div>
+                    <div className="space-y-1">
+                      {tasks.map(task => (
+                        <div
+                          key={task.id}
+                          className={`text-xs p-1 rounded ${
+                            checkedItems[task.id]
+                              ? 'bg-green-100 line-through text-gray-500'
+                              : task.priority === 'high'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100'
+                          }`}
+                        >
+                          {task.task}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Scroll Controls */}
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-2">
+            <button
+              onClick={() => {
+                calendarRef.current?.scrollBy({ top: -100, behavior: 'smooth' });
+              }}
+              className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                calendarRef.current?.scrollBy({ top: 100, behavior: 'smooth' });
+              }}
+              className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
         {/* Checklist Sections */}
         <div className="space-y-4">
           {checklistSections.map((section, idx) => {
@@ -661,7 +718,7 @@ export default function Daily() {
                               {item.task}
                             </span>
 
-                            {/* Tags Row - Type, Priority, Custom, Timer */}
+                            {/* Tags Row */}
                             <div className="flex flex-wrap gap-1.5 mt-2">
                               {/* Type Badge - Habit vs Task */}
                               {idx === 0 && section.title.includes('Self-Care') && !checkedItems[item.id] && (
