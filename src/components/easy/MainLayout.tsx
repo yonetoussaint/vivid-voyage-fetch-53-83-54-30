@@ -174,7 +174,7 @@ const MainLayout = ({
               tabs={conditionnementTabs}
               activeTab={conditionnementDenom}
               onTabChange={setConditionnementDenom}
-              size="sm"
+              size="md"
               containerClassName="py-2"
             />
           </div>
