@@ -1,4 +1,4 @@
-// SystemeStationService.jsx (updated with correct tab name)
+// SystemeStationService.jsx (complete with "Toute la journée" tab)
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -32,7 +32,7 @@ const SystemeStationService = () => {
   const [filterType, setFilterType] = useState('all');
   const [conditionnementDenom, setConditionnementDenom] = useState(1000);
   const [tasksStats, setTasksStats] = useState(null);
-  const [reportShift, setReportShift] = useState('AM'); // State for report tab shift
+  const [reportShift, setReportShift] = useState('full'); // Default to 'full' for whole day
 
   const {
     toutesDonnees,
@@ -438,7 +438,7 @@ const SystemeStationService = () => {
               prix={prix}
               prixPropane={prixPropane}
               pompes={pompes}
-              shift={reportShift} // Pass reportShift to ReportView
+              shift={reportShift} // Pass 'full', 'AM', or 'PM' to ReportView
             />
           </div>
         );
