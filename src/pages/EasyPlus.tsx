@@ -1,4 +1,4 @@
-// SystemeStationService.jsx (complete with "Toute la journée" tab)
+// SystemeStationService.jsx (complete with "Daily" tab)
 import React, { useState, useEffect } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
@@ -11,7 +11,8 @@ import PumpInputView from '@/components/easy/PumpInputView';
 import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
 import LiasseCounter from '@/components/easy/LiasseCounter';
-import ProForma from '@/components/easy/ProForma'; 
+import ProForma from '@/components/easy/ProForma';
+import Daily from '@/components/easy/Daily'; // IMPORT the Daily component (Daily.tsx)
 import { useStationData } from '@/hooks/useStationData';
 
 // Import the layout components
@@ -469,6 +470,28 @@ const SystemeStationService = () => {
         return (
           <div className="p-2 sm:p-6">
             <ProForma />
+          </div>
+        );
+
+      // ADD THIS NEW CASE for Daily tab
+      case 'daily':
+        return (
+          <div className="p-2 sm:p-6">
+            <Daily
+              date={date}
+              shift={shift}
+              vendeurs={vendeurs}
+              toutesDonnees={toutesDonnees}
+              propaneDonnees={propaneDonnees}
+              tousDepots={tousDepots}
+              ventesUSD={ventesUSD}
+              totauxAM={totauxAM}
+              totauxPM={totauxPM}
+              totauxQuotidiens={totauxQuotidiens}
+              prix={prix}
+              tauxUSD={tauxUSD}
+              prixPropane={prixPropane}
+            />
           </div>
         );
 
