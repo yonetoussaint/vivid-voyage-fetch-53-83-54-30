@@ -59,28 +59,34 @@ const DepotsManager = ({
     supprimerDepot
   });
 
-  // Auto-select first vendor if none selected AND we're not in "Tous les Vendeurs" mode
+  // Auto-select first vendor if none selected AND we're not in "Tous" mode
   useEffect(() => {
     if (vendeurs.length > 0 && vendeurActif === undefined) {
       setVendeurActif(vendeurs[0]);
     }
   }, [vendeurs, vendeurActif]);
 
-  // Initialize vendor state if not exists
+  // Initialize vendor state if not exists (only needed for single vendor mode)
   useEffect(() => {
-    vendeurs.forEach(vendeur => {
-      if (!vendorPresets[vendeur]) {
-        initializeVendorState(vendeur, 'HTG');
-      }
-    });
-  }, [vendeurs]);
+    // Only initialize state for vendors when in single vendor mode or for existing presets
+    if (vendeurActif !== null) {
+      vendeurs.forEach(vendeur => {
+        if (!vendorPresets[vendeur]) {
+          initializeVendorState(vendeur, 'HTG');
+        }
+      });
+    }
+  }, [vendeurs, vendeurActif]);
 
   // Determine which vendors to display
-  // If vendeurActif is null, show ALL vendors (Tous les Vendeurs mode)
+  // If vendeurActif is null, show ALL vendors (Tous mode)
   // If vendeurActif is a specific vendor, show only that vendor
   const displayVendeurs = vendeurActif === null 
-    ? vendeurs  // Show all vendors when "Tous les Vendeurs" is selected
+    ? vendeurs  // Show all vendors when "Tous" is selected
     : vendeurs.filter(v => v === vendeurActif);  // Show only specific vendor
+
+  // Check if we're in "Tous" mode (read-only)
+  const isTousMode = vendeurActif === null;
 
   return (
     <div className="space-y-2">
@@ -97,18 +103,18 @@ const DepotsManager = ({
             const especesAttendues = donneesVendeur ? donneesVendeur.especesAttendues : 0;
             const depots = depotsActuels[vendeur] || [];
 
-            // Initialize vendor state if not exists
-            if (!vendorPresets[vendeur]) {
+            // Only initialize state if not in Tous mode and state doesn't exist
+            if (!isTousMode && !vendorPresets[vendeur]) {
               initializeVendorState(vendeur, 'HTG');
             }
 
-            const vendorState = vendorPresets[vendeur];
-            const currentPresets = getCurrentPresets(vendeur);
-            const sequences = depositSequences[vendeur] || [];
-            const sequencesTotal = calculateSequencesTotal(vendeur);
-            const sequencesTotalByCurrency = calculateSequencesTotalByCurrency(vendeur);
-            const totalSequencesHTG = calculateTotalSequencesHTG(vendeur);
-            const isEditingMode = editingDeposit?.vendeur === vendeur;
+            const vendorState = !isTousMode ? vendorPresets[vendeur] : null;
+            const currentPresets = !isTousMode ? getCurrentPresets(vendeur) : [];
+            const sequences = !isTousMode ? (depositSequences[vendeur] || []) : [];
+            const sequencesTotal = !isTousMode ? calculateSequencesTotal(vendeur) : 0;
+            const sequencesTotalByCurrency = !isTousMode ? calculateSequencesTotalByCurrency(vendeur) : { usd: 0, htg: 0 };
+            const totalSequencesHTG = !isTousMode ? calculateTotalSequencesHTG(vendeur) : 0;
+            const isEditingMode = !isTousMode && editingDeposit?.vendeur === vendeur;
 
             return (
               <VendorDepositCard
@@ -117,32 +123,37 @@ const DepotsManager = ({
                 donneesVendeur={donneesVendeur}
                 especesAttendues={especesAttendues}
                 totalDepotHTG={totalDepotHTG}
+                isReadOnly={isTousMode} // Pass this prop to adjust card styling if needed
               >
-                <SequenceSection
-                  vendeur={vendeur}
-                  isEditingMode={isEditingMode}
-                  editingDeposit={editingDeposit}
-                  vendorState={vendorState}
-                  sequences={sequences}
-                  sequencesTotal={sequencesTotal}
-                  sequencesTotalByCurrency={sequencesTotalByCurrency}
-                  totalSequencesHTG={totalSequencesHTG}
-                  vendorInputs={vendorInputs}
-                  currentPresets={currentPresets}
-                  handleClearSequences={handleClearSequences}
-                  handleRemoveSequence={handleRemoveSequence}
-                  handleUpdateSequence={handleUpdateSequence}
-                  handlePresetSelect={handlePresetSelect}
-                  handleInputChange={handleInputChange}
-                  handleAddSequence={handleAddSequence}
-                  handleAddCompleteDeposit={isEditingMode ? 
-                    () => saveEditedDeposit(vendeur) : 
-                    () => handleAddCompleteDeposit(vendeur)}
-                  calculatePresetAmount={calculatePresetAmount}
-                  onCancelEdit={() => cancelEdit(vendeur)}
-                  TAUX_DE_CHANGE={TAUX_DE_CHANGE}
-                />
+                {/* Only show SequenceSection (input section) when NOT in Tous mode */}
+                {!isTousMode && (
+                  <SequenceSection
+                    vendeur={vendeur}
+                    isEditingMode={isEditingMode}
+                    editingDeposit={editingDeposit}
+                    vendorState={vendorState}
+                    sequences={sequences}
+                    sequencesTotal={sequencesTotal}
+                    sequencesTotalByCurrency={sequencesTotalByCurrency}
+                    totalSequencesHTG={totalSequencesHTG}
+                    vendorInputs={vendorInputs}
+                    currentPresets={currentPresets}
+                    handleClearSequences={handleClearSequences}
+                    handleRemoveSequence={handleRemoveSequence}
+                    handleUpdateSequence={handleUpdateSequence}
+                    handlePresetSelect={handlePresetSelect}
+                    handleInputChange={handleInputChange}
+                    handleAddSequence={handleAddSequence}
+                    handleAddCompleteDeposit={isEditingMode ? 
+                      () => saveEditedDeposit(vendeur) : 
+                      () => handleAddCompleteDeposit(vendeur)}
+                    calculatePresetAmount={calculatePresetAmount}
+                    onCancelEdit={() => cancelEdit(vendeur)}
+                    TAUX_DE_CHANGE={TAUX_DE_CHANGE}
+                  />
+                )}
 
+                {/* Deposits Summary - always show */}
                 <DepositsSummary
                   vendeur={vendeur}
                   depots={depots}
@@ -156,6 +167,7 @@ const DepotsManager = ({
                   editingDeposit={editingDeposit}
                   isEditingThisDeposit={isEditingThisDeposit}
                   exchangeRate={TAUX_DE_CHANGE}
+                  isReadOnly={isTousMode} // Pass this to disable edit/delete buttons in Tous mode
                 />
 
               </VendorDepositCard>
