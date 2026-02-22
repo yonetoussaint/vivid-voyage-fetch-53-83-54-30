@@ -272,7 +272,8 @@ export const useDepositLogic = ({
         montant: totalAmountUSD.toFixed(2),
         devise: 'USD',
         breakdown: breakdown,
-        sequences: sequences
+        sequences: sequences,
+        timestamp: Date.now() // Add timestamp for unique ID generation
       };
       mettreAJourDepot(vendeur, index, deposit);
     } else {
@@ -289,7 +290,8 @@ export const useDepositLogic = ({
       const deposit = {
         value: totalAmountHTG.toString(),
         breakdown: breakdown,
-        sequences: sequences
+        sequences: sequences,
+        timestamp: Date.now() // Add timestamp for unique ID generation
       };
       mettreAJourDepot(vendeur, index, deposit);
     }
@@ -439,7 +441,7 @@ export const useDepositLogic = ({
     return sequences.reduce((total, seq) => total + seq.amount, 0);
   }, [depositSequences]);
 
-  // Handle mixed currencies by creating separate deposits
+  // FIXED: Handle mixed currencies by creating separate deposits with unique timestamps
   const handleAddCompleteDeposit = useCallback((vendeur) => {
     const sequences = depositSequences[vendeur] || [];
 
@@ -462,10 +464,13 @@ export const useDepositLogic = ({
     const currentDepots = depotsActuels[vendeur] || [];
     let nextIndex = currentDepots.length;
 
-    // Create deposits with sequential indices
+    // Create deposits with sequential indices and unique timestamps
     Object.entries(sequencesByCurrency).forEach(([currency, currencySequences], i) => {
       const totalAmount = currencySequences.reduce((total, seq) => total + seq.amount, 0);
       const breakdown = currencySequences.map(seq => seq.note).join(', ');
+      
+      // Create a unique timestamp for each deposit
+      const timestamp = Date.now() + i;
 
       // Use setTimeout to ensure state updates sequentially
       setTimeout(() => {
@@ -474,14 +479,20 @@ export const useDepositLogic = ({
             montant: totalAmount.toFixed(2),
             devise: 'USD',
             breakdown: breakdown,
-            sequences: currencySequences
+            sequences: currencySequences,
+            timestamp: timestamp, // Add unique timestamp
+            vendor: vendeur,
+            shift: 'current'
           };
           mettreAJourDepot(vendeur, nextIndex + i, deposit);
         } else {
           const deposit = {
             value: totalAmount.toString(),
             breakdown: breakdown,
-            sequences: currencySequences
+            sequences: currencySequences,
+            timestamp: timestamp, // Add unique timestamp
+            vendor: vendeur,
+            shift: 'current'
           };
           mettreAJourDepot(vendeur, nextIndex + i, deposit);
         }
