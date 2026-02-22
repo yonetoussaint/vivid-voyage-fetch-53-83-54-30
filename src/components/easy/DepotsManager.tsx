@@ -100,7 +100,7 @@ const DepotsManager = ({
         totalVentes += donneesVendeur.ventesTotales || 0;
         totalAttendues += donneesVendeur.especesAttendues || 0;
       }
-      
+
       // Calculate total deposits for this vendor
       const vendorDepots = depotsActuels[vendeur] || [];
       vendorDepots.forEach(depot => {
