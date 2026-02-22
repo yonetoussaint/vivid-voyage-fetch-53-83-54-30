@@ -1,5 +1,5 @@
 // SystemeStationService.jsx (complete with "Daily" tab)
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ShiftManager from '@/components/easy/ShiftManager';
 import ConditionnementManager from '@/components/easy/ConditionnementManager';
 import VendeursManager from '@/components/easy/VendeursManager';
@@ -33,7 +33,27 @@ const SystemeStationService = () => {
   const [filterType, setFilterType] = useState('all');
   const [conditionnementDenom, setConditionnementDenom] = useState(1000);
   const [tasksStats, setTasksStats] = useState(null);
-  const [reportShift, setReportShift] = useState('full'); // Default to 'full' for whole day
+  const [reportShift, setReportShift] = useState('full');
+
+  // State for completed liasses across denominations
+  const [completedLiassesByDenom, setCompletedLiassesByDenom] = useState(() => {
+    // Load from localStorage on initial render
+    try {
+      const saved = localStorage.getItem('liasseCounterCompletedByDenom');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Save completed liasses to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('liasseCounterCompletedByDenom', JSON.stringify(completedLiassesByDenom));
+    } catch (error) {
+      console.error('Error saving completed liasses:', error);
+    }
+  }, [completedLiassesByDenom]);
 
   const {
     toutesDonnees,
@@ -81,7 +101,7 @@ const SystemeStationService = () => {
         return [...pompes, 'propane'];
       case 'vendeurs':
       case 'depots':
-        return [null, ...vendeurs]; // null represents "Tous les Vendeurs"
+        return [null, ...vendeurs];
       case 'conditionnement':
         return denominationValues;
       case 'tasks':
@@ -149,7 +169,6 @@ const SystemeStationService = () => {
     const currentIndex = getCurrentSecondaryIndex();
 
     if (items.length > 0) {
-      // Calculate previous index with wrap-around
       const previousIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
       const newValue = items[previousIndex];
 
@@ -176,7 +195,6 @@ const SystemeStationService = () => {
     const currentIndex = getCurrentSecondaryIndex();
 
     if (items.length > 0) {
-      // Calculate next index with wrap-around
       const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
       const newValue = items[nextIndex];
 
@@ -240,34 +258,28 @@ const SystemeStationService = () => {
   }, {});
 
   // Extract bill sequences from deposits for the current shift
-  const extractBillSequencesFromDeposits = () => {
+  const extractBillSequencesFromDeposits = useCallback(() => {
     const sequences = [];
     const currentShiftDepots = tousDepots[shift] || {};
 
     Object.values(currentShiftDepots).forEach(vendorDepots => {
       vendorDepots.forEach(depot => {
-        // Check if deposit has breakdown (bill sequences)
         if (depot && typeof depot === 'object' && depot.breakdown) {
           const breakdown = depot.breakdown;
           if (typeof breakdown === 'string') {
-            // Parse the breakdown to extract bill counts
             const parts = breakdown.split(',');
             parts.forEach(part => {
               const trimmed = part.trim();
 
-              // Look for patterns like "5 × 1000 HTG" or "1000 HTG"
               const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+)\s*HTG/i);
               if (multiplierMatch) {
-                // It's a multiplier pattern (multiple bills)
                 const multiplier = parseInt(multiplierMatch[1]);
                 const billValue = parseInt(multiplierMatch[2]);
 
-                // Only include if bill value matches current denomination
                 if (billValue === conditionnementDenom) {
                   sequences.push(multiplier);
                 }
               } else {
-                // Single bill
                 const singleMatch = trimmed.match(/(\d+)\s*HTG/i);
                 if (singleMatch) {
                   const billValue = parseInt(singleMatch[1]);
@@ -283,7 +295,43 @@ const SystemeStationService = () => {
     });
 
     return sequences;
-  };
+  }, [tousDepots, shift, conditionnementDenom]);
+
+  // Memoize the bill sequences to prevent unnecessary recalculations
+  const billSequences = useMemo(() => {
+    return extractBillSequencesFromDeposits();
+  }, [extractBillSequencesFromDeposits]);
+
+  // Handle liasse completion from child component
+  const handleLiasseComplete = useCallback((completedLiasse) => {
+    setCompletedLiassesByDenom(prev => {
+      const denomKey = `denom_${conditionnementDenom}`;
+      const currentLiasses = prev[denomKey] || [];
+      
+      // Add timestamp if not present
+      const liasseWithTimestamp = {
+        ...completedLiasse,
+        timestamp: completedLiasse.timestamp || Date.now()
+      };
+      
+      return {
+        ...prev,
+        [denomKey]: [liasseWithTimestamp, ...currentLiasses]
+      };
+    });
+  }, [conditionnementDenom]);
+
+  // Handle liasse undo from child component
+  const handleLiasseUndo = useCallback((liasseToUndo) => {
+    setCompletedLiassesByDenom(prev => {
+      const denomKey = `denom_${conditionnementDenom}`;
+      const currentLiasses = prev[denomKey] || [];
+      return {
+        ...prev,
+        [denomKey]: currentLiasses.filter(l => l.timestamp !== liasseToUndo.timestamp)
+      };
+    });
+  }, [conditionnementDenom]);
 
   const handlePompeSelection = (selection) => {
     setPompeEtendue(selection);
@@ -292,16 +340,25 @@ const SystemeStationService = () => {
   const handleReinitialiserShift = () => {
     reinitialiserShift(shift);
     setPompeEtendue('P1');
+    
+    // Clear completed liasses for the current shift when resetting
+    if (window.confirm('Voulez-vous aussi effacer les liasses complétées ?')) {
+      setCompletedLiassesByDenom({});
+    }
   };
 
   const handleReinitialiserJour = () => {
     reinitialiserJour();
     setPompeEtendue('P1');
+    
+    // Clear completed liasses for the day when resetting
+    if (window.confirm('Voulez-vous aussi effacer toutes les liasses complétées ?')) {
+      setCompletedLiassesByDenom({});
+    }
   };
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    // Reset filter when changing tabs
     setFilterType('all');
     if (window.innerWidth < 1024) {
       setIsMenuOpen(false);
@@ -439,7 +496,7 @@ const SystemeStationService = () => {
               prix={prix}
               prixPropane={prixPropane}
               pompes={pompes}
-              shift={reportShift} // Pass 'full', 'AM', or 'PM' to ReportView
+              shift={reportShift}
             />
           </div>
         );
@@ -459,9 +516,13 @@ const SystemeStationService = () => {
         return (
           <div className="p-2 sm:p-6">
             <LiasseCounter
+              key={`liasse-counter-${conditionnementDenom}-${date}-${shift}`}
               denomination={conditionnementDenom}
-              externalSequences={extractBillSequencesFromDeposits()}
+              externalSequences={billSequences}
               isExternal={true}
+              completedLiasses={completedLiassesByDenom[`denom_${conditionnementDenom}`] || []}
+              onLiasseComplete={handleLiasseComplete}
+              onLiasseUndo={handleLiasseUndo}
             />
           </div>
         );
@@ -473,7 +534,6 @@ const SystemeStationService = () => {
           </div>
         );
 
-      // ADD THIS NEW CASE for Daily tab
       case 'daily':
         return (
           <div className="">
@@ -519,31 +579,23 @@ const SystemeStationService = () => {
         onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
         onDateChange={(newDate) => setDate(newDate)}
         onShiftChange={(newShift) => setShift(newShift)}
-        // Pump props
         pompes={pompes}
         pompeEtendue={pompeEtendue}
         setPompeEtendue={setPompeEtendue}
         showPropane={true}
-        // Filter props
         filterType={filterType}
         setFilterType={setFilterType}
-        // Vendor props
         vendeurs={vendeurs}
         vendeurActif={vendeurActif}
         setVendeurActif={setVendeurActif}
         vendorStats={vendorStats}
-        // Conditionnement props
         conditionnementDenom={conditionnementDenom}
         setConditionnementDenom={setConditionnementDenom}
-        // Report shift props
         reportShift={reportShift}
         setReportShift={setReportShift}
-        // Reset functions
         onResetShift={handleReinitialiserShift}
         onResetDay={handleReinitialiserJour}
-        // Tasks stats
         tasksStats={tasksStats}
-        // Secondary navigation props - both arrows always shown
         onPreviousSecondary={handlePreviousSecondary}
         onNextSecondary={handleNextSecondary}
         showPreviousSecondary={true}
