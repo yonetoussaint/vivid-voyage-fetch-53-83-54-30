@@ -126,6 +126,8 @@ export default function LiasseCounter({
   useEffect(() => {
     if (isExternal) {
       setSequences(externalSequences);
+      // Don't load completed liasses from localStorage in external mode
+      setCompletedLiasses([]);
     }
   }, [externalSequences, isExternal]);
 
@@ -304,8 +306,8 @@ export default function LiasseCounter({
             },
             { 
               label: 'Liasses', 
-              value: liasseInfo.complete,
-              gdesValue: liasseInfo.complete * 100 * denomination,
+              value: completedLiasses.length, // Use completed count instead of calculated
+              gdesValue: completedLiasses.length * 100 * denomination,
               from: 'from-emerald-50', 
               to: 'to-emerald-100', 
               border: 'border-emerald-200', 
@@ -415,56 +417,66 @@ export default function LiasseCounter({
               Liasses à compléter
             </div>
             <div className="space-y-2 sm:space-y-3">
-              {instructions.map((inst) => (
-                <div key={inst.liasseNum} className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 ${inst.isComplete ? 'bg-emerald-50 border-emerald-300' : 'bg-amber-50 border-amber-300'}`}>
-                  <div className="flex items-center justify-between mb-2 sm:mb-3">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-slate-900">Liasse {inst.liasseNum}</span>
-                      <span className={`text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium text-white ${inst.isComplete ? 'bg-emerald-500' : 'bg-amber-500'}`}>
-                        {inst.isComplete ? 'Complète' : 'Incomplète'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
-                      {/* Complete button appears when liasse reaches exactly 100 - works in ALL modes */}
-                      {inst.isComplete && (
-                        <button
-                          onClick={() => completeLiasse(inst)}
-                          className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium shadow-sm"
-                          title="Marquer comme complétée"
-                        >
-                          <Check size={14} />
-                          <span>Compléter</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5 sm:space-y-2">
-                    {inst.steps.map((step, idx) => (
-                      <div key={idx} className={`text-[11px] sm:text-sm rounded-lg p-2 border ${idx === 0 ? 'bg-blue-50 border-blue-200' : 'bg-white/70 border-slate-200'}`}>
-                        {idx === 0 && (
-                          <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wider mr-1.5">Ancre</span>
-                        )}
-                        <span className="font-semibold text-slate-800">Séq. #{step.sequenceNum}:</span>{' '}
-                        Prenez <span className="font-bold text-emerald-700">{step.take}</span> billet{step.take > 1 ? 's' : ''} sur {step.from}
-                        {step.remaining > 0
-                          ? <span className="text-amber-700 font-semibold"> → reste {step.remaining}</span>
-                          : <span className="text-slate-400"> ✓</span>
-                        }
+              {instructions.map((inst) => {
+                // Check if this liasse is already completed by comparing timestamps or steps
+                const isAlreadyCompleted = completedLiasses.some(
+                  completed => JSON.stringify(completed.steps) === JSON.stringify(inst.steps)
+                );
+                
+                // Don't show if already completed
+                if (isAlreadyCompleted) return null;
+                
+                return (
+                  <div key={inst.liasseNum} className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 ${inst.isComplete ? 'bg-emerald-50 border-emerald-300' : 'bg-amber-50 border-amber-300'}`}>
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900">Liasse {inst.liasseNum}</span>
+                        <span className={`text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium text-white ${inst.isComplete ? 'bg-emerald-500' : 'bg-amber-500'}`}>
+                          {inst.isComplete ? 'Complète' : 'Incomplète'}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Celebration message when liasse is complete */}
-                  {inst.isComplete && (
-                    <div className="mt-2 text-[10px] sm:text-xs text-emerald-600 font-medium flex items-center gap-1">
-                      <Check size={12} />
-                      <span>Cette liasse est prête à être marquée comme complétée!</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
+                        {/* Complete button appears when liasse reaches exactly 100 - works in ALL modes */}
+                        {inst.isComplete && (
+                          <button
+                            onClick={() => completeLiasse(inst)}
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium shadow-sm"
+                            title="Marquer comme complétée"
+                          >
+                            <Check size={14} />
+                            <span>Compléter</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    <div className="space-y-1.5 sm:space-y-2">
+                      {inst.steps.map((step, idx) => (
+                        <div key={idx} className={`text-[11px] sm:text-sm rounded-lg p-2 border ${idx === 0 ? 'bg-blue-50 border-blue-200' : 'bg-white/70 border-slate-200'}`}>
+                          {idx === 0 && (
+                            <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wider mr-1.5">Ancre</span>
+                          )}
+                          <span className="font-semibold text-slate-800">Séq. #{step.sequenceNum}:</span>{' '}
+                          Prenez <span className="font-bold text-emerald-700">{step.take}</span> billet{step.take > 1 ? 's' : ''} sur {step.from}
+                          {step.remaining > 0
+                            ? <span className="text-amber-700 font-semibold"> → reste {step.remaining}</span>
+                            : <span className="text-slate-400"> ✓</span>
+                          }
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Celebration message when liasse is complete */}
+                    {inst.isComplete && (
+                      <div className="mt-2 text-[10px] sm:text-xs text-emerald-600 font-medium flex items-center gap-1">
+                        <Check size={12} />
+                        <span>Cette liasse est prête à être marquée comme complétée!</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
