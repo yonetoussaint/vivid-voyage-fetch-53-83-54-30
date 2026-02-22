@@ -348,6 +348,25 @@ const SystemeStationService = () => {
     return residuals;
   }, [rawBillSequencesFromDeposits, residualSequencesByDenom, conditionnementDenom, shift, completedLiassesByDenom]);
 
+  // Full sequence list with used/available status for display purposes.
+  // Used sequences are greyed out in LiasseCounter but still visible.
+  const allSequencesWithStatus = useMemo(() => {
+    const available = billSequenceAmounts;
+    const raw = rawBillSequencesFromDeposits;
+
+    // Walk raw sequences and mark each one as used or available
+    // by consuming from the available pool greedily
+    const remainingAvailable = [...available];
+    return raw.map((amount) => {
+      const idx = remainingAvailable.findIndex(a => a === amount);
+      if (idx !== -1) {
+        remainingAvailable.splice(idx, 1);
+        return { amount, used: false };
+      }
+      return { amount, used: true };
+    });
+  }, [rawBillSequencesFromDeposits, billSequenceAmounts]);
+
   // Handle liasse completion.
   // LiasseCounter already computed the correct post-completion sequence array
   // internally (step.remaining values). We persist that as residuals so it
@@ -628,9 +647,10 @@ const SystemeStationService = () => {
               )}
             </div>
             <LiasseCounter
-              key={`liasse-counter-${conditionnementDenom}-${date}-${shift}-${billSequenceAmounts.join(',')}`}
+              key={`liasse-counter-${conditionnementDenom}-${date}-${shift}`}
               denomination={conditionnementDenom}
               externalSequences={billSequenceAmounts}
+              allSequencesWithStatus={allSequencesWithStatus}
               isExternal={true}
               completedLiasses={completedLiassesByDenom[`denom_${conditionnementDenom}`] || []}
               onLiasseComplete={handleLiasseComplete}
