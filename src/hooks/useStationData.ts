@@ -40,23 +40,17 @@ export const useStationData = (date, shift) => {
   const parserInputGallons = (valeur) => {
     if (!valeur && valeur !== 0) return '';
 
-    // Convert to string if it's a number
     const valeurStr = String(valeur);
-
-    // Remove non-numeric characters except decimal point and minus sign
     const valeurPropre = valeurStr.replace(/[^\d.-]/g, '');
 
-    // Handle empty result
     if (valeurPropre === '' || valeurPropre === '-') return valeurPropre;
 
     const parties = valeurPropre.split('.');
 
-    // If there are multiple decimal points, keep only the first one
     if (parties.length > 2) {
       return parties[0] + '.' + parties.slice(1).join('');
     }
 
-    // Limit to 3 decimal places
     if (parties[1] && parties[1].length > 3) {
       return parties[0] + '.' + parties[1].substring(0, 3);
     }
@@ -73,7 +67,6 @@ export const useStationData = (date, shift) => {
           count++;
         }
       });
-      // Also count propane assignments
       if (propaneDonnees[shiftKey] && propaneDonnees[shiftKey]._vendeur === nomVendeur) {
         count++;
       }
@@ -119,10 +112,8 @@ export const useStationData = (date, shift) => {
     }));
   }, [shift]);
 
-  // UPDATED: Handle both pump and propane vendeur assignment
   const mettreAJourAffectationVendeur = useCallback((pompe, nomVendeur) => {
     if (pompe === 'propane') {
-      // Handle propane vendeur assignment
       setPropaneDonnees(prev => ({
         ...prev,
         [shift]: {
@@ -131,7 +122,6 @@ export const useStationData = (date, shift) => {
         }
       }));
     } else {
-      // Original logic for pumps
       setToutesDonnees(prev => ({
         ...prev,
         [shift]: {
@@ -145,72 +135,76 @@ export const useStationData = (date, shift) => {
     }
   }, [shift]);
 
-  // FIXED: Handle both HTG and USD deposits with all properties
-const mettreAJourDepot = useCallback((nomVendeur, index, valeur) => {
-  setTousDepots(prev => {
-    const nouveauxDepots = { ...prev };
-    if (!nouveauxDepots[shift][nomVendeur]) {
-      nouveauxDepots[shift][nomVendeur] = [];
-    }
+  // FIXED: Fully immutable update — never mutates nested arrays
+  const mettreAJourDepot = useCallback((nomVendeur, index, valeur) => {
+    setTousDepots(prev => {
+      // Always create a new array, never mutate the existing one
+      const vendorDepots = [...(prev[shift][nomVendeur] || [])];
 
-    // Handle the different types of deposits
-    if (typeof valeur === 'object') {
-      if (valeur.devise === 'USD') {
-        // For USD deposits - preserve all properties
-        nouveauxDepots[shift][nomVendeur][index] = {
-          ...valeur,
-          montant: valeur.montant === '' ? '' : parseFloat(valeur.montant) || 0
-        };
+      if (typeof valeur === 'object') {
+        if (valeur.devise === 'USD') {
+          vendorDepots[index] = {
+            ...valeur,
+            montant: valeur.montant === '' ? '' : parseFloat(valeur.montant) || 0
+          };
+        } else {
+          const hasValue = 'value' in valeur;
+          vendorDepots[index] = {
+            ...valeur,
+            ...(hasValue && { value: valeur.value === '' ? '' : parseFloat(valeur.value) || 0 })
+          };
+        }
       } else {
-        // For HTG deposit objects with breakdown and sequences
-        const hasValue = 'value' in valeur;
-        nouveauxDepots[shift][nomVendeur][index] = {
-          ...valeur,
-          ...(hasValue && { value: valeur.value === '' ? '' : parseFloat(valeur.value) || 0 })
-        };
+        vendorDepots[index] = valeur === '' ? '' : parseFloat(valeur) || 0;
       }
-    } else {
-      // For simple HTG deposits (string/number)
-      nouveauxDepots[shift][nomVendeur][index] = valeur === '' ? '' : parseFloat(valeur) || 0;
-    }
 
-    return nouveauxDepots;
-  });
-}, [shift]);
+      return {
+        ...prev,
+        [shift]: {
+          ...prev[shift],
+          [nomVendeur]: vendorDepots
+        }
+      };
+    });
+  }, [shift]);
 
-  // FIXED: Add deposit with proper structure
-const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
-  setTousDepots(prev => {
-    const nouveauxDepots = { ...prev };
-    if (!nouveauxDepots[shift][nomVendeur]) {
-      nouveauxDepots[shift][nomVendeur] = [];
-    }
+  // FIXED: Fully immutable update
+  const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
+    setTousDepots(prev => {
+      const vendorDepots = [...(prev[shift][nomVendeur] || [])];
 
-    // Add empty deposit based on currency type with proper structure
-    if (typeDevise === 'USD') {
-      nouveauxDepots[shift][nomVendeur].push({
-        montant: '',
-        devise: 'USD'
-      });
-    } else {
-      // For HTG, use empty string for simple deposits
-      nouveauxDepots[shift][nomVendeur].push('');
-    }
+      if (typeDevise === 'USD') {
+        vendorDepots.push({ montant: '', devise: 'USD' });
+      } else {
+        vendorDepots.push('');
+      }
 
-    return nouveauxDepots;
-  });
-}, [shift]);
+      return {
+        ...prev,
+        [shift]: {
+          ...prev[shift],
+          [nomVendeur]: vendorDepots
+        }
+      };
+    });
+  }, [shift]);
 
+  // FIXED: Fully immutable update
   const supprimerDepot = useCallback((nomVendeur, index) => {
     setTousDepots(prev => {
-      const nouveauxDepots = { ...prev };
-      if (nouveauxDepots[shift][nomVendeur]) {
-        nouveauxDepots[shift][nomVendeur] = nouveauxDepots[shift][nomVendeur].filter((_, i) => i !== index);
-        if (nouveauxDepots[shift][nomVendeur].length === 0) {
-          delete nouveauxDepots[shift][nomVendeur];
-        }
+      const vendorDepots = (prev[shift][nomVendeur] || []).filter((_, i) => i !== index);
+
+      const newShiftData = { ...prev[shift] };
+      if (vendorDepots.length === 0) {
+        delete newShiftData[nomVendeur];
+      } else {
+        newShiftData[nomVendeur] = vendorDepots;
       }
-      return nouveauxDepots;
+
+      return {
+        ...prev,
+        [shift]: newShiftData
+      };
     });
   }, [shift]);
 
@@ -248,7 +242,6 @@ const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
     if (window.confirm(`Supprimer vendeur "${nomVendeur}"? Cela supprimera aussi ses affectations aux pompes.`)) {
       setVendeurs(prev => prev.filter(v => v !== nomVendeur));
 
-      // Retirer vendeur de toutes les pompes
       const donneesMAJ = { ...toutesDonnees };
       Object.keys(donneesMAJ).forEach(shiftKey => {
         Object.keys(donneesMAJ[shiftKey]).forEach(pompe => {
@@ -259,7 +252,6 @@ const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
       });
       setToutesDonnees(donneesMAJ);
 
-      // Retirer vendeur du propane
       const propaneMAJ = { ...propaneDonnees };
       Object.keys(propaneMAJ).forEach(shiftKey => {
         if (propaneMAJ[shiftKey] && propaneMAJ[shiftKey]._vendeur === nomVendeur) {
@@ -268,7 +260,6 @@ const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
       });
       setPropaneDonnees(propaneMAJ);
 
-      // Retirer dépôts du vendeur
       const depotsMAJ = { ...tousDepots };
       Object.keys(depotsMAJ).forEach(shiftKey => {
         if (depotsMAJ[shiftKey][nomVendeur]) {
@@ -322,34 +313,33 @@ const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
 
   // Calculer totaux courants
   const totaux = calculerTotaux(
-    toutesDonnees[shift], 
-    propaneDonnees[shift], 
-    ventesUSD[shift], 
-    prix, 
-    tauxUSD, 
+    toutesDonnees[shift],
+    propaneDonnees[shift],
+    ventesUSD[shift],
+    prix,
+    tauxUSD,
     prixPropane
   );
 
-  // FIXED: Pass tauxUSD to calculerTotauxVendeurs function
   const totauxVendeurs = calculerTotauxVendeurs(vendeurs, toutesDonnees, tousDepots, prix, tauxUSD);
   const totauxVendeursCourants = totauxVendeurs[shift];
 
   // Calculer totaux par shift
   const totauxAM = calculerTotaux(
-    toutesDonnees.AM, 
-    propaneDonnees.AM, 
-    ventesUSD.AM, 
-    prix, 
-    tauxUSD, 
+    toutesDonnees.AM,
+    propaneDonnees.AM,
+    ventesUSD.AM,
+    prix,
+    tauxUSD,
     prixPropane
   );
 
   const totauxPM = calculerTotaux(
-    toutesDonnees.PM, 
-    propaneDonnees.PM, 
-    ventesUSD.PM, 
-    prix, 
-    tauxUSD, 
+    toutesDonnees.PM,
+    propaneDonnees.PM,
+    ventesUSD.PM,
+    prix,
+    tauxUSD,
     prixPropane
   );
 
@@ -365,15 +355,13 @@ const ajouterDepot = useCallback((nomVendeur, typeDevise = 'HTG') => {
     totalHTGenUSD: parseFloat((totauxAM.totalHTGenUSD + totauxPM.totalHTGenUSD).toFixed(2)),
   };
 
-  // Total brut WITHOUT propane
   totauxQuotidiens.totalBrut = parseFloat((
-    totauxQuotidiens.ventesGasoline + 
-    totauxQuotidiens.ventesDiesel 
+    totauxQuotidiens.ventesGasoline +
+    totauxQuotidiens.ventesDiesel
   ).toFixed(2));
 
-  // Total ajusté WITHOUT propane
   totauxQuotidiens.totalAjuste = parseFloat((
-    totauxQuotidiens.totalBrut - 
+    totauxQuotidiens.totalBrut -
     totauxQuotidiens.totalHTGenUSD
   ).toFixed(2));
 
