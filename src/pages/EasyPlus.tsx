@@ -349,67 +349,47 @@ const SystemeStationService = () => {
   }, [rawBillSequencesFromDeposits, residualSequencesByDenom, conditionnementDenom, shift, completedLiassesByDenom]);
 
   // Full sequence list with used/available status for display purposes.
-  // Uses positional index mapping so partial usage is always accurate.
-  // Rebuilds the full per-index remaining state from completed liasse steps.
+  // Replays completed liasse steps against raw sequences to get exact per-index
+  // remaining amounts — no positional guessing from filtered arrays.
   const allSequencesWithStatus = useMemo(() => {
     const raw = rawBillSequencesFromDeposits;
-
-    // Build a map of originalIndex -> remaining amount by replaying all completed liasses
-    // Start with each raw sequence at full amount, then subtract each completed step
-    const remainingByIndex = {};
-    raw.forEach((amount, i) => { remainingByIndex[i] = amount; });
-
     const completedLiasses = completedLiassesByDenom[`denom_${conditionnementDenom}`] || [];
-    // We need to replay against the index space of the sequences that existed
-    // at each completion. Since steps use sequenceNum (1-based into the available
-    // array AT THAT TIME), and the available array shrinks as sequences hit 0,
-    // we track the live index mapping the same way getInstructions does.
-    
-    // Simpler and correct: use billSequenceAmounts (the current residuals) which
-    // already reflects all completed subtractions. We just need to map each raw
-    // sequence to its current remaining value by original position.
-    //
-    // The residuals array is the raw array with completed amounts subtracted and
-    // zeros filtered out — but we need per-index values. So instead of using
-    // the filtered residuals array, replay subtractions directly on per-index state.
-    
-    const completedStepsFlat = completedLiasses.flatMap(l => l.steps);
-    // steps use sequenceNum which is originalIndex+1 relative to sequences AT COMPLETION TIME
-    // We can't reliably replay these without knowing the exact sequence state at each step.
-    // Instead: derive remaining per index from (raw - what billSequenceAmounts accounts for).
-    //
-    // The correct approach: billSequenceAmounts is already the right available list.
-    // Map it back to original indices using the raw array with positional tracking.
-    
-    // Walk raw sequences in order. For each, check if it still exists in billSequenceAmounts
-    // by consuming from a positional copy of billSequenceAmounts in raw order.
-    // Since billSequenceAmounts preserves relative order of surviving sequences,
-    // we can match them positionally.
-    const availableQueue = [...billSequenceAmounts]; // ordered survivors
-    
-    return raw.map((amount, rawIdx) => {
-      if (availableQueue.length > 0) {
-        const headRemaining = availableQueue[0];
-        
-        if (headRemaining === amount) {
-          // Fully intact — consume from queue
-          availableQueue.shift();
-          return { amount, remaining: amount, usedAmount: 0, used: false };
+
+    // Start: every raw sequence is fully available
+    // remainingByOriginalIndex[i] = how many bills remain in raw sequence i
+    const remaining = raw.map(amount => amount);
+
+    // Replay each completed liasse in reverse chronological order
+    // (they're stored newest-first, so reverse to apply oldest first)
+    const orderedLiasses = [...completedLiasses].reverse();
+
+    orderedLiasses.forEach(liasse => {
+      // Each step's sequenceNum is 1-based into the LIVE sequence array at completion time.
+      // The live array is the raw array with zeros filtered out, in original order.
+      // We rebuild that live->original mapping each time using current remaining state
+      // BEFORE applying this liasse's steps.
+      const liveToOriginal = [];
+      remaining.forEach((r, i) => {
+        if (r > 0) liveToOriginal.push(i);
+      });
+
+      liasse.steps.forEach(step => {
+        const liveIdx = step.sequenceNum - 1;
+        const origIdx = liveToOriginal[liveIdx];
+        if (origIdx !== undefined) {
+          remaining[origIdx] = Math.max(0, remaining[origIdx] - step.take);
         }
-        
-        if (headRemaining < amount) {
-          // Partially consumed — this raw sequence was split, head is its remainder
-          availableQueue.shift();
-          return { amount, remaining: headRemaining, usedAmount: amount - headRemaining, used: 'partial' };
-        }
-        
-        // headRemaining > amount — impossible if data is consistent, treat as fully used
-      }
-      
-      // Nothing left in queue for this raw sequence — fully consumed
-      return { amount, remaining: 0, usedAmount: amount, used: true };
+      });
     });
-  }, [rawBillSequencesFromDeposits, billSequenceAmounts, completedLiassesByDenom, conditionnementDenom]);
+
+    // Now build display objects
+    return raw.map((amount, i) => {
+      const rem = remaining[i];
+      if (rem === amount) return { amount, remaining: amount, usedAmount: 0, used: false };
+      if (rem === 0)      return { amount, remaining: 0, usedAmount: amount, used: true };
+      return { amount, remaining: rem, usedAmount: amount - rem, used: 'partial' };
+    });
+  }, [rawBillSequencesFromDeposits, completedLiassesByDenom, conditionnementDenom]);
 
   // Handle liasse completion.
   // LiasseCounter already computed the correct post-completion sequence array
