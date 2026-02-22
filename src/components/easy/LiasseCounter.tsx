@@ -201,10 +201,7 @@ export default function LiasseCounter({
 
   const completeLiasse = (liasse) => {
     if (isExternal && onLiasseComplete) {
-      // In external mode, call the parent callback
-      onLiasseComplete(liasse);
-      
-      // Immediately update local sequences to remove used amounts
+      // Compute post-completion sequence array first
       const newSequences = [...sequences];
       liasse.steps.forEach(step => {
         const index = step.sequenceNum - 1;
@@ -212,8 +209,11 @@ export default function LiasseCounter({
           newSequences[index] = step.remaining;
         }
       });
-      // Filter out sequences that are now 0
       const filteredSequences = newSequences.filter(amount => amount > 0);
+
+      // Pass liasse AND resulting sequence array to parent so it can persist
+      // residuals without re-parsing deposits (which would lose subtractions)
+      onLiasseComplete(liasse, filteredSequences);
       setSequences(filteredSequences);
       
     } else {
@@ -233,10 +233,7 @@ export default function LiasseCounter({
 
   const undoCompleteLiasse = (liasse) => {
     if (isExternal && onLiasseUndo) {
-      // In external mode, call the parent callback
-      onLiasseUndo(liasse);
-
-      // Restore the amounts to sequences
+      // Restore the amounts to sequences first
       const newSequences = [...sequences];
       liasse.steps.forEach(step => {
         const index = step.sequenceNum - 1;
@@ -249,7 +246,11 @@ export default function LiasseCounter({
           newSequences[step.sequenceNum - 1] = step.take;
         }
       });
-      setSequences(newSequences.filter(amount => amount > 0));
+      const restoredSequences = newSequences.filter(amount => amount > 0);
+
+      // Pass liasse AND restored sequence array to parent
+      onLiasseUndo(liasse, restoredSequences);
+      setSequences(restoredSequences);
       
     } else {
       // In internal mode, manage state locally
