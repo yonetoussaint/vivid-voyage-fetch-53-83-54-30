@@ -281,8 +281,10 @@ const SystemeStationService = () => {
     const denomKey = `denom_${conditionnementDenom}`;
     const usedBills = usedBillsByDenom[denomKey] || [];
 
-    // First, collect all bills from deposits
-    Object.values(currentShiftDepots).forEach(vendorDepots => {
+    console.log(`Extracting sequences for ${conditionnementDenom} Gdes, used bills:`, usedBills.length);
+
+    // First, collect all bills from deposits with unique IDs
+    Object.entries(currentShiftDepots).forEach(([vendor, vendorDepots]) => {
       vendorDepots.forEach((depot, depotIndex) => {
         if (depot && typeof depot === 'object' && depot.breakdown) {
           const breakdown = depot.breakdown;
@@ -291,23 +293,27 @@ const SystemeStationService = () => {
             parts.forEach((part, partIndex) => {
               const trimmed = part.trim();
 
+              // Create a truly unique ID for this bill/group
+              // Include vendor, depot index, part index, and timestamp to ensure uniqueness
+              const uniqueId = `${vendor}-${depotIndex}-${partIndex}-${depot.timestamp || Date.now()}-${Math.random()}`;
+
               const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+)\s*HTG/i);
               if (multiplierMatch) {
                 const multiplier = parseInt(multiplierMatch[1]);
                 const billValue = parseInt(multiplierMatch[2]);
 
                 if (billValue === conditionnementDenom) {
-                  // Create a unique ID for this bill group
-                  const billId = `${depotIndex}-${partIndex}-${Date.now()}`;
-                  
                   // Check if this specific bill group has been used
-                  const isUsed = usedBills.some(used => used.billId === billId);
+                  const isUsed = usedBills.some(used => used.billId === uniqueId);
                   
                   if (!isUsed) {
                     allSequences.push({
-                      id: billId,
+                      id: uniqueId,
                       amount: multiplier,
-                      originalAmount: multiplier
+                      originalAmount: multiplier,
+                      vendor,
+                      depotIndex,
+                      partIndex
                     });
                   }
                 }
@@ -316,15 +322,16 @@ const SystemeStationService = () => {
                 if (singleMatch) {
                   const billValue = parseInt(singleMatch[1]);
                   if (billValue === conditionnementDenom) {
-                    const billId = `${depotIndex}-${partIndex}-${Date.now()}`;
-                    
-                    const isUsed = usedBills.some(used => used.billId === billId);
+                    const isUsed = usedBills.some(used => used.billId === uniqueId);
                     
                     if (!isUsed) {
                       allSequences.push({
-                        id: billId,
+                        id: uniqueId,
                         amount: 1,
-                        originalAmount: 1
+                        originalAmount: 1,
+                        vendor,
+                        depotIndex,
+                        partIndex
                       });
                     }
                   }
@@ -336,6 +343,7 @@ const SystemeStationService = () => {
       });
     });
 
+    console.log(`Available sequences for ${conditionnementDenom} Gdes:`, allSequences.map(s => s.amount));
     return allSequences;
   }, [tousDepots, shift, conditionnementDenom, usedBillsByDenom]);
 
@@ -345,33 +353,51 @@ const SystemeStationService = () => {
     return availableSequences.map(s => s.amount);
   }, [extractAvailableBillSequences]);
 
+  // Get the full sequence objects for reference
+  const availableSequences = useMemo(() => {
+    return extractAvailableBillSequences();
+  }, [extractAvailableBillSequences]);
+
   // Handle liasse completion
   const handleLiasseComplete = useCallback((completedLiasse) => {
     const denomKey = `denom_${conditionnementDenom}`;
     
-    // Get all available sequences to find which ones were used
-    const availableSequences = extractAvailableBillSequences();
+    console.log('Completing liasse:', completedLiasse);
+    console.log('Available sequences before completion:', availableSequences.map(s => s.amount));
     
     // Track which bills were used in this liasse
     const usedBills = [];
     
-    completedLiasse.steps.forEach(step => {
-      // Find the sequence that matches this step
-      // This is a bit tricky because we need to match by amount and order
-      // We'll use a simple approach: take the first available sequence that matches the amount
-      const matchingSequence = availableSequences.find(s => 
-        !usedBills.includes(s.id) && s.amount >= step.take
-      );
-      
-      if (matchingSequence) {
-        usedBills.push({
-          billId: matchingSequence.id,
-          amount: step.take,
-          originalAmount: matchingSequence.originalAmount,
-          liasseTimestamp: completedLiasse.timestamp || Date.now()
-        });
+    // Sort steps by sequenceNum to ensure we match correctly
+    const sortedSteps = [...completedLiasse.steps].sort((a, b) => a.sequenceNum - b.sequenceNum);
+    
+    // Make a copy of available sequences to work with
+    const remainingSequences = [...availableSequences];
+    
+    sortedSteps.forEach((step) => {
+      // Find the first available sequence that matches this step
+      // We need to find a sequence that hasn't been used yet and has enough bills
+      for (let i = 0; i < remainingSequences.length; i++) {
+        const seq = remainingSequences[i];
+        
+        // If this sequence has enough bills
+        if (seq.amount >= step.take) {
+          usedBills.push({
+            billId: seq.id,
+            amount: step.take,
+            originalAmount: seq.originalAmount,
+            liasseTimestamp: completedLiasse.timestamp || Date.now(),
+            stepIndex: step.sequenceNum
+          });
+          
+          // Remove this sequence from remaining (it's fully used or partially used)
+          remainingSequences.splice(i, 1);
+          break;
+        }
       }
     });
+    
+    console.log('Used bills in this liasse:', usedBills);
     
     // Update used bills
     setUsedBillsByDenom(prev => {
@@ -396,11 +422,13 @@ const SystemeStationService = () => {
         [denomKey]: [liasseWithTimestamp, ...currentLiasses]
       };
     });
-  }, [conditionnementDenom, extractAvailableBillSequences]);
+  }, [conditionnementDenom, availableSequences]);
 
   // Handle liasse undo
   const handleLiasseUndo = useCallback((liasseToUndo) => {
     const denomKey = `denom_${conditionnementDenom}`;
+    
+    console.log('Undoing liasse:', liasseToUndo);
     
     // Remove used bills
     setUsedBillsByDenom(prev => {
@@ -631,6 +659,9 @@ const SystemeStationService = () => {
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
                   {billSequenceAmounts.reduce((a, b) => a + b, 0)} billets disponibles
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {usedBillsByDenom[`denom_${conditionnementDenom}`]?.length || 0} billets utilisés dans les liasses complétées
                 </p>
               </div>
               {completedLiassesByDenom[`denom_${conditionnementDenom}`]?.length > 0 && (
