@@ -35,9 +35,8 @@ const SystemeStationService = () => {
   const [tasksStats, setTasksStats] = useState(null);
   const [reportShift, setReportShift] = useState('full');
 
-  // State for completed liasses across denominations
+  // State for completed liasses with their used bills
   const [completedLiassesByDenom, setCompletedLiassesByDenom] = useState(() => {
-    // Load from localStorage on initial render
     try {
       const saved = localStorage.getItem('liasseCounterCompletedByDenom');
       return saved ? JSON.parse(saved) : {};
@@ -46,10 +45,17 @@ const SystemeStationService = () => {
     }
   });
 
-  // Track the last sequence hash to detect changes
-  const [lastSequenceHash, setLastSequenceHash] = useState({});
+  // Track which specific bills have been used in completed liasses
+  const [usedBillsByDenom, setUsedBillsByDenom] = useState(() => {
+    try {
+      const saved = localStorage.getItem('usedBillsByDenom');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
-  // Save completed liasses to localStorage whenever they change
+  // Save to localStorage
   useEffect(() => {
     try {
       localStorage.setItem('liasseCounterCompletedByDenom', JSON.stringify(completedLiassesByDenom));
@@ -57,6 +63,14 @@ const SystemeStationService = () => {
       console.error('Error saving completed liasses:', error);
     }
   }, [completedLiassesByDenom]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('usedBillsByDenom', JSON.stringify(usedBillsByDenom));
+    } catch (error) {
+      console.error('Error saving used bills:', error);
+    }
+  }, [usedBillsByDenom]);
 
   const {
     toutesDonnees,
@@ -260,18 +274,21 @@ const SystemeStationService = () => {
     return acc;
   }, {});
 
-  // Extract bill sequences from deposits for the current shift
-  const extractBillSequencesFromDeposits = useCallback(() => {
-    const sequences = [];
+  // Extract available bill sequences from deposits (excluding used bills)
+  const extractAvailableBillSequences = useCallback(() => {
+    const allSequences = [];
     const currentShiftDepots = tousDepots[shift] || {};
+    const denomKey = `denom_${conditionnementDenom}`;
+    const usedBills = usedBillsByDenom[denomKey] || [];
 
+    // First, collect all bills from deposits
     Object.values(currentShiftDepots).forEach(vendorDepots => {
-      vendorDepots.forEach(depot => {
+      vendorDepots.forEach((depot, depotIndex) => {
         if (depot && typeof depot === 'object' && depot.breakdown) {
           const breakdown = depot.breakdown;
           if (typeof breakdown === 'string') {
             const parts = breakdown.split(',');
-            parts.forEach(part => {
+            parts.forEach((part, partIndex) => {
               const trimmed = part.trim();
 
               const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+)\s*HTG/i);
@@ -280,14 +297,36 @@ const SystemeStationService = () => {
                 const billValue = parseInt(multiplierMatch[2]);
 
                 if (billValue === conditionnementDenom) {
-                  sequences.push(multiplier);
+                  // Create a unique ID for this bill group
+                  const billId = `${depotIndex}-${partIndex}-${Date.now()}`;
+                  
+                  // Check if this specific bill group has been used
+                  const isUsed = usedBills.some(used => used.billId === billId);
+                  
+                  if (!isUsed) {
+                    allSequences.push({
+                      id: billId,
+                      amount: multiplier,
+                      originalAmount: multiplier
+                    });
+                  }
                 }
               } else {
                 const singleMatch = trimmed.match(/(\d+)\s*HTG/i);
                 if (singleMatch) {
                   const billValue = parseInt(singleMatch[1]);
                   if (billValue === conditionnementDenom) {
-                    sequences.push(1);
+                    const billId = `${depotIndex}-${partIndex}-${Date.now()}`;
+                    
+                    const isUsed = usedBills.some(used => used.billId === billId);
+                    
+                    if (!isUsed) {
+                      allSequences.push({
+                        id: billId,
+                        amount: 1,
+                        originalAmount: 1
+                      });
+                    }
                   }
                 }
               }
@@ -297,63 +336,59 @@ const SystemeStationService = () => {
       });
     });
 
-    return sequences;
-  }, [tousDepots, shift, conditionnementDenom]);
+    return allSequences;
+  }, [tousDepots, shift, conditionnementDenom, usedBillsByDenom]);
 
-  // Memoize the bill sequences to prevent unnecessary recalculations
-  const billSequences = useMemo(() => {
-    return extractBillSequencesFromDeposits();
-  }, [extractBillSequencesFromDeposits]);
+  // Get just the amounts for the LiasseCounter
+  const billSequenceAmounts = useMemo(() => {
+    const availableSequences = extractAvailableBillSequences();
+    return availableSequences.map(s => s.amount);
+  }, [extractAvailableBillSequences]);
 
-  // Generate a hash of the sequences to detect changes
-  const sequencesHash = useMemo(() => {
-    return billSequences.join(',');
-  }, [billSequences]);
-
-  // Check if sequences have changed and clear completed liasses if they don't match
-  useEffect(() => {
-    const denomKey = `denom_${conditionnementDenom}`;
-    const currentHash = lastSequenceHash[denomKey];
-    
-    // If sequences have changed and there are completed liasses
-    if (currentHash && currentHash !== sequencesHash) {
-      const completedCount = completedLiassesByDenom[denomKey]?.length || 0;
-      
-      if (completedCount > 0) {
-        // Ask user if they want to keep completed liasses
-        const shouldKeep = window.confirm(
-          'De nouveaux dépôts ont été ajoutés. Voulez-vous conserver les liasses complétées précédentes ? ' +
-          'Cliquez sur "Annuler" pour les effacer.'
-        );
-        
-        if (!shouldKeep) {
-          // Clear completed liasses for this denomination
-          setCompletedLiassesByDenom(prev => {
-            const newState = { ...prev };
-            delete newState[denomKey];
-            return newState;
-          });
-        }
-      }
-    }
-    
-    // Update the hash
-    setLastSequenceHash(prev => ({
-      ...prev,
-      [denomKey]: sequencesHash
-    }));
-  }, [sequencesHash, conditionnementDenom, completedLiassesByDenom]);
-
-  // Handle liasse completion from child component
+  // Handle liasse completion
   const handleLiasseComplete = useCallback((completedLiasse) => {
-    setCompletedLiassesByDenom(prev => {
-      const denomKey = `denom_${conditionnementDenom}`;
-      const currentLiasses = prev[denomKey] || [];
+    const denomKey = `denom_${conditionnementDenom}`;
+    
+    // Get all available sequences to find which ones were used
+    const availableSequences = extractAvailableBillSequences();
+    
+    // Track which bills were used in this liasse
+    const usedBills = [];
+    
+    completedLiasse.steps.forEach(step => {
+      // Find the sequence that matches this step
+      // This is a bit tricky because we need to match by amount and order
+      // We'll use a simple approach: take the first available sequence that matches the amount
+      const matchingSequence = availableSequences.find(s => 
+        !usedBills.includes(s.id) && s.amount >= step.take
+      );
       
-      // Add timestamp if not present
+      if (matchingSequence) {
+        usedBills.push({
+          billId: matchingSequence.id,
+          amount: step.take,
+          originalAmount: matchingSequence.originalAmount,
+          liasseTimestamp: completedLiasse.timestamp || Date.now()
+        });
+      }
+    });
+    
+    // Update used bills
+    setUsedBillsByDenom(prev => {
+      const currentUsed = prev[denomKey] || [];
+      return {
+        ...prev,
+        [denomKey]: [...currentUsed, ...usedBills]
+      };
+    });
+    
+    // Store completed liasse
+    setCompletedLiassesByDenom(prev => {
+      const currentLiasses = prev[denomKey] || [];
       const liasseWithTimestamp = {
         ...completedLiasse,
-        timestamp: completedLiasse.timestamp || Date.now()
+        timestamp: completedLiasse.timestamp || Date.now(),
+        usedBills: usedBills.map(b => b.billId) // Store which bills were used
       };
       
       return {
@@ -361,12 +396,25 @@ const SystemeStationService = () => {
         [denomKey]: [liasseWithTimestamp, ...currentLiasses]
       };
     });
-  }, [conditionnementDenom]);
+  }, [conditionnementDenom, extractAvailableBillSequences]);
 
-  // Handle liasse undo from child component
+  // Handle liasse undo
   const handleLiasseUndo = useCallback((liasseToUndo) => {
+    const denomKey = `denom_${conditionnementDenom}`;
+    
+    // Remove used bills
+    setUsedBillsByDenom(prev => {
+      const currentUsed = prev[denomKey] || [];
+      const usedBillIds = liasseToUndo.usedBills || [];
+      
+      return {
+        ...prev,
+        [denomKey]: currentUsed.filter(b => !usedBillIds.includes(b.billId))
+      };
+    });
+    
+    // Remove completed liasse
     setCompletedLiassesByDenom(prev => {
-      const denomKey = `denom_${conditionnementDenom}`;
       const currentLiasses = prev[denomKey] || [];
       return {
         ...prev,
@@ -375,11 +423,18 @@ const SystemeStationService = () => {
     });
   }, [conditionnementDenom]);
 
-  // Clear completed liasses for current denomination
+  // Clear all used bills and completed liasses for current denomination
   const handleClearCompleted = useCallback(() => {
     if (window.confirm('Voulez-vous effacer toutes les liasses complétées pour cette dénomination ?')) {
+      const denomKey = `denom_${conditionnementDenom}`;
+      
+      setUsedBillsByDenom(prev => {
+        const newState = { ...prev };
+        delete newState[denomKey];
+        return newState;
+      });
+      
       setCompletedLiassesByDenom(prev => {
-        const denomKey = `denom_${conditionnementDenom}`;
         const newState = { ...prev };
         delete newState[denomKey];
         return newState;
@@ -395,8 +450,8 @@ const SystemeStationService = () => {
     reinitialiserShift(shift);
     setPompeEtendue('P1');
     
-    // Clear completed liasses for the current shift when resetting
     if (window.confirm('Voulez-vous aussi effacer les liasses complétées ?')) {
+      setUsedBillsByDenom({});
       setCompletedLiassesByDenom({});
     }
   };
@@ -405,8 +460,8 @@ const SystemeStationService = () => {
     reinitialiserJour();
     setPompeEtendue('P1');
     
-    // Clear completed liasses for the day when resetting
     if (window.confirm('Voulez-vous aussi effacer toutes les liasses complétées ?')) {
+      setUsedBillsByDenom({});
       setCompletedLiassesByDenom({});
     }
   };
@@ -570,9 +625,14 @@ const SystemeStationService = () => {
         return (
           <div className="p-2 sm:p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-slate-800">
-                Compteur de Liasses - {conditionnementDenom} Gdes
-              </h2>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-800">
+                  Compteur de Liasses - {conditionnementDenom} Gdes
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  {billSequenceAmounts.reduce((a, b) => a + b, 0)} billets disponibles
+                </p>
+              </div>
               {completedLiassesByDenom[`denom_${conditionnementDenom}`]?.length > 0 && (
                 <button
                   onClick={handleClearCompleted}
@@ -583,9 +643,9 @@ const SystemeStationService = () => {
               )}
             </div>
             <LiasseCounter
-              key={`liasse-counter-${conditionnementDenom}-${date}-${shift}-${sequencesHash}`}
+              key={`liasse-counter-${conditionnementDenom}-${date}-${shift}-${billSequenceAmounts.join(',')}`}
               denomination={conditionnementDenom}
-              externalSequences={billSequences}
+              externalSequences={billSequenceAmounts}
               isExternal={true}
               completedLiasses={completedLiassesByDenom[`denom_${conditionnementDenom}`] || []}
               onLiasseComplete={handleLiasseComplete}
