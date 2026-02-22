@@ -1,4 +1,4 @@
-// LiasseCounter.jsx (with props for external completion management)
+// LiasseCounter.jsx (with proper external sequence handling)
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, RotateCcw, Check, X, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -89,9 +89,9 @@ export default function LiasseCounter({
   denomination = 1000,
   externalSequences = [],
   isExternal = false,
-  completedLiasses: externalCompletedLiasses = [], // New prop for external completed liasses
-  onLiasseComplete, // Callback for when a liasse is completed
-  onLiasseUndo // Callback for when a liasse is undone
+  completedLiasses: externalCompletedLiasses = [],
+  onLiasseComplete,
+  onLiasseUndo
 }) {
   // State for active sequences
   const [sequences, setSequences] = useState([]);
@@ -100,6 +100,7 @@ export default function LiasseCounter({
   const [currentInput, setCurrentInput] = useState('');
   const [buttonState, setButtonState] = useState('default');
   const timeoutRef = useRef(null);
+  const prevExternalSequencesRef = useRef([]);
 
   // Use external completed liasses if provided, otherwise use internal
   const completedLiasses = isExternal ? externalCompletedLiasses : internalCompletedLiasses;
@@ -127,10 +128,17 @@ export default function LiasseCounter({
     setShowCompleted(false);
   }, [denomination, isExternal]);
 
-  // Update sequences when externalSequences change
+  // Update sequences when externalSequences change, but only if they're actually different
   useEffect(() => {
     if (isExternal) {
-      setSequences(externalSequences);
+      // Check if sequences have actually changed
+      const currentStr = JSON.stringify(sequences);
+      const externalStr = JSON.stringify(externalSequences);
+      
+      if (currentStr !== externalStr) {
+        console.log('External sequences changed:', externalSequences);
+        setSequences(externalSequences);
+      }
     }
   }, [externalSequences, isExternal]);
 
@@ -196,7 +204,7 @@ export default function LiasseCounter({
       // In external mode, call the parent callback
       onLiasseComplete(liasse);
       
-      // Remove the used amounts from sequences
+      // Immediately update local sequences to remove used amounts
       const newSequences = [...sequences];
       liasse.steps.forEach(step => {
         const index = step.sequenceNum - 1;
@@ -204,7 +212,10 @@ export default function LiasseCounter({
           newSequences[index] = step.remaining;
         }
       });
-      setSequences(newSequences.filter(amount => amount > 0));
+      // Filter out sequences that are now 0
+      const filteredSequences = newSequences.filter(amount => amount > 0);
+      setSequences(filteredSequences);
+      
     } else {
       // In internal mode, manage state locally
       setInternalCompletedLiasses(prev => [liasse, ...prev]);
@@ -239,6 +250,7 @@ export default function LiasseCounter({
         }
       });
       setSequences(newSequences.filter(amount => amount > 0));
+      
     } else {
       // In internal mode, manage state locally
       setInternalCompletedLiasses(prev => prev.filter(l => l.timestamp !== liasse.timestamp));
@@ -404,25 +416,25 @@ export default function LiasseCounter({
           </div>
         )}
 
-        {/* External data notice - only show when there are sequences */}
+        {/* External data notice */}
         {isExternal && sequences.length > 0 && (
           <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
             <p className="text-sm text-purple-700">
               <span className="font-semibold">Mode dépôts :</span> Les séquences proviennent des dépôts.
-              Les liasses complétées sont sauvegardées automatiquement.
+              Les liasses complétées sont retirées de la liste.
             </p>
           </div>
         )}
 
-        {/* Sequences */}
+        {/* Sequences - Show only available sequences */}
         {sequences.length > 0 && (
           <div className="mb-4 sm:mb-6">
             <div className="flex justify-between items-center mb-2 sm:mb-3">
               <div className="text-[10px] sm:text-xs font-semibold text-slate-700 uppercase tracking-wide">
-                Séquences ({sequences.length})
+                Séquences disponibles ({sequences.length})
               </div>
               <div className="text-[10px] sm:text-xs text-slate-500">
-                {isExternal ? 'Depuis les dépôts' : 'Sauvegardé automatiquement'} • {denomination} Gdes
+                {isExternal ? 'Des dépôts' : 'Sauvegardé'} • {denomination} Gdes
               </div>
             </div>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -591,7 +603,7 @@ export default function LiasseCounter({
             </div>
             <p className="text-sm sm:text-base text-slate-500">
               {isExternal 
-                ? "Aucune séquence trouvée dans les dépôts pour cette dénomination"
+                ? "Aucune séquence disponible dans les dépôts pour cette dénomination"
                 : `Ajoutez des séquences de billets de ${denomination} Gourdes`
               }
             </p>
