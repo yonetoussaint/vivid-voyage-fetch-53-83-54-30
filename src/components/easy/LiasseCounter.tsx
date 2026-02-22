@@ -1,4 +1,4 @@
-// LiasseCounter.jsx (with fix for denomination switching)
+// LiasseCounter.jsx (with props for external completion management)
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, RotateCcw, Check, X, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -87,33 +87,38 @@ function getInstructions(sequences) {
 
 export default function LiasseCounter({ 
   denomination = 1000,
-  externalSequences = [], // New prop for sequences from deposits
-  isExternal = false // Flag to indicate if using external data
+  externalSequences = [],
+  isExternal = false,
+  completedLiasses: externalCompletedLiasses = [], // New prop for external completed liasses
+  onLiasseComplete, // Callback for when a liasse is completed
+  onLiasseUndo // Callback for when a liasse is undone
 }) {
   // State for active sequences
   const [sequences, setSequences] = useState([]);
-  const [completedLiasses, setCompletedLiasses] = useState([]);
+  const [internalCompletedLiasses, setInternalCompletedLiasses] = useState([]);
   const [showCompleted, setShowCompleted] = useState(false);
   const [currentInput, setCurrentInput] = useState('');
   const [buttonState, setButtonState] = useState('default');
   const timeoutRef = useRef(null);
 
+  // Use external completed liasses if provided, otherwise use internal
+  const completedLiasses = isExternal ? externalCompletedLiasses : internalCompletedLiasses;
+
   // Reset state when denomination changes
   useEffect(() => {
     if (isExternal) {
-      // In external mode: clear internal state, then externalSequences will update
-      setSequences([]);
-      setCompletedLiasses([]);
+      // In external mode: use externalSequences
+      setSequences(externalSequences);
     } else {
       // Load from localStorage for internal mode
       try { 
         const saved = localStorage.getItem(`liasseCounterSequences_${denomination}`);
         setSequences(saved ? JSON.parse(saved) : []);
         const savedCompleted = localStorage.getItem(`liasseCounterCompleted_${denomination}`);
-        setCompletedLiasses(savedCompleted ? JSON.parse(savedCompleted) : []);
+        setInternalCompletedLiasses(savedCompleted ? JSON.parse(savedCompleted) : []);
       } catch { 
         setSequences([]); 
-        setCompletedLiasses([]);
+        setInternalCompletedLiasses([]);
       }
     }
     // Reset UI state
@@ -122,12 +127,10 @@ export default function LiasseCounter({
     setShowCompleted(false);
   }, [denomination, isExternal]);
 
-  // Update sequences from external source when they change
+  // Update sequences when externalSequences change
   useEffect(() => {
     if (isExternal) {
       setSequences(externalSequences);
-      // Don't load completed liasses from localStorage in external mode
-      setCompletedLiasses([]);
     }
   }, [externalSequences, isExternal]);
 
@@ -143,10 +146,10 @@ export default function LiasseCounter({
   useEffect(() => {
     if (!isExternal) {
       try { 
-        localStorage.setItem(`liasseCounterCompleted_${denomination}`, JSON.stringify(completedLiasses)); 
+        localStorage.setItem(`liasseCounterCompleted_${denomination}`, JSON.stringify(internalCompletedLiasses)); 
       } catch {}
     }
-  }, [completedLiasses, denomination, isExternal]);
+  }, [internalCompletedLiasses, denomination, isExternal]);
 
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
 
@@ -156,7 +159,7 @@ export default function LiasseCounter({
   };
 
   const addSequence = () => {
-    if (isExternal) return; // Cannot add sequences in external mode
+    if (isExternal) return;
     
     const value = parseInt(currentInput);
     if (currentInput === '' || isNaN(value) || value <= 0) {
@@ -174,59 +177,90 @@ export default function LiasseCounter({
   };
 
   const removeSequence = (i) => {
-    if (isExternal) return; // Cannot remove sequences in external mode
+    if (isExternal) return;
     setSequences(prev => prev.filter((_, j) => j !== i));
   };
 
   const resetAll = () => {
-    if (isExternal) return; // Cannot reset in external mode
+    if (isExternal) return;
     
     if (window.confirm('Êtes-vous sûr de vouloir tout réinitialiser ?')) {
       setSequences([]);
-      setCompletedLiasses([]);
+      setInternalCompletedLiasses([]);
       setCurrentInput('');
     }
   };
 
   const completeLiasse = (liasse) => {
-    // Complete button works regardless of mode
-    setCompletedLiasses(prev => [liasse, ...prev]);
-    // Remove the used amounts from sequences
-    const newSequences = [...sequences];
-    liasse.steps.forEach(step => {
-      const index = step.sequenceNum - 1;
-      if (newSequences[index] !== undefined) {
-        newSequences[index] = step.remaining;
-      }
-    });
-    // Filter out sequences that are now 0
-    setSequences(newSequences.filter(amount => amount > 0));
+    if (isExternal && onLiasseComplete) {
+      // In external mode, call the parent callback
+      onLiasseComplete(liasse);
+      
+      // Remove the used amounts from sequences
+      const newSequences = [...sequences];
+      liasse.steps.forEach(step => {
+        const index = step.sequenceNum - 1;
+        if (newSequences[index] !== undefined) {
+          newSequences[index] = step.remaining;
+        }
+      });
+      setSequences(newSequences.filter(amount => amount > 0));
+    } else {
+      // In internal mode, manage state locally
+      setInternalCompletedLiasses(prev => [liasse, ...prev]);
+      
+      const newSequences = [...sequences];
+      liasse.steps.forEach(step => {
+        const index = step.sequenceNum - 1;
+        if (newSequences[index] !== undefined) {
+          newSequences[index] = step.remaining;
+        }
+      });
+      setSequences(newSequences.filter(amount => amount > 0));
+    }
   };
 
   const undoCompleteLiasse = (liasse) => {
-    // Undo works regardless of mode
-    // Remove from completed
-    setCompletedLiasses(prev => prev.filter(l => l.timestamp !== liasse.timestamp));
+    if (isExternal && onLiasseUndo) {
+      // In external mode, call the parent callback
+      onLiasseUndo(liasse);
 
-    // Restore the amounts to sequences
-    const newSequences = [...sequences];
-    liasse.steps.forEach(step => {
-      const index = step.sequenceNum - 1;
-      if (newSequences[index] !== undefined) {
-        newSequences[index] += step.take;
-      } else {
-        // If the sequence was completely used up, add it back
-        while (newSequences.length < step.sequenceNum) {
-          newSequences.push(0);
+      // Restore the amounts to sequences
+      const newSequences = [...sequences];
+      liasse.steps.forEach(step => {
+        const index = step.sequenceNum - 1;
+        if (newSequences[index] !== undefined) {
+          newSequences[index] += step.take;
+        } else {
+          while (newSequences.length < step.sequenceNum) {
+            newSequences.push(0);
+          }
+          newSequences[step.sequenceNum - 1] = step.take;
         }
-        newSequences[step.sequenceNum - 1] = step.take;
-      }
-    });
-    setSequences(newSequences.filter(amount => amount > 0));
+      });
+      setSequences(newSequences.filter(amount => amount > 0));
+    } else {
+      // In internal mode, manage state locally
+      setInternalCompletedLiasses(prev => prev.filter(l => l.timestamp !== liasse.timestamp));
+
+      const newSequences = [...sequences];
+      liasse.steps.forEach(step => {
+        const index = step.sequenceNum - 1;
+        if (newSequences[index] !== undefined) {
+          newSequences[index] += step.take;
+        } else {
+          while (newSequences.length < step.sequenceNum) {
+            newSequences.push(0);
+          }
+          newSequences[step.sequenceNum - 1] = step.take;
+        }
+      });
+      setSequences(newSequences.filter(amount => amount > 0));
+    }
   };
 
   const total = sequences.reduce((s, v) => s + v, 0);
-  const liasseInfo = { complete: Math.floor(total / 100), remaining: total % 100 };
+  const liasseInfo = { complete: completedLiasses.length, remaining: total % 100 };
   const instructions = getInstructions(sequences);
 
   const getButtonConfig = () => {
@@ -306,7 +340,7 @@ export default function LiasseCounter({
             },
             { 
               label: 'Liasses', 
-              value: completedLiasses.length, // Use completed count instead of calculated
+              value: completedLiasses.length,
               gdesValue: completedLiasses.length * 100 * denomination,
               from: 'from-emerald-50', 
               to: 'to-emerald-100', 
@@ -375,7 +409,7 @@ export default function LiasseCounter({
           <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
             <p className="text-sm text-purple-700">
               <span className="font-semibold">Mode dépôts :</span> Les séquences proviennent des dépôts.
-              Vous pouvez toujours marquer les liasses comme complétées.
+              Les liasses complétées sont sauvegardées automatiquement.
             </p>
           </div>
         )}
@@ -410,7 +444,7 @@ export default function LiasseCounter({
           </div>
         )}
 
-        {/* Pending Instructions - with Complete button for liasses that reach 100 */}
+        {/* Pending Instructions */}
         {instructions.length > 0 && (
           <div className="mb-6">
             <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">
@@ -418,12 +452,13 @@ export default function LiasseCounter({
             </div>
             <div className="space-y-2 sm:space-y-3">
               {instructions.map((inst) => {
-                // Check if this liasse is already completed by comparing timestamps or steps
+                // Check if this liasse is already completed
                 const isAlreadyCompleted = completedLiasses.some(
-                  completed => JSON.stringify(completed.steps) === JSON.stringify(inst.steps)
+                  completed => 
+                    completed.total === inst.total && 
+                    JSON.stringify(completed.steps) === JSON.stringify(inst.steps)
                 );
                 
-                // Don't show if already completed
                 if (isAlreadyCompleted) return null;
                 
                 return (
@@ -437,7 +472,6 @@ export default function LiasseCounter({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
-                        {/* Complete button appears when liasse reaches exactly 100 - works in ALL modes */}
                         {inst.isComplete && (
                           <button
                             onClick={() => completeLiasse(inst)}
@@ -467,7 +501,6 @@ export default function LiasseCounter({
                       ))}
                     </div>
 
-                    {/* Celebration message when liasse is complete */}
                     {inst.isComplete && (
                       <div className="mt-2 text-[10px] sm:text-xs text-emerald-600 font-medium flex items-center gap-1">
                         <Check size={12} />
@@ -510,7 +543,6 @@ export default function LiasseCounter({
                           Complétée
                         </span>
                       </div>
-                      {/* Separate button works in ALL modes */}
                       <button
                         onClick={() => undoCompleteLiasse(liasse)}
                         className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
@@ -532,7 +564,6 @@ export default function LiasseCounter({
                       </div>
                     </div>
                     
-                    {/* Show breakdown of sources */}
                     {showCompleted && (
                       <div className="mt-2 pt-2 border-t border-slate-200 text-[10px] text-slate-500">
                         {liasse.steps.map((step, idx) => (
