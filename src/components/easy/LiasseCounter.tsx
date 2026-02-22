@@ -410,7 +410,7 @@ export default function LiasseCounter({
           </div>
         )}
 
-        {/* Pending Instructions - with Complete button */}
+        {/* Pending Instructions - with Complete button for liasses that reach 100 */}
         {instructions.length > 0 && (
           <div className="mb-6">
             <div className="text-[10px] sm:text-xs font-semibold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">
@@ -428,13 +428,15 @@ export default function LiasseCounter({
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
+                      {/* Complete button appears only when liasse reaches exactly 100 */}
                       {inst.isComplete && !isExternal && (
                         <button
                           onClick={() => completeLiasse(inst)}
-                          className="bg-emerald-500 hover:bg-emerald-600 text-white p-1.5 rounded-lg transition-colors"
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium shadow-sm"
                           title="Marquer comme complétée"
                         >
-                          <Check size={16} />
+                          <Check size={14} />
+                          <span>Compléter</span>
                         </button>
                       )}
                     </div>
@@ -455,6 +457,14 @@ export default function LiasseCounter({
                       </div>
                     ))}
                   </div>
+
+                  {/* Celebration message when liasse is complete */}
+                  {inst.isComplete && (
+                    <div className="mt-2 text-[10px] sm:text-xs text-emerald-600 font-medium flex items-center gap-1">
+                      <Check size={12} />
+                      <span>Cette liasse est prête à être marquée comme complétée!</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -493,19 +503,37 @@ export default function LiasseCounter({
                       {!isExternal && (
                         <button
                           onClick={() => undoCompleteLiasse(liasse)}
-                          className="text-amber-600 hover:text-amber-700 p-1 hover:bg-amber-50 rounded transition-colors"
-                          title="Annuler"
+                          className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
+                          title="Séparer la liasse"
                         >
                           <RotateCcw size={14} />
+                          <span>Séparer</span>
                         </button>
                       )}
                     </div>
                     <div className="text-xs text-slate-600">
                       {liasse.total} billets • {formatGourdes(liasse.total).replace('HTG', '')} Gdes
                     </div>
-                    <div className="text-[10px] text-slate-400 mt-1">
-                      {new Date(liasse.timestamp).toLocaleTimeString()}
+                    <div className="flex justify-between items-center mt-1">
+                      <div className="text-[10px] text-slate-400">
+                        {new Date(liasse.timestamp).toLocaleTimeString()}
+                      </div>
+                      <div className="text-[9px] text-slate-400">
+                        {liasse.steps.length} source{liasse.steps.length > 1 ? 's' : ''}
+                      </div>
                     </div>
+                    
+                    {/* Show breakdown of sources */}
+                    {showCompleted && (
+                      <div className="mt-2 pt-2 border-t border-slate-200 text-[10px] text-slate-500">
+                        {liasse.steps.map((step, idx) => (
+                          <div key={idx} className="flex justify-between">
+                            <span>Séquence #{step.sequenceNum}:</span>
+                            <span className="font-medium">{step.take} billets</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
