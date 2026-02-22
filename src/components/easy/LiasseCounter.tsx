@@ -88,6 +88,7 @@ function getInstructions(sequences) {
 export default function LiasseCounter({ 
   denomination = 1000,
   externalSequences = [],
+  allSequencesWithStatus = null, // Full list with {amount, used} flags for display
   isExternal = false,
   completedLiasses: externalCompletedLiasses = [],
   onLiasseComplete,
@@ -427,8 +428,8 @@ export default function LiasseCounter({
           </div>
         )}
 
-        {/* Sequences - Show only available sequences */}
-        {sequences.length > 0 && (
+        {/* Sequences — show all from deposits, grey out used ones */}
+        {(allSequencesWithStatus || sequences).length > 0 && (
           <div className="mb-4 sm:mb-6">
             <div className="flex justify-between items-center mb-2 sm:mb-3">
               <div className="text-[10px] sm:text-xs font-semibold text-slate-700 uppercase tracking-wide">
@@ -439,14 +440,31 @@ export default function LiasseCounter({
               </div>
             </div>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {sequences.map((count, idx) => (
-                <div key={idx} className="bg-slate-100 border border-slate-200 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 hover:bg-slate-200 transition-colors group">
-                  <span className="text-[10px] sm:text-sm font-medium text-slate-700">#{idx + 1}</span>
-                  <span className="text-xs sm:text-sm font-bold text-slate-900">{count}</span>
-                  <span className="text-[8px] sm:text-xs text-slate-500">
-                    ({count * denomination} Gdes)
+              {(allSequencesWithStatus
+                ? allSequencesWithStatus
+                : sequences.map(amount => ({ amount, used: false }))
+              ).map((seq, idx) => (
+                <div
+                  key={idx}
+                  className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 border transition-colors group
+                    ${seq.used
+                      ? 'bg-slate-50 border-slate-100 opacity-40 cursor-not-allowed'
+                      : 'bg-slate-100 border-slate-200 hover:bg-slate-200'
+                    }`}
+                >
+                  <span className={`text-[10px] sm:text-sm font-medium ${seq.used ? 'text-slate-400' : 'text-slate-700'}`}>
+                    #{idx + 1}
                   </span>
-                  {!isExternal && (
+                  <span className={`text-xs sm:text-sm font-bold ${seq.used ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                    {seq.amount}
+                  </span>
+                  <span className={`text-[8px] sm:text-xs ${seq.used ? 'text-slate-300' : 'text-slate-500'}`}>
+                    ({seq.amount * denomination} Gdes)
+                  </span>
+                  {seq.used && (
+                    <span className="text-[8px] text-slate-400 italic">utilisé</span>
+                  )}
+                  {!isExternal && !seq.used && (
                     <button onClick={() => removeSequence(idx)} className="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
                       <Trash2 size={12} />
                     </button>
