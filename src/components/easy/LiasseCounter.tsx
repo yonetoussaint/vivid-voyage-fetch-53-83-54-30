@@ -1,6 +1,6 @@
 // LiasseCounter.jsx (with proper external sequence handling)
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, RotateCcw, Check, X, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Check, X, DollarSign, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEPARTAGE ALGORITHM v3 — "Anchor + Fill"
@@ -232,44 +232,14 @@ export default function LiasseCounter({
     }
   };
 
-  const undoCompleteLiasse = (liasse) => {
+  // Delete a completed liasse — sequences are NOT restored (irreversible)
+  const deleteLiasse = (liasse) => {
     if (isExternal && onLiasseUndo) {
-      // Restore the amounts to sequences first
-      const newSequences = [...sequences];
-      liasse.steps.forEach(step => {
-        const index = step.sequenceNum - 1;
-        if (newSequences[index] !== undefined) {
-          newSequences[index] += step.take;
-        } else {
-          while (newSequences.length < step.sequenceNum) {
-            newSequences.push(0);
-          }
-          newSequences[step.sequenceNum - 1] = step.take;
-        }
-      });
-      const restoredSequences = newSequences.filter(amount => amount > 0);
-
-      // Pass liasse AND restored sequence array to parent
-      onLiasseUndo(liasse, restoredSequences);
-      setSequences(restoredSequences);
-      
+      // Notify parent to remove from completedLiassesByDenom only
+      // Pass null as restoredSequences to signal no restoration needed
+      onLiasseUndo(liasse, null);
     } else {
-      // In internal mode, manage state locally
       setInternalCompletedLiasses(prev => prev.filter(l => l.timestamp !== liasse.timestamp));
-
-      const newSequences = [...sequences];
-      liasse.steps.forEach(step => {
-        const index = step.sequenceNum - 1;
-        if (newSequences[index] !== undefined) {
-          newSequences[index] += step.take;
-        } else {
-          while (newSequences.length < step.sequenceNum) {
-            newSequences.push(0);
-          }
-          newSequences[step.sequenceNum - 1] = step.take;
-        }
-      });
-      setSequences(newSequences.filter(amount => amount > 0));
     }
   };
 
@@ -333,7 +303,7 @@ export default function LiasseCounter({
             onClick={resetAll} 
             className="bg-white text-red-600 hover:bg-red-50 active:bg-red-100 border border-red-200 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-sm font-medium shadow-sm w-full sm:w-auto"
           >
-            <RotateCcw size={16} /><span>Tout réinitialiser</span>
+            <RefreshCw size={16} /><span>Tout réinitialiser</span>
           </button>
         )}
       </div>
@@ -586,12 +556,16 @@ export default function LiasseCounter({
                         </span>
                       </div>
                       <button
-                        onClick={() => undoCompleteLiasse(liasse)}
-                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
-                        title="Séparer la liasse"
+                        onClick={() => {
+                          if (window.confirm('Supprimer cette liasse complétée ?')) {
+                            deleteLiasse(liasse);
+                          }
+                        }}
+                        className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
+                        title="Supprimer la liasse"
                       >
-                        <RotateCcw size={14} />
-                        <span>Séparer</span>
+                        <Trash2 size={14} />
+                        <span>Supprimer</span>
                       </button>
                     </div>
                     <div className="text-xs text-slate-600">
