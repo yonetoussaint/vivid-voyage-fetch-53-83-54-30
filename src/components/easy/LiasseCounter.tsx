@@ -442,35 +442,46 @@ export default function LiasseCounter({
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {(allSequencesWithStatus
                 ? allSequencesWithStatus
-                : sequences.map(amount => ({ amount, used: false }))
-              ).map((seq, idx) => (
-                <div
-                  key={idx}
-                  className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 border transition-colors group
-                    ${seq.used
-                      ? 'bg-slate-50 border-slate-100 opacity-40 cursor-not-allowed'
-                      : 'bg-slate-100 border-slate-200 hover:bg-slate-200'
-                    }`}
-                >
-                  <span className={`text-[10px] sm:text-sm font-medium ${seq.used ? 'text-slate-400' : 'text-slate-700'}`}>
-                    #{idx + 1}
-                  </span>
-                  <span className={`text-xs sm:text-sm font-bold ${seq.used ? 'line-through text-slate-400' : 'text-slate-900'}`}>
-                    {seq.amount}
-                  </span>
-                  <span className={`text-[8px] sm:text-xs ${seq.used ? 'text-slate-300' : 'text-slate-500'}`}>
-                    ({seq.amount * denomination} Gdes)
-                  </span>
-                  {seq.used && (
-                    <span className="text-[8px] text-slate-400 italic">utilisé</span>
-                  )}
-                  {!isExternal && !seq.used && (
-                    <button onClick={() => removeSequence(idx)} className="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                      <Trash2 size={12} />
-                    </button>
-                  )}
-                </div>
-              ))}
+                : sequences.map(amount => ({ amount, remaining: amount, usedAmount: 0, used: false }))
+              ).map((seq, idx) => {
+                const isFullyUsed = seq.used === true;
+                const isPartial = seq.used === 'partial';
+                const isDimmed = isFullyUsed || isPartial;
+
+                return (
+                  <div
+                    key={idx}
+                    className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 border transition-colors group
+                      ${isFullyUsed
+                        ? 'bg-slate-50 border-slate-100 opacity-40 cursor-not-allowed'
+                        : isPartial
+                          ? 'bg-amber-50 border-amber-100'
+                          : 'bg-slate-100 border-slate-200 hover:bg-slate-200'
+                      }`}
+                  >
+                    <span className={`text-[10px] sm:text-sm font-medium ${isDimmed ? 'text-slate-400' : 'text-slate-700'}`}>
+                      #{idx + 1}
+                    </span>
+                    <span className={`text-xs sm:text-sm font-bold ${isFullyUsed ? 'line-through text-slate-400' : isPartial ? 'text-amber-700' : 'text-slate-900'}`}>
+                      {seq.amount}
+                    </span>
+                    <span className={`text-[8px] sm:text-xs ${isDimmed ? 'text-slate-300' : 'text-slate-500'}`}>
+                      ({seq.amount * denomination} Gdes)
+                    </span>
+                    {isFullyUsed && (
+                      <span className="text-[8px] text-slate-400 italic">{seq.amount} utilisé</span>
+                    )}
+                    {isPartial && (
+                      <span className="text-[8px] text-amber-500 italic">{seq.usedAmount}/{seq.amount} utilisé</span>
+                    )}
+                    {!isExternal && !isDimmed && (
+                      <button onClick={() => removeSequence(idx)} className="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
