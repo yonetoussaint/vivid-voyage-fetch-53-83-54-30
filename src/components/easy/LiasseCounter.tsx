@@ -49,6 +49,10 @@ function getInstructions(sequences) {
   if (sequences.length === 0) return [];
 
   const piles = sequences.map((amount, i) => ({ originalIndex: i, amount }));
+  // Track which liasse number last split each pile (produced a remainder)
+  // pileProducedByLiasse[originalIndex] = liasseNum that last left a remainder there
+  const pileProducedByLiasse = {};
+
   const instructions = [];
   let liasseNum = 1;
 
@@ -58,6 +62,19 @@ function getInstructions(sequences) {
 
     const rawSteps = buildLiasse(activePiles);
 
+    // Check if any step in this liasse consumes from a remainder left by a prior liasse
+    // If so, this liasse is blocked until that prior one is completed
+    let blockedByLiasse = null;
+    rawSteps.forEach(({ originalIndex }) => {
+      const producedBy = pileProducedByLiasse[originalIndex];
+      if (producedBy !== undefined) {
+        // This pile is a remainder from producedBy — this liasse depends on it
+        if (blockedByLiasse === null || producedBy > blockedByLiasse) {
+          blockedByLiasse = producedBy;
+        }
+      }
+    });
+
     // Apply takes and build display steps
     let total = 0;
     const displaySteps = rawSteps.map(({ originalIndex, take }) => {
@@ -65,6 +82,15 @@ function getInstructions(sequences) {
       const from = pile.amount;
       pile.amount -= take;
       total += take;
+
+      // If this step leaves a remainder, record that this liasse produced it
+      if (pile.amount > 0) {
+        pileProducedByLiasse[originalIndex] = liasseNum;
+      } else {
+        // Fully consumed — clear the producer record
+        delete pileProducedByLiasse[originalIndex];
+      }
+
       return { sequenceNum: originalIndex + 1, take, from, remaining: pile.amount };
     });
 
@@ -74,6 +100,7 @@ function getInstructions(sequences) {
         steps: displaySteps, 
         total, 
         isComplete: total === TARGET,
+        blockedByLiasse, // null = free to complete, number = must complete that liasse first
         timestamp: Date.now()
       });
       liasseNum++;
@@ -474,17 +501,25 @@ export default function LiasseCounter({
                 if (isAlreadyCompleted) return null;
                 
                 return (
-                  <div key={inst.liasseNum} className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 ${inst.isComplete ? 'bg-emerald-50 border-emerald-300' : 'bg-amber-50 border-amber-300'}`}>
+                  <div key={inst.liasseNum} className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 ${
+                    inst.blockedByLiasse ? 'bg-slate-50 border-slate-300 opacity-70' :
+                    inst.isComplete ? 'bg-emerald-50 border-emerald-300' : 
+                    'bg-amber-50 border-amber-300'
+                  }`}>
                     <div className="flex items-center justify-between mb-2 sm:mb-3">
                       <div className="flex items-center gap-1.5 sm:gap-2">
                         <span className="text-xs sm:text-sm font-bold text-slate-900">Liasse {inst.liasseNum}</span>
-                        <span className={`text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium text-white ${inst.isComplete ? 'bg-emerald-500' : 'bg-amber-500'}`}>
-                          {inst.isComplete ? 'Complète' : 'Incomplète'}
+                        <span className={`text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium text-white ${
+                          inst.blockedByLiasse ? 'bg-slate-400' :
+                          inst.isComplete ? 'bg-emerald-500' : 
+                          'bg-amber-500'
+                        }`}>
+                          {inst.blockedByLiasse ? 'Bloquée' : inst.isComplete ? 'Complète' : 'Incomplète'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
-                        {inst.isComplete && (
+                        {inst.isComplete && !inst.blockedByLiasse && (
                           <button
                             onClick={() => completeLiasse(inst)}
                             className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium shadow-sm"
@@ -493,6 +528,11 @@ export default function LiasseCounter({
                             <Check size={14} />
                             <span>Compléter</span>
                           </button>
+                        )}
+                        {inst.isComplete && inst.blockedByLiasse && (
+                          <span className="text-[9px] sm:text-xs text-slate-500 italic">
+                            Compléter Liasse {inst.blockedByLiasse} d'abord
+                          </span>
                         )}
                       </div>
                     </div>
@@ -513,10 +553,16 @@ export default function LiasseCounter({
                       ))}
                     </div>
 
-                    {inst.isComplete && (
+                    {inst.isComplete && !inst.blockedByLiasse && (
                       <div className="mt-2 text-[10px] sm:text-xs text-emerald-600 font-medium flex items-center gap-1">
                         <Check size={12} />
                         <span>Cette liasse est prête à être marquée comme complétée!</span>
+                      </div>
+                    )}
+                    {inst.isComplete && inst.blockedByLiasse && (
+                      <div className="mt-2 text-[10px] sm:text-xs text-slate-500 font-medium flex items-center gap-1">
+                        <span>⛔</span>
+                        <span>Liasse {inst.blockedByLiasse} doit être complétée en premier.</span>
                       </div>
                     )}
                   </div>
