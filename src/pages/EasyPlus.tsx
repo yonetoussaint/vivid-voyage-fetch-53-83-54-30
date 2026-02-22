@@ -46,6 +46,9 @@ const SystemeStationService = () => {
     }
   });
 
+  // Track the last sequence hash to detect changes
+  const [lastSequenceHash, setLastSequenceHash] = useState({});
+
   // Save completed liasses to localStorage whenever they change
   useEffect(() => {
     try {
@@ -302,6 +305,45 @@ const SystemeStationService = () => {
     return extractBillSequencesFromDeposits();
   }, [extractBillSequencesFromDeposits]);
 
+  // Generate a hash of the sequences to detect changes
+  const sequencesHash = useMemo(() => {
+    return billSequences.join(',');
+  }, [billSequences]);
+
+  // Check if sequences have changed and clear completed liasses if they don't match
+  useEffect(() => {
+    const denomKey = `denom_${conditionnementDenom}`;
+    const currentHash = lastSequenceHash[denomKey];
+    
+    // If sequences have changed and there are completed liasses
+    if (currentHash && currentHash !== sequencesHash) {
+      const completedCount = completedLiassesByDenom[denomKey]?.length || 0;
+      
+      if (completedCount > 0) {
+        // Ask user if they want to keep completed liasses
+        const shouldKeep = window.confirm(
+          'De nouveaux dépôts ont été ajoutés. Voulez-vous conserver les liasses complétées précédentes ? ' +
+          'Cliquez sur "Annuler" pour les effacer.'
+        );
+        
+        if (!shouldKeep) {
+          // Clear completed liasses for this denomination
+          setCompletedLiassesByDenom(prev => {
+            const newState = { ...prev };
+            delete newState[denomKey];
+            return newState;
+          });
+        }
+      }
+    }
+    
+    // Update the hash
+    setLastSequenceHash(prev => ({
+      ...prev,
+      [denomKey]: sequencesHash
+    }));
+  }, [sequencesHash, conditionnementDenom, completedLiassesByDenom]);
+
   // Handle liasse completion from child component
   const handleLiasseComplete = useCallback((completedLiasse) => {
     setCompletedLiassesByDenom(prev => {
@@ -331,6 +373,18 @@ const SystemeStationService = () => {
         [denomKey]: currentLiasses.filter(l => l.timestamp !== liasseToUndo.timestamp)
       };
     });
+  }, [conditionnementDenom]);
+
+  // Clear completed liasses for current denomination
+  const handleClearCompleted = useCallback(() => {
+    if (window.confirm('Voulez-vous effacer toutes les liasses complétées pour cette dénomination ?')) {
+      setCompletedLiassesByDenom(prev => {
+        const denomKey = `denom_${conditionnementDenom}`;
+        const newState = { ...prev };
+        delete newState[denomKey];
+        return newState;
+      });
+    }
   }, [conditionnementDenom]);
 
   const handlePompeSelection = (selection) => {
@@ -515,8 +569,21 @@ const SystemeStationService = () => {
       case 'conditionnement':
         return (
           <div className="p-2 sm:p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-slate-800">
+                Compteur de Liasses - {conditionnementDenom} Gdes
+              </h2>
+              {completedLiassesByDenom[`denom_${conditionnementDenom}`]?.length > 0 && (
+                <button
+                  onClick={handleClearCompleted}
+                  className="text-xs text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Effacer les complétées
+                </button>
+              )}
+            </div>
             <LiasseCounter
-              key={`liasse-counter-${conditionnementDenom}-${date}-${shift}`}
+              key={`liasse-counter-${conditionnementDenom}-${date}-${shift}-${sequencesHash}`}
               denomination={conditionnementDenom}
               externalSequences={billSequences}
               isExternal={true}
