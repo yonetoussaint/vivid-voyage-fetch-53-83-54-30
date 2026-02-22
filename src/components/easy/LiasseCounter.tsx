@@ -428,7 +428,7 @@ export default function LiasseCounter({
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs sm:text-sm font-bold text-slate-900">{inst.total}/100</span>
-                      {/* Complete button appears only when liasse reaches exactly 100 */}
+                      {/* Complete button appears only when liasse reaches exactly 100 AND not in read-only mode */}
                       {inst.isComplete && !isExternal && (
                         <button
                           onClick={() => completeLiasse(inst)}
@@ -437,6 +437,17 @@ export default function LiasseCounter({
                         >
                           <Check size={14} />
                           <span>Compléter</span>
+                        </button>
+                      )}
+                      {/* Show disabled button in read-only mode */}
+                      {inst.isComplete && isExternal && (
+                        <button
+                          disabled
+                          className="bg-emerald-200 text-emerald-500 px-3 py-1.5 rounded-lg flex items-center gap-1 text-xs font-medium cursor-not-allowed"
+                          title="Compléter (lecture seule)"
+                        >
+                          <Check size={14} />
+                          <span>Complète</span>
                         </button>
                       )}
                     </div>
@@ -462,7 +473,12 @@ export default function LiasseCounter({
                   {inst.isComplete && (
                     <div className="mt-2 text-[10px] sm:text-xs text-emerald-600 font-medium flex items-center gap-1">
                       <Check size={12} />
-                      <span>Cette liasse est prête à être marquée comme complétée!</span>
+                      <span>
+                        {isExternal 
+                          ? "Cette liasse est complète (mode lecture seule)"
+                          : "Cette liasse est prête à être marquée comme complétée!"
+                        }
+                      </span>
                     </div>
                   )}
                 </div>
@@ -500,7 +516,7 @@ export default function LiasseCounter({
                           Complétée
                         </span>
                       </div>
-                      {!isExternal && (
+                      {!isExternal ? (
                         <button
                           onClick={() => undoCompleteLiasse(liasse)}
                           className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
@@ -509,6 +525,10 @@ export default function LiasseCounter({
                           <RotateCcw size={14} />
                           <span>Séparer</span>
                         </button>
+                      ) : (
+                        <div className="bg-slate-100 text-slate-400 px-3 py-1.5 rounded-lg text-xs font-medium">
+                          Lecture seule
+                        </div>
                       )}
                     </div>
                     <div className="text-xs text-slate-600">
