@@ -349,21 +349,29 @@ const SystemeStationService = () => {
   }, [rawBillSequencesFromDeposits, residualSequencesByDenom, conditionnementDenom, shift, completedLiassesByDenom]);
 
   // Full sequence list with used/available status for display purposes.
-  // Used sequences are greyed out in LiasseCounter but still visible.
+  // Supports partial usage: { amount: 36, remaining: 24, usedAmount: 12 }
   const allSequencesWithStatus = useMemo(() => {
-    const available = billSequenceAmounts;
     const raw = rawBillSequencesFromDeposits;
+    const remainingAvailable = [...billSequenceAmounts];
 
-    // Walk raw sequences and mark each one as used or available
-    // by consuming from the available pool greedily
-    const remainingAvailable = [...available];
     return raw.map((amount) => {
-      const idx = remainingAvailable.findIndex(a => a === amount);
-      if (idx !== -1) {
-        remainingAvailable.splice(idx, 1);
-        return { amount, used: false };
+      // Try exact match first (fully available)
+      const exactIdx = remainingAvailable.findIndex(a => a === amount);
+      if (exactIdx !== -1) {
+        remainingAvailable.splice(exactIdx, 1);
+        return { amount, remaining: amount, usedAmount: 0, used: false };
       }
-      return { amount, used: true };
+
+      // Try partial match: a remaining value < amount means it was partially consumed
+      const partialIdx = remainingAvailable.findIndex(a => a < amount);
+      if (partialIdx !== -1) {
+        const remaining = remainingAvailable[partialIdx];
+        remainingAvailable.splice(partialIdx, 1);
+        return { amount, remaining, usedAmount: amount - remaining, used: 'partial' };
+      }
+
+      // No match — fully consumed
+      return { amount, remaining: 0, usedAmount: amount, used: true };
     });
   }, [rawBillSequencesFromDeposits, billSequenceAmounts]);
 
