@@ -293,9 +293,11 @@ const SystemeStationService = () => {
             parts.forEach((part, partIndex) => {
               const trimmed = part.trim();
 
-              // Create a truly unique ID for this bill/group
-              // Include vendor, depot index, part index, and timestamp to ensure uniqueness
-              const uniqueId = `${vendor}-${depotIndex}-${partIndex}-${depot.timestamp || Date.now()}-${Math.random()}`;
+              // Create a stable deterministic ID for this bill/group.
+              // Must NOT use Math.random() — IDs must be identical across renders
+              // so that usedBillsByDenom comparisons remain valid after completion.
+              // Uses: vendor + depotIndex + partIndex + depot.timestamp (set once at creation).
+              const uniqueId = `${vendor}-${depotIndex}-${partIndex}-${depot.timestamp || `${vendor}-${depotIndex}`}`;
 
               const multiplierMatch = trimmed.match(/(\d+)\s*×\s*(\d+)\s*HTG/i);
               if (multiplierMatch) {
