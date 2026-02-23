@@ -462,9 +462,7 @@ export default function LiasseCounter({
                     <span className={`text-xs sm:text-sm font-bold ${isFullyUsed ? 'line-through text-slate-400' : isPartial ? 'text-amber-700' : 'text-slate-900'}`}>
                       {seq.amount}
                     </span>
-                    <span className={`text-[8px] sm:text-xs ${isDimmed ? 'text-slate-300' : 'text-slate-500'}`}>
-                      ({seq.amount * denomination} Gdes)
-                    </span>
+
                     {isFullyUsed && (
                       <span className="text-[8px] text-slate-400 italic">{seq.amount} utilisé</span>
                     )}
