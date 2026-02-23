@@ -469,7 +469,7 @@ export default function LiasseCounter({
                       <span className="text-[8px] text-slate-400 italic">{seq.amount} utilisé</span>
                     )}
                     {isPartial && (
-                      <span className="text-[8px] text-amber-500 italic">{seq.usedAmount}/{seq.amount} utilisé</span>
+                      <span className="text-[8px] text-amber-500 italic">{seq.usedAmount}/{seq.amount} utilisé, Reste: {seq.remaining}</span>
                     )}
                     {!isExternal && !isDimmed && (
                       <button onClick={() => removeSequence(idx)} className="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
@@ -666,3 +666,4 @@ export default function LiasseCounter({
     </div>
   );
 }
+
