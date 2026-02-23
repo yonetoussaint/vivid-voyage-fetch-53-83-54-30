@@ -309,7 +309,8 @@ const SystemeStationService = () => {
 
   // The sequence array fed to LiasseCounter.
   // If residuals exist for this denom+shift, use those (post-completion state).
-  // If raw deposits changed (new deposit added), merge: append new bills to residuals.
+  // If raw deposits grew (new deposit added), append only the net new bills
+  // to the existing residuals — never replay completed liasses (indexes shift).
   const billSequenceAmounts = useMemo(() => {
     const denomKey = `denom_${conditionnementDenom}_${shift}`;
     const residuals = residualSequencesByDenom[denomKey];
@@ -319,55 +320,37 @@ const SystemeStationService = () => {
       return rawBillSequencesFromDeposits;
     }
 
-    // Check if raw deposits grew (new deposit added after completions).
-    // Residuals can only be <= raw since completions subtract from raw.
     const residualTotal = residuals.reduce((a, b) => a + b, 0);
     const rawTotal = rawBillSequencesFromDeposits.reduce((a, b) => a + b, 0);
     const completedTotal = (completedLiassesByDenom[`denom_${conditionnementDenom}`] || []).length * 100;
     const expectedResidualTotal = rawTotal - completedTotal;
 
-    if (Math.abs(residualTotal - expectedResidualTotal) > 0) {
-      // Deposits changed — recompute residuals by subtracting completed bills
-      // from the new raw totals
-      let rebuiltSequences = [...rawBillSequencesFromDeposits];
-      const completedLiasses = completedLiassesByDenom[`denom_${conditionnementDenom}`] || [];
-      
-      // Re-apply each completed liasse's subtractions in order
-      completedLiasses.forEach((liasse) => {
-        const piles = rebuiltSequences.map((amount, i) => ({ originalIndex: i, amount }));
-        liasse.steps.forEach((step) => {
-          const pile = piles.find(p => p.originalIndex === step.sequenceNum - 1);
-          if (pile) pile.amount = Math.max(0, pile.amount - step.take);
-        });
-        rebuiltSequences = piles.map(p => p.amount).filter(a => a > 0);
-      });
-
-      return rebuiltSequences;
+    if (residualTotal < expectedResidualTotal) {
+      // New deposits arrived after completions — append the net new bills as a
+      // fresh sequence at the end. This avoids broken index replays entirely.
+      const newBills = expectedResidualTotal - residualTotal;
+      return [...residuals, newBills];
     }
 
     return residuals;
   }, [rawBillSequencesFromDeposits, residualSequencesByDenom, conditionnementDenom, shift, completedLiassesByDenom]);
 
   // Full sequence list with used/available status for display purposes.
-  // Replays completed liasse steps against raw sequences to get exact per-index
-  // remaining amounts — no positional guessing from filtered arrays.
+  // Shows all raw sequences grayed/partial/available based on completed liasse steps.
+  // Also appends any net-new sequences (added after completions) as fully available.
   const allSequencesWithStatus = useMemo(() => {
     const raw = rawBillSequencesFromDeposits;
     const completedLiasses = completedLiassesByDenom[`denom_${conditionnementDenom}`] || [];
 
     // Start: every raw sequence is fully available
-    // remainingByOriginalIndex[i] = how many bills remain in raw sequence i
     const remaining = raw.map(amount => amount);
 
-    // Replay each completed liasse in reverse chronological order
-    // (they're stored newest-first, so reverse to apply oldest first)
+    // Replay completed liasses oldest-first (stored newest-first, so reverse)
     const orderedLiasses = [...completedLiasses].reverse();
 
     orderedLiasses.forEach(liasse => {
-      // Each step's sequenceNum is 1-based into the LIVE sequence array at completion time.
-      // The live array is the raw array with zeros filtered out, in original order.
-      // We rebuild that live->original mapping each time using current remaining state
-      // BEFORE applying this liasse's steps.
+      // Rebuild the live->original index mapping using current remaining state
+      // BEFORE applying this liasse's steps (mirrors what LiasseCounter saw)
       const liveToOriginal = [];
       remaining.forEach((r, i) => {
         if (r > 0) liveToOriginal.push(i);
@@ -382,14 +365,26 @@ const SystemeStationService = () => {
       });
     });
 
-    // Now build display objects
-    return raw.map((amount, i) => {
+    // Build display objects for raw sequences
+    const rawStatus = raw.map((amount, i) => {
       const rem = remaining[i];
       if (rem === amount) return { amount, remaining: amount, usedAmount: 0, used: false };
       if (rem === 0)      return { amount, remaining: 0, usedAmount: amount, used: true };
       return { amount, remaining: rem, usedAmount: amount - rem, used: 'partial' };
     });
-  }, [rawBillSequencesFromDeposits, completedLiassesByDenom, conditionnementDenom]);
+
+    // Append any net-new sequences that arrived after completions as fully available
+    const rawTotal = raw.reduce((a, b) => a + b, 0);
+    const completedTotal = completedLiasses.length * 100;
+    const residualTotal = (residualSequencesByDenom[`denom_${conditionnementDenom}_${shift}`] || []).reduce((a, b) => a + b, 0);
+    const newBills = (rawTotal - completedTotal) - residualTotal;
+
+    if (newBills > 0) {
+      rawStatus.push({ amount: newBills, remaining: newBills, usedAmount: 0, used: false });
+    }
+
+    return rawStatus;
+  }, [rawBillSequencesFromDeposits, completedLiassesByDenom, conditionnementDenom, residualSequencesByDenom, shift]);
 
   // Handle liasse completion.
   // LiasseCounter already computed the correct post-completion sequence array
