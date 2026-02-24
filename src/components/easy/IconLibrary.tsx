@@ -1,0 +1,40 @@
+const SvgIcon = ({ d, size=16, color="currentColor", viewBox="0 0 24 24", fill="none", strokeWidth=1.8 }) => (
+  <svg width={size} height={size} viewBox={viewBox} fill={fill} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    {typeof d === "string" ? <path d={d}/> : d}
+  </svg>
+);
+
+export const IC = {
+  food:      (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></>}/>,
+  transport: (c,s=16) => <SvgIcon size={s} color={c} d={<><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M15 6H9l-3 8h12l-3-8z"/><path d="M9 6V4"/><path d="M3 8h18"/></>}/>,
+  cosmetics: (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M12 2a4 4 0 0 1 4 4v1H8V6a4 4 0 0 1 4-4z"/><rect x="8" y="7" width="8" height="13" rx="1"/><line x1="10" y1="11" x2="14" y2="11"/><line x1="10" y1="15" x2="14" y2="15"/></>}/>,
+  clothes:   (c,s=16) => <SvgIcon size={s} color={c} d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/>,
+  internet:  (c,s=16) => <SvgIcon size={s} color={c} d={<><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>}/>,
+  haircut:   (c,s=16) => <SvgIcon size={s} color={c} d={<><circle cx="6" cy="4" r="2"/><circle cx="18" cy="4" r="2"/><path d="M6 6c0 4 2 7 6 8s6-4 6-8"/><path d="M2 20l4-4"/><path d="M22 20l-4-4"/><path d="M12 14v8"/></>}/>,
+  savings:   (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2z"/><path d="M2 9.5C1.06 9.5 1 10 1 10.5V15c0 .5.5 1 1 1"/><circle cx="16" cy="10" r="1"/></>}/>,
+  other:     (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>}/>,
+  piggy:     (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2z"/><path d="M2 9.5C1.06 9.5 1 10 1 10.5V15c0 .5.5 1 1 1"/><circle cx="16" cy="10" r="1"/></>}/>,
+  trendUp:   (c,s=16) => <SvgIcon size={s} color={c} d={<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>}/>,
+  receipt:   (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></>}/>,
+  utensils:  (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></>}/>,
+  target:    (c,s=16) => <SvgIcon size={s} color={c} d={<><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>}/>,
+  lock:      (c,s=16) => <SvgIcon size={s} color={c} d={<><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>}/>,
+  phone:     (c,s=16) => <SvgIcon size={s} color={c} d={<><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></>}/>,
+  bank:      (c,s=16) => <SvgIcon size={s} color={c} d={<><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></>}/>,
+  handshake: (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></>}/>,
+  user:      (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>}/>,
+  car:       (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2"/><rect x="9" y="11" width="8" height="10"/><circle cx="5" cy="19" r="2"/><circle cx="17" cy="19" r="2"/><path d="M3 7h4"/></>}/>,
+  home:      (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}/>,
+  plane:     (c,s=16) => <SvgIcon size={s} color={c} d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>,
+  laptop:    (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></>}/>,
+  grad:      (c,s=16) => <SvgIcon size={s} color={c} d={<><polyline points="22 10 12 5 2 10 12 15 22 10"/><path d="M6 12v5c3 3 9 3 12 0v-5"/><path d="M22 10v6"/></>}/>,
+  ring:      (c,s=16) => <SvgIcon size={s} color={c} d={<><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-7.07-2.93 2.83-2.83m8.48 0 2.83 2.83M2 12h4m12 0h4m-6.93-7.07-2.83 2.83"/></>}/>,
+  ship:      (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M2 21c.6.5 1.2 1 2.5 1C7 22 7 20 9.5 20c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></>}/>,
+  dumbbell:  (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M6 5v14"/><path d="M18 5v14"/><path d="M2 9v6"/><path d="M22 9v6"/><line x1="6" y1="12" x2="18" y2="12"/><rect x="4" y="7" width="4" height="10" rx="1"/><rect x="16" y="7" width="4" height="10" rx="1"/><rect x="0" y="10" width="4" height="4" rx="1"/><rect x="20" y="10" width="4" height="4" rx="1"/></>}/>,
+  guitar:    (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="m20.38 3.46-1.23 1.23a1.5 1.5 0 0 0 0 2.12l.65.65a1.5 1.5 0 0 1 0 2.12l-9.13 9.13a1.5 1.5 0 0 1-2.12 0l-.65-.65a1.5 1.5 0 0 0-2.12 0L3.54 19.2a1.5 1.5 0 0 0 0 2.12c1.17 1.17 3.07 1.17 4.24 0l1.41-1.41a3 3 0 0 1 4.24 0l.71.71a3 3 0 0 0 4.24 0l3.18-3.18a3 3 0 0 0 0-4.24l-.71-.71a3 3 0 0 1 0-4.24l1.41-1.41a3 3 0 0 0-2.12-5.12z"/><path d="m11 11 2.5-2.5"/></>}/>,
+  spend:     (c,s=16) => <SvgIcon size={s} color={c} d={<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>}/>,
+  income:    (c,s=16) => <SvgIcon size={s} color={c} d={<><polyline points="16 8 12 4 8 8"/><line x1="12" y1="4" x2="12" y2="16"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"/></>}/>,
+  warn:      (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>}/>,
+  bulb:      (c,s=16) => <SvgIcon size={s} color={c} d={<><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></>}/>,
+  celebrate: (c,s=16) => <SvgIcon size={s} color={c} d={<><path d="M5.8 11.3 2 22l10.7-3.79"/><path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/><path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/><path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/><path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7"/><path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2z"/></>}/>,
+};
