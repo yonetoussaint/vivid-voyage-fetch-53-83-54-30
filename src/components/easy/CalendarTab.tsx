@@ -6,7 +6,7 @@ import { EventCard } from '@/components/easy/EventCard';
 import { WritingCard } from '@/components/easy/WritingCard';
 import { MoneyEventCard } from '@/components/easy/MoneyEventCard';
 import { AddEventSheet } from '@/components/easy/AddEventSheet';
-import { txStore, incomeStore } from '../stores/moneyStores';
+import { txStore, incomeStore } from '@/stores/moneyStores';
 
 export function CalendarTab() {
   const now = new Date();
