@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { CalendarTab } from '@/components/easy/CalendarTab';
 import { NotesTab } from '@/components/easy/NotesTab';
 import { MoneyTab } from '@/components/easy/MoneyTab';
-import { TaskDetailScreen } from '@/components/TaskDetailScreen';
+import { TaskDetailScreen } from '@/components/easy/TaskDetailScreen';
 import { registerOpenDetail } from '@/components/EventCard';
 
 export default function SamsungCalendar() {
