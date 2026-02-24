@@ -3,8 +3,8 @@ import { TYPE_META, NOTE_TYPE_STYLE } from '@/data/typeMeta';
 import { SAMPLE_NOTES } from '@/data/notesData';
 import { events } from '@/data/eventsData';
 import { FIELDS } from '@/data/fieldsData';
-import { DocScreen } from '@/components/doc/DocScreen';
-import { ProjectScreen } from '@/components/project/ProjectScreen';
+import { DocScreen } from '@/components/easy/DocScreen';
+import { ProjectScreen } from '@/components/easy/ProjectScreen';
 
 function guessField(ev) {
   const t = ((ev.title||"") + " " + (ev.prompt||"") + " " + (ev.tags||[]).join(" ")).toLowerCase();
