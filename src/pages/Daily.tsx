@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { CalendarTab } from './tabs/CalendarTab';
-import { NotesTab } from './tabs/NotesTab';
-import { MoneyTab } from './tabs/MoneyTab';
-import { TaskDetailScreen } from './components/TaskDetailScreen';
-import { registerOpenDetail } from './components/EventCard';
+import { CalendarTab } from '@/easy/CalendarTab';
+import { NotesTab } from '@/easy/NotesTab';
+import { MoneyTab } from '@/easy/MoneyTab';
+import { TaskDetailScreen } from '@/components/TaskDetailScreen';
+import { registerOpenDetail } from '@/components/EventCard';
 
 export default function SamsungCalendar() {
   const [activeTab, setActiveTab] = useState("calendar");
