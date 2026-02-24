@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CalendarTab } from '@/easy/CalendarTab';
-import { NotesTab } from '@/easy/NotesTab';
-import { MoneyTab } from '@/easy/MoneyTab';
+import { NotesTab } from '@/components/easy/NotesTab';
+import { MoneyTab } from '@/components/easy/MoneyTab';
 import { TaskDetailScreen } from '@/components/TaskDetailScreen';
 import { registerOpenDetail } from '@/components/EventCard';
 
