@@ -23,6 +23,8 @@ import AuthCallback from "@/pages/AuthCallback";
 // import KGPattisseriePOS from "@/pages/KGPattiseriePOS";
 // Import the VendorPostComments component
 import VendorPostComments from '@/components/home/VendorPostComments';
+// Import the Daily component
+import Daily from "@/pages/Daily";
 
 export function AppRoutes() {
   return (
@@ -34,7 +36,7 @@ export function AppRoutes() {
           <AuthCallback />
         }
       />
-<Route path="/product/:productId/add-review" element={<AddReviewPage />} />
+      <Route path="/product/:productId/add-review" element={<AddReviewPage />} />
 
       {/* ✅ Error route for auth failures */}
       <Route
@@ -62,6 +64,14 @@ export function AppRoutes() {
         path="comments"
         element={
           <VendorPostComments />
+        }
+      />
+
+      {/* Daily Route - Add this line */}
+      <Route
+        path="daily"
+        element={
+          <Daily />
         }
       />
 
