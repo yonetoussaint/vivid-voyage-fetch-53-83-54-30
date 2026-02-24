@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { MONTH_NAMES, DAY_LABELS, getDaysInMonth, getFirstDayOfWeek, formatDateKey } from '../utils/dateHelpers';
-import { events, dynamicEvents, addDynamicEvent, getEventsForDay } from '../utils/eventUtils';
-import { TypeLegend } from '../components/TypeLegend';
-import { EventCard } from '../components/EventCard';
-import { WritingCard } from '../components/WritingCard';
-import { MoneyEventCard } from '../components/MoneyEventCard';
-import { AddEventSheet } from '../components/AddEventSheet';
+import { MONTH_NAMES, DAY_LABELS, getDaysInMonth, getFirstDayOfWeek, formatDateKey } from '@/utils/dateHelpers';
+import { events, dynamicEvents, addDynamicEvent, getEventsForDay } from '@/utils/eventUtils';
+import { TypeLegend } from '@/components/easy/TypeLegend';
+import { EventCard } from '@/components/easy/EventCard';
+import { WritingCard } from '@/components/easy/WritingCard';
+import { MoneyEventCard } from '@/components/easy/MoneyEventCard';
+import { AddEventSheet } from '@/components/easy/AddEventSheet';
 import { txStore, incomeStore } from '../stores/moneyStores';
 
 export function CalendarTab() {
