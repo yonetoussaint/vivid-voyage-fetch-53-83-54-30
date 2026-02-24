@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CalendarTab } from '@/easy/CalendarTab';
+import { CalendarTab } from '@/components/easy/CalendarTab';
 import { NotesTab } from '@/components/easy/NotesTab';
 import { MoneyTab } from '@/components/easy/MoneyTab';
 import { TaskDetailScreen } from '@/components/TaskDetailScreen';
