@@ -19,7 +19,8 @@ import Calculator from "@/pages/Calculator";
 import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
 import AuthCallback from "@/pages/AuthCallback";
-import KGPattisseriePOS from "@/pages/KGPattiseriePOS";
+// Remove the KGPattisseriePOS import
+// import KGPattisseriePOS from "@/pages/KGPattiseriePOS";
 // Import the VendorPostComments component
 import VendorPostComments from '@/components/home/VendorPostComments';
 
@@ -54,13 +55,7 @@ export function AppRoutes() {
         }
       />
 
-      {/* KG Pâtisserie POS System - Now Public */}
-      <Route
-        path="pos"
-        element={
-          <KGPattisseriePOS />
-        }
-      />
+      {/* KG Pâtisserie POS System route - REMOVED */}
 
       {/* NEW ROUTE: Vendor Post Comments */}
       <Route
@@ -176,4 +171,3 @@ export function AppRoutes() {
     </Routes>
   );
 }
-
