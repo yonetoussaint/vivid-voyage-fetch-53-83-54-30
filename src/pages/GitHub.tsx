@@ -326,7 +326,7 @@ export default function GitHub() {
                 value={repoInput}
                 onChange={e => setRepoInput(e.target.value)}
                 placeholder="owner/repo or full URL"
-                onKeyDown={e => e.key === "Enter" && connect()}
+                onKeyDown={e => e.key === "Enter" && connect(token, repoInput)}
                 style={{
                   width: "100%", padding: "12px 16px",
                   background: "#161b22", border: "1px solid #30363d",
@@ -339,7 +339,7 @@ export default function GitHub() {
             {error && <div style={{ color: "#f85149", fontSize: 12, padding: "10px 14px", background: "rgba(248,81,73,0.1)", borderRadius: 6, border: "1px solid rgba(248,81,73,0.2)" }}>{error}</div>}
 
             <button
-              onClick={connect}
+              onClick={() => connect(token, repoInput)}
               disabled={loading || !token || !repoInput}
               style={{
                 padding: "13px 24px",
