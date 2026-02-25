@@ -12,6 +12,7 @@ import Messages from "@/pages/Messages";
 // Remove or fix this import if ChatPage doesn't exist
 // import { ChatPage } from "@/pages/Messages";
 import GasStationSystem from "@/pages/EasyPlus";
+import GitHubEditor from "@/pages/GitHub";
 import ProfilePage from "@/pages/ProfilePage";
 import Portfolio from "@/pages/Portfolio.tsx";
 import ProductDetail from "@/pages/ProductDetail";
