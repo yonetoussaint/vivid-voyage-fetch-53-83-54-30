@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { IC } from '@/components/icons/IconLibrary';
+import { IC } from '@/components/easy/IconLibrary';
 import { Avatar } from '@/components/easy/Avatar';
 import { ContactSection } from '@/components/easy/ContactSection';
 import { getContactKey, contactStore } from '@/utils/contactUtils';
