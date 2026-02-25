@@ -142,10 +142,13 @@ export default function GitHub() {
     "Content-Type": "application/json",
   }), [token]);
 
+  const isAutoConnecting = useRef(false);
+
   // Auto-reconnect on mount if credentials are saved
   useEffect(() => {
     if (token && repoInput) {
-      connect(token, repoInput);
+      isAutoConnecting.current = true;
+      connect(token, repoInput).finally(() => { isAutoConnecting.current = false; });
     }
   }, []); // eslint-disable-line
 
@@ -174,7 +177,13 @@ export default function GitHub() {
       localStorage.setItem("gh_repo", repo.trim());
       setConnected(true);
     } catch (e) {
-      setError(e.message);
+      // If auto-reconnect on mount failed, clear bad saved credentials silently
+      if (e.message.includes("Invalid token") || e.message.includes("Repo not found")) {
+        localStorage.removeItem("gh_token");
+        localStorage.removeItem("gh_repo");
+      }
+      // Only show error to user if they manually clicked Connect
+      if (!isAutoConnecting.current) setError(e.message);
     }
     setLoading(false);
   }
