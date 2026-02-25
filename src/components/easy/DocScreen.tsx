@@ -774,26 +774,25 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     }}
                   />
                   {!activeSub && ev.prompt && (
-                    <div style={{ fontSize:12, color:"#2a2a2a", marginTop:8, fontStyle:"italic", lineHeight:1.6 }}>{ev.prompt}</div>
+                    <div style={{ fontSize:12, color:"#3a3a3a", marginTop:8, fontStyle:"italic", lineHeight:1.6 }}>{ev.prompt}</div>
                   )}
-                  <div style={{ display:"flex", gap:14, marginTop:12, flexWrap:"wrap" }}>
+                  <div style={{ display:"flex", gap:16, marginTop:14, flexWrap:"wrap", paddingBottom:16, borderBottom:"1px solid #111" }}>
                     {[
                       { label:"Words", value:`${activeWordCount}` },
                       { label:"Total", value:`${totalWords} / ${ev.wordGoal||500}` },
                       { label:"Chapters", value:chapters.length },
                       { label:"Progress", value:`${progress}%`, hi:progress>=100 },
                     ].map((s,i) => (
-                      <div key={i} style={{ fontSize:9, color:"#2a2a2a" }}>
-                        <span style={{ color:"#1e1e1e" }}>{s.label}: </span>
-                        <span style={{ color:s.hi ? accent : "#333" }}>{s.value}</span>
+                      <div key={i} style={{ fontSize:9, color:"#3a3a3a" }}>
+                        <span style={{ color:"#2e2e2e" }}>{s.label}: </span>
+                        <span style={{ color:s.hi ? accent : "#4a4a4a" }}>{s.value}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* ── contentEditable writing area ── */}
-                <div style={{ flex:1, position:"relative" }}>
-                  <div style={{ position:"absolute", left:0, top:0, bottom:0, width:2, background:`linear-gradient(to bottom, ${accent}44, transparent)` }}/>
+                <div style={{ flex:1, position:"relative", marginTop:8 }}>
                   <div
                     key={activeChapterId + '-' + activeSubId}
                     ref={editorRef}
@@ -812,9 +811,10 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     }}
                     style={{
                       minHeight: isMobile ? 300 : 440,
-                      color:"#9a9a9a", fontSize: isMobile ? 15 : 14, lineHeight:1.95,
+                      color:"#c0c0c4", fontSize: isMobile ? 15 : 15, lineHeight:2.1,
                       fontFamily:"'Courier New', Courier, monospace",
-                      padding:"0 0 0 16px", boxSizing:"border-box",
+                      padding: isMobile ? "4px 0 24px" : "8px 0 32px",
+                      boxSizing:"border-box",
                       caretColor:accent,
                       WebkitTapHighlightColor:"transparent",
                     }}
