@@ -1,4 +1,4 @@
-import { IC } from '../components/icons/IconLibrary';
+import { IC } from '@/components/easy/IconLibrary';
 
 export const SPEND_CATEGORIES = [
   { id:"food",         label:"Food",         icon:(c,s)=>IC.food(c,s),      color:"#69f0ae", budget:3000 },
