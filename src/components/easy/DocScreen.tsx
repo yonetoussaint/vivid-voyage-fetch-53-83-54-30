@@ -98,6 +98,8 @@ function FormattingToolbar({ editorRef, accent, onUpdate }) {
         overflowX: 'auto',
         overflowY: 'hidden',
         paddingBottom: 4,
+        paddingLeft: 8,
+        paddingRight: 8,
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
         WebkitOverflowScrolling: 'touch',
@@ -277,7 +279,13 @@ function FormattingToolbar({ editorRef, accent, onUpdate }) {
 export function DocScreen({ ev, accent, text, setText, onClose }) {
   const isMobile = useIsMobile();
 
+  const STORAGE_KEY = `doc_chapters_${ev.id || ev.title || 'default'}`;
+
   const initChapters = () => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
     if (text && text.trim().startsWith("[CHAPTERS]")) {
       try { return JSON.parse(text.slice("[CHAPTERS]".length)); } catch(e) {}
     }
@@ -298,7 +306,9 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
   const editorRef = useRef(null);
 
   useEffect(() => {
-    setText("[CHAPTERS]" + JSON.stringify(chapters));
+    const serialized = "[CHAPTERS]" + JSON.stringify(chapters);
+    setText(serialized);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(chapters)); } catch(e) {}
   }, [chapters]);
 
   useEffect(() => {
