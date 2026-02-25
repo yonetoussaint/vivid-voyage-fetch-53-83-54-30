@@ -306,10 +306,50 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
     else setSidebarOpen(true);
   }, [isMobile]);
 
+  const [toolbarVisible, setToolbarVisible] = useState(false);
+  const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
+  const toolbarRef = useRef(null);
+
+  // Fix backwards typing: only set innerHTML on mount/chapter-switch, never on re-render
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = activeContent;
+    }
+  }, [activeChapterId, activeSubId]);
+
   // Focus editor when switching chapters
   useEffect(() => {
-    editorRef.current?.focus();
-  }, [activeChapterId, activeSubId]);
+    if (!readMode) editorRef.current?.focus();
+  }, [activeChapterId, activeSubId, readMode]);
+
+  const handleSelectionChange = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) {
+      setToolbarVisible(false);
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    if (!editorRef.current?.contains(range.commonAncestorContainer)) {
+      setToolbarVisible(false);
+      return;
+    }
+    const rect = range.getBoundingClientRect();
+    const editorRect = editorRef.current.getBoundingClientRect();
+    setToolbarPos({
+      top: rect.top - editorRect.top - 44,
+      left: Math.max(0, rect.left - editorRect.left + rect.width / 2),
+    });
+    setToolbarVisible(true);
+  };
+
+  useEffect(() => {
+    const dismiss = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) setToolbarVisible(false);
+    };
+    document.addEventListener('mousedown', dismiss);
+    return () => document.removeEventListener('mousedown', dismiss);
+  }, []);
 
   const totalWords = chapters.reduce((acc, ch) => {
     const stripHtml = h => h.replace(/<[^>]*>/g, ' ').trim();
@@ -541,22 +581,25 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
           .doc-sidebar-scroll::-webkit-scrollbar { width:2px; }
           .doc-sidebar-scroll::-webkit-scrollbar-thumb { background:#111; }
           .doc-editor-div::-webkit-scrollbar { display:none; }
-          .doc-editor-div:empty:before { content: attr(data-placeholder); color: #1e1e1e; pointer-events:none; display:block; }
+          .doc-editor-div:empty:before { content: attr(data-placeholder); color: #252525; pointer-events:none; display:block; font-style: italic; }
           .doc-editor-div:focus { outline:none; }
-          .doc-editor-div p { margin: 0 0 12px; }
-          .doc-editor-div h1 { font-size: 22px; font-weight: 700; color: #c0c0c4; margin: 20px 0 10px; letter-spacing: -0.3px; line-height: 1.25; font-family: Georgia, serif; }
-          .doc-editor-div h2 { font-size: 16px; font-weight: 600; color: #888; margin: 18px 0 8px; line-height: 1.3; font-family: Georgia, serif; }
-          .doc-editor-div ul { padding-left: 20px; margin: 0 0 12px; }
-          .doc-editor-div li { margin-bottom: 4px; }
-          .doc-editor-div strong { color: #c0c0c4; }
-          .doc-editor-div em { color: #888; }
-          .doc-editor-div blockquote { border-left: 2px solid #2a2a2a; margin: 12px 0; padding: 4px 16px; color: #666; font-style: italic; }
-          .doc-editor-div pre { background: #0d0f11; border: 1px solid #1a1a1a; padding: 12px 16px; margin: 12px 0; font-size: 12px; color: #7a9a7a; overflow-x: auto; }
-          .doc-editor-div h3 { font-size: 14px; font-weight: 600; color: #777; margin: 16px 0 6px; line-height: 1.3; font-family: Georgia, serif; }
-          .doc-editor-div h4 { font-size: 12px; font-weight: 600; color: #666; margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.8px; }
-          .doc-editor-div s { color: #444; }
-          .doc-editor-div ol { padding-left: 20px; margin: 0 0 12px; }
-          .toolbar-scroll::-webkit-scrollbar { display: none; }
+          .doc-editor-div p { margin: 0 0 1.1em; }
+          .doc-editor-div h1 { font-size: 26px; font-weight: 700; color: #d4d4d8; margin: 2em 0 0.5em; letter-spacing: -0.4px; line-height: 1.2; font-family: Georgia, 'Times New Roman', serif; }
+          .doc-editor-div h2 { font-size: 20px; font-weight: 600; color: #aaa; margin: 1.8em 0 0.4em; line-height: 1.3; font-family: Georgia, 'Times New Roman', serif; }
+          .doc-editor-div h3 { font-size: 16px; font-weight: 600; color: #888; margin: 1.5em 0 0.35em; line-height: 1.35; font-family: Georgia, 'Times New Roman', serif; }
+          .doc-editor-div h4 { font-size: 13px; font-weight: 600; color: #666; margin: 1.3em 0 0.3em; text-transform: uppercase; letter-spacing: 1px; }
+          .doc-editor-div ul { padding-left: 1.5em; margin: 0 0 1.1em; }
+          .doc-editor-div ol { padding-left: 1.5em; margin: 0 0 1.1em; }
+          .doc-editor-div li { margin-bottom: 0.3em; }
+          .doc-editor-div strong { color: #c8c8cc; font-weight: 600; }
+          .doc-editor-div em { color: #999; font-style: italic; }
+          .doc-editor-div s { color: #3a3a3a; }
+          .doc-editor-div blockquote { border-left: 2px solid #222; margin: 1.5em 0; padding: 4px 20px; color: #666; font-style: italic; }
+          .doc-editor-div pre { background: #0d0f11; border: 1px solid #1a1a1a; padding: 14px 18px; margin: 1.2em 0; font-size: 12px; color: #7a9a7a; overflow-x: auto; font-family: 'Courier New', monospace; border-radius: 2px; }
+          .floating-toolbar { position:absolute; display:flex; align-items:center; gap:1px; background:#111; border:1px solid #222; padding:3px 4px; pointer-events:all; transform:translateX(-50%); z-index:100; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+          .floating-toolbar button { background:transparent; border:none; color:#666; width:26px; height:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:'Courier New',monospace; transition:color 0.1s,background 0.1s; border-radius:1px; }
+          .floating-toolbar button:hover { color:#ccc; background:#1a1a1a; }
+          .floating-toolbar .ft-div { width:1px; height:14px; background:#222; margin:0 2px; flex-shrink:0; }
           .doc-mobile-overlay { animation:sideSlide 0.22s ease; }
           @keyframes sideSlide { from { transform:translateX(-100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
           div:hover > .ch-actions { opacity:1 !important; }
@@ -670,8 +713,44 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
 
                 {/* ── contentEditable writing area ── */}
                 <div style={{ flex:1, position:"relative", marginTop:8 }}>
+                  {/* Floating formatting toolbar — appears on selection */}
+                  {!readMode && toolbarVisible && (
+                    <div
+                      ref={toolbarRef}
+                      className="floating-toolbar"
+                      style={{ top: toolbarPos.top, left: toolbarPos.left }}
+                      onMouseDown={e => e.preventDefault()}
+                    >
+                      {[
+                        { title:"Bold", icon:<b style={{fontSize:12,fontFamily:'serif'}}>B</b>, cmd:'bold' },
+                        { title:"Italic", icon:<i style={{fontSize:12,fontFamily:'serif'}}>I</i>, cmd:'italic' },
+                        { title:"Underline", icon:<u style={{fontSize:11}}>U</u>, cmd:'underline' },
+                        { title:"Strike", icon:<s style={{fontSize:11}}>S</s>, cmd:'strikeThrough' },
+                      ].map(({title,icon,cmd}) => (
+                        <button key={cmd} title={title} onClick={() => { document.execCommand(cmd,false,null); setToolbarVisible(false); }}>
+                          {icon}
+                        </button>
+                      ))}
+                      <div className="ft-div"/>
+                      {[
+                        { title:"H1", icon:<span style={{fontSize:9,fontWeight:700,letterSpacing:.3}}>H1</span>, tag:'h1' },
+                        { title:"H2", icon:<span style={{fontSize:9,fontWeight:600,letterSpacing:.3}}>H2</span>, tag:'h2' },
+                        { title:"¶", icon:<span style={{fontSize:10}}>¶</span>, tag:'p' },
+                      ].map(({title,icon,tag}) => (
+                        <button key={tag} title={title} onClick={() => { document.execCommand('formatBlock',false,tag); setToolbarVisible(false); }}>
+                          {icon}
+                        </button>
+                      ))}
+                      <div className="ft-div"/>
+                      <button title="Quote" onClick={() => { document.execCommand('formatBlock',false,'blockquote'); setToolbarVisible(false); }}>
+                        <span style={{fontSize:13,lineHeight:1}}>"</span>
+                      </button>
+                      <button title="Remove formatting" onClick={() => { document.execCommand('removeFormat'); setToolbarVisible(false); }}>
+                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M3 13L13 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      </button>
+                    </div>
+                  )}
                   <div
-                    key={activeChapterId + '-' + activeSubId}
                     ref={editorRef}
                     className="doc-editor-div"
                     contentEditable={!readMode}
@@ -681,22 +760,27 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     autoCapitalize="off"
                     data-placeholder={activeSub
                       ? `Write the content of "${activeTitle}" here…`
-                      : `Begin writing Chapter ${chapters.indexOf(activeChapter)+1}…`}
-                    dangerouslySetInnerHTML={{ __html: activeContent }}
+                      : `Begin writing…`}
                     onInput={() => {
                       if (editorRef.current && !readMode) updateContent(editorRef.current.innerHTML);
                     }}
+                    onMouseUp={handleSelectionChange}
+                    onKeyUp={handleSelectionChange}
                     onDoubleClick={() => { if (readMode) setReadMode(false); }}
                     style={{
-                      minHeight: isMobile ? 300 : 440,
-                      color:"#c0c0c4", fontSize: isMobile ? 15 : 15, lineHeight:2.1,
-                      fontFamily:"'Courier New', Courier, monospace",
-                      padding: isMobile ? "4px 0 24px" : "8px 0 32px",
+                      minHeight: isMobile ? 300 : 460,
+                      color:"#b8b8bc",
+                      fontSize: isMobile ? 16 : 17,
+                      lineHeight: 1.85,
+                      fontFamily:"Georgia, 'Times New Roman', serif",
+                      padding: isMobile ? "4px 0 40px" : "4px 0 60px",
                       boxSizing:"border-box",
                       caretColor: readMode ? "transparent" : accent,
                       WebkitTapHighlightColor:"transparent",
                       cursor: readMode ? "default" : "text",
-                      userSelect: readMode ? "text" : "auto",
+                      userSelect: "text",
+                      wordSpacing: "0.02em",
+                      letterSpacing: "0.01em",
                     }}
                   />
                   {readMode && (
@@ -708,14 +792,8 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                   )}
                 </div>
 
-                {/* ── FORMATTING TOOLBAR (bottom) ── */}
-                {!readMode && (
-                  <FormattingToolbar
-                    editorRef={editorRef}
-                    accent={accent}
-                    onUpdate={updateContent}
-                  />
-                )}
+                {/* ── FORMATTING TOOLBAR (bottom, read mode hidden) ── */}
+                {/* Removed: toolbar now floats on selection */}
 
                 {/* Chapter navigation */}
                 {!readMode && (
