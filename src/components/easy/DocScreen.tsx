@@ -9,63 +9,160 @@ function generateId() {
   return "ch_" + Math.random().toString(36).slice(2, 9);
 }
 
-// =============================================
-// ADD THIS: Formatter utilities
-// =============================================
-const FORMATTERS = {
-  bold: { before: '**', after: '**' },
-  italic: { before: '*', after: '*' },
-  underline: { before: '__', after: '__' },
-  h1: { before: '# ', after: '' },
-  h2: { before: '## ', after: '' },
-  bullet: { before: '- ', after: '' }
-};
+// ── Formatting toolbar (bottom, markdown-based) ──────────────────────────────
+function FormattingToolbar({ textareaRef, accent, onUpdate, value }) {
+  const applyFormat = (type) => {
+    const el = textareaRef.current;
+    if (!el) return;
 
-function applyFormat(textarea, formatter, updateContent) {
-  if (!textarea) return;
-  
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const text = textarea.value;
-  const selectedText = text.substring(start, end);
-  
-  // If no selection, just insert formatter and place cursor in middle
-  if (start === end) {
-    const newText = text.substring(0, start) + 
-                   formatter.before + formatter.after + 
-                   text.substring(end);
-    updateContent(newText);
-    
-    // Place cursor between markers
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = value.slice(start, end);
+    const before = value.slice(0, start);
+    const after = value.slice(end);
+
+    let insert = selected;
+    let cursorOffset = 0;
+
+    switch (type) {
+      case 'bold':
+        insert = `**${selected || 'bold text'}**`;
+        cursorOffset = selected ? insert.length : 2;
+        break;
+      case 'italic':
+        insert = `*${selected || 'italic text'}*`;
+        cursorOffset = selected ? insert.length : 1;
+        break;
+      case 'underline':
+        // Markdown has no underline; use HTML-style comment hint or <u> tag
+        insert = `<u>${selected || 'underlined text'}</u>`;
+        cursorOffset = selected ? insert.length : 3;
+        break;
+      case 'h1': {
+        // Apply to start of the current line
+        const lineStart = before.lastIndexOf('\n') + 1;
+        const lineContent = value.slice(lineStart, end);
+        const stripped = lineContent.replace(/^#{1,6}\s*/, '');
+        const newContent = `# ${stripped}`;
+        const newValue = value.slice(0, lineStart) + newContent + value.slice(end);
+        onUpdate(newValue);
+        setTimeout(() => {
+          el.focus();
+          const pos = lineStart + newContent.length;
+          el.setSelectionRange(pos, pos);
+        }, 0);
+        return;
+      }
+      case 'h2': {
+        const lineStart = before.lastIndexOf('\n') + 1;
+        const lineContent = value.slice(lineStart, end);
+        const stripped = lineContent.replace(/^#{1,6}\s*/, '');
+        const newContent = `## ${stripped}`;
+        const newValue = value.slice(0, lineStart) + newContent + value.slice(end);
+        onUpdate(newValue);
+        setTimeout(() => {
+          el.focus();
+          const pos = lineStart + newContent.length;
+          el.setSelectionRange(pos, pos);
+        }, 0);
+        return;
+      }
+      case 'bullet': {
+        // Prefix each selected line with "- "
+        const lineStart = before.lastIndexOf('\n') + 1;
+        const selectionText = value.slice(lineStart, end);
+        const bulleted = selectionText
+          .split('\n')
+          .map(line => line.startsWith('- ') ? line.slice(2) : `- ${line}`)
+          .join('\n');
+        const newValue = value.slice(0, lineStart) + bulleted + value.slice(end);
+        onUpdate(newValue);
+        setTimeout(() => {
+          el.focus();
+          const pos = lineStart + bulleted.length;
+          el.setSelectionRange(pos, pos);
+        }, 0);
+        return;
+      }
+      default:
+        return;
+    }
+
+    const newValue = before + insert + after;
+    onUpdate(newValue);
+
+    // Restore cursor / selection
     setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(
-        start + formatter.before.length,
-        start + formatter.before.length
-      );
+      el.focus();
+      if (selected) {
+        el.setSelectionRange(start, start + insert.length);
+      } else {
+        const cur = start + cursorOffset;
+        el.setSelectionRange(cur, cur);
+      }
     }, 0);
-    return;
-  }
-  
-  // Wrap selected text
-  const newText = text.substring(0, start) + 
-                 formatter.before + selectedText + formatter.after + 
-                 text.substring(end);
-  
-  updateContent(newText);
-  
-  // Restore selection with formatting
-  setTimeout(() => {
-    textarea.focus();
-    textarea.setSelectionRange(
-      start + formatter.before.length,
-      end + formatter.before.length
-    );
-  }, 0);
+  };
+
+  const buttons = [
+    { type: 'bold',      label: 'B',  title: 'Bold (** **)',    style: { fontWeight: 700 } },
+    { type: 'italic',    label: 'I',  title: 'Italic (* *)',    style: { fontStyle: 'italic' } },
+    { type: 'underline', label: 'U',  title: 'Underline (<u>)', style: { textDecoration: 'underline' } },
+    { type: 'h1',        label: 'H1', title: 'Heading 1',       style: { fontSize: 10, letterSpacing: 0.5 } },
+    { type: 'h2',        label: 'H2', title: 'Heading 2',       style: { fontSize: 10, letterSpacing: 0.5 } },
+    { type: 'bullet',    label: '≡',  title: 'Bullet list',     style: { fontSize: 15, lineHeight: 1 } },
+  ];
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 2,
+      padding: '6px 0',
+      borderTop: '1px solid #111',
+      marginTop: 12,
+      flexWrap: 'wrap',
+    }}>
+      {buttons.map(btn => (
+        <button
+          key={btn.type}
+          title={btn.title}
+          onMouseDown={e => {
+            e.preventDefault(); // don't blur textarea
+            applyFormat(btn.type);
+          }}
+          style={{
+            background: 'transparent',
+            border: '1px solid #1a1a1a',
+            color: '#444',
+            fontSize: 11,
+            fontFamily: "'Courier New', Courier, monospace",
+            width: 28,
+            height: 26,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            userSelect: 'none',
+            transition: 'border-color 0.12s, color 0.12s',
+            ...btn.style,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = accent + '66';
+            e.currentTarget.style.color = accent;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = '#1a1a1a';
+            e.currentTarget.style.color = '#444';
+          }}
+        >
+          {btn.label}
+        </button>
+      ))}
+      <span style={{ marginLeft: 4, fontSize: 9, color: '#1e1e1e' }}>md</span>
+    </div>
+  );
 }
-// =============================================
-// END OF ADDED CODE
-// =============================================
+// ────────────────────────────────────────────────────────────────────────────
 
 export function DocScreen({ ev, accent, text, setText, onClose }) {
   const isMobile = useIsMobile();
@@ -200,71 +297,6 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
   const activeContent = activeSub ? activeSub.content : (activeChapter?.content || "");
   const activeTitle = activeSub ? activeSub.title : (activeChapter?.title || "");
   const activeWordCount = activeContent.trim() ? activeContent.trim().split(/\s+/).length : 0;
-
-  // =============================================
-  // ADD THIS: Toolbar component inside DocScreen
-  // =============================================
-  const MarkdownToolbar = ({ textareaRef, onFormat, accent }) => {
-    const buttons = [
-      { key: 'bold', label: 'B', title: 'Bold (**)', formatter: FORMATTERS.bold },
-      { key: 'italic', label: 'I', title: 'Italic (*)', formatter: FORMATTERS.italic },
-      { key: 'underline', label: 'U', title: 'Underline (__)', formatter: FORMATTERS.underline },
-      { type: 'divider' },
-      { key: 'h1', label: 'H1', title: 'Heading 1 (# )', formatter: FORMATTERS.h1 },
-      { key: 'h2', label: 'H2', title: 'Heading 2 (## )', formatter: FORMATTERS.h2 },
-      { type: 'divider' },
-      { key: 'bullet', label: '•', title: 'Bullet list (- )', formatter: FORMATTERS.bullet }
-    ];
-
-    return (
-      <div style={{
-        display: 'flex',
-        gap: '2px',
-        padding: '8px 16px',
-        borderTop: '1px solid #1a1a1a',
-        background: '#0a0c0e',
-        marginTop: '16px',
-        borderRadius: '4px',
-        flexWrap: 'wrap'
-      }}>
-        {buttons.map((btn, i) => 
-          btn.type === 'divider' ? (
-            <div key={i} style={{ width: '1px', background: '#222', margin: '0 6px' }} />
-          ) : (
-            <button
-              key={btn.key}
-              onMouseDown={(e) => {
-                e.preventDefault(); // Prevent focus loss
-                onFormat(btn.formatter);
-              }}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#888',
-                fontSize: btn.key === 'bullet' ? '18px' : '13px',
-                fontWeight: btn.key === 'bold' ? '700' : '400',
-                textDecoration: btn.key === 'underline' ? 'underline' : 'none',
-                cursor: 'pointer',
-                padding: '4px 10px',
-                borderRadius: '2px',
-                fontFamily: 'monospace',
-                transition: 'all 0.1s ease',
-                minWidth: '32px'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.color = accent}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#888'}
-              title={btn.title}
-            >
-              {btn.label}
-            </button>
-          )
-        )}
-      </div>
-    );
-  };
-  // =============================================
-  // END OF ADDED CODE
-  // =============================================
 
   const Sidebar = () => (
     <div style={{ display:"flex", flexDirection:"column", height:"100%", background:"#07090b" }}>
@@ -527,14 +559,9 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                 </div>
               </div>
 
-              {/* ============================================= */}
-              {/* MODIFIED: Writing area with toolbar at bottom */}
-              {/* ============================================= */}
-              <div style={{ flex:1, position:"relative", display:"flex", flexDirection:"column" }}>
-                <div style={{ position:"absolute", left:0, top:0, bottom:0, width:2, 
-                              background:`linear-gradient(to bottom, ${accent}44, transparent)` }}/>
-                
-                {/* Textarea - moved above toolbar */}
+              {/* Writing area */}
+              <div style={{ flex:1, position:"relative" }}>
+                <div style={{ position:"absolute", left:0, top:0, bottom:0, width:2, background:`linear-gradient(to bottom, ${accent}44, transparent)` }}/>
                 <textarea
                   ref={textareaRef}
                   className="doc-textarea-full"
@@ -544,33 +571,26 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     ? `Write the content of "${activeTitle}" here…`
                     : `Begin writing Chapter ${chapters.indexOf(activeChapter)+1}…\n\nYou can use plain prose here. Manage chapters and sections from the sidebar on the left.`}
                   style={{
-                    width: "100%",
+                    width:"100%",
                     minHeight: isMobile ? 300 : 440,
-                    background: "transparent", 
-                    border: "none", 
-                    outline: "none",
-                    color: "#9a9a9a", 
-                    fontSize: isMobile ? 15 : 14, 
-                    lineHeight: 1.95,
-                    fontFamily: "'Courier New', Courier, monospace",
-                    resize: "none", 
-                    boxSizing: "border-box",
-                    padding: "0 0 0 16px", // Removed top padding
-                    caretColor: accent,
-                    WebkitTapHighlightColor: "transparent",
+                    background:"transparent", border:"none", outline:"none",
+                    color:"#9a9a9a", fontSize: isMobile ? 15 : 14, lineHeight:1.95,
+                    fontFamily:"'Courier New', Courier, monospace",
+                    resize:"none", boxSizing:"border-box",
+                    padding:"0 0 0 16px",
+                    caretColor:accent,
+                    WebkitTapHighlightColor:"transparent",
                   }}
                 />
-
-                {/* Toolbar at bottom */}
-                <MarkdownToolbar 
-                  textareaRef={textareaRef}
-                  onFormat={(formatter) => applyFormat(textareaRef.current, formatter, updateContent)}
-                  accent={accent}
-                />
               </div>
-              {/* ============================================= */}
-              {/* END OF MODIFIED SECTION */}
-              {/* ============================================= */}
+
+              {/* ── FORMATTING TOOLBAR (bottom) ── */}
+              <FormattingToolbar
+                textareaRef={textareaRef}
+                accent={accent}
+                value={activeContent}
+                onUpdate={updateContent}
+              />
 
               {/* Chapter navigation */}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", paddingTop:20, marginTop:20, borderTop:"1px solid #0f0f0f" }}>
