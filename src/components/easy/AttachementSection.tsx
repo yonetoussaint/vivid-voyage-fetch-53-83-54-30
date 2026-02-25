@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ATTACHMENT_PRESETS, FILE_TYPE_META, getAttachKey, attachmentStore, detectFileType } from '../utils/attachmentUtils';
+import { ATTACHMENT_PRESETS, FILE_TYPE_META, getAttachKey, attachmentStore, detectFileType } from '@/utils/attachmentUtils';
 
 export function AttachmentSection({ evTitle, evType, accentColor }) {
   const key = getAttachKey(evTitle, evType);
