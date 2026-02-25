@@ -1,106 +1,108 @@
-// easy/TotalSalesCard.jsx
 import React from 'react';
-import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { formaterArgent, formaterCaisse } from '@/utils/formatters';
 
-const TotalSalesCard = ({ 
-  ventesTotales, 
+const TotalSalesCard = ({
+  ventesTotales,
   isPropane = false,
-  pompe = '' 
+  pompe = '',
+  accent = '#7a7aff',
 }) => {
-  // Calculate rounded adjusted total
-  const totalAjusteArrondi = formaterCaisse(ventesTotales || 0);
-  const exactValue = parseFloat(ventesTotales || 0);
-  const roundedValue = parseFloat(totalAjusteArrondi.replace(/'/g, ''));
-  const adjustment = roundedValue - exactValue;
-  const hasAdjustment = Math.abs(adjustment) > 0;
-  const isRoundedUp = adjustment > 0;
+  const exactValue  = parseFloat(ventesTotales || 0);
+  const rawRounded  = formaterCaisse(ventesTotales || 0);
+  const roundedValue = parseFloat(rawRounded.replace(/'/g, '').replace(/\s/g, ''));
+  const adjustment  = roundedValue - exactValue;
+  const hasAdjustment = Math.abs(adjustment) > 0.001;
+  const isRoundedUp   = adjustment > 0;
 
-  const getMainCardColor = () => {
-    if (isPropane) {
-      return 'bg-gradient-to-br from-red-600 to-orange-600';
-    }
-    return 'bg-gradient-to-br from-indigo-600 to-purple-600';
-  };
-
-  const getProductLabel = () => {
-    if (isPropane) {
-      return 'Propane';
-    }
-    return pompe;
-  };
+  const productLabel = isPropane ? 'Propane' : pompe;
+  const dotColor     = isPropane ? '#f87171' : accent;
 
   return (
-    <div className={`rounded-xl p-4 shadow-xl mb-3 ${getMainCardColor()} text-white`}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-white bg-opacity-80"></div>
-          <p className="text-sm font-bold">TOTAL VENTES ({getProductLabel()})</p>
+    <div style={{
+      fontFamily: "'Courier New', Courier, monospace",
+      border: '1px solid #1a1a1a',
+      background: '#07090b',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+
+      {/* ── Header ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '8px 14px',
+        borderBottom: '1px solid #111',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+          <span style={{ fontSize: 9, color: '#444', letterSpacing: 1.1, textTransform: 'uppercase' }}>
+            Total Ventes · {productLabel}
+          </span>
         </div>
-        <div className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full font-bold">
+        <span style={{ fontSize: 9, color: '#2a2a2a', letterSpacing: 0.8, textTransform: 'uppercase' }}>
           Final
+        </span>
+      </div>
+
+      {/* ── Brut ── */}
+      <div style={{
+        padding: '12px 14px',
+        borderBottom: '1px solid #111',
+      }}>
+        <div style={{ fontSize: 9, color: '#333', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 6 }}>
+          {isPropane ? 'Ventes brutes propane' : 'Ventes brutes — Essence + Diesel'}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 26, fontWeight: 700, color: '#d4d4d8', letterSpacing: -0.5, lineHeight: 1 }}>
+            {formaterArgent(ventesTotales)}
+          </span>
+          <span style={{ fontSize: 9, color: '#333', letterSpacing: 0.8, textTransform: 'uppercase' }}>HTG</span>
         </div>
       </div>
 
-      <div className="space-y-2">
-        {/* Main Total Sales */}
-        <div className="bg-white bg-opacity-15 rounded-lg p-3 border border-white border-opacity-20">
-          <p className="text-xs opacity-90 mb-1">
-            {isPropane ? 'VENTES BRUTES PROPANE' : 'VENTES BRUTES (Essence + Diesel)'}
-          </p>
-          <div className="flex items-end justify-between">
-            <p className="text-2xl sm:text-3xl font-bold tracking-tight">{formaterArgent(ventesTotales)}</p>
-            <span className="text-sm font-medium opacity-90">HTG</span>
+      {/* ── Adjusted / Caisse ── */}
+      <div style={{ padding: '12px 14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div style={{ fontSize: 9, color: '#333', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+            Total ajusté — Caisse
+          </div>
+          <div style={{ fontSize: 9, color: '#2a2a2a', letterSpacing: 0.6, fontStyle: 'italic' }}>
+            arrondi au 0 ou 5
           </div>
         </div>
 
-        {/* Final Adjusted Total */}
-        <div className={`rounded-lg p-3 relative overflow-hidden ${
-          isPropane 
-            ? 'bg-gradient-to-r from-orange-500 to-red-500' 
-            : 'bg-gradient-to-r from-green-500 to-emerald-600'
-        }`}>
-          <div className="absolute top-0 right-0 w-16 h-16 bg-white bg-opacity-10 rounded-full -translate-y-8 translate-x-8"></div>
-
-          <div className="flex items-center justify-between mb-2 relative z-10">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                <DollarSign size={16} className="text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold">TOTAL AJUSTÉ (CAISSE)</p>
-                <p className="text-[10px] opacity-80">Arrondi au 0 ou 5 le plus proche</p>
-              </div>
-            </div>
-            <div className="bg-white bg-opacity-25 px-3 py-1 rounded-full">
-              <p className="text-xs font-bold">FINAL</p>
-            </div>
-          </div>
-
-          <div className="relative z-10">
-            <div className="mb-1">
-              <div className="flex items-end justify-between">
-                <p className="text-2xl sm:text-3xl font-bold">{formaterCaisse(ventesTotales)}</p>
-                <span className="text-xl font-bold ml-2">HTG</span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-xs opacity-80">Valeur arrondie</p>
-              {hasAdjustment && (
-                <div className="flex items-center gap-1">
-                  <span className="text-xs opacity-80">Écart:</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    isRoundedUp ? 'bg-amber-500' : 'bg-blue-500'
-                  }`}>
-                    {isRoundedUp ? `+${adjustment.toFixed(2)}` : `${adjustment.toFixed(2)}`}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ fontSize: 26, fontWeight: 700, color: dotColor, letterSpacing: -0.5, lineHeight: 1 }}>
+            {formaterCaisse(ventesTotales)}
+          </span>
+          <span style={{ fontSize: 9, color: dotColor + '88', letterSpacing: 0.8, textTransform: 'uppercase',
+            borderLeft: `1px solid ${dotColor}33`, paddingLeft: 8 }}>
+            HTG
+          </span>
         </div>
+
+        {hasAdjustment && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingTop: 8,
+            borderTop: '1px solid #111',
+          }}>
+            <span style={{ fontSize: 9, color: '#2a2a2a', letterSpacing: 0.6 }}>Écart d'arrondi</span>
+            <span style={{
+              fontSize: 9,
+              color: isRoundedUp ? '#fbbf24' : '#60a5fa',
+              letterSpacing: 0.5,
+              fontWeight: 600,
+            }}>
+              {isRoundedUp ? '+' : ''}{adjustment.toFixed(2)}
+            </span>
+          </div>
+        )}
       </div>
+
     </div>
   );
 };
