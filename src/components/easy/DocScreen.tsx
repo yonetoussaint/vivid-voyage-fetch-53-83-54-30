@@ -9,6 +9,64 @@ function generateId() {
   return "ch_" + Math.random().toString(36).slice(2, 9);
 }
 
+// =============================================
+// ADD THIS: Formatter utilities
+// =============================================
+const FORMATTERS = {
+  bold: { before: '**', after: '**' },
+  italic: { before: '*', after: '*' },
+  underline: { before: '__', after: '__' },
+  h1: { before: '# ', after: '' },
+  h2: { before: '## ', after: '' },
+  bullet: { before: '- ', after: '' }
+};
+
+function applyFormat(textarea, formatter, updateContent) {
+  if (!textarea) return;
+  
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  const selectedText = text.substring(start, end);
+  
+  // If no selection, just insert formatter and place cursor in middle
+  if (start === end) {
+    const newText = text.substring(0, start) + 
+                   formatter.before + formatter.after + 
+                   text.substring(end);
+    updateContent(newText);
+    
+    // Place cursor between markers
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + formatter.before.length,
+        start + formatter.before.length
+      );
+    }, 0);
+    return;
+  }
+  
+  // Wrap selected text
+  const newText = text.substring(0, start) + 
+                 formatter.before + selectedText + formatter.after + 
+                 text.substring(end);
+  
+  updateContent(newText);
+  
+  // Restore selection with formatting
+  setTimeout(() => {
+    textarea.focus();
+    textarea.setSelectionRange(
+      start + formatter.before.length,
+      end + formatter.before.length
+    );
+  }, 0);
+}
+// =============================================
+// END OF ADDED CODE
+// =============================================
+
 export function DocScreen({ ev, accent, text, setText, onClose }) {
   const isMobile = useIsMobile();
 
@@ -142,6 +200,71 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
   const activeContent = activeSub ? activeSub.content : (activeChapter?.content || "");
   const activeTitle = activeSub ? activeSub.title : (activeChapter?.title || "");
   const activeWordCount = activeContent.trim() ? activeContent.trim().split(/\s+/).length : 0;
+
+  // =============================================
+  // ADD THIS: Toolbar component inside DocScreen
+  // =============================================
+  const MarkdownToolbar = ({ textareaRef, onFormat, accent }) => {
+    const buttons = [
+      { key: 'bold', label: 'B', title: 'Bold (**)', formatter: FORMATTERS.bold },
+      { key: 'italic', label: 'I', title: 'Italic (*)', formatter: FORMATTERS.italic },
+      { key: 'underline', label: 'U', title: 'Underline (__)', formatter: FORMATTERS.underline },
+      { type: 'divider' },
+      { key: 'h1', label: 'H1', title: 'Heading 1 (# )', formatter: FORMATTERS.h1 },
+      { key: 'h2', label: 'H2', title: 'Heading 2 (## )', formatter: FORMATTERS.h2 },
+      { type: 'divider' },
+      { key: 'bullet', label: '•', title: 'Bullet list (- )', formatter: FORMATTERS.bullet }
+    ];
+
+    return (
+      <div style={{
+        display: 'flex',
+        gap: '2px',
+        padding: '8px 16px',
+        borderTop: '1px solid #1a1a1a',
+        background: '#0a0c0e',
+        marginTop: '16px',
+        borderRadius: '4px',
+        flexWrap: 'wrap'
+      }}>
+        {buttons.map((btn, i) => 
+          btn.type === 'divider' ? (
+            <div key={i} style={{ width: '1px', background: '#222', margin: '0 6px' }} />
+          ) : (
+            <button
+              key={btn.key}
+              onMouseDown={(e) => {
+                e.preventDefault(); // Prevent focus loss
+                onFormat(btn.formatter);
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#888',
+                fontSize: btn.key === 'bullet' ? '18px' : '13px',
+                fontWeight: btn.key === 'bold' ? '700' : '400',
+                textDecoration: btn.key === 'underline' ? 'underline' : 'none',
+                cursor: 'pointer',
+                padding: '4px 10px',
+                borderRadius: '2px',
+                fontFamily: 'monospace',
+                transition: 'all 0.1s ease',
+                minWidth: '32px'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = accent}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#888'}
+              title={btn.title}
+            >
+              {btn.label}
+            </button>
+          )
+        )}
+      </div>
+    );
+  };
+  // =============================================
+  // END OF ADDED CODE
+  // =============================================
 
   const Sidebar = () => (
     <div style={{ display:"flex", flexDirection:"column", height:"100%", background:"#07090b" }}>
@@ -404,9 +527,14 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                 </div>
               </div>
 
-              {/* Writing area */}
-              <div style={{ flex:1, position:"relative" }}>
-                <div style={{ position:"absolute", left:0, top:0, bottom:0, width:2, background:`linear-gradient(to bottom, ${accent}44, transparent)` }}/>
+              {/* ============================================= */}
+              {/* MODIFIED: Writing area with toolbar at bottom */}
+              {/* ============================================= */}
+              <div style={{ flex:1, position:"relative", display:"flex", flexDirection:"column" }}>
+                <div style={{ position:"absolute", left:0, top:0, bottom:0, width:2, 
+                              background:`linear-gradient(to bottom, ${accent}44, transparent)` }}/>
+                
+                {/* Textarea - moved above toolbar */}
                 <textarea
                   ref={textareaRef}
                   className="doc-textarea-full"
@@ -416,18 +544,33 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     ? `Write the content of "${activeTitle}" here…`
                     : `Begin writing Chapter ${chapters.indexOf(activeChapter)+1}…\n\nYou can use plain prose here. Manage chapters and sections from the sidebar on the left.`}
                   style={{
-                    width:"100%",
+                    width: "100%",
                     minHeight: isMobile ? 300 : 440,
-                    background:"transparent", border:"none", outline:"none",
-                    color:"#9a9a9a", fontSize: isMobile ? 15 : 14, lineHeight:1.95,
-                    fontFamily:"'Courier New', Courier, monospace",
-                    resize:"none", boxSizing:"border-box",
-                    padding:"0 0 0 16px",
-                    caretColor:accent,
-                    WebkitTapHighlightColor:"transparent",
+                    background: "transparent", 
+                    border: "none", 
+                    outline: "none",
+                    color: "#9a9a9a", 
+                    fontSize: isMobile ? 15 : 14, 
+                    lineHeight: 1.95,
+                    fontFamily: "'Courier New', Courier, monospace",
+                    resize: "none", 
+                    boxSizing: "border-box",
+                    padding: "0 0 0 16px", // Removed top padding
+                    caretColor: accent,
+                    WebkitTapHighlightColor: "transparent",
                   }}
                 />
+
+                {/* Toolbar at bottom */}
+                <MarkdownToolbar 
+                  textareaRef={textareaRef}
+                  onFormat={(formatter) => applyFormat(textareaRef.current, formatter, updateContent)}
+                  accent={accent}
+                />
               </div>
+              {/* ============================================= */}
+              {/* END OF MODIFIED SECTION */}
+              {/* ============================================= */}
 
               {/* Chapter navigation */}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", paddingTop:20, marginTop:20, borderTop:"1px solid #0f0f0f" }}>
