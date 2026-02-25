@@ -113,8 +113,8 @@ function buildTree(items) {
 }
 
 export default function GitHub() {
-  const [token, setToken] = useState("");
-  const [repoInput, setRepoInput] = useState("");
+  const [token, setToken] = useState(() => localStorage.getItem("gh_token") || "");
+  const [repoInput, setRepoInput] = useState(() => localStorage.getItem("gh_repo") || "");
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -142,25 +142,36 @@ export default function GitHub() {
     "Content-Type": "application/json",
   }), [token]);
 
-  async function connect() {
+  // Auto-reconnect on mount if credentials are saved
+  useEffect(() => {
+    if (token && repoInput) {
+      connect(token, repoInput);
+    }
+  }, []); // eslint-disable-line
+
+  async function connect(tok = token, repo = repoInput) {
     setLoading(true);
     setError("");
     try {
-      const [owner, repo] = repoInput.trim()
+      const [owner, repoName] = repo.trim()
         .replace("https://github.com/", "")
         .replace(/\.git$/, "")
         .split("/");
-      const r = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, { headers: headers(token) });
+      const r = await fetch(`${GITHUB_API}/repos/${owner}/${repoName}`, { headers: headers(tok) });
       if (!r.ok) throw new Error(r.status === 401 ? "Invalid token — check it has 'repo' scope" : r.status === 404 ? "Repo not found — check the URL and token permissions" : `GitHub error ${r.status}`);
       const info = await r.json();
       setRepoInfo(info);
 
-      const br = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/branches`, { headers: headers(token) });
+      const br = await fetch(`${GITHUB_API}/repos/${owner}/${repoName}/branches`, { headers: headers(tok) });
       const bData = await br.json();
       setBranches(bData);
       const def = info.default_branch;
       setCurrentBranch(def);
-      await loadTree(owner, repo, def);
+      await loadTree(owner, repoName, def);
+
+      // Save credentials only on successful connect
+      localStorage.setItem("gh_token", tok);
+      localStorage.setItem("gh_repo", repo.trim());
       setConnected(true);
     } catch (e) {
       setError(e.message);
@@ -434,7 +445,7 @@ export default function GitHub() {
           >
             {branches.map(b => <option key={b.name} value={b.name}>{b.name}</option>)}
           </select>
-          <button className="disconnect-btn" onClick={() => setConnected(false)} style={{ padding: "5px 10px", background: "transparent", border: "1px solid #30363d", borderRadius: 4, color: "#6e7681", fontSize: 11, cursor: "pointer" }}>
+          <button className="disconnect-btn" onClick={() => { setConnected(false); localStorage.removeItem("gh_token"); localStorage.removeItem("gh_repo"); }} style={{ padding: "5px 10px", background: "transparent", border: "1px solid #30363d", borderRadius: 4, color: "#6e7681", fontSize: 11, cursor: "pointer" }}>
             Disconnect
           </button>
         </div>
