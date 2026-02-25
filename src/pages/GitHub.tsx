@@ -136,8 +136,8 @@ export default function GitHub() {
   const preRef = useRef(null);
   const textareaRef = useRef(null);
 
-  const headers = useCallback(() => ({
-    Authorization: `token ${token}`,
+  const headers = useCallback((tok = token) => ({
+    Authorization: `token ${tok}`,
     Accept: "application/vnd.github.v3+json",
     "Content-Type": "application/json",
   }), [token]);
@@ -146,13 +146,16 @@ export default function GitHub() {
     setLoading(true);
     setError("");
     try {
-      const [owner, repo] = repoInput.trim().replace("https://github.com/", "").split("/");
-      const r = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, { headers: headers() });
-      if (!r.ok) throw new Error("Repo not found or invalid token");
+      const [owner, repo] = repoInput.trim()
+        .replace("https://github.com/", "")
+        .replace(/\.git$/, "")
+        .split("/");
+      const r = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, { headers: headers(token) });
+      if (!r.ok) throw new Error(r.status === 401 ? "Invalid token — check it has 'repo' scope" : r.status === 404 ? "Repo not found — check the URL and token permissions" : `GitHub error ${r.status}`);
       const info = await r.json();
       setRepoInfo(info);
 
-      const br = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/branches`, { headers: headers() });
+      const br = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/branches`, { headers: headers(token) });
       const bData = await br.json();
       setBranches(bData);
       const def = info.default_branch;
