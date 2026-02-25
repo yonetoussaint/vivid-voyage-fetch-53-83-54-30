@@ -1,3 +1,4 @@
+import { TYPE_META } from '@/data/typeMeta';
 import { useState, useEffect, useRef } from 'react';
 import { MONTH_NAMES, DAY_LABELS, getDaysInMonth, getFirstDayOfWeek, formatDateKey } from '@/utils/dateHelpers';
 import { events, dynamicEvents, addDynamicEvent, getEventsForDay } from '@/utils/eventUtils';
