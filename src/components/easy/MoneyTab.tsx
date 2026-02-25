@@ -5,7 +5,7 @@ import {
   SALARY, incomeStore, recurringStore, goalsStore, bucketStore,
   addIncome, getTotalIncomeWithSalary, getRecurringTotal, 
   getMonthTotals, getGoalProgress, goalIdCounter
-} from '@/components/money/moneyStores';
+} from '@/components/stores/moneyStores';
 import { SPEND_CATEGORIES, INCOME_SOURCES, INCOME_SOURCE_ICONS, 
          DEFAULT_BUCKETS, GOAL_ICONS, GOAL_COLORS } from '@/data/moneyData';
 import { PayrollView } from '@/components/easy/PayrollView';
