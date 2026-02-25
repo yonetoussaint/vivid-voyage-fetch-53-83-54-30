@@ -53,63 +53,90 @@ export default function SamsungCalendar() {
   ];
 
   return (
-    // Outer container now exactly fills the viewport and disables page scroll
-    <div style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      height: "100vh",          // 👈 changed from minHeight to height
-      overflow: "hidden",       // 👈 new – prevents any browser scroll
-      background: "#1a1a1a",
-      fontFamily: "'Roboto', sans-serif"
-    }}>
-      {/* Phone frame – fixed dimensions, internal scroll only */}
+    <>
+      {/* Global reset – kills all page scrolling */}
+      <style jsx global>{`
+        html, body {
+          margin: 0;
+          padding: 0;
+          height: 100%;
+          overflow: hidden;
+        }
+        body {
+          background: #1a1a1a;
+          font-family: 'Roboto', sans-serif;
+        }
+      `}</style>
+
+      {/* Outer container – exactly fills viewport, no scroll */}
       <div style={{
-        width: 390,
-        height: 844,
-        background: "#000",
-        overflow: "hidden",
-        position: "relative",
         display: "flex",
-        flexDirection: "column",
-        color: "#fff"
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        width: "100vw",
+        overflow: "hidden",
+        background: "#1a1a1a",
       }}>
-        <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}} div::-webkit-scrollbar{display:none} input::-webkit-scrollbar{display:none}`}</style>
+        {/* Phone frame – fixed dimensions, internal scroll only */}
+        <div style={{
+          width: 390,
+          height: 844,
+          background: "#000",
+          overflow: "hidden",
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          color: "#fff",
+          boxShadow: "0 0 20px rgba(0,0,0,0.5)",
+        }}>
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; transform: translateY(4px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            div::-webkit-scrollbar {
+              display: none;
+            }
+            input::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
 
-        {/* Scrollable content area – bottom bar stays fixed */}
-        <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
-          {activeTab === "notes"    && <NotesTab />}
-          {activeTab === "calendar" && <CalendarTab />}
-          {activeTab === "money"    && <MoneyTab />}
+          {/* Scrollable content area – bottom bar stays fixed */}
+          <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+            {activeTab === "notes"    && <NotesTab />}
+            {activeTab === "calendar" && <CalendarTab />}
+            {activeTab === "money"    && <MoneyTab />}
+          </div>
+
+          {/* Bottom navigation – fixed at the bottom */}
+          <div style={{ display: "flex", flexShrink: 0, borderTop: "1px solid #111", background: "#000", paddingBottom: 8 }}>
+            {TABS.map(tab => {
+              const active = activeTab === tab.id;
+              return (
+                <div key={tab.id} onClick={() => setActiveTab(tab.id)}
+                  style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "10px 0 6px", cursor: "pointer", userSelect: "none" }}>
+                  {tab.icon(active)}
+                  <span style={{ fontSize: 10, color: active ? "#4285f4" : "#555", fontWeight: active ? 600 : 400, letterSpacing: 0.3 }}>{tab.label}</span>
+                  {active && <div style={{ width: 20, height: 2, borderRadius: 1, background: "#4285f4", marginTop: 1 }} />}
+                </div>
+              );
+            })}
+          </div>
+
+          {detailCtx && (
+            <TaskDetailScreen
+              ev={detailCtx.ev}
+              dateKey={detailCtx.dateKey}
+              year={detailCtx.year}
+              month={detailCtx.month}
+              onClose={() => setDetailCtx(null)}
+              bump={() => detailCtx.bump && detailCtx.bump()}
+            />
+          )}
         </div>
-
-        {/* Bottom navigation – fixed at the bottom */}
-        <div style={{ display: "flex", flexShrink: 0, borderTop: "1px solid #111", background: "#000", paddingBottom: 8 }}>
-          {TABS.map(tab => {
-            const active = activeTab === tab.id;
-            return (
-              <div key={tab.id} onClick={()=>setActiveTab(tab.id)}
-                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "10px 0 6px", cursor: "pointer", userSelect: "none" }}
-              >
-                {tab.icon(active)}
-                <span style={{ fontSize: 10, color: active ? "#4285f4" : "#555", fontWeight: active ? 600 : 400, letterSpacing: 0.3 }}>{tab.label}</span>
-                {active && <div style={{ width: 20, height: 2, borderRadius: 1, background: "#4285f4", marginTop: 1 }}/>}
-              </div>
-            );
-          })}
-        </div>
-
-        {detailCtx && (
-          <TaskDetailScreen
-            ev={detailCtx.ev}
-            dateKey={detailCtx.dateKey}
-            year={detailCtx.year}
-            month={detailCtx.month}
-            onClose={() => setDetailCtx(null)}
-            bump={() => detailCtx.bump && detailCtx.bump()}
-          />
-        )}
       </div>
-    </div>
+    </>
   );
 }
