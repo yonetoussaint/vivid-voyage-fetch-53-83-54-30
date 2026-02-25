@@ -716,9 +716,12 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
           )}
 
           {/* ── EDITOR AREA ── */}
-          <div className="doc-content-area" style={{ flex:1, overflowY:"auto", display:"flex", flexDirection:"column" }}>
+          <div className="doc-content-area" style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
             {activeChapter ? (
-              <div style={{ flex:1, display:"flex", flexDirection:"column", padding: isMobile ? "20px 18px 40px" : "32px 40px 60px", maxWidth:760, width:"100%", boxSizing:"border-box" }}>
+              <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+
+                {/* Scrollable writing zone */}
+                <div style={{ flex:1, overflowY:"auto", padding: isMobile ? "20px 18px 24px" : "32px 40px 32px", maxWidth:760, width:"100%", boxSizing:"border-box" }}>
 
                 {/* Header */}
                 <div style={{ marginBottom:24, paddingBottom:16, borderBottom:`1px solid #0f0f0f` }}>
@@ -752,19 +755,6 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                   {!activeSub && ev.prompt && (
                     <div style={{ fontSize:12, color:"#3a3a3a", marginTop:8, fontStyle:"italic", lineHeight:1.6 }}>{ev.prompt}</div>
                   )}
-                  <div style={{ display:"flex", gap:16, marginTop:14, flexWrap:"wrap", paddingBottom:16, borderBottom:"1px solid #111" }}>
-                    {[
-                      { label:"Words", value:`${activeWordCount}` },
-                      { label:"Total", value:`${totalWords} / ${ev.wordGoal||500}` },
-                      { label:"Chapters", value:chapters.length },
-                      { label:"Progress", value:`${progress}%`, hi:progress>=100 },
-                    ].map((s,i) => (
-                      <div key={i} style={{ fontSize:9, color:"#3a3a3a" }}>
-                        <span style={{ color:"#2e2e2e" }}>{s.label}: </span>
-                        <span style={{ color:s.hi ? accent : "#4a4a4a" }}>{s.value}</span>
-                      </div>
-                    ))}
-                  </div>
                 </div>
 
                 {/* ── contentEditable writing area ── */}
@@ -809,8 +799,18 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                   )}
                 </div>
 
-                {/* ── FORMATTING TOOLBAR (bottom, read mode hidden) ── */}
-                {/* Removed: toolbar now floats on selection */}
+                </div>{/* end scrollable zone */}
+
+                {/* ── STICKY FORMATTING TOOLBAR ── */}
+                {!readMode && (
+                  <div style={{ flexShrink:0 }}>
+                    <FormattingToolbar
+                      editorRef={editorRef}
+                      accent={accent}
+                      onUpdate={updateContent}
+                    />
+                  </div>
+                )}
 
               </div>
             ) : (
