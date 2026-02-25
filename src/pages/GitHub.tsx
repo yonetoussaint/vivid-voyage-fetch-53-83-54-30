@@ -112,7 +112,7 @@ function buildTree(items) {
   return root;
 }
 
-export default function GitHubEditor() {
+export default function GitHub() {
   const [token, setToken] = useState("");
   const [repoInput, setRepoInput] = useState("");
   const [connected, setConnected] = useState(false);
