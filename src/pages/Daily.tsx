@@ -3,7 +3,7 @@ import { CalendarTab } from '@/components/easy/CalendarTab';
 import { NotesTab } from '@/components/easy/NotesTab';
 import { MoneyTab } from '@/components/easy/MoneyTab';
 import { TaskDetailScreen } from '@/components/easy/TaskDetailScreen';
-import { registerOpenDetail } from '@/components/EventCard';
+import { registerOpenDetail } from '@/components/easy/EventCard';
 
 export default function SamsungCalendar() {
   const [activeTab, setActiveTab] = useState("calendar");
