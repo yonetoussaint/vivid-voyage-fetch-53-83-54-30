@@ -1,5 +1,5 @@
-import { HABITS } from '../data/habitsData';
-import { formatDateKey } from './dateHelpers';
+import { HABITS } from '@/data/habitsData';
+import { formatDateKey } from '@/hooks/dateHelpers';
 
 // Dynamic events store
 export const dynamicEvents = {};
