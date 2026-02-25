@@ -334,10 +334,9 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
       return;
     }
     const rect = range.getBoundingClientRect();
-    const editorRect = editorRef.current.getBoundingClientRect();
     setToolbarPos({
-      top: rect.top - editorRect.top - 44,
-      left: Math.max(0, rect.left - editorRect.left + rect.width / 2),
+      top: rect.top + window.scrollY - 44,
+      left: rect.left + window.scrollX + rect.width / 2,
     });
     setToolbarVisible(true);
   };
@@ -467,7 +466,6 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
       <div style={{ flex:1, overflowY:"auto", padding:"8px 0" }}>
         <div style={{ padding:"6px 14px 4px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <span style={{ fontSize:9, color:"#2a2a2a", letterSpacing:1.1, textTransform:"uppercase" }}>Chapters</span>
-          <div onClick={addChapter} style={{ fontSize:16, color:accent+"88", cursor:"pointer", lineHeight:1, padding:"0 2px" }} title="Add chapter">+</div>
         </div>
 
         {chapters.map((ch, ci) => {
@@ -562,11 +560,69 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
           </div>
         </div>
       )}
+      {/* Add actions */}
+      <div style={{ padding:"10px 14px", borderTop:"1px solid #0f0f0f", flexShrink:0, display:"flex", flexDirection:"column", gap:6 }}>
+        {activeChapter && (
+          <div
+            onClick={() => addSub(activeChapterId)}
+            style={{ fontSize:9, color:"#333", cursor:"pointer", display:"flex", alignItems:"center", gap:6, padding:"5px 0", userSelect:"none", letterSpacing:0.4, transition:"color 0.12s" }}
+            onMouseEnter={e => e.currentTarget.style.color = accent}
+            onMouseLeave={e => e.currentTarget.style.color = '#333'}
+          >
+            <span style={{ color:accent+"55", fontSize:12, lineHeight:1 }}>+</span> Add section to chapter
+          </div>
+        )}
+        <div
+          onClick={addChapter}
+          style={{ fontSize:9, color:"#333", cursor:"pointer", display:"flex", alignItems:"center", gap:6, padding:"5px 0", userSelect:"none", letterSpacing:0.4, transition:"color 0.12s" }}
+          onMouseEnter={e => e.currentTarget.style.color = accent}
+          onMouseLeave={e => e.currentTarget.style.color = '#333'}
+        >
+          <span style={{ color:accent+"55", fontSize:12, lineHeight:1 }}>+</span> New chapter
+        </div>
+      </div>
     </div>
   );
 
   return (
     <>
+      {/* Floating selection toolbar — fixed to viewport */}
+      {!readMode && toolbarVisible && (
+        <div
+          ref={toolbarRef}
+          className="floating-toolbar"
+          style={{ top: toolbarPos.top, left: toolbarPos.left }}
+          onMouseDown={e => e.preventDefault()}
+        >
+          {[
+            { title:"Bold", icon:<b style={{fontSize:12,fontFamily:'serif'}}>B</b>, cmd:'bold' },
+            { title:"Italic", icon:<i style={{fontSize:12,fontFamily:'serif'}}>I</i>, cmd:'italic' },
+            { title:"Underline", icon:<u style={{fontSize:11}}>U</u>, cmd:'underline' },
+            { title:"Strike", icon:<s style={{fontSize:11}}>S</s>, cmd:'strikeThrough' },
+          ].map(({title,icon,cmd}) => (
+            <button key={cmd} title={title} onClick={() => { document.execCommand(cmd,false,null); setToolbarVisible(false); }}>
+              {icon}
+            </button>
+          ))}
+          <div className="ft-div"/>
+          {[
+            { title:"H1", icon:<span style={{fontSize:9,fontWeight:700,letterSpacing:.3}}>H1</span>, tag:'h1' },
+            { title:"H2", icon:<span style={{fontSize:9,fontWeight:600,letterSpacing:.3}}>H2</span>, tag:'h2' },
+            { title:"¶",  icon:<span style={{fontSize:10}}>¶</span>, tag:'p' },
+          ].map(({title,icon,tag}) => (
+            <button key={tag} title={title} onClick={() => { document.execCommand('formatBlock',false,tag); setToolbarVisible(false); }}>
+              {icon}
+            </button>
+          ))}
+          <div className="ft-div"/>
+          <button title="Quote" onClick={() => { document.execCommand('formatBlock',false,'blockquote'); setToolbarVisible(false); }}>
+            <span style={{fontSize:13,lineHeight:1}}>"</span>
+          </button>
+          <button title="Remove formatting" onClick={() => { document.execCommand('removeFormat'); setToolbarVisible(false); }}>
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M3 13L13 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+      )}
       <div onClick={e=>e.stopPropagation()} style={{
         position:"fixed", inset:0, zIndex:9999,
         background:"#06080a",
@@ -596,7 +652,7 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
           .doc-editor-div s { color: #3a3a3a; }
           .doc-editor-div blockquote { border-left: 2px solid #222; margin: 1.5em 0; padding: 4px 20px; color: #666; font-style: italic; }
           .doc-editor-div pre { background: #0d0f11; border: 1px solid #1a1a1a; padding: 14px 18px; margin: 1.2em 0; font-size: 12px; color: #7a9a7a; overflow-x: auto; font-family: 'Courier New', monospace; border-radius: 2px; }
-          .floating-toolbar { position:absolute; display:flex; align-items:center; gap:1px; background:#111; border:1px solid #222; padding:3px 4px; pointer-events:all; transform:translateX(-50%); z-index:100; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+          .floating-toolbar { position:fixed; display:flex; align-items:center; gap:1px; background:#111; border:1px solid #222; padding:3px 4px; pointer-events:all; transform:translateX(-50%); z-index:99999; box-shadow: 0 4px 20px rgba(0,0,0,0.7); }
           .floating-toolbar button { background:transparent; border:none; color:#666; width:26px; height:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:'Courier New',monospace; transition:color 0.1s,background 0.1s; border-radius:1px; }
           .floating-toolbar button:hover { color:#ccc; background:#1a1a1a; }
           .floating-toolbar .ft-div { width:1px; height:14px; background:#222; margin:0 2px; flex-shrink:0; }
@@ -687,7 +743,7 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     }}
                     style={{
                       width:"100%", background:"transparent", border:"none", outline:"none",
-                      color:"#d4d4d8", fontSize: isMobile ? 22 : 28, fontWeight:700,
+                      color:"#d4d4d8", fontSize: isMobile ? 18 : 22, fontWeight:700,
                       letterSpacing:-0.5, lineHeight:1.2, fontFamily:"inherit",
                       caretColor: readMode ? "transparent" : accent, boxSizing:"border-box",
                       cursor: readMode ? "default" : "text",
@@ -713,43 +769,6 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
 
                 {/* ── contentEditable writing area ── */}
                 <div style={{ flex:1, position:"relative", marginTop:8 }}>
-                  {/* Floating formatting toolbar — appears on selection */}
-                  {!readMode && toolbarVisible && (
-                    <div
-                      ref={toolbarRef}
-                      className="floating-toolbar"
-                      style={{ top: toolbarPos.top, left: toolbarPos.left }}
-                      onMouseDown={e => e.preventDefault()}
-                    >
-                      {[
-                        { title:"Bold", icon:<b style={{fontSize:12,fontFamily:'serif'}}>B</b>, cmd:'bold' },
-                        { title:"Italic", icon:<i style={{fontSize:12,fontFamily:'serif'}}>I</i>, cmd:'italic' },
-                        { title:"Underline", icon:<u style={{fontSize:11}}>U</u>, cmd:'underline' },
-                        { title:"Strike", icon:<s style={{fontSize:11}}>S</s>, cmd:'strikeThrough' },
-                      ].map(({title,icon,cmd}) => (
-                        <button key={cmd} title={title} onClick={() => { document.execCommand(cmd,false,null); setToolbarVisible(false); }}>
-                          {icon}
-                        </button>
-                      ))}
-                      <div className="ft-div"/>
-                      {[
-                        { title:"H1", icon:<span style={{fontSize:9,fontWeight:700,letterSpacing:.3}}>H1</span>, tag:'h1' },
-                        { title:"H2", icon:<span style={{fontSize:9,fontWeight:600,letterSpacing:.3}}>H2</span>, tag:'h2' },
-                        { title:"¶", icon:<span style={{fontSize:10}}>¶</span>, tag:'p' },
-                      ].map(({title,icon,tag}) => (
-                        <button key={tag} title={title} onClick={() => { document.execCommand('formatBlock',false,tag); setToolbarVisible(false); }}>
-                          {icon}
-                        </button>
-                      ))}
-                      <div className="ft-div"/>
-                      <button title="Quote" onClick={() => { document.execCommand('formatBlock',false,'blockquote'); setToolbarVisible(false); }}>
-                        <span style={{fontSize:13,lineHeight:1}}>"</span>
-                      </button>
-                      <button title="Remove formatting" onClick={() => { document.execCommand('removeFormat'); setToolbarVisible(false); }}>
-                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M3 13L13 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                      </button>
-                    </div>
-                  )}
                   <div
                     ref={editorRef}
                     className="doc-editor-div"
@@ -769,9 +788,9 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     onDoubleClick={() => { if (readMode) setReadMode(false); }}
                     style={{
                       minHeight: isMobile ? 300 : 460,
-                      color:"#b8b8bc",
-                      fontSize: isMobile ? 16 : 17,
-                      lineHeight: 1.85,
+                      color:"#b0b0b4",
+                      fontSize: isMobile ? 13 : 14,
+                      lineHeight: 1.9,
                       fontFamily:"Georgia, 'Times New Roman', serif",
                       padding: isMobile ? "4px 0 40px" : "4px 0 60px",
                       boxSizing:"border-box",
@@ -779,8 +798,6 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                       WebkitTapHighlightColor:"transparent",
                       cursor: readMode ? "default" : "text",
                       userSelect: "text",
-                      wordSpacing: "0.02em",
-                      letterSpacing: "0.01em",
                     }}
                   />
                   {readMode && (
@@ -795,80 +812,6 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                 {/* ── FORMATTING TOOLBAR (bottom, read mode hidden) ── */}
                 {/* Removed: toolbar now floats on selection */}
 
-                {/* Chapter navigation */}
-                {!readMode && (
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", paddingTop:20, marginTop:20, borderTop:"1px solid #0f0f0f" }}>
-                  {(() => {
-                    const ci = chapters.indexOf(activeChapter);
-                    if (activeSub) {
-                      const si = activeChapter.subs.indexOf(activeSub);
-                      if (si > 0) {
-                        const prev = activeChapter.subs[si-1];
-                        return (<div onClick={() => setActiveSubId(prev.id)} style={{ fontSize:11, color:accent+"66", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                          <span>{prev.title}</span></div>);
-                      }
-                      return (<div onClick={() => setActiveSubId(null)} style={{ fontSize:11, color:accent+"66", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                        <span>{activeChapter.title}</span></div>);
-                    }
-                    if (ci > 0) {
-                      const prevCh = chapters[ci-1];
-                      const lastSub = prevCh.subs[prevCh.subs.length-1];
-                      return (<div onClick={() => { setActiveChapterId(prevCh.id); setActiveSubId(lastSub?.id || null); }} style={{ fontSize:11, color:accent+"66", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                        <span>{lastSub ? lastSub.title : prevCh.title}</span></div>);
-                    }
-                    return <div/>;
-                  })()}
-                  {(() => {
-                    const ci = chapters.indexOf(activeChapter);
-                    if (activeSub) {
-                      const si = activeChapter.subs.indexOf(activeSub);
-                      if (si < activeChapter.subs.length - 1) {
-                        const next = activeChapter.subs[si+1];
-                        return (<div onClick={() => setActiveSubId(next.id)} style={{ fontSize:11, color:accent+"66", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                          <span>{next.title}</span>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>);
-                      }
-                      if (ci < chapters.length - 1) {
-                        const nextCh = chapters[ci+1];
-                        return (<div onClick={() => { setActiveChapterId(nextCh.id); setActiveSubId(null); }} style={{ fontSize:11, color:accent+"66", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                          <span>{nextCh.title}</span>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>);
-                      }
-                      return <div/>;
-                    }
-                    if (activeChapter.subs.length > 0) {
-                      const first = activeChapter.subs[0];
-                      return (<div onClick={() => setActiveSubId(first.id)} style={{ fontSize:11, color:accent+"66", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                        <span>{first.title}</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>);
-                    }
-                    if (ci < chapters.length - 1) {
-                      const nextCh = chapters[ci+1];
-                      return (<div onClick={() => { setActiveChapterId(nextCh.id); setActiveSubId(null); }} style={{ fontSize:11, color:accent+"66", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                        <span>{nextCh.title}</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>);
-                    }
-                    return <div/>;
-                  })()}
-                </div>
-                )}
-
-                {/* Add section/chapter */}
-                {!readMode && (
-                <div style={{ marginTop:24, display:"flex", gap:8 }}>
-                  <div onClick={() => addSub(activeChapterId)}
-                    style={{ fontSize:10, color:"#333", border:"1px solid #1a1a1a", padding:"6px 14px", cursor:"pointer", display:"flex", alignItems:"center", gap:6, userSelect:"none" }}>
-                    <span style={{ color:accent+"66" }}>+</span> Add section to this chapter
-                  </div>
-                  <div onClick={addChapter}
-                    style={{ fontSize:10, color:"#333", border:"1px solid #1a1a1a", padding:"6px 14px", cursor:"pointer", display:"flex", alignItems:"center", gap:6, userSelect:"none" }}>
-                    <span style={{ color:accent+"66" }}>+</span> New chapter
-                  </div>
-                </div>
-                )}
               </div>
             ) : (
               <div style={{ textAlign:"center", padding:"80px 24px", color:"#222" }}>
