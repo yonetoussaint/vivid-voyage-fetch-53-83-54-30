@@ -340,8 +340,15 @@ export default function GitHub() {
     );
   }
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  function handleFileSelect(file) {
+    openFile(file);
+    setSidebarOpen(false);
+  }
+
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0d1117", fontFamily: "'JetBrains Mono', monospace", overflow: "hidden" }}>
+    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: "#0d1117", fontFamily: "'JetBrains Mono', monospace", overflow: "hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Syne:wght@600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -349,39 +356,85 @@ export default function GitHub() {
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
         textarea { outline: none; resize: none; }
-        .ck { color: #ff7b72; }
-        .cs { color: #a5d6ff; }
-        .cm { color: #8b949e; font-style: italic; }
-        .cn { color: #79c0ff; }
+        .ck { color: #ff7b72; } .cs { color: #a5d6ff; }
+        .cm { color: #8b949e; font-style: italic; } .cn { color: #79c0ff; }
         select { outline: none; }
+        .sidebar-overlay {
+          display: none; position: fixed; inset: 0;
+          background: rgba(0,0,0,0.6); z-index: 40;
+        }
+        .sidebar-drawer {
+          position: fixed; top: 0; left: 0; bottom: 0;
+          width: 80vw; max-width: 300px;
+          background: #161b22; border-right: 1px solid #21262d;
+          overflow-y: auto; z-index: 50; padding: 12px 0;
+          transform: translateX(-100%); transition: transform 0.22s ease;
+        }
+        .sidebar-static {
+          width: 220px; background: #161b22;
+          border-right: 1px solid #21262d;
+          overflow: auto; flex-shrink: 0; padding: 12px 0;
+        }
+        .file-path-short { display: none; }
+        @media (max-width: 640px) {
+          .sidebar-static { display: none !important; }
+          .sidebar-drawer { transform: var(--drawer-transform, translateX(-100%)); }
+          .sidebar-overlay { display: var(--overlay-display, none); }
+          .topbar-repo, .topbar-stars, .branch-label, .disconnect-btn { display: none !important; }
+          .file-path-full { display: none !important; }
+          .file-path-short { display: inline !important; }
+          .line-numbers, .status-bar { display: none !important; }
+          .commit-bar-flex { flex-wrap: wrap; }
+        }
+        @media (min-width: 641px) {
+          .mobile-menu-btn { display: none !important; }
+          .file-path-short { display: none !important; }
+        }
       `}</style>
 
-      {/* Top bar */}
-      <div style={{ height: 44, background: "#161b22", borderBottom: "1px solid #21262d", display: "flex", alignItems: "center", padding: "0 16px", gap: 12, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "#e2c97e", letterSpacing: 2, textTransform: "uppercase", marginRight: 8 }}>⬡ GHCE</div>
-        <div style={{ fontSize: 12, color: "#c8ccd4", fontWeight: 600 }}>{repoInfo?.full_name}</div>
-        <div style={{ fontSize: 11, padding: "2px 8px", background: "#21262d", borderRadius: 10, color: "#6e7681" }}>⭐ {repoInfo?.stargazers_count}</div>
+      {/* Mobile sidebar overlay */}
+      <div
+        className="sidebar-overlay"
+        style={{ "--overlay-display": sidebarOpen ? "block" : "none" }}
+        onClick={() => setSidebarOpen(false)}
+      />
+      {/* Mobile sidebar drawer */}
+      <div
+        className="sidebar-drawer"
+        style={{ "--drawer-transform": sidebarOpen ? "translateX(0)" : "translateX(-100%)" }}
+      >
+        <div style={{ padding: "0 12px 10px", fontSize: 10, color: "#484f58", textTransform: "uppercase", letterSpacing: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>Files</span>
+          <button onClick={() => setSidebarOpen(false)} style={{ background: "transparent", border: "none", color: "#6e7681", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: "4px 8px" }}>✕</button>
+        </div>
+        <FileTree tree={tree} onSelect={handleFileSelect} selected={selectedFile?.path} />
+      </div>
 
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-          <label style={{ fontSize: 11, color: "#6e7681" }}>Branch:</label>
+      {/* Top bar */}
+      <div style={{ height: 48, background: "#161b22", borderBottom: "1px solid #21262d", display: "flex", alignItems: "center", padding: "0 12px", gap: 10, flexShrink: 0 }}>
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setSidebarOpen(o => !o)}
+          style={{ background: "transparent", border: "1px solid #30363d", borderRadius: 6, color: "#c8ccd4", width: 38, height: 38, cursor: "pointer", fontSize: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+        >☰</button>
+        <div style={{ fontSize: 11, color: "#e2c97e", letterSpacing: 2, textTransform: "uppercase", flexShrink: 0 }}>⬡</div>
+        <div className="topbar-repo" style={{ fontSize: 12, color: "#c8ccd4", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{repoInfo?.full_name}</div>
+        <div className="topbar-stars" style={{ fontSize: 11, padding: "2px 8px", background: "#21262d", borderRadius: 10, color: "#6e7681", flexShrink: 0 }}>⭐ {repoInfo?.stargazers_count}</div>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <label className="branch-label" style={{ fontSize: 11, color: "#6e7681" }}>Branch:</label>
           <select
             value={currentBranch}
             onChange={async e => {
               setCurrentBranch(e.target.value);
-              setSelectedFile(null);
-              setContent("");
+              setSelectedFile(null); setContent("");
               const [o, r] = repoInfo.full_name.split("/");
               await loadTree(o, r, e.target.value);
             }}
-            style={{ background: "#21262d", border: "1px solid #30363d", borderRadius: 4, color: "#c8ccd4", fontSize: 12, padding: "3px 8px", fontFamily: "'JetBrains Mono', monospace" }}
+            style={{ background: "#21262d", border: "1px solid #30363d", borderRadius: 4, color: "#c8ccd4", fontSize: 12, padding: "5px 8px", fontFamily: "'JetBrains Mono', monospace", maxWidth: 130 }}
           >
             {branches.map(b => <option key={b.name} value={b.name}>{b.name}</option>)}
           </select>
-
-          <button
-            onClick={() => setConnected(false)}
-            style={{ padding: "4px 10px", background: "transparent", border: "1px solid #30363d", borderRadius: 4, color: "#6e7681", fontSize: 11, cursor: "pointer" }}
-          >
+          <button className="disconnect-btn" onClick={() => setConnected(false)} style={{ padding: "5px 10px", background: "transparent", border: "1px solid #30363d", borderRadius: 4, color: "#6e7681", fontSize: 11, cursor: "pointer" }}>
             Disconnect
           </button>
         </div>
@@ -389,27 +442,29 @@ export default function GitHub() {
 
       {/* Main layout */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        {/* Sidebar */}
-        <div style={{ width: 220, background: "#161b22", borderRight: "1px solid #21262d", overflow: "auto", flexShrink: 0, padding: "12px 0" }}>
+        {/* Sidebar (desktop only) */}
+        <div className="sidebar-static">
           <div style={{ padding: "0 12px 10px", fontSize: 10, color: "#484f58", textTransform: "uppercase", letterSpacing: 2 }}>Files</div>
           <FileTree tree={tree} onSelect={openFile} selected={selectedFile?.path} />
         </div>
 
         {/* Editor area */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
           {selectedFile ? (
             <>
               {/* File tab bar */}
-              <div style={{ height: 36, background: "#161b22", borderBottom: "1px solid #21262d", display: "flex", alignItems: "center", padding: "0 16px", gap: 12, flexShrink: 0 }}>
-                <span style={{ fontSize: 12, color: "#c8ccd4" }}>{getFileIcon(selectedFile.name)} {selectedFile.path}</span>
-                {isDirty && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#e2c97e", display: "inline-block" }} />}
-                <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ height: 40, background: "#161b22", borderBottom: "1px solid #21262d", display: "flex", alignItems: "center", padding: "0 12px", gap: 8, flexShrink: 0, minWidth: 0 }}>
+                <span className="file-path-short" style={{ fontSize: 12, color: "#c8ccd4", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                  {getFileIcon(selectedFile.name)} {selectedFile.name}
+                </span>
+                <span className="file-path-full" style={{ fontSize: 12, color: "#c8ccd4", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                  {getFileIcon(selectedFile.name)} {selectedFile.path}
+                </span>
+                {isDirty && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#e2c97e", display: "inline-block", flexShrink: 0 }} />}
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
                   {saveMsg && <span style={{ fontSize: 11, color: saveMsg.startsWith("✓") ? "#3fb950" : "#f85149" }}>{saveMsg}</span>}
                   {isDirty && !showCommit && (
-                    <button
-                      onClick={() => setShowCommit(true)}
-                      style={{ padding: "4px 14px", background: "linear-gradient(135deg, #e2c97e, #c9a227)", border: "none", borderRadius: 4, color: "#0d1117", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'JetBrains Mono', monospace" }}
-                    >
+                    <button onClick={() => setShowCommit(true)} style={{ padding: "5px 14px", background: "linear-gradient(135deg, #e2c97e, #c9a227)", border: "none", borderRadius: 4, color: "#0d1117", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'JetBrains Mono', monospace", whiteSpace: "nowrap" }}>
                       Commit
                     </button>
                   )}
@@ -418,72 +473,47 @@ export default function GitHub() {
 
               {/* Commit bar */}
               {showCommit && (
-                <div style={{ padding: "10px 16px", background: "#161b22", borderBottom: "1px solid #21262d", display: "flex", gap: 8 }}>
+                <div className="commit-bar-flex" style={{ padding: "10px 12px", background: "#161b22", borderBottom: "1px solid #21262d", display: "flex", gap: 8 }}>
                   <input
                     value={commitMsg}
                     onChange={e => setCommitMsg(e.target.value)}
                     placeholder={`Update ${selectedFile.name}`}
                     onKeyDown={e => e.key === "Enter" && saveFile()}
-                    style={{ flex: 1, padding: "6px 12px", background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#c8ccd4", fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}
+                    style={{ flex: 1, minWidth: 0, padding: "8px 12px", background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#c8ccd4", fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }}
                   />
-                  <button onClick={saveFile} disabled={saving} style={{ padding: "6px 16px", background: "#238636", border: "none", borderRadius: 4, color: "#fff", fontSize: 12, cursor: saving ? "not-allowed" : "pointer", fontFamily: "'JetBrains Mono', monospace" }}>
+                  <button onClick={saveFile} disabled={saving} style={{ padding: "8px 14px", background: "#238636", border: "none", borderRadius: 4, color: "#fff", fontSize: 12, cursor: saving ? "not-allowed" : "pointer", fontFamily: "'JetBrains Mono', monospace", whiteSpace: "nowrap" }}>
                     {saving ? "Saving..." : "Commit & Push"}
                   </button>
-                  <button onClick={() => setShowCommit(false)} style={{ padding: "6px 12px", background: "transparent", border: "1px solid #30363d", borderRadius: 4, color: "#6e7681", fontSize: 12, cursor: "pointer" }}>✕</button>
+                  <button onClick={() => setShowCommit(false)} style={{ padding: "8px 12px", background: "transparent", border: "1px solid #30363d", borderRadius: 4, color: "#6e7681", fontSize: 12, cursor: "pointer" }}>✕</button>
                 </div>
               )}
 
               {/* Editor */}
               <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
-                {/* Line numbers */}
-                <div style={{
-                  width: 48, background: "#0d1117", borderRight: "1px solid #161b22",
-                  overflow: "hidden", padding: "16px 0", flexShrink: 0,
-                  fontSize: 12, lineHeight: "21px", color: "#484f58", textAlign: "right",
-                  paddingRight: 10, userSelect: "none",
-                }}>
+                {/* Line numbers (desktop only) */}
+                <div className="line-numbers" style={{ width: 48, background: "#0d1117", borderRight: "1px solid #161b22", overflow: "hidden", padding: "16px 0", flexShrink: 0, fontSize: 12, lineHeight: "21px", color: "#484f58", textAlign: "right", paddingRight: 10, userSelect: "none" }}>
                   {lineNums.map(n => <div key={n}>{n}</div>)}
                 </div>
-
                 {/* Code area */}
                 <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-                  {/* Syntax highlighted background */}
-                  <pre
-                    ref={preRef}
-                    style={{
-                      position: "absolute", inset: 0,
-                      padding: "16px 16px 16px 12px",
-                      margin: 0, overflow: "auto",
-                      fontSize: 13, lineHeight: "21px",
-                      fontFamily: "'JetBrains Mono', monospace",
-                      background: "#0d1117", color: "#c8ccd4",
-                      pointerEvents: "none", whiteSpace: "pre", tabSize: 2,
-                    }}
+                  <pre ref={preRef} style={{ position: "absolute", inset: 0, padding: "16px 16px 16px 12px", margin: 0, overflow: "auto", fontSize: 13, lineHeight: "21px", fontFamily: "'JetBrains Mono', monospace", background: "#0d1117", color: "#c8ccd4", pointerEvents: "none", whiteSpace: "pre", tabSize: 2 }}
                     dangerouslySetInnerHTML={{ __html: highlight(content, ext) + "\n" }}
                   />
-                  {/* Editable textarea */}
                   <textarea
                     ref={textareaRef}
                     value={content}
                     onChange={handleEdit}
                     onScroll={syncScroll}
                     spellCheck={false}
-                    style={{
-                      position: "absolute", inset: 0,
-                      padding: "16px 16px 16px 12px",
-                      fontSize: 13, lineHeight: "21px",
-                      fontFamily: "'JetBrains Mono', monospace",
-                      background: "transparent", color: "transparent",
-                      caretColor: "#e2c97e",
-                      border: "none", resize: "none",
-                      whiteSpace: "pre", tabSize: 2,
-                    }}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    style={{ position: "absolute", inset: 0, padding: "16px 16px 16px 12px", fontSize: 13, lineHeight: "21px", fontFamily: "'JetBrains Mono', monospace", background: "transparent", color: "transparent", caretColor: "#e2c97e", border: "none", resize: "none", whiteSpace: "pre", tabSize: 2, WebkitOverflowScrolling: "touch" }}
                   />
                 </div>
               </div>
 
-              {/* Status bar */}
-              <div style={{ height: 24, background: "#161b22", borderTop: "1px solid #21262d", display: "flex", alignItems: "center", padding: "0 16px", gap: 16, flexShrink: 0 }}>
+              {/* Status bar (desktop only) */}
+              <div className="status-bar" style={{ height: 24, background: "#161b22", borderTop: "1px solid #21262d", display: "flex", alignItems: "center", padding: "0 16px", gap: 16, flexShrink: 0 }}>
                 <span style={{ fontSize: 10, color: "#484f58" }}>{lineNums.length} lines</span>
                 <span style={{ fontSize: 10, color: "#484f58" }}>{ext.toUpperCase()}</span>
                 <span style={{ fontSize: 10, color: "#484f58" }}>UTF-8</span>
@@ -497,7 +527,7 @@ export default function GitHub() {
               ) : (
                 <>
                   <div style={{ fontSize: 32 }}>⬡</div>
-                  <div style={{ fontSize: 13 }}>Select a file to edit</div>
+                  <div style={{ fontSize: 13 }}>Tap ☰ to browse files</div>
                 </>
               )}
             </div>
