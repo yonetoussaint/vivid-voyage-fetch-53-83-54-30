@@ -14,7 +14,6 @@ function FormattingToolbar({ editorRef, accent, onUpdate }) {
   const exec = (cmd, value = null) => {
     editorRef.current?.focus();
     document.execCommand(cmd, false, value);
-    // Sync HTML back to state after execCommand
     setTimeout(() => {
       if (editorRef.current) onUpdate(editorRef.current.innerHTML);
     }, 0);
@@ -22,12 +21,11 @@ function FormattingToolbar({ editorRef, accent, onUpdate }) {
 
   const applyBlock = (tag) => {
     editorRef.current?.focus();
-    // If already that block, revert to paragraph
     const sel = window.getSelection();
     if (sel && sel.rangeCount) {
       const node = sel.getRangeAt(0).commonAncestorContainer;
       const block = node.nodeType === 3 ? node.parentElement : node;
-      const current = block?.closest('h1,h2,h3,p,div');
+      const current = block?.closest('h1,h2,h3,h4,blockquote,pre,p,div');
       if (current && current.tagName.toLowerCase() === tag) {
         document.execCommand('formatBlock', false, 'p');
       } else {
@@ -41,98 +39,235 @@ function FormattingToolbar({ editorRef, accent, onUpdate }) {
     }, 0);
   };
 
-  const buttons = [
-    {
-      title: 'Bold',
-      onMouseDown: (e) => { e.preventDefault(); exec('bold'); },
-      children: <span style={{ fontWeight: 800, fontFamily: 'serif', fontSize: 13 }}>B</span>,
-    },
-    {
-      title: 'Italic',
-      onMouseDown: (e) => { e.preventDefault(); exec('italic'); },
-      children: <span style={{ fontStyle: 'italic', fontFamily: 'serif', fontSize: 13 }}>I</span>,
-    },
-    {
-      title: 'Underline',
-      onMouseDown: (e) => { e.preventDefault(); exec('underline'); },
-      children: <span style={{ textDecoration: 'underline', fontSize: 12 }}>U</span>,
-    },
-    { divider: true },
-    {
-      title: 'Heading 1',
-      onMouseDown: (e) => { e.preventDefault(); applyBlock('h1'); },
-      children: <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>H1</span>,
-    },
-    {
-      title: 'Heading 2',
-      onMouseDown: (e) => { e.preventDefault(); applyBlock('h2'); },
-      children: <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.5 }}>H2</span>,
-    },
-    { divider: true },
-    {
-      title: 'Bullet list',
-      onMouseDown: (e) => { e.preventDefault(); exec('insertUnorderedList'); },
-      children: (
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-          <circle cx="2" cy="4" r="1.5" fill="currentColor"/>
-          <circle cx="2" cy="8" r="1.5" fill="currentColor"/>
-          <circle cx="2" cy="12" r="1.5" fill="currentColor"/>
-          <rect x="5" y="3" width="10" height="2" rx="1" fill="currentColor"/>
-          <rect x="5" y="7" width="10" height="2" rx="1" fill="currentColor"/>
-          <rect x="5" y="11" width="10" height="2" rx="1" fill="currentColor"/>
-        </svg>
-      ),
-    },
-  ];
+  const insertHR = () => {
+    editorRef.current?.focus();
+    document.execCommand('insertHTML', false, '<hr style="border:none;border-top:1px solid #1a1a1a;margin:20px 0;"/>');
+    setTimeout(() => { if (editorRef.current) onUpdate(editorRef.current.innerHTML); }, 0);
+  };
+
+  const Divider = () => (
+    <div style={{ width: 1, height: 18, background: '#1e1e1e', margin: '0 3px', flexShrink: 0 }} />
+  );
+
+  const Btn = ({ title, onMouseDown, children, wide }) => (
+    <button
+      title={title}
+      onMouseDown={onMouseDown}
+      style={{
+        background: 'transparent',
+        border: '1px solid #181818',
+        color: '#484848',
+        width: wide ? 36 : 28,
+        height: 26,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        userSelect: 'none',
+        fontFamily: "'Courier New', Courier, monospace",
+        transition: 'border-color 0.12s, color 0.12s, background 0.12s',
+        flexShrink: 0,
+        padding: 0,
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = accent + '77';
+        e.currentTarget.style.color = accent;
+        e.currentTarget.style.background = accent + '0d';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = '#181818';
+        e.currentTarget.style.color = '#484848';
+        e.currentTarget.style.background = 'transparent';
+      }}
+    >
+      {children}
+    </button>
+  );
 
   return (
     <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 2,
-      padding: '8px 0 4px',
       borderTop: '1px solid #111',
       marginTop: 16,
+      paddingTop: 8,
+      paddingBottom: 4,
     }}>
-      {buttons.map((btn, i) => {
-        if (btn.divider) {
-          return <div key={i} style={{ width: 1, height: 16, background: '#1a1a1a', margin: '0 4px' }} />;
-        }
-        return (
-          <button
-            key={i}
-            title={btn.title}
-            onMouseDown={btn.onMouseDown}
-            style={{
-              background: 'transparent',
-              border: '1px solid #1a1a1a',
-              color: '#555',
-              width: 28,
-              height: 26,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              userSelect: 'none',
-              fontFamily: "'Courier New', Courier, monospace",
-              transition: 'border-color 0.12s, color 0.12s, background 0.12s',
-              flexShrink: 0,
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = accent + '88';
-              e.currentTarget.style.color = accent;
-              e.currentTarget.style.background = accent + '0d';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = '#1a1a1a';
-              e.currentTarget.style.color = '#555';
-              e.currentTarget.style.background = 'transparent';
-            }}
-          >
-            {btn.children}
-          </button>
-        );
-      })}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        paddingBottom: 4,
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+        WebkitOverflowScrolling: 'touch',
+      }}
+        className="toolbar-scroll"
+      >
+        {/* Text style */}
+        <Btn title="Bold" onMouseDown={e => { e.preventDefault(); exec('bold'); }}>
+          <span style={{ fontWeight: 800, fontFamily: 'serif', fontSize: 13 }}>B</span>
+        </Btn>
+        <Btn title="Italic" onMouseDown={e => { e.preventDefault(); exec('italic'); }}>
+          <span style={{ fontStyle: 'italic', fontFamily: 'serif', fontSize: 13 }}>I</span>
+        </Btn>
+        <Btn title="Underline" onMouseDown={e => { e.preventDefault(); exec('underline'); }}>
+          <span style={{ textDecoration: 'underline', fontSize: 12 }}>U</span>
+        </Btn>
+        <Btn title="Strikethrough" onMouseDown={e => { e.preventDefault(); exec('strikeThrough'); }}>
+          <span style={{ textDecoration: 'line-through', fontSize: 12 }}>S</span>
+        </Btn>
+        <Btn title="Superscript" onMouseDown={e => { e.preventDefault(); exec('superscript'); }}>
+          <span style={{ fontSize: 10 }}>x<sup style={{ fontSize: 8 }}>²</sup></span>
+        </Btn>
+        <Btn title="Subscript" onMouseDown={e => { e.preventDefault(); exec('subscript'); }}>
+          <span style={{ fontSize: 10 }}>x<sub style={{ fontSize: 8 }}>₂</sub></span>
+        </Btn>
+
+        <Divider />
+
+        {/* Headings */}
+        <Btn title="Heading 1" wide onMouseDown={e => { e.preventDefault(); applyBlock('h1'); }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.3 }}>H1</span>
+        </Btn>
+        <Btn title="Heading 2" wide onMouseDown={e => { e.preventDefault(); applyBlock('h2'); }}>
+          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.3 }}>H2</span>
+        </Btn>
+        <Btn title="Heading 3" wide onMouseDown={e => { e.preventDefault(); applyBlock('h3'); }}>
+          <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 0.3 }}>H3</span>
+        </Btn>
+        <Btn title="Heading 4" wide onMouseDown={e => { e.preventDefault(); applyBlock('h4'); }}>
+          <span style={{ fontSize: 10, fontWeight: 400, letterSpacing: 0.3 }}>H4</span>
+        </Btn>
+        <Btn title="Paragraph" wide onMouseDown={e => { e.preventDefault(); applyBlock('p'); }}>
+          <span style={{ fontSize: 9, letterSpacing: 0.2 }}>¶ P</span>
+        </Btn>
+
+        <Divider />
+
+        {/* Lists */}
+        <Btn title="Bullet list" onMouseDown={e => { e.preventDefault(); exec('insertUnorderedList'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <circle cx="2" cy="4" r="1.4" fill="currentColor"/>
+            <circle cx="2" cy="8" r="1.4" fill="currentColor"/>
+            <circle cx="2" cy="12" r="1.4" fill="currentColor"/>
+            <rect x="5" y="3" width="10" height="1.8" rx="0.9" fill="currentColor"/>
+            <rect x="5" y="7" width="10" height="1.8" rx="0.9" fill="currentColor"/>
+            <rect x="5" y="11" width="10" height="1.8" rx="0.9" fill="currentColor"/>
+          </svg>
+        </Btn>
+        <Btn title="Numbered list" onMouseDown={e => { e.preventDefault(); exec('insertOrderedList'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <text x="0" y="5" fontSize="5" fill="currentColor">1.</text>
+            <text x="0" y="9.5" fontSize="5" fill="currentColor">2.</text>
+            <text x="0" y="14" fontSize="5" fill="currentColor">3.</text>
+            <rect x="6" y="3" width="9" height="1.8" rx="0.9" fill="currentColor"/>
+            <rect x="6" y="7.5" width="9" height="1.8" rx="0.9" fill="currentColor"/>
+            <rect x="6" y="12" width="9" height="1.8" rx="0.9" fill="currentColor"/>
+          </svg>
+        </Btn>
+        <Btn title="Indent" onMouseDown={e => { e.preventDefault(); exec('indent'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <rect x="0" y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="4" y="6" width="12" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="4" y="10" width="12" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="0" y="14" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+          </svg>
+        </Btn>
+        <Btn title="Outdent" onMouseDown={e => { e.preventDefault(); exec('outdent'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <rect x="0" y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="0" y="6" width="12" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="0" y="10" width="12" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="0" y="14" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+          </svg>
+        </Btn>
+
+        <Divider />
+
+        {/* Alignment */}
+        <Btn title="Align left" onMouseDown={e => { e.preventDefault(); exec('justifyLeft'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <rect x="0" y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="0" y="6" width="10" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="0" y="10" width="14" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="0" y="14" width="8" height="1.5" rx="0.75" fill="currentColor"/>
+          </svg>
+        </Btn>
+        <Btn title="Align center" onMouseDown={e => { e.preventDefault(); exec('justifyCenter'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <rect x="0" y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="3" y="6" width="10" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="1" y="10" width="14" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="4" y="14" width="8" height="1.5" rx="0.75" fill="currentColor"/>
+          </svg>
+        </Btn>
+        <Btn title="Align right" onMouseDown={e => { e.preventDefault(); exec('justifyRight'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <rect x="0" y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="6" y="6" width="10" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="2" y="10" width="14" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="8" y="14" width="8" height="1.5" rx="0.75" fill="currentColor"/>
+          </svg>
+        </Btn>
+        <Btn title="Justify" onMouseDown={e => { e.preventDefault(); exec('justifyFull'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <rect x="0" y="2" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="0" y="6" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="0" y="10" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="0" y="14" width="10" height="1.5" rx="0.75" fill="currentColor"/>
+          </svg>
+        </Btn>
+
+        <Divider />
+
+        {/* Block formats */}
+        <Btn title="Blockquote" wide onMouseDown={e => { e.preventDefault(); applyBlock('blockquote'); }}>
+          <span style={{ fontSize: 14, lineHeight: 1 }}>"</span>
+        </Btn>
+        <Btn title="Code block" wide onMouseDown={e => { e.preventDefault(); applyBlock('pre'); }}>
+          <span style={{ fontSize: 9, fontFamily: 'monospace', letterSpacing: 0 }}>{`</>`}</span>
+        </Btn>
+
+        <Divider />
+
+        {/* Font size */}
+        <Btn title="Smaller text" onMouseDown={e => { e.preventDefault(); exec('fontSize', '2'); }}>
+          <span style={{ fontSize: 9 }}>A</span>
+        </Btn>
+        <Btn title="Normal text" onMouseDown={e => { e.preventDefault(); exec('fontSize', '3'); }}>
+          <span style={{ fontSize: 11 }}>A</span>
+        </Btn>
+        <Btn title="Larger text" onMouseDown={e => { e.preventDefault(); exec('fontSize', '5'); }}>
+          <span style={{ fontSize: 14 }}>A</span>
+        </Btn>
+
+        <Divider />
+
+        {/* Misc */}
+        <Btn title="Horizontal rule" onMouseDown={e => { e.preventDefault(); insertHR(); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <rect x="0" y="7" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+          </svg>
+        </Btn>
+        <Btn title="Remove formatting" onMouseDown={e => { e.preventDefault(); exec('removeFormat'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M3 3l10 10M3 13L13 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </Btn>
+        <Btn title="Undo" onMouseDown={e => { e.preventDefault(); exec('undo'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M3 7 C3 4 6 2 9 2 C12 2 14 4 14 7 C14 10 12 12 9 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+            <path d="M3 7 L1 4.5 M3 7 L5.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </Btn>
+        <Btn title="Redo" onMouseDown={e => { e.preventDefault(); exec('redo'); }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M13 7 C13 4 10 2 7 2 C4 2 2 4 2 7 C2 10 4 12 7 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+            <path d="M13 7 L15 4.5 M13 7 L10.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </Btn>
+      </div>
     </div>
   );
 }
@@ -541,6 +676,13 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
           .doc-editor-div li { margin-bottom: 4px; }
           .doc-editor-div strong { color: #c0c0c4; }
           .doc-editor-div em { color: #888; }
+          .doc-editor-div blockquote { border-left: 2px solid #2a2a2a; margin: 12px 0; padding: 4px 16px; color: #666; font-style: italic; }
+          .doc-editor-div pre { background: #0d0f11; border: 1px solid #1a1a1a; padding: 12px 16px; margin: 12px 0; font-size: 12px; color: #7a9a7a; overflow-x: auto; }
+          .doc-editor-div h3 { font-size: 14px; font-weight: 600; color: #777; margin: 16px 0 6px; line-height: 1.3; font-family: Georgia, serif; }
+          .doc-editor-div h4 { font-size: 12px; font-weight: 600; color: #666; margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.8px; }
+          .doc-editor-div s { color: #444; }
+          .doc-editor-div ol { padding-left: 20px; margin: 0 0 12px; }
+          .toolbar-scroll::-webkit-scrollbar { display: none; }
           .doc-mobile-overlay { animation:sideSlide 0.22s ease; }
           @keyframes sideSlide { from { transform:translateX(-100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
           div:hover > .ch-actions { opacity:1 !important; }
@@ -658,6 +800,9 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     className="doc-editor-div"
                     contentEditable
                     suppressContentEditableWarning
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
                     data-placeholder={activeSub
                       ? `Write the content of "${activeTitle}" here…`
                       : `Begin writing Chapter ${chapters.indexOf(activeChapter)+1}…`}
