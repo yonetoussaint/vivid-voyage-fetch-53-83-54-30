@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { MONTH_NAMES } from '@/utils/dateHelpers';
 import { IC } from '@/components/easy/IconLibrary';
 import { 
-  getSalary, setSalary,           // <-- changed: use getter/setter instead of direct SALARY
+  getSalary, setSalary,
   incomeStore, recurringStore, goalsStore, bucketStore,
   addIncome, getTotalIncomeWithSalary, getRecurringTotal, 
-  getMonthTotals, getGoalProgress, goalIdCounter
+  getMonthTotals, getGoalProgress, getNextGoalId   // <-- changed: removed goalIdCounter, added getNextGoalId
 } from '@/stores/moneyStores';
 import { SPEND_CATEGORIES, INCOME_SOURCES, INCOME_SOURCE_ICONS, 
          DEFAULT_BUCKETS, GOAL_ICONS, GOAL_COLORS } from '@/data/moneyData';
