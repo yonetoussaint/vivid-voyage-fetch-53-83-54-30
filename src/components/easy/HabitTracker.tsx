@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { isHabitDone } from '../utils/eventUtils';
-import { DAY_SHORT, MONTH_SHORT, getTodayKey } from '../utils/dateHelpers';
+import { isHabitDone } from '@/utils/eventUtils';
+import { DAY_SHORT, MONTH_SHORT, getTodayKey } from '@/utils/dateHelpers';
 
 export function HabitTracker({ title, color, year, month }) {
   const [tab, setTab] = useState("week");
