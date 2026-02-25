@@ -1,13 +1,77 @@
-// components/easy/CaisseRecuCard.js
+// components/easy/CaisseRecuCard.jsx
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { 
-  DollarSign, Calculator, TrendingUp, TrendingDown, Wallet, Receipt, 
-  Layers, Target, AlertCircle, Plus, Trash2, Globe, ChevronDown, 
-  RefreshCw, ArrowRightLeft, Loader2 
-} from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 import { generateChangeCombinations, getMaximumGivableAmount } from '@/utils/changeCalculator';
 import ChangeCombinations from './ChangeCombinations';
+
+const S = { fontFamily: "'Courier New', Courier, monospace" };
+
+// ── Shared primitives ────────────────────────────────────────────────────────
+
+const Row = ({ children, style }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', ...style }}>
+    {children}
+  </div>
+);
+
+const Label = ({ children, style }) => (
+  <span style={{ fontSize: 9, color: '#444', letterSpacing: 1, textTransform: 'uppercase', ...style }}>
+    {children}
+  </span>
+);
+
+const Value = ({ children, accent, style }) => (
+  <span style={{ fontSize: 14, fontWeight: 700, color: accent || '#d4d4d8', letterSpacing: -0.3, ...style }}>
+    {children}
+  </span>
+);
+
+const Divider = () => (
+  <div style={{ borderTop: '1px solid #111', margin: '8px 0' }} />
+);
+
+const Dot = ({ color }) => (
+  <div style={{ width: 5, height: 5, borderRadius: '50%', background: color, flexShrink: 0 }} />
+);
+
+const GhostBtn = ({ onClick, children, accent, style, disabled }) => {
+  const base = {
+    background: 'transparent',
+    border: `1px solid ${disabled ? '#1a1a1a' : (accent ? accent + '44' : '#1a1a1a')}`,
+    color: disabled ? '#2a2a2a' : (accent || '#444'),
+    padding: '4px 10px',
+    fontSize: 9,
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    display: 'flex', alignItems: 'center', gap: 5,
+    fontFamily: S.fontFamily,
+    transition: 'color 0.12s, border-color 0.12s',
+    flexShrink: 0,
+    ...style,
+  };
+  return (
+    <button onClick={disabled ? undefined : onClick} style={base}
+      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.color = accent || '#aaa'; e.currentTarget.style.borderColor = (accent || '#aaa') + '66'; }}}
+      onMouseLeave={e => { if (!disabled) { e.currentTarget.style.color = accent || '#444'; e.currentTarget.style.borderColor = (accent ? accent + '44' : '#1a1a1a'); }}}
+    >
+      {children}
+    </button>
+  );
+};
+
+const XBtn = ({ onClick }) => (
+  <button onClick={onClick} style={{
+    background: 'transparent', border: 'none', color: '#2a2a2a',
+    cursor: 'pointer', padding: '2px 4px', fontSize: 11, lineHeight: 1,
+    fontFamily: S.fontFamily, transition: 'color 0.12s',
+  }}
+    onMouseEnter={e => e.currentTarget.style.color = '#ef5350'}
+    onMouseLeave={e => e.currentTarget.style.color = '#2a2a2a'}
+  >×</button>
+);
+
+// ── Main Component ────────────────────────────────────────────────────────────
 
 const CaisseRecuCard = React.memo(({
   vendeurActuel,
@@ -16,985 +80,565 @@ const CaisseRecuCard = React.memo(({
   totalAjustePourCaisse = 0,
   especesAttendues = 0,
   isPropane = false,
-  tauxUSD = 132
+  tauxUSD = 132,
+  accent = '#7a7aff',
 }) => {
-  // State
-  const [inputValue, setInputValue] = useState('');
-  const [currencyType, setCurrencyType] = useState('HTG');
+  const dotColor = isPropane ? '#f87171' : accent;
+  const usdColor = '#4ade80';
+  const htgColor = accent;
+
+  // ── State ──
+  const [inputValue, setInputValue]       = useState('');
+  const [currencyType, setCurrencyType]   = useState('HTG');
   const [cashSequences, setCashSequences] = useState([]);
   const [selectedPreset, setSelectedPreset] = useState('aucune');
-  const [showPresets, setShowPresets] = useState(false);
-  const [showRoundAmount, setShowRoundAmount] = useState(false);
-  const [roundAmount, setRoundAmount] = useState('');
+  const [showPresets, setShowPresets]     = useState(false);
+  const [roundAmount, setRoundAmount]     = useState('');
   const [isCalculating, setIsCalculating] = useState(false);
-  
-  // Refs for debouncing
-  const inputDebounceRef = useRef(null);
+
+  const inputDebounceRef     = useRef(null);
   const calculationTimeoutRef = useRef(null);
 
-  // Presets
+  // ── Presets ──
   const htgPresets = [
-    { value: '5', label: '5' },
-    { value: '10', label: '10' },
-    { value: '20', label: '20' },
-    { value: '25', label: '25' },
-    { value: '50', label: '50' },
-    { value: '100', label: '100' },
-    { value: '250', label: '250' },
-    { value: '500', label: '500' },
-    { value: '1000', label: '1,000' },
-    { value: '5000', label: '5,000' },
-    { value: '10000', label: '10k' },
-    { value: '25000', label: '25k' },
-    { value: '50000', label: '50k' },
-    { value: '100000', label: '100k' }
+    { value: '5',      label: '5' },
+    { value: '10',     label: '10' },
+    { value: '20',     label: '20' },
+    { value: '25',     label: '25' },
+    { value: '50',     label: '50' },
+    { value: '100',    label: '100' },
+    { value: '250',    label: '250' },
+    { value: '500',    label: '500' },
+    { value: '1000',   label: '1,000' },
+    { value: '5000',   label: '5,000' },
+    { value: '10000',  label: '10k' },
+    { value: '25000',  label: '25k' },
+    { value: '50000',  label: '50k' },
+    { value: '100000', label: '100k' },
   ];
-
   const usdPresets = [
-    { value: '1', label: '1' },
-    { value: '5', label: '5' },
+    { value: '1',  label: '1' },
+    { value: '5',  label: '5' },
     { value: '10', label: '10' },
     { value: '20', label: '20' },
     { value: '50', label: '50' },
-    { value: '100', label: '100' }
+    { value: '100',label: '100' },
   ];
 
-  // Quick adds
   const htgQuickAdds = [100, 250, 500, 1000];
   const usdQuickAdds = [1, 5, 10, 20];
-  const quickAddAmounts = currencyType === 'HTG' ? htgQuickAdds : usdQuickAdds;
-  const currentPresets = currencyType === 'HTG' ? htgPresets : usdPresets;
-  const isDirectAmount = selectedPreset === 'aucune';
+  const quickAddAmounts  = currencyType === 'HTG' ? htgQuickAdds : usdQuickAdds;
+  const currentPresets   = currencyType === 'HTG' ? htgPresets : usdPresets;
+  const isDirectAmount   = selectedPreset === 'aucune';
   const commonRoundAmounts = [50, 100, 250, 500, 1000, 2000, 5000, 10000];
+  const activeCurrencyColor = currencyType === 'USD' ? usdColor : htgColor;
 
-  // Format deposit display with caching
+  // ── Format helpers ──
   const formatDepositDisplay = useCallback((depot) => {
     if (!depot) return '';
-    
     try {
       if (typeof depot === 'object' && depot.devise === 'USD') {
         const montantUSD = parseFloat(depot.montant) || 0;
-        const montantHTG = montantUSD * tauxUSD;
-        return `${montantUSD.toFixed(2)} USD (${formaterArgent(montantHTG)} HTG)`;
+        return `${montantUSD.toFixed(2)} USD (${formaterArgent(montantUSD * tauxUSD)} HTG)`;
       }
-
       if (typeof depot === 'object' && depot.value !== undefined) {
-        const montantHTG = parseFloat(depot.value) || 0;
-        return `${formaterArgent(montantHTG)} HTG`;
+        return `${formaterArgent(parseFloat(depot.value) || 0)} HTG`;
       }
-
-      const montantHTG = parseFloat(depot) || 0;
-      return `${formaterArgent(montantHTG)} HTG`;
-    } catch (error) {
-      return 'Erreur de formatage';
-    }
+      return `${formaterArgent(parseFloat(depot) || 0)} HTG`;
+    } catch { return 'Erreur'; }
   }, [tauxUSD]);
 
-  // Memoized calculations
+  // ── Memos ──
   const depositBreakdown = useMemo(() => {
     if (!Array.isArray(sellerDeposits)) return [];
-    
-    return sellerDeposits
-      .filter(depot => depot != null)
-      .map((depot, index) => {
-        const isUSD = typeof depot === 'object' && depot.devise === 'USD';
-        let amountInHTG = 0;
-        
-        if (isUSD) {
-          const montantUSD = parseFloat(depot.montant) || 0;
-          amountInHTG = montantUSD * tauxUSD;
-        } else if (typeof depot === 'object' && depot.value !== undefined) {
-          amountInHTG = parseFloat(depot.value) || 0;
-        } else {
-          amountInHTG = parseFloat(depot) || 0;
-        }
-        
-        return {
-          id: index + 1,
-          display: formatDepositDisplay(depot),
-          isUSD,
-          amountInHTG
-        };
-      });
+    return sellerDeposits.filter(Boolean).map((depot, i) => {
+      const isUSD = typeof depot === 'object' && depot.devise === 'USD';
+      let amountInHTG = 0;
+      if (isUSD)                                           amountInHTG = (parseFloat(depot.montant) || 0) * tauxUSD;
+      else if (typeof depot === 'object' && depot.value !== undefined) amountInHTG = parseFloat(depot.value) || 0;
+      else                                                 amountInHTG = parseFloat(depot) || 0;
+      return { id: i + 1, display: formatDepositDisplay(depot), isUSD, amountInHTG };
+    });
   }, [sellerDeposits, tauxUSD, formatDepositDisplay]);
 
-  const calculatedTotalDepositsHTG = useMemo(() => {
-    return depositBreakdown.reduce((sum, deposit) => sum + deposit.amountInHTG, 0);
-  }, [depositBreakdown]);
+  const calculatedTotalDepositsHTG  = useMemo(() => depositBreakdown.reduce((s, d) => s + d.amountInHTG, 0), [depositBreakdown]);
+  const calculatedEspecesAttendues  = useMemo(() => totalAjustePourCaisse - calculatedTotalDepositsHTG, [totalAjustePourCaisse, calculatedTotalDepositsHTG]);
+  const totalCashRecuHTG = useMemo(() => cashSequences.reduce((s, seq) => s + (seq.currency === 'USD' ? (parseFloat(seq.amount) * tauxUSD || 0) : (parseFloat(seq.amount) || 0)), 0), [cashSequences, tauxUSD]);
+  const totalHTG = useMemo(() => cashSequences.filter(s => s.currency === 'HTG').reduce((s, seq) => s + (parseFloat(seq.amount) || 0), 0), [cashSequences]);
+  const totalUSD = useMemo(() => cashSequences.filter(s => s.currency === 'USD').reduce((s, seq) => s + (parseFloat(seq.amount) || 0), 0), [cashSequences]);
 
-  const calculatedEspecesAttendues = useMemo(() => {
-    return totalAjustePourCaisse - calculatedTotalDepositsHTG;
-  }, [totalAjustePourCaisse, calculatedTotalDepositsHTG]);
-
-  const totalCashRecuHTG = useMemo(() => {
-    return cashSequences.reduce((sum, seq) => {
-      if (seq.currency === 'USD') {
-        return sum + (parseFloat(seq.amount) * tauxUSD || 0);
-      }
-      return sum + (parseFloat(seq.amount) || 0);
-    }, 0);
-  }, [cashSequences, tauxUSD]);
-
-  const totalHTG = useMemo(() => {
-    return cashSequences
-      .filter(seq => seq.currency === 'HTG')
-      .reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
-  }, [cashSequences]);
-
-  const totalUSD = useMemo(() => {
-    return cashSequences
-      .filter(seq => seq.currency === 'USD')
-      .reduce((sum, seq) => sum + (parseFloat(seq.amount) || 0), 0);
-  }, [cashSequences]);
-
-  const changeNeeded = totalCashRecuHTG - calculatedEspecesAttendues;
+  const changeNeeded    = totalCashRecuHTG - calculatedEspecesAttendues;
   const shouldGiveChange = changeNeeded > 0;
-  const isShort = changeNeeded < 0;
+  const isShort          = changeNeeded < 0;
+  const givableAmount    = useMemo(() => getMaximumGivableAmount(changeNeeded), [changeNeeded]);
+  const remainder        = changeNeeded - givableAmount;
+  const hasRemainder     = remainder > 0;
 
-  // Givable amount calculation
-  const givableAmount = useMemo(() => {
-    return getMaximumGivableAmount(changeNeeded);
-  }, [changeNeeded]);
-
-  const remainder = changeNeeded - givableAmount;
-  const hasRemainder = remainder > 0;
-
-  // Round amount details
   const roundAmountDetails = useMemo(() => {
     if (!roundAmount || !shouldGiveChange || changeNeeded <= 0) return null;
-    
     const desiredAmount = parseFloat(roundAmount);
-    const currentChange = changeNeeded;
-    
     if (isNaN(desiredAmount) || desiredAmount <= 0) return null;
-    
-    const customerAdds = desiredAmount - currentChange;
-    
+    const customerAdds = desiredAmount - changeNeeded;
     return {
-      desiredAmount,
-      currentChange,
-      customerAdds,
+      desiredAmount, currentChange: changeNeeded, customerAdds,
       isValid: customerAdds >= 0,
-      message: customerAdds >= 0 
-        ? `Le client vous donne ${formaterArgent(customerAdds)} HTG de plus pour recevoir ${formaterArgent(desiredAmount)} HTG`
-        : `Impossible: ${formaterArgent(desiredAmount)} HTG est moins que ${formaterArgent(currentChange)} HTG dû`
+      message: customerAdds >= 0
+        ? `Le client donne ${formaterArgent(customerAdds)} HTG de plus pour recevoir ${formaterArgent(desiredAmount)} HTG`
+        : `Impossible: ${formaterArgent(desiredAmount)} HTG est inférieur à ${formaterArgent(changeNeeded)} HTG dû`,
     };
   }, [roundAmount, changeNeeded, shouldGiveChange]);
 
-  // Selected preset text
   const getSelectedPresetText = () => {
-    if (selectedPreset === 'aucune') {
-      return 'Entrer montant libre';
-    }
-    const preset = currentPresets.find(p => p.value === selectedPreset);
-    return preset ? `× ${preset.label} ${currencyType}` : 'Sélectionner';
+    if (isDirectAmount) return 'Montant libre';
+    const p = currentPresets.find(p => p.value === selectedPreset);
+    return p ? `× ${p.label} ${currencyType}` : 'Sélectionner';
   };
 
-  // Debounced input handler
-  const handleInputChange = useCallback((e) => {
-    const value = e.target.value;
-    setInputValue(value);
-    
-    // Clear existing debounce
-    if (inputDebounceRef.current) {
-      clearTimeout(inputDebounceRef.current);
-    }
-    
-    // Only trigger heavy calculations after a delay
-    if (parseFloat(value) > 1000) {
-      inputDebounceRef.current = setTimeout(() => {
-        // Re-trigger calculations if needed
-      }, 500);
-    }
-  }, []);
+  // ── Handlers ──
+  const handleInputChange   = useCallback((e) => setInputValue(e.target.value), []);
+  const handleCurrencyToggle = useCallback(() => { setCurrencyType(p => p === 'HTG' ? 'USD' : 'HTG'); setSelectedPreset('aucune'); setInputValue(''); }, []);
+  const handleKeyPress      = useCallback((e) => { if (e.key === 'Enter') handleAddSequence(); }, []);
+  const handlePresetSelect  = useCallback((v) => { setSelectedPreset(v); setShowPresets(false); if (v === 'aucune') setInputValue(''); }, []);
+  const handleClearAll      = useCallback(() => setCashSequences([]), []);
+  const handleRemoveSequence = useCallback((id) => setCashSequences(p => p.filter(s => s.id !== id)), []);
+  const handleRoundAmountSelect = useCallback((v) => setRoundAmount(v.toString()), []);
+  const handleResetRoundAmount  = useCallback(() => setRoundAmount(''), []);
 
-  // Add sequence handler
   const handleAddSequence = useCallback(() => {
-    let amount = 0;
-    let displayAmount = '';
-    let note = '';
-
+    let amount = 0, note = '';
     if (isDirectAmount) {
       amount = parseFloat(inputValue) || 0;
-      displayAmount = amount.toString();
-      note = `${amount} ${currencyType}`;
+      note   = `${amount} ${currencyType}`;
     } else {
       if (inputValue && !isNaN(parseFloat(inputValue))) {
-        const multiplier = parseFloat(inputValue);
-        const presetValue = parseFloat(selectedPreset);
-        amount = presetValue * multiplier;
-        displayAmount = amount.toString();
-        note = `${multiplier} × ${selectedPreset} ${currencyType}`;
+        const mult = parseFloat(inputValue);
+        amount = parseFloat(selectedPreset) * mult;
+        note   = `${mult} × ${selectedPreset} ${currencyType}`;
       } else {
         amount = parseFloat(selectedPreset);
-        displayAmount = amount.toString();
-        note = `${selectedPreset} ${currencyType}`;
+        note   = `${selectedPreset} ${currencyType}`;
       }
     }
-
-    if (currencyType === 'USD') {
-      amount = parseFloat(amount.toFixed(2));
-      displayAmount = amount.toFixed(2);
-    }
-
+    if (currencyType === 'USD') amount = parseFloat(amount.toFixed(2));
     if (amount > 0) {
-      const newSequence = {
-        id: Date.now(),
-        amount: amount,
-        currency: currencyType,
+      setCashSequences(p => [...p, {
+        id: Date.now(), amount, currency: currencyType,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         convertedToHTG: currencyType === 'USD' ? amount * tauxUSD : amount,
-        note: note
-      };
-      
-      setCashSequences(prev => [...prev, newSequence]);
+        note,
+      }]);
       setInputValue('');
-      
-      if (!isDirectAmount && inputValue) {
-        setSelectedPreset('aucune');
-      }
+      if (!isDirectAmount && inputValue) setSelectedPreset('aucune');
     }
   }, [inputValue, currencyType, selectedPreset, isDirectAmount, tauxUSD]);
 
-  // Remove sequence handler
-  const handleRemoveSequence = useCallback((id) => {
-    setCashSequences(prev => prev.filter(seq => seq.id !== id));
-  }, []);
-
-  // Clear all sequences
-  const handleClearAll = useCallback(() => {
-    setCashSequences([]);
-  }, []);
-
-  // Currency toggle
-  const handleCurrencyToggle = useCallback(() => {
-    setCurrencyType(prev => {
-      const newCurrency = prev === 'HTG' ? 'USD' : 'HTG';
-      setSelectedPreset('aucune');
-      setInputValue('');
-      return newCurrency;
-    });
-  }, []);
-
-  // Key press handler
-  const handleKeyPress = useCallback((e) => {
-    if (e.key === 'Enter') {
-      handleAddSequence();
-    }
-  }, [handleAddSequence]);
-
-  // Quick add handler
   const handleQuickAdd = useCallback((amount) => {
-    const newSequence = {
-      id: Date.now(),
-      amount: amount,
-      currency: currencyType,
+    setCashSequences(p => [...p, {
+      id: Date.now(), amount, currency: currencyType,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       convertedToHTG: currencyType === 'USD' ? amount * tauxUSD : amount,
-      note: `${amount} ${currencyType}`
-    };
-    setCashSequences(prev => [...prev, newSequence]);
+      note: `${amount} ${currencyType}`,
+    }]);
   }, [currencyType, tauxUSD]);
 
-  // Preset selection handler
-  const handlePresetSelect = useCallback((presetValue) => {
-    setSelectedPreset(presetValue);
-    setShowPresets(false);
-    
-    if (presetValue === 'aucune') {
-      setInputValue('');
-    } else {
-      setTimeout(() => {
-        const input = document.querySelector('input[type="number"]');
-        if (input) input.focus();
-      }, 100);
-    }
-  }, []);
-
-  // Round amount handlers
-  const handleRoundAmountSelect = useCallback((amount) => {
-    setRoundAmount(amount.toString());
-    setShowRoundAmount(true);
-  }, []);
-
-  const handleResetRoundAmount = useCallback(() => {
-    setRoundAmount('');
-  }, []);
-
   const handleApplyRoundAmount = useCallback(() => {
-    if (!roundAmountDetails || !roundAmountDetails.isValid) return;
-    
+    if (!roundAmountDetails?.isValid) return;
     const extraAmount = roundAmountDetails.customerAdds;
     if (extraAmount > 0) {
-      const newSequence = {
-        id: Date.now(),
-        amount: extraAmount,
-        currency: 'HTG',
+      setCashSequences(p => [...p, {
+        id: Date.now(), amount: extraAmount, currency: 'HTG',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         convertedToHTG: extraAmount,
-        note: `Client ajoute pour arrondir à ${formaterArgent(roundAmountDetails.desiredAmount)} HTG`
-      };
-      setCashSequences(prev => [...prev, newSequence]);
+        note: `Client ajoute pour arrondir à ${formaterArgent(roundAmountDetails.desiredAmount)} HTG`,
+      }]);
     }
-    
     setRoundAmount('');
   }, [roundAmountDetails]);
 
-  // Set calculating state for large amounts
   useEffect(() => {
     if (shouldGiveChange && changeNeeded > 1000) {
       setIsCalculating(true);
-      
-      if (calculationTimeoutRef.current) {
-        clearTimeout(calculationTimeoutRef.current);
-      }
-      
-      calculationTimeoutRef.current = setTimeout(() => {
-        setIsCalculating(false);
-      }, 100);
-    } else {
-      setIsCalculating(false);
-    }
-    
-    return () => {
-      if (calculationTimeoutRef.current) {
-        clearTimeout(calculationTimeoutRef.current);
-      }
-      if (inputDebounceRef.current) {
-        clearTimeout(inputDebounceRef.current);
-      }
-    };
+      calculationTimeoutRef.current = setTimeout(() => setIsCalculating(false), 100);
+    } else { setIsCalculating(false); }
+    return () => { clearTimeout(calculationTimeoutRef.current); clearTimeout(inputDebounceRef.current); };
   }, [changeNeeded, shouldGiveChange]);
 
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (inputDebounceRef.current) clearTimeout(inputDebounceRef.current);
-      if (calculationTimeoutRef.current) clearTimeout(calculationTimeoutRef.current);
-    };
-  }, []);
+  useEffect(() => () => { clearTimeout(inputDebounceRef.current); clearTimeout(calculationTimeoutRef.current); }, []);
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className={`rounded-xl p-3 shadow-lg mb-3 ${
-      isPropane 
-        ? 'bg-gradient-to-br from-orange-500 to-red-500' 
-        : 'bg-gradient-to-br from-blue-500 to-indigo-500'
-    } text-white`}>
-      
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-          {isPropane ? <Receipt size={14} /> : <Wallet size={14} />}
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-bold">CAISSE REÇU</p>
-          <p className="text-[10px] opacity-80">
-            {isPropane ? 'Argent reçu pour propane' : 'Argent donné par le vendeur'}
-          </p>
+    <div style={{ ...S, border: '1px solid #1a1a1a', background: '#07090b', display: 'flex', flexDirection: 'column' }}>
+
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid #111' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Dot color={dotColor} />
+          <Label>Caisse Reçu · {isPropane ? 'Propane' : 'Essence / Diesel'}</Label>
         </div>
         {vendeurActuel && (
-          <div className="text-right">
-            <p className="text-[10px] opacity-80">Vendeur</p>
-            <p className="text-xs font-bold truncate max-w-[80px]">{vendeurActuel}</p>
-          </div>
+          <span style={{ fontSize: 9, color: '#555', letterSpacing: 0.5 }}>{vendeurActuel}</span>
         )}
       </div>
 
-      {/* Total Deposits Row */}
+      {/* ── Deposits ── */}
       {sellerDeposits.length > 0 && (
-        <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <Layers size={12} className="text-white opacity-90" />
-              <p className="text-xs opacity-90">Total Dépôts:</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-bold">{formaterArgent(calculatedTotalDepositsHTG)} HTG</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Deposits Breakdown */}
-      {sellerDeposits.length > 0 && (
-        <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2 space-y-1">
-          <div className="flex items-center gap-1 mb-1">
-            <Calculator size={12} className="text-white opacity-90" />
-            <p className="text-xs opacity-90">Détail des dépôts:</p>
-          </div>
-          <div className="space-y-1">
-            {depositBreakdown.map((deposit) => (
-              <div key={deposit.id} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1">
-                  <div className={`w-2 h-2 rounded-full ${
-                    deposit.isUSD ? 'bg-green-400' : 'bg-blue-400'
-                  }`}></div>
-                  <span className="opacity-80">Dépôt {deposit.id}:</span>
+        <div style={{ padding: '10px 14px', borderBottom: '1px solid #111' }}>
+          <Row style={{ marginBottom: 6 }}>
+            <Label>Total dépôts</Label>
+            <Value accent={dotColor}>{formaterArgent(calculatedTotalDepositsHTG)} HTG</Value>
+          </Row>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {depositBreakdown.map(dep => (
+              <Row key={dep.id}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <Dot color={dep.isUSD ? usdColor : htgColor} />
+                  <Label>Dépôt {dep.id}</Label>
                 </div>
-                <span className="font-medium opacity-90 text-right text-[11px]">
-                  {deposit.display}
-                </span>
-              </div>
+                <span style={{ fontSize: 10, color: '#666', letterSpacing: 0.3 }}>{dep.display}</span>
+              </Row>
             ))}
           </div>
         </div>
       )}
 
-      {/* Espèces Attendues */}
-      <div className={`rounded-lg p-2 mb-2 ${
-        calculatedEspecesAttendues > 0 
-          ? 'bg-green-500 bg-opacity-20 border border-green-400 border-opacity-30' 
-          : calculatedEspecesAttendues < 0 
-          ? 'bg-red-500 bg-opacity-20 border border-red-400 border-opacity-30'
-          : 'bg-white bg-opacity-10'
-      }`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <Target size={12} className={
-              calculatedEspecesAttendues > 0 
-                ? 'text-green-300' 
-                : calculatedEspecesAttendues < 0 
-                ? 'text-red-300'
-                : 'text-white opacity-90'
-            } />
-            <p className="text-xs opacity-90">Espèces attendues:</p>
-          </div>
-          <div className="text-right">
-            <p className={`text-sm font-bold ${
-              calculatedEspecesAttendues > 0 
-                ? 'text-green-300' 
-                : calculatedEspecesAttendues < 0 
-                ? 'text-red-300'
-                : 'text-white'
-            }`}>
+      {/* ── Espèces attendues ── */}
+      <div style={{ padding: '10px 14px', borderBottom: '1px solid #111' }}>
+        <Row>
+          <Label>Espèces attendues</Label>
+          <div style={{ textAlign: 'right' }}>
+            <Value accent={calculatedEspecesAttendues > 0 ? '#4ade80' : calculatedEspecesAttendues < 0 ? '#f87171' : '#d4d4d8'}>
               {formaterArgent(calculatedEspecesAttendues)} HTG
-            </p>
-            <p className="text-[10px] opacity-60">
-              {formaterArgent(totalAjustePourCaisse)} HTG - {formaterArgent(calculatedTotalDepositsHTG)} HTG
-            </p>
+            </Value>
+            <div style={{ fontSize: 9, color: '#2a2a2a', marginTop: 2 }}>
+              {formaterArgent(totalAjustePourCaisse)} − {formaterArgent(calculatedTotalDepositsHTG)}
+            </div>
           </div>
-        </div>
+        </Row>
       </div>
 
-      {/* Cash Sequences Section */}
-      <div className="mb-3">
-        {/* Exchange Rate */}
-        <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <Globe size={12} className="text-blue-300" />
-            <p className="text-xs opacity-90">Taux USD:</p>
+      {/* ── Input section ── */}
+      <div style={{ padding: '10px 14px', borderBottom: '1px solid #111' }}>
+
+        {/* Currency toggle + rate */}
+        <Row style={{ marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <GhostBtn onClick={handleCurrencyToggle} accent={activeCurrencyColor}>
+              {currencyType}
+            </GhostBtn>
+            <Label style={{ color: '#333' }}>{currencyType === 'HTG' ? 'Gourdes' : 'Dollars US'}</Label>
           </div>
-          <p className="text-sm font-bold text-blue-300">1 USD = {tauxUSD} HTG</p>
+          <Label style={{ color: '#2a2a2a' }}>1 USD = {tauxUSD} HTG</Label>
+        </Row>
+
+        {/* Preset selector */}
+        <div style={{ position: 'relative', marginBottom: 8 }}>
+          <button
+            onClick={() => setShowPresets(p => !p)}
+            style={{
+              width: '100%', background: 'transparent',
+              border: `1px solid ${showPresets ? activeCurrencyColor + '55' : '#1a1a1a'}`,
+              color: isDirectAmount ? '#333' : activeCurrencyColor,
+              padding: '5px 10px', fontSize: 9, letterSpacing: 0.7, textTransform: 'uppercase',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              fontFamily: S.fontFamily, transition: 'border-color 0.12s, color 0.12s',
+            }}
+          >
+            <span>{getSelectedPresetText()}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              style={{ transform: showPresets ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+
+          {showPresets && (
+            <div style={{
+              position: 'absolute', zIndex: 30, top: '100%', left: 0, right: 0, marginTop: 2,
+              background: '#07090b', border: `1px solid #1e1e1e`,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
+            }}>
+              <button
+                onClick={() => handlePresetSelect('aucune')}
+                style={{
+                  width: '100%', background: isDirectAmount ? activeCurrencyColor + '0d' : 'transparent',
+                  border: 'none', borderBottom: '1px solid #111',
+                  color: isDirectAmount ? activeCurrencyColor : '#444',
+                  padding: '7px 12px', fontSize: 9, letterSpacing: 0.7, textTransform: 'uppercase',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  fontFamily: S.fontFamily,
+                }}
+              >
+                <span>Montant libre</span>
+                {isDirectAmount && <span style={{ fontSize: 9, color: activeCurrencyColor }}>✓</span>}
+              </button>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, padding: 8 }}>
+                {currentPresets.map(p => (
+                  <button key={p.value} onClick={() => handlePresetSelect(p.value)} style={{
+                    background: selectedPreset === p.value ? activeCurrencyColor + '1a' : 'transparent',
+                    border: `1px solid ${selectedPreset === p.value ? activeCurrencyColor + '55' : '#1a1a1a'}`,
+                    color: selectedPreset === p.value ? activeCurrencyColor : '#444',
+                    padding: '5px 4px', fontSize: 9, letterSpacing: 0.5, cursor: 'pointer',
+                    fontFamily: S.fontFamily, transition: 'all 0.1s',
+                  }}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div style={{ fontSize: 9, color: '#2a2a2a', marginTop: 4, textAlign: 'center', letterSpacing: 0.4 }}>
+            {isDirectAmount ? 'Entrez directement le montant' : `Ex: 33 × ${selectedPreset} ${currencyType}`}
+          </div>
         </div>
 
-        {/* Total Cash Received */}
-        {cashSequences.length > 0 && (
-          <div className="bg-green-500 bg-opacity-20 rounded-lg p-2 mb-2 border border-green-400 border-opacity-30">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1">
-                <DollarSign size={12} className="text-green-300" />
-                <p className="text-xs font-bold text-green-300">Total reçu:</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-green-300">{formaterArgent(totalCashRecuHTG)} HTG</p>
-                <button
-                  onClick={handleClearAll}
-                  className="p-1 hover:bg-red-500 hover:bg-opacity-30 rounded text-red-300 hover:text-red-200 transition-colors"
-                  title="Effacer toutes les séquences"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-1.5 text-[10px]">
-              <div className="bg-blue-500 bg-opacity-10 rounded p-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="opacity-80">Total HTG:</span>
-                  <span className="font-bold text-blue-300">{formaterArgent(totalHTG)} HTG</span>
-                </div>
-              </div>
-              <div className="bg-green-500 bg-opacity-10 rounded p-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="opacity-80">Total USD:</span>
-                  <div className="flex flex-col items-end">
-                    <span className="font-bold text-green-300">
-                      {totalUSD.toFixed(2)} USD
-                    </span>
-                    <span className="text-[9px] opacity-70 mt-0.5">
-                      ({formaterArgent(totalUSD * tauxUSD)} HTG)
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-[10px] opacity-80 mt-2 text-green-300">
-              {cashSequences.length} séquence{cashSequences.length !== 1 ? 's' : ''} ajoutée{cashSequences.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-        )}
-
-        {/* Cash Sequences List */}
-        {cashSequences.length > 0 && (
-          <div className="bg-white bg-opacity-10 rounded-lg p-2 mb-2 max-h-32 overflow-y-auto">
-            <div className="space-y-1">
-              {cashSequences.map((sequence, index) => (
-                <div key={sequence.id} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${
-                      sequence.currency === 'USD' ? 'bg-green-400' : 'bg-blue-400'
-                    }`}></div>
-                    <span className="opacity-80">Séquence {index + 1}:</span>
-                    <span className="text-[10px] opacity-60">{sequence.timestamp}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                      sequence.currency === 'USD' 
-                        ? 'bg-green-500 bg-opacity-20 text-green-300' 
-                        : 'bg-blue-500 bg-opacity-20 text-blue-300'
-                    }`}>
-                      {sequence.currency}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <span className={`font-medium ${
-                        sequence.currency === 'USD' ? 'text-green-300' : 'text-blue-300'
-                      }`}>
-                        {sequence.currency === 'USD' ? '$' : ''}{formaterArgent(sequence.amount)} {sequence.currency}
-                      </span>
-                      {sequence.currency === 'USD' && (
-                        <p className="text-[10px] opacity-60">
-                          = {formaterArgent(sequence.convertedToHTG)} HTG
-                        </p>
-                      )}
-                      {sequence.note && (
-                        <p className="text-[9px] opacity-50 mt-0.5">
-                          {sequence.note}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleRemoveSequence(sequence.id)}
-                      className="p-0.5 hover:bg-red-500 hover:bg-opacity-30 rounded text-red-300 hover:text-red-200 transition-colors"
-                      title="Retirer cette séquence"
-                    >
-                      <Trash2 size={10} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Input Section */}
-        <div className="relative mb-2">
-          {/* Currency selector */}
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleCurrencyToggle}
-                className={`px-2 py-1 rounded text-xs font-bold flex items-center gap-1 transition-colors ${
-                  currencyType === 'HTG' 
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                    : 'bg-green-500 hover:bg-green-600 text-white'
-                }`}
-              >
-                {currencyType === 'HTG' ? (
-                  <>
-                    <DollarSign size={10} />
-                    HTG
-                  </>
-                ) : (
-                  <>
-                    <Globe size={10} />
-                    USD
-                  </>
-                )}
-              </button>
-              <span className="text-xs opacity-80">
-                {currencyType === 'HTG' ? 'Gourdes Haïtiennes' : 'Dollars US'}
-              </span>
-            </div>
-            <span className="text-xs opacity-70">
-              Taux: 1 USD = {tauxUSD} HTG
+        {/* Input + add */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+          <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <span style={{ position: 'absolute', left: 10, fontSize: 9, color: '#333', letterSpacing: 0.5, pointerEvents: 'none' }}>
+              {isDirectAmount ? currencyType : '×'}
             </span>
-          </div>
-
-          {/* Preset selector */}
-          <div className="mb-2">
-            <div className="relative">
-              <button
-                onClick={() => setShowPresets(!showPresets)}
-                className={`w-full px-3 py-2 text-left rounded-lg flex items-center justify-between transition-colors ${
-                  currencyType === 'HTG'
-                    ? 'bg-blue-500 bg-opacity-20 hover:bg-opacity-30 border border-blue-400 border-opacity-30'
-                    : 'bg-green-500 bg-opacity-20 hover:bg-opacity-30 border border-green-400 border-opacity-30'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold ${
-                    currencyType === 'HTG' ? 'text-blue-300' : 'text-green-300'
-                  }`}>
-                    {getSelectedPresetText()}
-                  </span>
-                </div>
-                <ChevronDown 
-                  size={12} 
-                  className={`transition-transform ${showPresets ? 'rotate-180' : ''} ${
-                    currencyType === 'HTG' ? 'text-blue-300' : 'text-green-300'
-                  }`} 
-                />
-              </button>
-
-              {/* Preset dropdown */}
-              {showPresets && (
-                <div className={`absolute z-20 w-full mt-1 rounded-lg shadow-lg overflow-hidden border ${
-                  currencyType === 'HTG'
-                    ? 'bg-blue-900 border-blue-700'
-                    : 'bg-green-900 border-green-700'
-                }`}>
-                  <button
-                    onClick={() => handlePresetSelect('aucune')}
-                    className={`w-full px-3 py-3 text-left text-xs hover:bg-opacity-50 transition-colors flex items-center justify-between border-b ${
-                      currencyType === 'HTG' ? 'border-blue-700' : 'border-green-700'
-                    } ${
-                      selectedPreset === 'aucune'
-                        ? currencyType === 'HTG'
-                          ? 'bg-blue-700 text-white'
-                          : 'bg-green-700 text-white'
-                        : currencyType === 'HTG'
-                          ? 'hover:bg-blue-800 text-blue-100'
-                          : 'hover:bg-green-800 text-green-100'
-                    }`}
-                  >
-                    <span>Entrer montant libre</span>
-                    {isDirectAmount && (
-                      <span className="text-[10px] opacity-70">✓</span>
-                    )}
-                  </button>
-
-                  <div className="p-2">
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {currentPresets.map((preset) => (
-                        <button
-                          key={preset.value}
-                          onClick={() => handlePresetSelect(preset.value)}
-                          className={`px-2 py-2 text-xs font-medium rounded border transition-colors flex items-center justify-center ${
-                            currencyType === 'HTG'
-                              ? 'bg-blue-500 bg-opacity-10 hover:bg-opacity-20 border-blue-400 border-opacity-30 text-blue-300'
-                              : 'bg-green-500 bg-opacity-10 hover:bg-opacity-20 border-green-400 border-opacity-30 text-green-300'
-                          } ${selectedPreset === preset.value ? 'ring-1 ring-white ring-opacity-50' : ''}`}
-                          title={`${preset.label} ${currencyType}`}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <p className="text-[10px] opacity-70 mt-1 text-center">
-              {isDirectAmount 
-                ? "Entrez directement le montant" 
-                : `Sélectionnez un montant et entrez un multiplicateur (ex: 33 × ${selectedPreset})`}
-            </p>
-          </div>
-
-          {/* Input with Add button */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-white font-bold text-xs">
-                {isDirectAmount ? (
-                  currencyType === 'HTG' ? 'HTG' : 'USD'
-                ) : (
-                  '×'
-                )}
-              </span>
-            </div>
             <input
               type="number"
               value={inputValue}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
-              placeholder={
-                isDirectAmount 
-                  ? `Montant en ${currencyType}...` 
-                  : 'Multiplicateur (ex: 33)...'
-              }
-              className="w-full pl-10 pr-20 py-2.5 text-base font-bold bg-white bg-opacity-15 border-2 border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-1 focus:ring-white focus:border-white"
+              placeholder={isDirectAmount ? `Montant en ${currencyType}…` : 'Multiplicateur…'}
+              style={{
+                width: '100%', background: 'transparent',
+                border: `1px solid ${inputValue ? activeCurrencyColor + '44' : '#1a1a1a'}`,
+                color: '#d4d4d8', padding: '6px 10px 6px 34px', fontSize: 12, fontWeight: 700,
+                outline: 'none', fontFamily: S.fontFamily,
+                transition: 'border-color 0.12s',
+              }}
             />
-            <div className="absolute inset-y-0 right-0 flex items-center pr-1">
-              <button
-                onClick={handleAddSequence}
-                disabled={!inputValue || parseFloat(inputValue) <= 0}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 ${
-                  inputValue && parseFloat(inputValue) > 0
-                    ? currencyType === 'HTG' 
-                      ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                      : 'bg-green-500 hover:bg-green-600 text-white'
-                    : 'bg-gray-400 bg-opacity-30 text-gray-300 cursor-not-allowed'
-                } transition-colors`}
-              >
-                <Plus size={12} />
-                Ajouter
-              </button>
-            </div>
           </div>
-
-          {/* Preview */}
-          {!isDirectAmount && inputValue && !isNaN(parseFloat(inputValue)) && selectedPreset && selectedPreset !== 'aucune' && (
-            <div className="mt-2 bg-white bg-opacity-10 rounded p-2 text-center">
-              <p className="text-xs opacity-90">
-                {inputValue} × {selectedPreset} {currencyType} = {formaterArgent(parseFloat(selectedPreset) * parseFloat(inputValue))} {currencyType}
-              </p>
-              {currencyType === 'USD' && (
-                <p className="text-[10px] opacity-70">
-                  ({formaterArgent(parseFloat(selectedPreset) * parseFloat(inputValue) * tauxUSD)} HTG)
-                </p>
-              )}
-            </div>
-          )}
+          <GhostBtn
+            onClick={handleAddSequence}
+            accent={activeCurrencyColor}
+            disabled={!inputValue || parseFloat(inputValue) <= 0}
+          >
+            + Ajouter
+          </GhostBtn>
         </div>
 
-        {/* Quick add buttons */}
-        <div className="grid grid-cols-4 gap-1 mb-2">
-          {quickAddAmounts.map((amount) => (
-            <button
-              key={amount}
-              onClick={() => handleQuickAdd(amount)}
-              className={`px-2 py-1.5 text-xs font-medium rounded border transition-colors ${
-                currencyType === 'USD'
-                  ? 'bg-green-500 bg-opacity-10 hover:bg-opacity-20 border-green-400 border-opacity-30 text-green-300'
-                  : 'bg-blue-500 bg-opacity-10 hover:bg-opacity-20 border-blue-400 border-opacity-30 text-blue-300'
-              }`}
-              title={`Ajouter ${amount} ${currencyType}`}
-            >
+        {/* Multiplication preview */}
+        {!isDirectAmount && inputValue && !isNaN(parseFloat(inputValue)) && selectedPreset !== 'aucune' && (
+          <div style={{ padding: '5px 10px', border: '1px solid #1a1a1a', marginBottom: 8, textAlign: 'center' }}>
+            <span style={{ fontSize: 10, color: activeCurrencyColor, letterSpacing: 0.4 }}>
+              {inputValue} × {selectedPreset} = {formaterArgent(parseFloat(selectedPreset) * parseFloat(inputValue))} {currencyType}
+            </span>
+            {currencyType === 'USD' && (
+              <span style={{ fontSize: 9, color: '#444', marginLeft: 8 }}>
+                ({formaterArgent(parseFloat(selectedPreset) * parseFloat(inputValue) * tauxUSD)} HTG)
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Quick add */}
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${quickAddAmounts.length}, 1fr)`, gap: 4 }}>
+          {quickAddAmounts.map(amount => (
+            <GhostBtn key={amount} onClick={() => handleQuickAdd(amount)} accent={activeCurrencyColor} style={{ justifyContent: 'center' }}>
               +{currencyType === 'USD' ? '$' : ''}{amount}
-            </button>
+            </GhostBtn>
           ))}
         </div>
       </div>
 
-      {/* Change calculation */}
+      {/* ── Cash sequences list ── */}
       {cashSequences.length > 0 && (
-        <div className="bg-white bg-opacity-10 rounded-lg p-2 space-y-3">
-          {/* Change summary */}
-          <div className={`flex items-center justify-between pb-2 border-b border-white border-opacity-20 ${
-            shouldGiveChange ? 'text-green-300' : isShort ? 'text-red-300' : 'text-emerald-300'
-          }`}>
-            <div className="flex items-center gap-1">
-              {shouldGiveChange ? (
-                <TrendingUp size={12} />
-              ) : isShort ? (
-                <TrendingDown size={12} />
-              ) : (
-                <DollarSign size={12} />
-              )}
-              <p className="text-xs font-bold">
-                {shouldGiveChange ? 'À rendre:' : isShort ? 'Manquant:' : 'Exact'}
-              </p>
-            </div>
-            <p className={`text-sm font-bold ${
-              shouldGiveChange ? 'text-green-300' : isShort ? 'text-red-300' : 'text-emerald-300'
-            }`}>
-              {formaterArgent(Math.abs(changeNeeded))} HTG
-            </p>
-          </div>
+        <div style={{ padding: '10px 14px', borderBottom: '1px solid #111' }}>
 
-          {/* Warning for remainder */}
-          {shouldGiveChange && hasRemainder && (
-            <div className="bg-amber-500 bg-opacity-20 rounded-lg p-2 border border-amber-400 border-opacity-30">
-              <div className="flex items-start gap-1.5">
-                <AlertCircle size={12} className="text-amber-300 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-xs font-bold text-amber-300 mb-0.5">
-                    Note: Reste à abandonner
-                  </p>
-                  <p className="text-[10px] opacity-90 leading-tight">
-                    Avec des billets/monnaie de 5 HTG minimum, on ne peut rendre que {formaterArgent(givableAmount)} HTG.
-                    <span className="block mt-0.5 font-bold text-amber-200">
-                      Le vendeur doit abandonner: {formaterArgent(remainder)} HTG
-                    </span>
-                  </p>
+          {/* Totals summary */}
+          <Row style={{ marginBottom: 8 }}>
+            <Label>Total reçu</Label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Value accent={activeCurrencyColor}>{formaterArgent(totalCashRecuHTG)} HTG</Value>
+              <GhostBtn onClick={handleClearAll} accent="#f87171" style={{ padding: '2px 6px' }}>
+                Effacer
+              </GhostBtn>
+            </div>
+          </Row>
+          <Row style={{ marginBottom: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <Dot color={htgColor} />
+              <Label>HTG</Label>
+            </div>
+            <span style={{ fontSize: 10, color: '#666' }}>{formaterArgent(totalHTG)} HTG</span>
+          </Row>
+          <Row style={{ marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <Dot color={usdColor} />
+              <Label>USD</Label>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <span style={{ fontSize: 10, color: '#666' }}>{totalUSD.toFixed(2)} USD</span>
+              <span style={{ fontSize: 9, color: '#2a2a2a', marginLeft: 6 }}>({formaterArgent(totalUSD * tauxUSD)} HTG)</span>
+            </div>
+          </Row>
+
+          <Divider />
+
+          {/* Sequence rows */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 140, overflowY: 'auto' }}>
+            {cashSequences.map((seq, i) => (
+              <Row key={seq.id}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <Dot color={seq.currency === 'USD' ? usdColor : htgColor} />
+                  <Label>#{i + 1}</Label>
+                  <span style={{ fontSize: 9, color: '#2a2a2a' }}>{seq.timestamp}</span>
                 </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: 10, color: seq.currency === 'USD' ? usdColor : htgColor, fontWeight: 600 }}>
+                      {seq.currency === 'USD' ? '$' : ''}{formaterArgent(seq.amount)} {seq.currency}
+                    </span>
+                    {seq.currency === 'USD' && (
+                      <div style={{ fontSize: 9, color: '#2a2a2a' }}>= {formaterArgent(seq.convertedToHTG)} HTG</div>
+                    )}
+                    {seq.note && <div style={{ fontSize: 9, color: '#2a2a2a', fontStyle: 'italic' }}>{seq.note}</div>}
+                  </div>
+                  <XBtn onClick={() => handleRemoveSequence(seq.id)} />
+                </div>
+              </Row>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Change calculation ── */}
+      {cashSequences.length > 0 && (
+        <div style={{ padding: '10px 14px', borderBottom: '1px solid #111' }}>
+
+          {/* Change summary */}
+          <Row style={{ marginBottom: 8 }}>
+            <Label>{shouldGiveChange ? 'À rendre' : isShort ? 'Manquant' : 'Exact'}</Label>
+            <Value accent={shouldGiveChange ? '#4ade80' : isShort ? '#f87171' : '#4ade80'}>
+              {formaterArgent(Math.abs(changeNeeded))} HTG
+            </Value>
+          </Row>
+
+          {/* Remainder warning */}
+          {shouldGiveChange && hasRemainder && (
+            <div style={{ border: '1px solid #fbbf2433', padding: '8px 10px', marginBottom: 8 }}>
+              <div style={{ fontSize: 9, color: '#fbbf24', letterSpacing: 0.5, marginBottom: 3 }}>
+                Note — Reste à abandonner
+              </div>
+              <div style={{ fontSize: 9, color: '#555', lineHeight: 1.6 }}>
+                On ne peut rendre que <span style={{ color: '#fbbf24' }}>{formaterArgent(givableAmount)} HTG</span>.{' '}
+                Le vendeur abandonne: <span style={{ color: '#fbbf24', fontWeight: 700 }}>{formaterArgent(remainder)} HTG</span>
               </div>
             </div>
           )}
 
-          {/* Change Combinations - with loading state */}
+          {/* Change combinations */}
+          {shouldGiveChange && (
+            isCalculating ? (
+              <div style={{ textAlign: 'center', padding: '12px 0', fontSize: 9, color: '#333', letterSpacing: 0.8 }}>
+                Calcul en cours…
+              </div>
+            ) : (
+              <ChangeCombinations changeNeeded={changeNeeded} shouldGiveChange={shouldGiveChange} />
+            )
+          )}
+
+          {/* Round amount tool */}
           {shouldGiveChange && (
             <>
-              {isCalculating ? (
-                <div className="text-center py-4">
-                  <div className="inline-flex items-center justify-center">
-                    <Loader2 className="h-4 w-4 animate-spin text-white" />
-                    <span className="ml-2 text-xs opacity-70">Calcul des combinaisons...</span>
-                  </div>
-                </div>
-              ) : (
-                <ChangeCombinations 
-                  changeNeeded={changeNeeded}
-                  shouldGiveChange={shouldGiveChange}
+              <Divider />
+              <Row style={{ marginBottom: 6 }}>
+                <Label style={{ color: accent }}>Arrondir le montant</Label>
+                {roundAmount && <GhostBtn onClick={handleResetRoundAmount} accent="#555" style={{ padding: '2px 6px' }}>Réinitialiser</GhostBtn>}
+              </Row>
+              <div style={{ fontSize: 9, color: '#2a2a2a', textAlign: 'center', marginBottom: 8, letterSpacing: 0.4 }}>
+                Le client veut recevoir un montant rond
+              </div>
+
+              {/* Round amount input */}
+              <div style={{ position: 'relative', display: 'flex', gap: 6, marginBottom: 6 }}>
+                <input
+                  type="number"
+                  value={roundAmount}
+                  onChange={e => setRoundAmount(e.target.value)}
+                  placeholder="Montant désiré (ex: 50, 100, 500)…"
+                  style={{
+                    flex: 1, background: 'transparent',
+                    border: `1px solid ${roundAmount ? accent + '44' : '#1a1a1a'}`,
+                    color: '#d4d4d8', padding: '6px 10px', fontSize: 10,
+                    outline: 'none', fontFamily: S.fontFamily,
+                  }}
                 />
-              )}
-
-              {/* Round Amount Preference */}
-              <div className="border-t border-white border-opacity-20 pt-2">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1">
-                    <ArrowRightLeft size={12} className="text-purple-300" />
-                    <p className="text-xs font-bold text-purple-300">Arrondir le montant</p>
-                  </div>
-                  {roundAmount ? (
-                    <button
-                      onClick={handleResetRoundAmount}
-                      className="p-1 hover:bg-gray-500 hover:bg-opacity-30 rounded text-gray-300 hover:text-gray-200 transition-colors"
-                      title="Réinitialiser"
-                    >
-                      <RefreshCw size={10} />
-                    </button>
-                  ) : null}
-                </div>
-
-                <p className="text-[10px] opacity-80 mb-2 text-center">
-                  Le client veut recevoir un montant rond (ex: 50 au lieu de 45 HTG)
-                </p>
-
-                {/* Round amount input */}
-                <div className="relative mb-2">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <DollarSign size={12} className="text-purple-300" />
-                  </div>
-                  <input
-                    type="number"
-                    value={roundAmount}
-                    onChange={(e) => setRoundAmount(e.target.value)}
-                    placeholder="Montant désiré par le client (ex: 50, 100, 500)..."
-                    className="w-full pl-10 pr-20 py-2 text-sm font-bold bg-white bg-opacity-15 border border-purple-400 border-opacity-50 rounded-lg text-white placeholder-purple-200 placeholder-opacity-70 focus:outline-none focus:ring-1 focus:ring-purple-400 focus:border-purple-400"
-                  />
-                  {roundAmountDetails && roundAmountDetails.isValid && (
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-1">
-                      <button
-                        onClick={handleApplyRoundAmount}
-                        className="px-2 py-1.5 rounded-md text-xs font-bold bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-1 transition-colors"
-                        title="Appliquer cet arrangement"
-                      >
-                        <Plus size={10} />
-                        Appliquer
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Quick round amount buttons */}
-                <div className="grid grid-cols-4 gap-1 mb-2">
-                  {commonRoundAmounts.map((amount) => (
-                    <button
-                      key={amount}
-                      onClick={() => handleRoundAmountSelect(amount)}
-                      className="px-1 py-1.5 text-xs font-medium rounded bg-purple-500 bg-opacity-10 hover:bg-opacity-20 border border-purple-400 border-opacity-30 text-purple-300 transition-colors"
-                      title={`Arrondir à ${amount} HTG`}
-                    >
-                      {amount}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Round amount calculation result */}
-                {roundAmountDetails && (
-                  <div className={`rounded-lg p-2 ${
-                    roundAmountDetails.isValid
-                      ? 'bg-purple-500 bg-opacity-20 border border-purple-400 border-opacity-30'
-                      : 'bg-red-500 bg-opacity-20 border border-red-400 border-opacity-30'
-                  }`}>
-                    <div className="flex items-start gap-1.5">
-                      {roundAmountDetails.isValid ? (
-                        <ArrowRightLeft size={12} className="text-purple-300 mt-0.5" />
-                      ) : (
-                        <AlertCircle size={12} className="text-red-300 mt-0.5" />
-                      )}
-                      <div className="flex-1">
-                        <p className={`text-xs font-bold mb-0.5 ${
-                          roundAmountDetails.isValid ? 'text-purple-300' : 'text-red-300'
-                        }`}>
-                          {roundAmountDetails.isValid ? 'Échange proposé:' : 'Impossible:'}
-                        </p>
-                        <div className="space-y-1 text-[10px]">
-                          <div className="flex justify-between items-center">
-                            <span className="opacity-80">Actuellement dû:</span>
-                            <span className="font-bold">{formaterArgent(roundAmountDetails.currentChange)} HTG</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="opacity-80">Le client veut recevoir:</span>
-                            <span className="font-bold text-purple-300">{formaterArgent(roundAmountDetails.desiredAmount)} HTG</span>
-                          </div>
-                          <div className="flex justify-between items-center pt-1 border-t border-white border-opacity-10">
-                            <span className="opacity-80">Le client doit vous donner:</span>
-                            <span className={`font-bold ${
-                              roundAmountDetails.isValid ? 'text-green-300' : 'text-red-300'
-                            }`}>
-                              {roundAmountDetails.isValid ? '+' : ''}{formaterArgent(Math.abs(roundAmountDetails.customerAdds))} HTG
-                            </span>
-                          </div>
-                          <p className={`text-[10px] mt-1 pt-1 border-t border-white border-opacity-10 ${
-                            roundAmountDetails.isValid ? 'text-purple-200' : 'text-red-300'
-                          }`}>
-                            {roundAmountDetails.message}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {roundAmountDetails?.isValid && (
+                  <GhostBtn onClick={handleApplyRoundAmount} accent={accent}>
+                    + Appliquer
+                  </GhostBtn>
                 )}
               </div>
+
+              {/* Quick round amounts */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, marginBottom: 8 }}>
+                {commonRoundAmounts.map(a => (
+                  <GhostBtn key={a} onClick={() => handleRoundAmountSelect(a)} accent={accent} style={{ justifyContent: 'center' }}>
+                    {a}
+                  </GhostBtn>
+                ))}
+              </div>
+
+              {/* Round amount result */}
+              {roundAmountDetails && (
+                <div style={{ border: `1px solid ${roundAmountDetails.isValid ? accent + '33' : '#f8717133'}`, padding: '8px 10px' }}>
+                  <div style={{ fontSize: 9, color: roundAmountDetails.isValid ? accent : '#f87171', letterSpacing: 0.5, marginBottom: 6 }}>
+                    {roundAmountDetails.isValid ? 'Échange proposé' : 'Impossible'}
+                  </div>
+                  <Row style={{ marginBottom: 4 }}>
+                    <Label>Actuellement dû</Label>
+                    <span style={{ fontSize: 10, color: '#666' }}>{formaterArgent(roundAmountDetails.currentChange)} HTG</span>
+                  </Row>
+                  <Row style={{ marginBottom: 4 }}>
+                    <Label>Le client veut</Label>
+                    <span style={{ fontSize: 10, color: accent }}>{formaterArgent(roundAmountDetails.desiredAmount)} HTG</span>
+                  </Row>
+                  <Divider />
+                  <Row>
+                    <Label>Le client doit donner</Label>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: roundAmountDetails.isValid ? '#4ade80' : '#f87171' }}>
+                      {roundAmountDetails.isValid ? '+' : ''}{formaterArgent(Math.abs(roundAmountDetails.customerAdds))} HTG
+                    </span>
+                  </Row>
+                </div>
+              )}
             </>
           )}
 
-          {/* No change needed */}
+          {/* Exact / short status */}
           {!shouldGiveChange && (
-            <div className="text-center pt-1">
-              {isShort ? (
-                <>
-                  <p className="text-[10px] opacity-80 mt-0.5 text-red-300">Doit donner plus d'argent</p>
-                  <p className="text-[9px] opacity-60 mt-0.5">
-                    Manque {formaterArgent(Math.abs(changeNeeded))} HTG
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-[10px] opacity-80 mt-0.5 text-emerald-300">Montant exact</p>
-                  <p className="text-[9px] opacity-60 mt-0.5">
-                    Aucune monnaie à rendre
-                  </p>
-                </>
+            <div style={{ textAlign: 'center', padding: '6px 0' }}>
+              <div style={{ fontSize: 10, color: isShort ? '#f87171' : '#4ade80', letterSpacing: 0.5 }}>
+                {isShort ? 'Doit donner plus' : 'Montant exact'}
+              </div>
+              {isShort && (
+                <div style={{ fontSize: 9, color: '#333', marginTop: 3 }}>
+                  Manque {formaterArgent(Math.abs(changeNeeded))} HTG
+                </div>
               )}
             </div>
           )}
         </div>
       )}
 
-      {/* Instructions */}
+      {/* ── Empty state instructions ── */}
       {cashSequences.length === 0 && (
-        <div className="bg-white bg-opacity-5 rounded-lg p-2 text-center">
-          <p className="text-[10px] opacity-70">
-            {selectedPreset === 'aucune' 
-              ? 'Entrez directement le montant ou utilisez les boutons rapides' 
-              : 'Sélectionnez un montant, entrez un multiplicateur ou utilisez les boutons rapides'}
-          </p>
-          <p className="text-[9px] opacity-50 mt-0.5">
-            {selectedPreset === 'aucune'
-              ? 'Ex: Entrez "1250" pour ajouter 1,250 HTG'
-              : `Ex: Sélectionnez "1,000", entrez "33" → 33,000 ${currencyType}`}
-          </p>
+        <div style={{ padding: '12px 14px', textAlign: 'center' }}>
+          <div style={{ fontSize: 9, color: '#2a2a2a', letterSpacing: 0.6, lineHeight: 1.8 }}>
+            {isDirectAmount
+              ? 'Entrez directement le montant ou utilisez les boutons rapides'
+              : `Sélectionnez un montant et entrez un multiplicateur — ex: 33 × ${selectedPreset} ${currencyType}`}
+          </div>
         </div>
       )}
+
     </div>
   );
 });
 
 CaisseRecuCard.displayName = 'CaisseRecuCard';
-
 export default CaisseRecuCard;
