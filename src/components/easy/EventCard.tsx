@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { TYPE_META } from '@/data/typeMeta';
 import { 
   isHabitDone, markHabit, 
-  isSubtaskDone, markSubtask, allSubtasksDone,
-  getAttachKey, attachmentStore 
+  isSubtaskDone, markSubtask, allSubtasksDone
 } from '@/utils/eventUtils';
+import { getAttachKey, attachmentStore } from '@/utils/attachmentUtils';
 import { getContactKey, contactStore } from '@/utils/contactUtils';
 import { Avatar } from '@/components/easy/Avatar';
 import { OilDropIcon } from '@/components/easy/OilDropIcon';
