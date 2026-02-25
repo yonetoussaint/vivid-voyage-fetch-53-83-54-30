@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { MONTH_NAMES } from '@/utils/dateHelpers';
-import { IC } from '@/components/icons/IconLibrary';
+import { IC } from '@/components/easy/IconLibrary';
 import { 
   SALARY, incomeStore, recurringStore, goalsStore, bucketStore,
   addIncome, getTotalIncomeWithSalary, getRecurringTotal, 
   getMonthTotals, getGoalProgress, goalIdCounter
-} from '@/stores/moneyStores';
+} from '@/components/easy/moneyStores';
 import { SPEND_CATEGORIES, INCOME_SOURCES, INCOME_SOURCE_ICONS, 
          DEFAULT_BUCKETS, GOAL_ICONS, GOAL_COLORS } from '@/data/moneyData';
-import { PayrollView } from '@/components/money/PayrollView';
+import { PayrollView } from '@/components/easy/PayrollView';
 
 // Re-export for use in other components
 export { SPEND_CATEGORIES, INCOME_SOURCES, INCOME_SOURCE_ICONS };
