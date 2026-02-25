@@ -113,8 +113,8 @@ function buildTree(items) {
 }
 
 export default function GitHub() {
-  const [token, setToken] = useState(() => localStorage.getItem("gh_token") || "");
-  const [repoInput, setRepoInput] = useState(() => localStorage.getItem("gh_repo") || "");
+  const [token, setToken] = useState(() => { try { return localStorage.getItem("gh_token") || ""; } catch { return ""; } });
+  const [repoInput, setRepoInput] = useState(() => { try { return localStorage.getItem("gh_repo") || ""; } catch { return ""; } });
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -132,6 +132,7 @@ export default function GitHub() {
   const [commitMsg, setCommitMsg] = useState("");
   const [showCommit, setShowCommit] = useState(false);
   const [lineNums, setLineNums] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const editorRef = useRef(null);
   const preRef = useRef(null);
   const textareaRef = useRef(null);
@@ -359,8 +360,6 @@ export default function GitHub() {
       </div>
     );
   }
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   function handleFileSelect(file) {
     openFile(file);
