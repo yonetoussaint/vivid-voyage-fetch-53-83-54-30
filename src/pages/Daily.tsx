@@ -58,7 +58,8 @@ export default function SamsungCalendar() {
 
         <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}} div::-webkit-scrollbar{display:none} input::-webkit-scrollbar{display:none}`}</style>
 
-        <div style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column" }}>
+        {/* Allow scrolling inside the tab container */}
+        <div style={{ flex:1, overflow:"auto", display:"flex", flexDirection:"column" }}>
           {activeTab === "notes"    && <NotesTab />}
           {activeTab === "calendar" && <CalendarTab />}
           {activeTab === "money"    && <MoneyTab />}
