@@ -1,7 +1,7 @@
 import { IC } from '@/components/easy/IconLibrary';
 import { SPEND_CATEGORIES, INCOME_SOURCES, DEFAULT_BUCKETS, recurringStore as recurringData, SALARY as initialSalary } from '@/data/moneyData';
 
-// Salary – now internal with getter/setter
+// Salary – internal with getter/setter
 let _SALARY = initialSalary;
 
 export function getSalary() {
@@ -15,9 +15,6 @@ export function setSalary(newSalary: number) {
 // Income store
 export const incomeStore: any[] = [];
 export let incomeIdCounter = 1;
-
-// Salary received flag (per month, managed in MoneyTab)
-// (no need to store globally, it's component state)
 
 // Transaction store (for calendar compatibility)
 export const txStore = { transactions: [] };
@@ -38,7 +35,13 @@ export let goalsStore: any[] = [
     usdRate:130,
   },
 ];
-export let goalIdCounter = 2;
+
+// Goal ID counter – internal, not exported directly
+let _goalIdCounter = 2;
+
+export function getNextGoalId() {
+  return `g${_goalIdCounter++}`;
+}
 
 // Recurring expenses store
 export const recurringStore = [...recurringData];
