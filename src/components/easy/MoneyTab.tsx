@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { MONTH_NAMES } from '@/utils/dateHelpers';
 import { IC } from '@/components/easy/IconLibrary';
 import { 
-  SALARY, incomeStore, recurringStore, goalsStore, bucketStore,
+  getSalary, setSalary,           // <-- changed: use getter/setter instead of direct SALARY
+  incomeStore, recurringStore, goalsStore, bucketStore,
   addIncome, getTotalIncomeWithSalary, getRecurringTotal, 
   getMonthTotals, getGoalProgress, goalIdCounter
 } from '@/stores/moneyStores';
@@ -17,6 +18,7 @@ export function MoneyTab() {
   const [view, setView] = useState("overview");
   const [selectedMoneyMonth, setSelectedMoneyMonth] = useState(new Date().getMonth());
   const [salaryReceived, setSalaryReceived] = useState(false);
+  const [salary, setSalaryState] = useState(getSalary()); // local copy for reactivity
   const [, forceUpdate] = useState(0);
   const refresh = () => forceUpdate(n => n+1);
 
@@ -145,7 +147,7 @@ export function MoneyTab() {
     const [editLabel,  setEditLabel]      = useState("");
     const [editDate,   setEditDate]       = useState("");
     const [salaryEditing, setSalaryEditing] = useState(false);
-    const [salaryInput,   setSalaryInput]   = useState(String(SALARY));
+    const [salaryInput,   setSalaryInput]   = useState(String(salary));
 
     const handleDelete = (id) => {
       const entry = incomeStore.find(e => e.id === id);
@@ -184,13 +186,23 @@ export function MoneyTab() {
     const monthSalary = monthEntries.find(e => e.sourceId === "salary");
     const nonSalary = monthEntries.filter(e => e.sourceId !== "salary");
     const nonSalaryTotal = nonSalary.reduce((s,e) => s+e.amount, 0);
-    const total = (monthSalary ? SALARY : 0) + nonSalaryTotal;
+    const total = (monthSalary ? salary : 0) + nonSalaryTotal;
     const today = new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"});
 
     const handleReceiveSalary = () => {
       if (salaryReceived) return;
       setSalaryReceived(true);
-      addIncome({ sourceId:"salary", label:"Monthly salary", amount:SALARY, recurring:false });
+      addIncome({ sourceId:"salary", label:"Monthly salary", amount:salary, recurring:false });
+      lr();
+    };
+
+    const handleSalaryUpdate = () => {
+      const v = parseFloat(salaryInput);
+      if (v > 0) {
+        setSalary(v);
+        setSalaryState(v);
+      }
+      setSalaryEditing(false);
       lr();
     };
 
@@ -213,9 +225,9 @@ export function MoneyTab() {
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                 <span style={{ fontSize:16, color:"#4285f4" }}>G</span>
                 <input autoFocus type="number" value={salaryInput} onChange={e=>setSalaryInput(e.target.value)}
-                  onKeyDown={e=>{ if(e.key==="Enter"){ const v=parseFloat(salaryInput); if(v>0){SALARY=v;} setSalaryEditing(false); lr(); }}}
+                  onKeyDown={e=>{ if(e.key==="Enter") handleSalaryUpdate(); }}
                   style={{ flex:1, background:"transparent", border:"none", borderBottom:"1px solid #2a2a2a", outline:"none", color:"#fff", fontSize:22, fontWeight:800, fontFamily:"inherit", padding:"4px 0" }}/>
-                <div onClick={()=>{ const v=parseFloat(salaryInput); if(v>0){SALARY=v;} setSalaryEditing(false); lr(); }}
+                <div onClick={handleSalaryUpdate}
                   style={{ fontSize:11, fontWeight:700, color:"#4285f4", background:"#4285f418", border:"1px solid #4285f433", padding:"6px 14px", cursor:"pointer", flexShrink:0 }}>Save</div>
                 <div onClick={()=>setSalaryEditing(false)}
                   style={{ fontSize:11, color:"#444", padding:"6px 10px", border:"1px solid #1a1a1a", cursor:"pointer", flexShrink:0 }}>✕</div>
@@ -228,9 +240,9 @@ export function MoneyTab() {
               </div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:11, color:"#34a853", fontWeight:700, letterSpacing:0.3 }}>Salary received</div>
-                <div style={{ fontSize:10, color:"#444", marginTop:2 }}>G {SALARY.toLocaleString()} · {today}</div>
+                <div style={{ fontSize:10, color:"#444", marginTop:2 }}>G {salary.toLocaleString()} · {today}</div>
               </div>
-              <div onClick={()=>{ setSalaryInput(String(SALARY)); setSalaryEditing(true); }}
+              <div onClick={()=>{ setSalaryInput(String(salary)); setSalaryEditing(true); }}
                 style={{ fontSize:10, color:"#444", cursor:"pointer", padding:"3px 8px", border:"1px solid #1a1a1a", flexShrink:0 }}>edit</div>
               <span style={{ fontSize:16, color:"#34a853" }}>✓</span>
             </div>
@@ -241,9 +253,9 @@ export function MoneyTab() {
               </div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:11, color:"#aaa", fontWeight:600 }}>Monthly salary</div>
-                <div style={{ fontSize:10, color:"#444", marginTop:2 }}>G {SALARY.toLocaleString()} · not yet received</div>
+                <div style={{ fontSize:10, color:"#444", marginTop:2 }}>G {salary.toLocaleString()} · not yet received</div>
               </div>
-              <div onClick={()=>{ setSalaryInput(String(SALARY)); setSalaryEditing(true); }}
+              <div onClick={()=>{ setSalaryInput(String(salary)); setSalaryEditing(true); }}
                 style={{ fontSize:10, color:"#444", cursor:"pointer", padding:"3px 8px", border:"1px solid #1a1a1a", flexShrink:0 }}>edit</div>
               <div onClick={handleReceiveSalary}
                 style={{ fontSize:11, fontWeight:700, color:"#4285f4", background:"#4285f418", border:"1px solid #4285f433", padding:"6px 12px", flexShrink:0, whiteSpace:"nowrap", cursor:"pointer" }}>
@@ -261,7 +273,7 @@ export function MoneyTab() {
           <div style={{ marginTop:10, display:"flex", gap:16 }}>
             <div>
               <div style={{ fontSize:9, color:"#333", marginBottom:1 }}>Salary</div>
-              <div style={{ fontSize:13, fontWeight:700, color:"#4285f4" }}>G {SALARY.toLocaleString()}</div>
+              <div style={{ fontSize:13, fontWeight:700, color:"#4285f4" }}>G {salary.toLocaleString()}</div>
             </div>
             <div>
               <div style={{ fontSize:9, color:"#333", marginBottom:1 }}>Other sources</div>
@@ -921,7 +933,7 @@ export function MoneyTab() {
           </div>
           <div style={{ textAlign:"right" }}>
             <div style={{ fontSize:10, color:"#444", marginBottom:2 }}>{recurringStore.length} expenses</div>
-            <div style={{ fontSize:11, color:"#555" }}>G {(SALARY - recurringTotal).toLocaleString()} left after</div>
+            <div style={{ fontSize:11, color:"#555" }}>G {(salary - recurringTotal).toLocaleString()} left after</div> {/* use salary */}
           </div>
         </div>
 
@@ -1086,7 +1098,7 @@ export function MoneyTab() {
 
           <div style={{ padding:"14px 20px", borderTop:"1px solid #111" }}>
             <div style={{ fontSize:9, color:"#333", letterSpacing:0.8, textTransform:"uppercase", marginBottom:4 }}>Monthly salary</div>
-            <div style={{ fontSize:16, fontWeight:800, color:"#4285f4" }}>G {SALARY.toLocaleString()}</div>
+            <div style={{ fontSize:16, fontWeight:800, color:"#4285f4" }}>G {salary.toLocaleString()}</div>
           </div>
         </div>
       )}
@@ -1107,7 +1119,7 @@ export function MoneyTab() {
           <div style={{ fontSize:10, color:"#444", marginTop:1 }}>{MONTH_NAMES[selectedMoneyMonth]} {new Date().getFullYear()}</div>
         </div>
         <div style={{ fontSize:10, color:"#4285f4", background:"#4285f411", border:"1px solid #4285f422", padding:"4px 10px", flexShrink:0 }}>
-          G {SALARY.toLocaleString()}
+          G {salary.toLocaleString()}
         </div>
       </div>
 
@@ -1131,7 +1143,7 @@ export function MoneyTab() {
         {view === "income"    && <Income />}
         {view === "expenses"  && <Expenses />}
         {view === "goals"     && <Goals />}
-        {view === "payroll"   && <PayrollView salary={SALARY} refresh={refresh} />}
+        {view === "payroll"   && <PayrollView salary={salary} refresh={refresh} />}
         {view === "recurring" && <Recurring />}
         {view === "history"   && <History />}
       </div>
