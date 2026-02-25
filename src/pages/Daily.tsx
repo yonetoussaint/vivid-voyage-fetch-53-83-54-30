@@ -4,6 +4,8 @@ import { NotesTab } from '@/components/easy/NotesTab';
 import { MoneyTab } from '@/components/easy/MoneyTab';
 import { TaskDetailScreen } from '@/components/easy/TaskDetailScreen';
 import { registerOpenDetail } from '@/components/easy/EventCard';
+// Import the main component from your EasyPlus page
+import SystemeStationService from '@/pages/EasyPlus'; // Assuming the path is correct
 
 export default function SamsungCalendar() {
   const [activeTab, setActiveTab] = useState("calendar");
@@ -47,6 +49,19 @@ export default function SamsungCalendar() {
           <rect x="2" y="6" width="20" height="13" rx="2"/>
           <path d="M2 10h20"/>
           <circle cx="12" cy="15" r="2"/>
+        </svg>
+      ),
+    },
+    // --- New EasyPlus Tab ---
+    {
+      id: "easyplus",
+      label: "EasyPlus",
+      icon: (active) => (
+        // Using a simple plus icon for EasyPlus; you can replace it.
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#34A853":"#555"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
         </svg>
       ),
     },
@@ -108,6 +123,8 @@ export default function SamsungCalendar() {
             {activeTab === "notes"    && <NotesTab />}
             {activeTab === "calendar" && <CalendarTab />}
             {activeTab === "money"    && <MoneyTab />}
+            {/* Render the imported EasyPlus component */}
+            {activeTab === "easyplus" && <SystemeStationService />}
           </div>
 
           {/* Bottom navigation */}
