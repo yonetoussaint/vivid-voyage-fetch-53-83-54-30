@@ -54,72 +54,101 @@ export default function SamsungCalendar() {
 
   return (
     <>
-      {/* Global reset – kills all page scrolling */}
       <style jsx global>{`
         html, body {
           margin: 0;
           padding: 0;
           height: 100%;
           overflow: hidden;
-        }
-        body {
           background: #1a1a1a;
           font-family: 'Roboto', sans-serif;
         }
+
+        /* On real mobile: fill the whole screen */
+        .app-shell {
+          width: 100vw;
+          height: 100dvh; /* dynamic viewport height handles mobile browser chrome */
+          background: #000;
+          overflow: hidden;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          color: #fff;
+        }
+
+        /* On desktop (wider than 480px): show the phone-frame look */
+        @media (min-width: 480px) {
+          .app-outer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+          }
+          .app-shell {
+            width: 390px;
+            height: 844px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.6);
+            border-radius: 40px;
+          }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        div::-webkit-scrollbar, input::-webkit-scrollbar { display: none; }
       `}</style>
 
-      {/* Outer container – exactly fills viewport, no scroll */}
-      <div style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-        width: "100vw",
-        overflow: "hidden",
-        background: "#1a1a1a",
-      }}>
-        {/* Phone frame – fixed dimensions, internal scroll only */}
-        <div style={{
-          width: 390,
-          height: 844,
-          background: "#000",
-          overflow: "hidden",
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          color: "#fff",
-          boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-        }}>
-          <style>{`
-            @keyframes fadeIn {
-              from { opacity: 0; transform: translateY(4px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-            div::-webkit-scrollbar {
-              display: none;
-            }
-            input::-webkit-scrollbar {
-              display: none;
-            }
-          `}</style>
+      <div className="app-outer">
+        <div className="app-shell">
 
-          {/* Scrollable content area – bottom bar stays fixed */}
+          {/* Scrollable content area */}
           <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
             {activeTab === "notes"    && <NotesTab />}
             {activeTab === "calendar" && <CalendarTab />}
             {activeTab === "money"    && <MoneyTab />}
           </div>
 
-          {/* Bottom navigation – fixed at the bottom */}
-          <div style={{ display: "flex", flexShrink: 0, borderTop: "1px solid #111", background: "#000", paddingBottom: 8 }}>
+          {/* Bottom navigation */}
+          <div style={{
+            display: "flex",
+            flexShrink: 0,
+            borderTop: "1px solid #111",
+            background: "#000",
+            paddingBottom: "env(safe-area-inset-bottom, 8px)", // handles iPhone notch/home indicator
+          }}>
             {TABS.map(tab => {
               const active = activeTab === tab.id;
               return (
-                <div key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "10px 0 6px", cursor: "pointer", userSelect: "none" }}>
+                <div
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 4,
+                    padding: "10px 0 6px",
+                    cursor: "pointer",
+                    userSelect: "none",
+                    WebkitTapHighlightColor: "transparent", // removes tap flash on mobile
+                  }}
+                >
                   {tab.icon(active)}
-                  <span style={{ fontSize: 10, color: active ? "#4285f4" : "#555", fontWeight: active ? 600 : 400, letterSpacing: 0.3 }}>{tab.label}</span>
-                  {active && <div style={{ width: 20, height: 2, borderRadius: 1, background: "#4285f4", marginTop: 1 }} />}
+                  <span style={{
+                    fontSize: 10,
+                    color: active ? "#4285f4" : "#555",
+                    fontWeight: active ? 600 : 400,
+                    letterSpacing: 0.3,
+                  }}>
+                    {tab.label}
+                  </span>
+                  {active && (
+                    <div style={{ width: 20, height: 2, borderRadius: 1, background: "#4285f4", marginTop: 1 }} />
+                  )}
                 </div>
               );
             })}
@@ -135,6 +164,7 @@ export default function SamsungCalendar() {
               bump={() => detailCtx.bump && detailCtx.bump()}
             />
           )}
+
         </div>
       </div>
     </>
