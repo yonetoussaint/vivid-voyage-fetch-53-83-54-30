@@ -272,122 +272,6 @@ function FormattingToolbar({ editorRef, accent, onUpdate }) {
   );
 }
 
-// ── Read Mode View ───────────────────────────────────────────────────────────
-function ReadMode({ chapters, ev, accent, onExit }) {
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 10000,
-      background: '#0a0c0e',
-      overflowY: 'auto',
-      fontFamily: 'Georgia, "Times New Roman", serif',
-      animation: 'readFadeIn 0.3s ease',
-    }}>
-      <style>{`
-        @keyframes readFadeIn { from { opacity:0; } to { opacity:1; } }
-        .read-content h1 { font-size: 26px; font-weight: 700; color: #d4d4d8; margin: 32px 0 12px; letter-spacing: -0.5px; line-height: 1.25; }
-        .read-content h2 { font-size: 19px; font-weight: 600; color: #aaa; margin: 28px 0 10px; line-height: 1.3; }
-        .read-content p { margin: 0 0 16px; color: #7a7a7a; }
-        .read-content ul { padding-left: 22px; margin: 0 0 16px; }
-        .read-content li { color: #7a7a7a; margin-bottom: 6px; }
-        .read-content strong { color: #bbb; }
-        .read-content em { color: #888; font-style: italic; }
-        .read-content u { text-decoration-color: #444; }
-      `}</style>
-
-      {/* Exit bar */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 2,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 40px', height: 48,
-        background: 'linear-gradient(to bottom, #0a0c0e, transparent)',
-      }}>
-        <span style={{ fontSize: 9, color: accent + '66', letterSpacing: 1.5, textTransform: 'uppercase' }}>
-          {TYPE_META[ev.type]?.icon || '§'} reading mode
-        </span>
-        <div
-          onClick={onExit}
-          style={{
-            fontSize: 10, color: '#333', cursor: 'pointer',
-            border: '1px solid #1a1a1a', padding: '4px 12px',
-            letterSpacing: 0.8, textTransform: 'uppercase',
-            transition: 'color 0.15s, border-color 0.15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = accent + '66'; }}
-          onMouseLeave={e => { e.currentTarget.style.color = '#333'; e.currentTarget.style.borderColor = '#1a1a1a'; }}
-        >
-          ✕ Exit
-        </div>
-      </div>
-
-      {/* Content */}
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '20px 40px 120px' }}>
-        {/* Book title */}
-        <div style={{ marginBottom: 60, paddingBottom: 32, borderBottom: `1px solid #111` }}>
-          <div style={{ fontSize: 9, color: accent + '55', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>
-            {ev.type}
-          </div>
-          <h1 style={{
-            fontSize: 38, fontWeight: 700, color: '#d4d4d8', margin: 0,
-            letterSpacing: -1, lineHeight: 1.15,
-            fontFamily: 'Georgia, serif',
-          }}>{ev.title}</h1>
-        </div>
-
-        {/* Chapters */}
-        {chapters.map((ch, ci) => {
-          const hasContent = ch.content && ch.content.trim() && ch.content.trim() !== '<br>' && ch.content.trim() !== '<p><br></p>';
-          const hasSubs = ch.subs && ch.subs.length > 0;
-          if (!hasContent && !hasSubs) return null;
-
-          return (
-            <div key={ch.id} style={{ marginBottom: 64 }}>
-              {/* Chapter title */}
-              <div style={{ marginBottom: 28 }}>
-                <div style={{ fontSize: 9, color: accent + '44', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>
-                  Chapter {ci + 1}
-                </div>
-                <div style={{
-                  fontSize: 24, fontWeight: 700, color: '#888',
-                  letterSpacing: -0.3, lineHeight: 1.2,
-                  fontFamily: 'Georgia, serif',
-                }}>{ch.title}</div>
-                <div style={{ width: 32, height: 1, background: accent + '44', marginTop: 14 }} />
-              </div>
-
-              {/* Chapter body */}
-              {hasContent && (
-                <div
-                  className="read-content"
-                  style={{ fontSize: 16, lineHeight: 1.9 }}
-                  dangerouslySetInnerHTML={{ __html: ch.content }}
-                />
-              )}
-
-              {/* Sub-sections */}
-              {hasSubs && ch.subs.map((sub, si) => {
-                const subHasContent = sub.content && sub.content.trim() && sub.content.trim() !== '<br>' && sub.content.trim() !== '<p><br></p>';
-                if (!subHasContent) return null;
-                return (
-                  <div key={sub.id} style={{ marginTop: 36, paddingLeft: 20, borderLeft: `1px solid ${accent}22` }}>
-                    <div style={{
-                      fontSize: 11, fontWeight: 600, color: '#555',
-                      letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 16,
-                    }}>{ci + 1}.{si + 1} — {sub.title}</div>
-                    <div
-                      className="read-content"
-                      style={{ fontSize: 15, lineHeight: 1.85 }}
-                      dangerouslySetInnerHTML={{ __html: sub.content }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 // ────────────────────────────────────────────────────────────────────────────
 
 export function DocScreen({ ev, accent, text, setText, onClose }) {
@@ -643,22 +527,12 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
 
   return (
     <>
-      {readMode && (
-        <ReadMode
-          chapters={chapters}
-          ev={ev}
-          accent={accent}
-          onExit={() => setReadMode(false)}
-        />
-      )}
-
       <div onClick={e=>e.stopPropagation()} style={{
         position:"fixed", inset:0, zIndex:9999,
         background:"#06080a",
         display:"flex", flexDirection:"column",
         fontFamily:"'Courier New', Courier, monospace",
         animation:"docFadeIn 0.18s ease",
-        visibility: readMode ? 'hidden' : 'visible',
       }}>
         <style>{`
           @keyframes docFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
@@ -714,12 +588,12 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
             <span style={{ fontSize:9, color:"#2a2a2a" }}>{activeWordCount}w</span>
             {/* Read mode toggle */}
             <div
-              onClick={() => setReadMode(true)}
-              title="Read mode"
-              style={{ fontSize:9, color:"#333", cursor:"pointer", padding:"3px 10px", border:"1px solid #1a1a1a", userSelect:"none", letterSpacing:0.6, transition:"color 0.15s, border-color 0.15s" }}
+              onClick={() => setReadMode(r => !r)}
+              title={readMode ? "Exit read mode" : "Read mode"}
+              style={{ fontSize:9, color: readMode ? accent : "#333", cursor:"pointer", padding:"3px 10px", border:`1px solid ${readMode ? accent+'44' : '#1a1a1a'}`, userSelect:"none", letterSpacing:0.6, transition:"color 0.15s, border-color 0.15s" }}
               onMouseEnter={e => { e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = accent + '66'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = '#333'; e.currentTarget.style.borderColor = '#1a1a1a'; }}
-            >Read</div>
+              onMouseLeave={e => { e.currentTarget.style.color = readMode ? accent : '#333'; e.currentTarget.style.borderColor = readMode ? accent+'44' : '#1a1a1a'; }}
+            >{readMode ? "Editing…" : "Read"}</div>
             <div onClick={onClose} style={{ fontSize:11, color:"#444", cursor:"pointer", padding:"3px 8px", border:"1px solid #1a1a1a", userSelect:"none" }}>✕</div>
           </div>
         </div>
@@ -756,7 +630,9 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                   </div>
                   <input
                     value={activeTitle}
+                    readOnly={readMode}
                     onChange={e => {
+                      if (readMode) return;
                       const val = e.target.value;
                       setChapters(p => p.map(ch => {
                         if (activeSub) {
@@ -770,7 +646,8 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                       width:"100%", background:"transparent", border:"none", outline:"none",
                       color:"#d4d4d8", fontSize: isMobile ? 22 : 28, fontWeight:700,
                       letterSpacing:-0.5, lineHeight:1.2, fontFamily:"inherit",
-                      caretColor:accent, boxSizing:"border-box",
+                      caretColor: readMode ? "transparent" : accent, boxSizing:"border-box",
+                      cursor: readMode ? "default" : "text",
                     }}
                   />
                   {!activeSub && ev.prompt && (
@@ -797,7 +674,7 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     key={activeChapterId + '-' + activeSubId}
                     ref={editorRef}
                     className="doc-editor-div"
-                    contentEditable
+                    contentEditable={!readMode}
                     suppressContentEditableWarning
                     spellCheck={false}
                     autoCorrect="off"
@@ -807,28 +684,41 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                       : `Begin writing Chapter ${chapters.indexOf(activeChapter)+1}…`}
                     dangerouslySetInnerHTML={{ __html: activeContent }}
                     onInput={() => {
-                      if (editorRef.current) updateContent(editorRef.current.innerHTML);
+                      if (editorRef.current && !readMode) updateContent(editorRef.current.innerHTML);
                     }}
+                    onDoubleClick={() => { if (readMode) setReadMode(false); }}
                     style={{
                       minHeight: isMobile ? 300 : 440,
                       color:"#c0c0c4", fontSize: isMobile ? 15 : 15, lineHeight:2.1,
                       fontFamily:"'Courier New', Courier, monospace",
                       padding: isMobile ? "4px 0 24px" : "8px 0 32px",
                       boxSizing:"border-box",
-                      caretColor:accent,
+                      caretColor: readMode ? "transparent" : accent,
                       WebkitTapHighlightColor:"transparent",
+                      cursor: readMode ? "default" : "text",
+                      userSelect: readMode ? "text" : "auto",
                     }}
                   />
+                  {readMode && (
+                    <div style={{
+                      position:"absolute", bottom:8, right:0,
+                      fontSize:9, color:"#222", letterSpacing:0.8,
+                      pointerEvents:"none", userSelect:"none",
+                    }}>double-click to edit</div>
+                  )}
                 </div>
 
                 {/* ── FORMATTING TOOLBAR (bottom) ── */}
-                <FormattingToolbar
-                  editorRef={editorRef}
-                  accent={accent}
-                  onUpdate={updateContent}
-                />
+                {!readMode && (
+                  <FormattingToolbar
+                    editorRef={editorRef}
+                    accent={accent}
+                    onUpdate={updateContent}
+                  />
+                )}
 
                 {/* Chapter navigation */}
+                {!readMode && (
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", paddingTop:20, marginTop:20, borderTop:"1px solid #0f0f0f" }}>
                   {(() => {
                     const ci = chapters.indexOf(activeChapter);
@@ -886,8 +776,10 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     return <div/>;
                   })()}
                 </div>
+                )}
 
                 {/* Add section/chapter */}
+                {!readMode && (
                 <div style={{ marginTop:24, display:"flex", gap:8 }}>
                   <div onClick={() => addSub(activeChapterId)}
                     style={{ fontSize:10, color:"#333", border:"1px solid #1a1a1a", padding:"6px 14px", cursor:"pointer", display:"flex", alignItems:"center", gap:6, userSelect:"none" }}>
@@ -898,6 +790,7 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
                     <span style={{ color:accent+"66" }}>+</span> New chapter
                   </div>
                 </div>
+                )}
               </div>
             ) : (
               <div style={{ textAlign:"center", padding:"80px 24px", color:"#222" }}>
