@@ -123,6 +123,13 @@ export function AppRoutes() {
         }
       />
 
+      <Route
+        path="github"
+        element={
+          <GitHub />
+        }
+      />
+
       {/* All other routes - INSIDE MainLayout */}
       <Route path="/" element={<MainLayout />}>
         <Route
