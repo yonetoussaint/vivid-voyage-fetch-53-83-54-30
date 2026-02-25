@@ -1,5 +1,5 @@
 import { TYPE_META } from '@/data/typeMeta';
-import { OilDropIcon } from '@components/easy/OilDropIcon';
+import { OilDropIcon } from '@/components/easy/OilDropIcon';
 
 export function TypeLegend({ onClose }) {
   const entries = Object.entries(TYPE_META);
