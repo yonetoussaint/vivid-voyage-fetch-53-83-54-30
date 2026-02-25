@@ -1,65 +1,71 @@
-// easy/StatisticCard.jsx
 import React from 'react';
 
-const StatisticCard = ({ 
-  title, 
-  value, 
+const ACCENT_MAP = {
+  emerald: '#4ade80',
+  amber:   '#fbbf24',
+  red:     '#f87171',
+  orange:  '#fb923c',
+  blue:    '#60a5fa',
+};
+
+const StatisticCard = ({
+  title,
+  value,
   color = 'emerald',
-  unit = 'gallons'
+  unit = 'gallons',
 }) => {
-  const getColorClasses = () => {
-    const colorMap = {
-      emerald: {
-        bg: 'bg-emerald-50',
-        dot: 'bg-emerald-500',
-        text: 'text-emerald-900',
-        badgeBg: 'bg-emerald-100'
-      },
-      amber: {
-        bg: 'bg-amber-50',
-        dot: 'bg-amber-500',
-        text: 'text-amber-900',
-        badgeBg: 'bg-amber-100'
-      },
-      red: {
-        bg: 'bg-red-50',
-        dot: 'bg-red-500',
-        text: 'text-red-900',
-        badgeBg: 'bg-red-100'
-      },
-      orange: {
-        bg: 'bg-orange-50',
-        dot: 'bg-orange-500',
-        text: 'text-orange-900',
-        badgeBg: 'bg-orange-100'
-      },
-      blue: {
-        bg: 'bg-blue-50',
-        dot: 'bg-blue-500',
-        text: 'text-blue-900',
-        badgeBg: 'bg-blue-100'
-      }
-    };
-
-    return colorMap[color] || colorMap.emerald;
-  };
-
-  const colors = getColorClasses();
+  const accent = ACCENT_MAP[color] || ACCENT_MAP.emerald;
 
   return (
-    <div className={`rounded-xl p-3 border ${colors.bg} ${colors.text}`}>
-      <div className="flex items-center gap-1 mb-1">
-        <div className={`w-2 h-2 rounded-full ${colors.dot}`}></div>
-        <p className="text-xs font-medium opacity-90">{title}</p>
+    <div style={{
+      background: '#07090b',
+      border: '1px solid #1a1a1a',
+      padding: '10px 14px 12px',
+      fontFamily: "'Courier New', Courier, monospace",
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+    }}>
+      {/* Title row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+        <div style={{
+          width: 5,
+          height: 5,
+          borderRadius: '50%',
+          background: accent,
+          flexShrink: 0,
+        }} />
+        <span style={{
+          fontSize: 9,
+          color: '#444',
+          letterSpacing: 1.1,
+          textTransform: 'uppercase',
+        }}>
+          {title}
+        </span>
       </div>
-      <div className="flex items-baseline justify-between">
-        <p className="text-lg sm:text-xl font-bold">{value}</p>
-        <div 
-          className={`!rounded-xl !px-2 !py-0.5 ${colors.badgeBg} ${colors.text}`}
-          style={{ borderRadius: '12px !important' }}
-        >
-          <p className="text-[10px] font-medium !important">{unit}</p>
-        </div>
+
+      {/* Value + unit row */}
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+        <span style={{
+          fontSize: 22,
+          fontWeight: 700,
+          color: '#d4d4d8',
+          letterSpacing: -0.5,
+          lineHeight: 1,
+        }}>
+          {value}
+        </span>
+        <span style={{
+          fontSize: 9,
+          color: accent,
+          letterSpacing: 0.8,
+          textTransform: 'uppercase',
+          borderLeft: `1px solid ${accent}33`,
+          paddingLeft: 8,
+        }}>
+          {unit}
+        </span>
       </div>
     </div>
   );
