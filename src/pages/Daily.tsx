@@ -53,35 +53,62 @@ export default function SamsungCalendar() {
   ];
 
   return (
-    <div style={{display:"flex",justifyContent:"center",alignItems:"center",minHeight:"100vh",background:"#1a1a1a",fontFamily:"'Roboto',sans-serif"}}>
-      <div style={{width:390,height:844,background:"#000",overflow:"hidden",position:"relative",display:"flex",flexDirection:"column",color:"#fff"}}>
-
+    // Outer container now exactly fills the viewport and disables page scroll
+    <div style={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      height: "100vh",          // 👈 changed from minHeight to height
+      overflow: "hidden",       // 👈 new – prevents any browser scroll
+      background: "#1a1a1a",
+      fontFamily: "'Roboto', sans-serif"
+    }}>
+      {/* Phone frame – fixed dimensions, internal scroll only */}
+      <div style={{
+        width: 390,
+        height: 844,
+        background: "#000",
+        overflow: "hidden",
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        color: "#fff"
+      }}>
         <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}} div::-webkit-scrollbar{display:none} input::-webkit-scrollbar{display:none}`}</style>
 
-        {/* Allow scrolling inside the tab container */}
-        <div style={{ flex:1, overflow:"auto", display:"flex", flexDirection:"column" }}>
+        {/* Scrollable content area – bottom bar stays fixed */}
+        <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
           {activeTab === "notes"    && <NotesTab />}
           {activeTab === "calendar" && <CalendarTab />}
           {activeTab === "money"    && <MoneyTab />}
         </div>
 
-        <div style={{ display:"flex", flexShrink:0, borderTop:"1px solid #111", background:"#000", paddingBottom:8 }}>
+        {/* Bottom navigation – fixed at the bottom */}
+        <div style={{ display: "flex", flexShrink: 0, borderTop: "1px solid #111", background: "#000", paddingBottom: 8 }}>
           {TABS.map(tab => {
             const active = activeTab === tab.id;
             return (
               <div key={tab.id} onClick={()=>setActiveTab(tab.id)}
-                style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, padding:"10px 0 6px", cursor:"pointer", userSelect:"none" }}
+                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "10px 0 6px", cursor: "pointer", userSelect: "none" }}
               >
                 {tab.icon(active)}
-                <span style={{ fontSize:10, color:active?"#4285f4":"#555", fontWeight:active?600:400, letterSpacing:0.3 }}>{tab.label}</span>
-                {active && <div style={{ width:20, height:2, borderRadius:1, background:"#4285f4", marginTop:1 }}/>}
+                <span style={{ fontSize: 10, color: active ? "#4285f4" : "#555", fontWeight: active ? 600 : 400, letterSpacing: 0.3 }}>{tab.label}</span>
+                {active && <div style={{ width: 20, height: 2, borderRadius: 1, background: "#4285f4", marginTop: 1 }}/>}
               </div>
             );
           })}
         </div>
 
-        {detailCtx && <TaskDetailScreen ev={detailCtx.ev} dateKey={detailCtx.dateKey} year={detailCtx.year} month={detailCtx.month} onClose={()=>setDetailCtx(null)} bump={()=>detailCtx.bump&&detailCtx.bump()}/>}
-
+        {detailCtx && (
+          <TaskDetailScreen
+            ev={detailCtx.ev}
+            dateKey={detailCtx.dateKey}
+            year={detailCtx.year}
+            month={detailCtx.month}
+            onClose={() => setDetailCtx(null)}
+            bump={() => detailCtx.bump && detailCtx.bump()}
+          />
+        )}
       </div>
     </div>
   );
