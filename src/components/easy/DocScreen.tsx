@@ -302,7 +302,7 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
   const [editingTitleId, setEditingTitleId] = useState(null);
   const [editingTitleVal, setEditingTitleVal] = useState("");
   const [expandedIds, setExpandedIds] = useState({});
-  const [readMode, setReadMode] = useState(false);
+  const [readMode, setReadMode] = useState(true);
   const editorRef = useRef(null);
 
   useEffect(() => {
@@ -695,14 +695,29 @@ export function DocScreen({ ev, accent, text, setText, onClose }) {
 
           <div style={{ display:"flex", alignItems:"center", gap:8, padding:"0 12px", borderLeft:"1px solid #111", flexShrink:0 }}>
             <span style={{ fontSize:9, color:"#2a2a2a" }}>{activeWordCount}w</span>
-            {/* Read mode toggle */}
+            {/* Mode toggle */}
             <div
               onClick={() => setReadMode(r => !r)}
-              title={readMode ? "Exit read mode" : "Read mode"}
-              style={{ fontSize:9, color: readMode ? accent : "#333", cursor:"pointer", padding:"3px 10px", border:`1px solid ${readMode ? accent+'44' : '#1a1a1a'}`, userSelect:"none", letterSpacing:0.6, transition:"color 0.15s, border-color 0.15s" }}
-              onMouseEnter={e => { e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = accent + '66'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = readMode ? accent : '#333'; e.currentTarget.style.borderColor = readMode ? accent+'44' : '#1a1a1a'; }}
-            >{readMode ? "Editing…" : "Read"}</div>
+              style={{ fontSize:9, color: readMode ? accent : "#555", cursor:"pointer", padding:"3px 10px", border:`1px solid ${readMode ? accent+'33' : '#1e1e1e'}`, userSelect:"none", letterSpacing:0.5, transition:"color 0.15s, border-color 0.15s", display:"flex", alignItems:"center", gap:5 }}
+              onMouseEnter={e => { e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = accent + '55'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = readMode ? accent : '#555'; e.currentTarget.style.borderColor = readMode ? accent+'33' : '#1e1e1e'; }}
+            >
+              {readMode ? (
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  Read
+                </>
+              ) : (
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  Edit
+                </>
+              )}
+            </div>
             <div onClick={onClose} style={{ fontSize:11, color:"#444", cursor:"pointer", padding:"3px 8px", border:"1px solid #1a1a1a", userSelect:"none" }}>✕</div>
           </div>
         </div>
