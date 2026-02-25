@@ -716,14 +716,23 @@ export function MoneyTab() {
     };
 
     const handleAddGoal = () => {
-      const targetHTG = parseFloat(newTarget);
-      if (!targetHTG || !newLabel.trim()) return;
-      const g = { id:"g"+(goalIdCounter++), label:newLabel.trim(), icon:newIcon, color:newColor, targetHTG, savedHTG:0, note:newNote.trim(), usdRate:USD_RATE };
-      goalsStore.push(g);
-      setGoals([...goalsStore]);
-      setNewLabel(""); setNewTarget(""); setNewNote(""); setNewIcon((c,s)=>IC.target(c,s)); setNewColor("#69f0ae");
-      setAdding(false);
-    };
+  const targetHTG = parseFloat(newTarget);
+  if (!targetHTG || !newLabel.trim()) return;
+  const g = { 
+    id: getNextGoalId(),  // <-- use function instead of incrementing imported variable
+    label: newLabel.trim(), 
+    icon: newIcon, 
+    color: newColor, 
+    targetHTG, 
+    savedHTG: 0, 
+    note: newNote.trim(), 
+    usdRate: USD_RATE 
+  };
+  goalsStore.push(g);
+  setGoals([...goalsStore]);
+  setNewLabel(""); setNewTarget(""); setNewNote(""); setNewIcon((c,s)=>IC.target(c,s)); setNewColor("#69f0ae");
+  setAdding(false);
+};
 
     const handleDelete = (id) => {
       const idx = goalsStore.findIndex(g => g.id === id);
