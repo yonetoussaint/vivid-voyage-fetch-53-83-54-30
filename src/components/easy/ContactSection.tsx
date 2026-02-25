@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { SOCIALS, contactStore, getContactKey } from '../utils/contactUtils';
-import { Avatar } from './Avatar';
+import { SOCIALS, contactStore, getContactKey } from '@/utils/contactUtils';
+import { Avatar } from '@/components/easy/Avatar';
 
 const EMPTY_FORM = { name: "", role: "", photo: "", phone: "", email: "", notes: "", whatsapp: "", instagram: "", linkedin: "", twitter: "", telegram: "", snapchat: "" };
 
