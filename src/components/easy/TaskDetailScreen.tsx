@@ -10,7 +10,7 @@ import { getAttachKey, attachmentStore } from '@/utils/attachmentUtils';
 import { HabitTracker } from '@/components/easy/HabitTracker';
 import { ContactSection } from '@/components/easy/ContactSection';
 import { AttachmentSection } from '@/components/easy/AttachmentSection';
-import { OilDropIcon } from '@/components/icons/OilDropIcon';
+import { OilDropIcon } from '@/components/easy/OilDropIcon';
 
 export function TaskDetailScreen({ ev, dateKey, year, month, onClose, bump }) {
   const isHabit = ev.type === "habit";
