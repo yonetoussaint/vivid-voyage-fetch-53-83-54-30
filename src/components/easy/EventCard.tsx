@@ -7,7 +7,7 @@ import {
 } from '@/utils/eventUtils';
 import { getContactKey, contactStore } from '@/utils/contactUtils';
 import { Avatar } from '@/components/easy/Avatar';
-import { OilDropIcon } from '@/components/icons/OilDropIcon';
+import { OilDropIcon } from '@/components/easy/OilDropIcon';
 import { ContactSection } from '@/components/easy/ContactSection';
 import { AttachmentSection } from '@/components/easy/AttachmentSection';
 import { HabitTracker } from '@/components/easy/HabitTracker';
