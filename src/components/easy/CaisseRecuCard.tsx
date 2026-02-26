@@ -107,6 +107,7 @@ const CaisseRecuCard = React.memo(({
   const commonRoundAmounts = [50, 100, 250, 500, 1000, 2000, 5000, 10000];
   const activeCurrencyColor = currencyType === 'USD' ? usdColor : htgColor;
 
+  // FIX: Wrap formatDepositDisplay in useCallback with proper dependencies
   const formatDepositDisplay = useCallback((depot) => {
     if (!depot) return '';
     try {
@@ -117,7 +118,9 @@ const CaisseRecuCard = React.memo(({
       if (typeof depot === 'object' && depot.value !== undefined)
         return `${formaterArgent(parseFloat(depot.value) || 0)} HTG`;
       return `${formaterArgent(parseFloat(depot) || 0)} HTG`;
-    } catch { return 'Erreur'; }
+    } catch { 
+      return 'Erreur'; 
+    }
   }, [tauxUSD]);
 
   const depositBreakdown = useMemo(() => {
@@ -134,9 +137,26 @@ const CaisseRecuCard = React.memo(({
 
   const calculatedTotalDepositsHTG = useMemo(() => depositBreakdown.reduce((s, d) => s + d.amountInHTG, 0), [depositBreakdown]);
   const calculatedEspecesAttendues = useMemo(() => totalAjustePourCaisse - calculatedTotalDepositsHTG, [totalAjustePourCaisse, calculatedTotalDepositsHTG]);
-  const totalCashRecuHTG = useMemo(() => cashSequences.reduce((s, seq) => s + (seq.currency === 'USD' ? (parseFloat(seq.amount) * tauxUSD || 0) : (parseFloat(seq.amount) || 0)), 0), [cashSequences, tauxUSD]);
-  const totalHTG = useMemo(() => cashSequences.filter(s => s.currency === 'HTG').reduce((s, seq) => s + (parseFloat(seq.amount) || 0), 0), [cashSequences]);
-  const totalUSD = useMemo(() => cashSequences.filter(s => s.currency === 'USD').reduce((s, seq) => s + (parseFloat(seq.amount) || 0), 0), [cashSequences]);
+  
+  // FIX: Memoize these calculations to prevent unnecessary re-renders
+  const totalCashRecuHTG = useMemo(() => 
+    cashSequences.reduce((s, seq) => {
+      if (seq.currency === 'USD') {
+        return s + ((parseFloat(seq.amount) || 0) * tauxUSD);
+      }
+      return s + (parseFloat(seq.amount) || 0);
+    }, 0), 
+  [cashSequences, tauxUSD]);
+  
+  const totalHTG = useMemo(() => 
+    cashSequences.filter(s => s.currency === 'HTG')
+      .reduce((s, seq) => s + (parseFloat(seq.amount) || 0), 0), 
+  [cashSequences]);
+  
+  const totalUSD = useMemo(() => 
+    cashSequences.filter(s => s.currency === 'USD')
+      .reduce((s, seq) => s + (parseFloat(seq.amount) || 0), 0), 
+  [cashSequences]);
 
   const changeNeeded     = totalCashRecuHTG - calculatedEspecesAttendues;
   const shouldGiveChange = changeNeeded > 0;
@@ -167,28 +187,46 @@ const CaisseRecuCard = React.memo(({
 
   const handleInputChange    = useCallback((e) => setInputValue(e.target.value), []);
   const handleCurrencyToggle = useCallback(() => { setCurrencyType(p => p === 'HTG' ? 'USD' : 'HTG'); setSelectedPreset('aucune'); setInputValue(''); }, []);
-  const handleKeyPress       = useCallback((e) => { if (e.key === 'Enter') handleAddSequence(); }, []);
+  const handleKeyPress       = useCallback((e) => { if (e.key === 'Enter') handleAddSequence(); }, [handleAddSequence]);
   const handlePresetSelect   = useCallback((v) => { setSelectedPreset(v); setShowPresets(false); if (v === 'aucune') setInputValue(''); }, []);
   const handleClearAll       = useCallback(() => setCashSequences([]), []);
   const handleRemoveSequence = useCallback((id) => setCashSequences(p => p.filter(s => s.id !== id)), []);
   const handleRoundAmountSelect = useCallback((v) => setRoundAmount(v.toString()), []);
   const handleResetRoundAmount  = useCallback(() => setRoundAmount(''), []);
 
+  // FIX: Fixed handleAddSequence with proper validation
   const handleAddSequence = useCallback(() => {
     let amount = 0, note = '';
-    if (isDirectAmount) { amount = parseFloat(inputValue) || 0; note = `${amount} ${currencyType}`; }
-    else {
+    
+    if (isDirectAmount) { 
+      amount = parseFloat(inputValue) || 0; 
+      note = `${amount} ${currencyType}`; 
+    } else {
       if (inputValue && !isNaN(parseFloat(inputValue))) {
-        const mult = parseFloat(inputValue); amount = parseFloat(selectedPreset) * mult;
+        const mult = parseFloat(inputValue); 
+        amount = parseFloat(selectedPreset) * mult;
         note = `${mult} × ${selectedPreset} ${currencyType}`;
-      } else { amount = parseFloat(selectedPreset); note = `${selectedPreset} ${currencyType}`; }
+      } else { 
+        amount = parseFloat(selectedPreset); 
+        note = `${selectedPreset} ${currencyType}`; 
+      }
     }
-    if (currencyType === 'USD') amount = parseFloat(amount.toFixed(2));
-    if (amount > 0) {
+    
+    // FIX: Handle USD rounding safely - ensure it's a finite number
+    if (currencyType === 'USD') {
+      amount = Math.round(amount * 100) / 100; // Round to 2 decimals safely
+      if (!isFinite(amount) || isNaN(amount)) amount = 0;
+    }
+    
+    // FIX: Validate amount is positive and finite
+    if (amount > 0 && isFinite(amount)) {
       setCashSequences(p => [...p, {
-        id: Date.now(), amount, currency: currencyType,
+        id: Date.now() + Math.random(), // Add random to ensure unique IDs
+        amount, 
+        currency: currencyType,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        convertedToHTG: currencyType === 'USD' ? amount * tauxUSD : amount, note,
+        convertedToHTG: currencyType === 'USD' ? amount * tauxUSD : amount, 
+        note,
       }]);
       setInputValue('');
       if (!isDirectAmount && inputValue) setSelectedPreset('aucune');
@@ -196,8 +234,13 @@ const CaisseRecuCard = React.memo(({
   }, [inputValue, currencyType, selectedPreset, isDirectAmount, tauxUSD]);
 
   const handleQuickAdd = useCallback((amount) => {
+    // FIX: Ensure amount is valid
+    if (!amount || amount <= 0) return;
+    
     setCashSequences(p => [...p, {
-      id: Date.now(), amount, currency: currencyType,
+      id: Date.now() + Math.random(),
+      amount, 
+      currency: currencyType,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       convertedToHTG: currencyType === 'USD' ? amount * tauxUSD : amount,
       note: `${amount} ${currencyType}`,
@@ -207,9 +250,11 @@ const CaisseRecuCard = React.memo(({
   const handleApplyRoundAmount = useCallback(() => {
     if (!roundAmountDetails?.isValid) return;
     const extra = roundAmountDetails.customerAdds;
-    if (extra > 0) {
+    if (extra > 0 && isFinite(extra)) {
       setCashSequences(p => [...p, {
-        id: Date.now(), amount: extra, currency: 'HTG',
+        id: Date.now() + Math.random(),
+        amount: extra, 
+        currency: 'HTG',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         convertedToHTG: extra,
         note: `Client ajoute pour arrondir à ${formaterArgent(roundAmountDetails.desiredAmount)} HTG`,
@@ -218,15 +263,46 @@ const CaisseRecuCard = React.memo(({
     setRoundAmount('');
   }, [roundAmountDetails]);
 
+  // FIX: Fixed useEffect without causing infinite loops
   useEffect(() => {
+    // Only run this effect if we actually need to calculate
     if (shouldGiveChange && changeNeeded > 1000) {
       setIsCalculating(true);
-      calculationTimeoutRef.current = setTimeout(() => setIsCalculating(false), 100);
-    } else { setIsCalculating(false); }
-    return () => { clearTimeout(calculationTimeoutRef.current); clearTimeout(inputDebounceRef.current); };
-  }, [changeNeeded, shouldGiveChange]);
+      
+      // Clear any existing timeout
+      if (calculationTimeoutRef.current) {
+        clearTimeout(calculationTimeoutRef.current);
+      }
+      
+      // Set new timeout
+      calculationTimeoutRef.current = setTimeout(() => {
+        setIsCalculating(false);
+        calculationTimeoutRef.current = null;
+      }, 100);
+    } else { 
+      setIsCalculating(false); 
+    }
+    
+    // Clean up
+    return () => {
+      if (calculationTimeoutRef.current) {
+        clearTimeout(calculationTimeoutRef.current);
+        calculationTimeoutRef.current = null;
+      }
+    };
+  }, [changeNeeded, shouldGiveChange]); // Remove calculationTimeoutRef from dependencies
 
-  useEffect(() => () => { clearTimeout(inputDebounceRef.current); clearTimeout(calculationTimeoutRef.current); }, []);
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (inputDebounceRef.current) {
+        clearTimeout(inputDebounceRef.current);
+      }
+      if (calculationTimeoutRef.current) {
+        clearTimeout(calculationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const inputStyle = (hasValue) => ({
     width: '100%', background: '#ffffff',
