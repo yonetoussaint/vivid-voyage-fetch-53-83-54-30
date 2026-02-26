@@ -5,7 +5,6 @@ import './index.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './i18n';
 
-// 👇 Add this import
 import { registerSW } from 'virtual:pwa-register';
 
 const container = document.getElementById("root");
@@ -18,7 +17,4 @@ root.render(
   </React.StrictMode>
 );
 
-// 👇 Register Service Worker for offline support
-registerSW({
-  immediate: true,
-});
+registerSW({ immediate: true });
