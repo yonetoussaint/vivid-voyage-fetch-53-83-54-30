@@ -6,7 +6,7 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig(({ mode }) => ({
-  base: "/", // Important for PWA
+  base: "/",
   server: {
     host: "0.0.0.0",
     port: 5000,
@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     nodePolyfills({
-      include: ['path', 'stream', 'util', 'crypto', 'buffer', 'process'],
+      include: ["path", "stream", "util", "crypto", "buffer", "process"],
       globals: {
         Buffer: true,
         global: true,
