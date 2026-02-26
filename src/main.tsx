@@ -1,10 +1,12 @@
-
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import './i18n'; // Initialize i18next
+import './i18n';
+
+// 👇 Add this import
+import { registerSW } from 'virtual:pwa-register';
 
 const container = document.getElementById("root");
 if (!container) throw new Error('Failed to find the root element');
@@ -15,3 +17,8 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+// 👇 Register Service Worker for offline support
+registerSW({
+  immediate: true,
+});
