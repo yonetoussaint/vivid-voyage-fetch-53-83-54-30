@@ -1,10 +1,25 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { TYPE_META, NOTE_TYPE_STYLE } from '@/data/typeMeta';
 import { SAMPLE_NOTES } from '@/data/notesData';
 import { events } from '@/data/eventsData';
 import { FIELDS } from '@/data/fieldsData';
 import { DocScreen } from '@/components/easy/DocScreen';
 import { ProjectScreen } from '@/components/easy/ProjectScreen';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Note {
+  id: string;
+  title: string;
+  content?: string;
+  type: string;
+  field: string;
+  prompt?: string;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+  is_custom?: boolean;
+}
 
 function guessField(ev) {
   const t = ((ev.title||"") + " " + (ev.prompt||"") + " " + (ev.tags||[]).join(" ")).toLowerCase();
@@ -27,36 +42,12 @@ function guessField(ev) {
   return "personal";
 }
 
-// ── NEW: localStorage helpers ─────────────────────────────────────────────────
-const LS_KEY = "custom_notes_v1";
-function loadCustomNotes() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch { return []; }
-}
-function saveCustomNotes(notes) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(notes)); } catch {}
-}
+// Storage for note content (you might want to move this to Supabase too)
+const writingStorage: Record<string, string> = {};
 
-// ── CHANGED: accepts extra custom notes ───────────────────────────────────────
-function getAllNotes(customNotes = []) {
-  const writingTypes = new Set(["note","article","doc","journal","draft","project"]);
-  const out = [];
-  Object.entries(events).forEach(([, parts]) => {
-    Object.values(parts).forEach(evList => {
-      (evList||[]).forEach(ev => {
-        if (writingTypes.has(ev.type)) out.push({ ...ev, field: guessField(ev) });
-      });
-    });
-  });
-  SAMPLE_NOTES.forEach(n => out.push({ ...n, field: guessField(n) }));
-  customNotes.forEach(n => out.push(n));
-  return out;
-}
-
-const writingStorage = {};
-
-// ── NoteFormModal: handles both Add and Edit ─────────────────────────────────
 const NOTE_TYPES = ["note","article","doc","journal","draft","project"];
 
+// NoteFormModal component
 function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
   const isEdit = !!editNote;
   const [form, setForm] = useState(isEdit ? {
@@ -77,12 +68,12 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
       field:  form.field,
       prompt: form.prompt.trim(),
       tags:   form.tags.split(",").map(t => t.trim()).filter(Boolean),
-      _custom: true,
+      is_custom: true,
     };
     if (isEdit) {
       onEdit({ ...editNote, ...data });
     } else {
-      onAdd({ ...data, _id: Date.now() });
+      onAdd({ ...data });
     }
     onClose();
   }
@@ -225,16 +216,15 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
     </>
   );
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
-// ── SwipeableRow ──────────────────────────────────────────────────────────────
+// SwipeableRow component
 function SwipeableRow({ note, onEdit, onDelete, children }) {
-  const ACTION_W   = 160; // total revealed width (80px each)
+  const ACTION_W   = 160;
   const SNAP_AT    = ACTION_W * 0.4;
   const startX     = useRef(null);
   const startY     = useRef(null);
   const dragging   = useRef(false);
-  const locked     = useRef(false); // locked to horizontal swipe
+  const locked     = useRef(false);
   const [offset, setOffset]     = useState(0);
   const [isOpen,  setIsOpen]    = useState(false);
   const [animate, setAnimate]   = useState(true);
@@ -255,22 +245,19 @@ function SwipeableRow({ note, onEdit, onDelete, children }) {
     const dx = startX.current - e.touches[0].clientX;
     const dy = Math.abs(e.touches[0].clientY - startY.current);
 
-    // If moving more vertically than horizontally, abort swipe
     if (!locked.current) {
       if (dy > Math.abs(dx) + 4) { dragging.current = false; setAnimate(true); return; }
       if (Math.abs(dx) > 6) locked.current = true;
     }
     if (!locked.current) return;
 
-    e.preventDefault(); // prevent scroll while swiping horizontally
+    e.preventDefault();
 
     const base = isOpen ? ACTION_W : 0;
     const raw  = base + dx;
     if (raw <= 0) {
-      // rubber-band right: dampened
       setOffset(Math.max(raw * 0.15, -12));
     } else if (raw > ACTION_W) {
-      // rubber-band past full: dampened
       setOffset(ACTION_W + (raw - ACTION_W) * 0.15);
     } else {
       setOffset(raw);
@@ -284,14 +271,13 @@ function SwipeableRow({ note, onEdit, onDelete, children }) {
     if (offset >= SNAP_AT) { open(); } else { close(); }
   }
 
-  // close when tapping the row content while open
   function onRowClick(e) {
     if (isOpen) { e.stopPropagation(); close(); }
   }
 
   return (
     <div style={{ position:"relative", overflow:"hidden" }}>
-      {/* ── Action strip behind the row ── */}
+      {/* Action strip behind the row */}
       <div style={{
         position:"absolute", top:0, right:0, bottom:0, width:ACTION_W,
         display:"flex", overflow:"hidden",
@@ -312,51 +298,48 @@ function SwipeableRow({ note, onEdit, onDelete, children }) {
           onTouchStart={e => e.currentTarget.style.background = "#1a3a5c"}
           onTouchEnd={e => e.currentTarget.style.background = "#0d2340"}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4285f4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4285f4" strokeWidth="1.5">
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
           </svg>
-          <span style={{ fontSize:10, color:"#4285f4", letterSpacing:0.8, fontWeight:600 }}>Edit</span>
+          <span style={{ fontSize:10, color:"#4285f4" }}>Edit</span>
         </div>
-
         {/* Delete */}
         <div
-          onClick={e => { e.stopPropagation(); close(); setTimeout(() => onDelete(note), 180); }}
+          onClick={e => { e.stopPropagation(); close(); setTimeout(() => onDelete(note.id), 180); }}
           style={{
             flex:1, display:"flex", flexDirection:"column", alignItems:"center",
             justifyContent:"center", gap:5,
-            background:"#2a0d0d",
-            borderLeft:"1px solid #ef535022",
+            background:"#2d1a1a",
             cursor:"pointer", userSelect:"none",
             transition:"background 0.15s",
           }}
-          onMouseDown={e => e.currentTarget.style.background = "#3d1212"}
-          onMouseUp={e => e.currentTarget.style.background = "#2a0d0d"}
-          onTouchStart={e => e.currentTarget.style.background = "#3d1212"}
-          onTouchEnd={e => e.currentTarget.style.background = "#2a0d0d"}
+          onMouseDown={e => e.currentTarget.style.background = "#4d2a2a"}
+          onMouseUp={e => e.currentTarget.style.background = "#2d1a1a"}
+          onTouchStart={e => e.currentTarget.style.background = "#4d2a2a"}
+          onTouchEnd={e => e.currentTarget.style.background = "#2d1a1a"}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef5350" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef5350" strokeWidth="1.5">
             <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-            <path d="M10 11v6M14 11v6"/>
-            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0h12M10 11v5M14 11v5"/>
           </svg>
-          <span style={{ fontSize:10, color:"#ef5350", letterSpacing:0.8, fontWeight:600 }}>Delete</span>
+          <span style={{ fontSize:10, color:"#ef5350" }}>Delete</span>
         </div>
       </div>
 
-      {/* ── Sliding row ── */}
+      {/* Content */}
       <div
+        onClick={onRowClick}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        onClick={onRowClick}
+        onTouchCancel={onTouchEnd}
         style={{
-          transform:`translateX(-${offset}px)`,
-          transition: animate ? "transform 0.28s cubic-bezier(0.25,1,0.5,1)" : "none",
-          willChange:"transform",
-          // Subtle swipe-hint indicator on the right edge
-          boxShadow: isOpen ? "none" : "inset -3px 0 0 #ffffff08",
+          transform: `translateX(-${offset}px)`,
+          transition: animate ? 'transform 0.2s cubic-bezier(0.2,0.9,0.3,1)' : 'none',
+          cursor: 'pointer',
+          userSelect: 'none',
+          WebkitTapHighlightColor: 'transparent',
+          background: '#0a0a0a',
         }}
       >
         {children}
@@ -365,316 +348,301 @@ function SwipeableRow({ note, onEdit, onDelete, children }) {
   );
 }
 
+// Main NotesTab component
 export function NotesTab() {
-  const [activeField, setActiveField] = useState("all");
-  const [openNote, setOpenNote]       = useState(null);
-  const [search, setSearch]           = useState("");
-  const [searchOpen, setSearchOpen]   = useState(false);
-  const [noteTexts, setNoteTexts]     = useState({});
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  // ── NEW ──
-  const [addOpen, setAddOpen]         = useState(false);
-  const [customNotes, setCustomNotes] = useState(() => loadCustomNotes());
-  const [editNote, setEditNote]       = useState(null);
+  const { user } = useAuth();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [migrating, setMigrating] = useState(false);
 
-  const openAddModal  = () => setAddOpen(true);
-  const closeAddModal = () => { setAddOpen(false); setEditNote(null); };
-
-  // ── NEW ──
-  function handleAddNote(newNote) {
-    const updated = [newNote, ...customNotes];
-    setCustomNotes(updated);
-    saveCustomNotes(updated);
-  }
-
-  function handleEditNote(updatedNote) {
-    const updated = customNotes.map(n => n._id === updatedNote._id ? updatedNote : n);
-    setCustomNotes(updated);
-    saveCustomNotes(updated);
-  }
-
-  function handleDeleteNote(note) {
-    const updated = customNotes.filter(n => n._id !== note._id);
-    setCustomNotes(updated);
-    saveCustomNotes(updated);
-  }
-
-  // ── CHANGED: pass customNotes in ──
-  const allNotes = getAllNotes(customNotes);
-
-  // ── CHANGED: use _id as key for custom notes ──
-  const noteKey = (n) => n._id ? `custom_${n._id}` : n.title + "__" + n.type;
-
-  const filtered = allNotes.filter(n => {
-    const matchF = activeField === "all" || n.field === activeField;
-    const q = search.toLowerCase();
-    const matchS = !q || (n.title + (n.prompt||"") + (n.tags||[]).join(" ")).toLowerCase().includes(q);
-    return matchF && matchS;
-  });
-
-  // Group by field only in "all" view
-  const groups = activeField === "all"
-    ? FIELDS.slice(1).reduce((acc, f) => {
-        const ns = filtered.filter(n => n.field === f.id);
-        if (ns.length) acc.push({ field: f, notes: ns });
-        return acc;
-      }, [])
-    : [{ field: FIELDS.find(f => f.id === activeField) || FIELDS[0], notes: filtered }];
-
-  if (openNote) {
-    if (openNote.type === "project") {
-      return <ProjectScreen ev={openNote} onClose={() => setOpenNote(null)} />;
+  // Load notes from Supabase
+  useEffect(() => {
+    if (!user) {
+      setNotes([]);
+      setLoading(false);
+      return;
     }
-    const accent = TYPE_META[openNote.type]?.accent || openNote.color || "#86efac";
-    const key = noteKey(openNote);
+
+    const fetchNotes = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching notes:', error);
+      } else {
+        setNotes(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchNotes();
+  }, [user]);
+
+  // Migrate localStorage data to Supabase
+  const migrateLocalStorageData = async () => {
+    if (!user || migrating) return;
+
+    try {
+      setMigrating(true);
+      const localNotes = JSON.parse(localStorage.getItem('custom_notes_v1') || '[]');
+      
+      if (localNotes.length === 0) return;
+
+      const notesToMigrate = localNotes.map(note => ({
+        ...note,
+        user_id: user.id,
+        content: writingStorage[note._id] || '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }));
+
+      const { error } = await supabase
+        .from('notes')
+        .insert(notesToMigrate);
+
+      if (error) {
+        console.error('Error migrating notes:', error);
+      } else {
+        localStorage.removeItem('custom_notes_v1');
+        // Refresh notes
+        const { data } = await supabase
+          .from('notes')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        setNotes(data || []);
+      }
+    } catch (error) {
+      console.error('Migration error:', error);
+    } finally {
+      setMigrating(false);
+    }
+  };
+
+  // Show migration prompt if there's localStorage data
+  useEffect(() => {
+    if (user && notes.length === 0 && !migrating) {
+      const localNotes = localStorage.getItem('custom_notes_v1');
+      if (localNotes && JSON.parse(localNotes).length > 0) {
+        if (window.confirm('Found existing notes in local storage. Would you like to import them?')) {
+          migrateLocalStorageData();
+        }
+      }
+    }
+  }, [user, notes.length]);
+
+  const handleAddNote = async (noteData) => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('notes')
+      .insert([{
+        ...noteData,
+        user_id: user.id,
+        content: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating note:', error);
+    } else {
+      setNotes(prev => [data, ...prev]);
+      setSelectedNote(data);
+    }
+  };
+
+  const handleEditNote = async (updatedNote) => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('notes')
+      .update({
+        title: updatedNote.title,
+        type: updatedNote.type,
+        field: updatedNote.field,
+        prompt: updatedNote.prompt,
+        tags: updatedNote.tags,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', updatedNote.id)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating note:', error);
+    } else {
+      setNotes(prev => prev.map(n => n.id === data.id ? data : n));
+      setEditingNote(null);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('notes')
+      .delete()
+      .eq('id', noteId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error deleting note:', error);
+    } else {
+      setNotes(prev => prev.filter(n => n.id !== noteId));
+      if (selectedNote?.id === noteId) {
+        setSelectedNote(null);
+      }
+    }
+  };
+
+  const handleNoteClick = (note: Note) => {
+    setSelectedNote(note);
+  };
+
+  const handleCloseDoc = () => {
+    setSelectedNote(null);
+  };
+
+  const fieldObjs = FIELDS.filter(f => f.id !== "all");
+  const getField = (fieldId: string) => fieldObjs.find(f => f.id === fieldId) || fieldObjs[0];
+
+  // If a note is selected, show DocScreen
+  if (selectedNote) {
     return (
       <DocScreen
-        ev={openNote}
-        accent={accent}
-        text={noteTexts[key] || ""}
-        setText={val => setNoteTexts(p => ({ ...p, [key]: val }))}
-        onClose={() => setOpenNote(null)}
+        noteId={selectedNote.id}
+        initialTitle={selectedNote.title}
+        initialContent={selectedNote.content}
+        onTitleChange={(title) => {
+          setNotes(prev => prev.map(n => 
+            n.id === selectedNote.id ? { ...n, title } : n
+          ));
+        }}
       />
     );
   }
 
-  const activeFieldObj = FIELDS.find(f => f.id === activeField) || FIELDS[0];
-
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:"100%", background:"#000", color:"#fff", fontFamily:"'Roboto',sans-serif", overflow:"hidden", position:"relative" }}>
-      <style>{`
-        .note-row:active{background:#0d0d0d!important}
-        @keyframes notesFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes sidebarSlide{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
-        @keyframes overlayFade{from{opacity:0}to{opacity:1}}
-        @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-        .sidebar-field-row:active{background:#1a1a1a!important}
-      `}</style>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#000' }}>
+      {/* Header */}
+      <div style={{
+        padding: '16px',
+        borderBottom: '1px solid #111',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 500, color: '#fff' }}>Notes</h2>
+        <button
+          onClick={() => setShowFormModal(true)}
+          style={{
+            background: '#4285f4',
+            border: 'none',
+            color: '#fff',
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: 20,
+          }}
+        >
+          +
+        </button>
+      </div>
 
-      {/* SIDEBAR OVERLAY */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.6)", zIndex:30, animation:"overlayFade 0.2s ease" }}
+      {/* Notes list */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', color: '#555', padding: 20 }}>Loading notes...</div>
+        ) : notes.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#555', padding: 40 }}>
+            <p>No notes yet</p>
+            <p style={{ fontSize: 13, marginTop: 8 }}>Tap + to create your first note</p>
+          </div>
+        ) : (
+          notes.map(note => {
+            const field = getField(note.field);
+            const typeStyle = NOTE_TYPE_STYLE[note.type] || NOTE_TYPE_STYLE.note;
+            
+            return (
+              <SwipeableRow
+                key={note.id}
+                note={note}
+                onEdit={setEditingNote}
+                onDelete={handleDeleteNote}
+              >
+                <div
+                  onClick={() => handleNoteClick(note)}
+                  style={{
+                    padding: '16px',
+                    borderBottom: '1px solid #111',
+                    background: '#0a0a0a',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 14 }}>{field?.icon}</span>
+                    <span style={{
+                      fontSize: 11,
+                      color: typeStyle.color,
+                      background: typeStyle.bg,
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      textTransform: 'uppercase',
+                    }}>
+                      {note.type}
+                    </span>
+                    {note.tags && note.tags.length > 0 && (
+                      <span style={{ fontSize: 10, color: '#555' }}>
+                        {note.tags.slice(0, 2).join(', ')}
+                        {note.tags.length > 2 && '...'}
+                      </span>
+                    )}
+                  </div>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: 15, fontWeight: 500, color: '#fff' }}>
+                    {note.title}
+                  </h3>
+                  {note.prompt && (
+                    <p style={{ margin: 0, fontSize: 13, color: '#666', lineHeight: 1.4 }}>
+                      {note.prompt.length > 100 ? note.prompt.slice(0, 100) + '...' : note.prompt}
+                    </p>
+                  )}
+                </div>
+              </SwipeableRow>
+            );
+          })
+        )}
+      </div>
+
+      {/* Note Form Modal */}
+      {showFormModal && (
+        <NoteFormModal
+          onClose={() => setShowFormModal(false)}
+          onAdd={handleAddNote}
+          onEdit={handleEditNote}
         />
       )}
 
-      {/* SIDEBAR PANEL */}
-      {sidebarOpen && (
-        <div style={{
-          position:"absolute", top:0, left:0, bottom:0, width:240,
-          background:"#0a0a0a", borderRight:"1px solid #1a1a1a",
-          zIndex:40, display:"flex", flexDirection:"column",
-          animation:"sidebarSlide 0.22s ease",
-        }}>
-          {/* Sidebar header */}
-          <div style={{ padding:"20px 20px 12px", borderBottom:"1px solid #111" }}>
-            <div style={{ fontSize:13, fontWeight:700, letterSpacing:1.2, color:"#555", textTransform:"uppercase", marginBottom:2 }}>Fields</div>
-            <div style={{ fontSize:10, color:"#2a2a2a" }}>{allNotes.length} total entries</div>
-          </div>
-
-          {/* Field list */}
-          <div style={{ flex:1, overflowY:"auto", padding:"8px 0" }}>
-            {FIELDS.map(f => {
-              const active = activeField === f.id;
-              const count = f.id === "all" ? allNotes.length : allNotes.filter(n => n.field === f.id).length;
-              return (
-                <div
-                  key={f.id}
-                  className="sidebar-field-row"
-                  onClick={() => { setActiveField(f.id); setSidebarOpen(false); }}
-                  style={{
-                    display:"flex", alignItems:"center", gap:12,
-                    padding:"12px 20px", cursor:"pointer", userSelect:"none",
-                    background: active ? f.color+"11" : "transparent",
-                    borderLeft: `3px solid ${active ? f.color : "transparent"}`,
-                    transition:"all 0.12s",
-                  }}
-                >
-                  <span style={{ display:"flex", alignItems:"center", color: active ? f.color : "#444", fontSize:15 }}>{f.icon}</span>
-                  <span style={{ flex:1, fontSize:13, fontWeight: active ? 600 : 400, color: active ? f.color : "#666", letterSpacing:0.2 }}>{f.label}</span>
-                  <span style={{ fontSize:10, color: active ? f.color+"99" : "#2a2a2a", fontVariantNumeric:"tabular-nums" }}>{count}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Sidebar footer — NEW: button wired up */}
-          <div style={{ padding:"16px 20px", borderTop:"1px solid #111" }}>
-            <div
-              onClick={() => { setSidebarOpen(false); openAddModal(); }}
-              style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", background:"#4285f411", border:"1px solid #4285f422", borderRadius:4, cursor:"pointer" }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#4285f4" strokeWidth="2.5" strokeLinecap="round"/></svg>
-              <span style={{ fontSize:12, color:"#4285f4", fontWeight:600 }}>New Note</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* HEADER */}
-      <div style={{ flexShrink:0, padding:"16px 20px 0" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            {/* Hamburger button */}
-            <div
-              onClick={() => setSidebarOpen(s => !s)}
-              style={{ width:36, height:36, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:5, cursor:"pointer", flexShrink:0 }}
-            >
-              <div style={{ width:20, height:1.5, background:"#aaa", borderRadius:1 }}/>
-              <div style={{ width:14, height:1.5, background:"#aaa", borderRadius:1 }}/>
-              <div style={{ width:20, height:1.5, background:"#aaa", borderRadius:1 }}/>
-            </div>
-            <div>
-              <div style={{ fontSize:24, fontWeight:700, letterSpacing:-0.5, display:"flex", alignItems:"center", gap:8 }}>
-                {activeField !== "all" && <span style={{ color: activeFieldObj.color, fontSize:18 }}>{activeFieldObj.icon}</span>}
-                {activeField === "all" ? "Notes" : activeFieldObj.label}
-              </div>
-              <div style={{ fontSize:11, color:"#444", marginTop:2 }}>
-                {activeField === "all"
-                  ? `${allNotes.length} entries across ${FIELDS.length - 1} fields`
-                  : `${filtered.length} entries`}
-              </div>
-            </div>
-          </div>
-          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-            <div
-              onClick={() => { setSearchOpen(s=>!s); if(searchOpen) setSearch(""); }}
-              style={{ width:36, height:36, borderRadius:"50%", background:searchOpen?"#1e1e1e":"transparent", border:"1px solid #1e1e1e", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={searchOpen?"#fff":"#555"} strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-            </div>
-            {/* ── CHANGED: onClick wired up ── */}
-            <div
-              onClick={() => openAddModal()}
-              style={{ width:36, height:36, borderRadius:"50%", background:"#4285f4", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Search */}
-        {searchOpen && (
-          <div style={{ display:"flex", alignItems:"center", gap:8, background:"#0d0d0d", border:"1px solid #1e1e1e", padding:"8px 12px", marginBottom:10, animation:"notesFade 0.15s ease" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input autoFocus value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search notes, tags, topics…" style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"#bbb", fontSize:13 }}/>
-            {search && <div onClick={()=>setSearch("")} style={{ fontSize:16, color:"#333", cursor:"pointer", lineHeight:1 }}>×</div>}
-          </div>
-        )}
-      </div>
-
-      {/* NOTES LIST */}
-      <div style={{ flex:1, overflowY:"auto" }}>
-        {filtered.length === 0 && (
-          <div style={{ textAlign:"center", padding:"60px 24px", color:"#222" }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1.5" style={{ margin:"0 auto 12px", display:"block" }}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            <div style={{ fontSize:13 }}>No notes in this field yet</div>
-          </div>
-        )}
-
-        {groups.map(({ field, notes }) => (
-          <div key={field.id} style={{ marginBottom: activeField==="all" ? 8 : 0 }}>
-
-            {/* Field section header — only in "all" view */}
-            {activeField === "all" && (
-              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"14px 20px 10px", background:"#000", position:"sticky", top:0, zIndex:2 }}>
-                <span style={{ display:"flex", alignItems:"center", color:field.color }}>{field.icon}</span>
-                <span style={{ fontSize:11, fontWeight:700, color:field.color, letterSpacing:0.8, textTransform:"uppercase" }}>{field.label}</span>
-                <span style={{ fontSize:10, color:"#333" }}>{notes.length}</span>
-                <div onClick={()=>setActiveField(field.id)} style={{ marginLeft:"auto", display:"flex", alignItems:"center", cursor:"pointer", padding:"4px", opacity:0.5 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={field.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                </div>
-              </div>
-            )}
-
-            {/* Note rows */}
-            {notes.map((note, i) => {
-              const ts  = NOTE_TYPE_STYLE[note.type] || NOTE_TYPE_STYLE.note;
-              const fd  = FIELDS.find(f=>f.id===note.field) || FIELDS[0];
-              const key = noteKey(note);
-              const wc  = (noteTexts[key]||"").trim().split(/\s+/).filter(Boolean).length;
-              const pct = Math.min(100, Math.round((wc / (note.wordGoal||300)) * 100));
-
-              const rowContent = (
-                <div key={key} className="note-row" onClick={()=>setOpenNote(note)}
-                  style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 20px", cursor:"pointer",
-                    borderLeft:`3px solid ${fd.color}${activeField==="all"?"33":"55"}`,
-                    borderBottom:"1px solid #080808", background:"#000",
-                    animation:`notesFade 0.15s ease ${i*0.03}s both`,
-                  }}
-                >
-                  {/* Type icon box */}
-                  <div style={{ width:36, height:36, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
-                    background:ts.bg, border:`1px solid ${ts.color}22` }}>
-                    <span style={{ fontFamily:"'Courier New',monospace", fontSize:14, color:ts.color, lineHeight:1 }}>
-                      {note.type==="note"?"§":note.type==="article"?"¶":note.type==="doc"?"#":note.type==="journal"?"~":note.type==="project"?"◎":"✎"}
-                    </span>
-                  </div>
-
-                  {/* Text */}
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:14, fontWeight:600, color:"#d4d4d8", marginBottom:3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                      {note._custom && (
-                        <span style={{ fontSize:9, color:"#4285f4", border:"1px solid #4285f433", padding:"1px 4px", marginRight:5 }}>NEW</span>
-                      )}
-                      {note.title}
-                    </div>
-                    <div style={{ fontSize:11, color:"#444", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginBottom:6 }}>{note.prompt||"No description"}</div>
-                    <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-                      <span style={{ fontSize:9, color:ts.color, border:`1px solid ${ts.color}33`, padding:"1px 5px", letterSpacing:0.8, textTransform:"uppercase" }}>{ts.label}</span>
-                      {activeField==="all" && (
-                        <span style={{ display:"flex", alignItems:"center", gap:3, fontSize:9, color:fd.color+"99" }}>
-                          <span style={{ display:"flex", alignItems:"center", transform:"scale(0.7)", transformOrigin:"left" }}>{fd.icon}</span>
-                          {fd.label}
-                        </span>
-                      )}
-                      {(note.tags||[]).slice(0,2).map(t=>(
-                        <span key={t} style={{ fontSize:9, color:"#333" }}>#{t}</span>
-                      ))}
-                      {wc > 0 && (
-                        <>
-                          <span style={{ fontSize:9, color:"#2a2a2a" }}>{wc}w</span>
-                          <div style={{ display:"flex", alignItems:"center", gap:3 }}>
-                            <div style={{ width:32, height:2, background:"#111", borderRadius:1, overflow:"hidden" }}>
-                              <div style={{ width:`${pct}%`, height:"100%", background:ts.color, opacity:0.7 }}/>
-                            </div>
-                            <span style={{ fontSize:8, color:"#2a2a2a" }}>{pct}%</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Arrow */}
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink:0 }}>
-                    <path d="M9 18l6-6-6-6" stroke="#2a2a2a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              );
-
-              return note._custom ? (
-                <SwipeableRow
-                  key={key}
-                  note={note}
-                  onEdit={n => { setEditNote(n); setAddOpen(true); }}
-                  onDelete={handleDeleteNote}
-                >
-                  {rowContent}
-                </SwipeableRow>
-              ) : rowContent;
-            })}
-          </div>
-        ))}
-      </div>
-
-      {/* ── NEW: Add / Edit Note Modal ── */}
-      {addOpen && (
+      {/* Edit Note Modal */}
+      {editingNote && (
         <NoteFormModal
-          onClose={closeAddModal}
+          editNote={editingNote}
+          onClose={() => setEditingNote(null)}
           onAdd={handleAddNote}
           onEdit={handleEditNote}
-          editNote={editNote}
         />
       )}
     </div>
