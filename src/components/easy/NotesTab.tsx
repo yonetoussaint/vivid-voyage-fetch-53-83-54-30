@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { TYPE_META, NOTE_TYPE_STYLE } from '@/data/typeMeta';
 import { SAMPLE_NOTES } from '@/data/notesData';
 import { events } from '@/data/eventsData';
@@ -7,6 +7,7 @@ import { DocScreen } from '@/components/easy/DocScreen';
 import { ProjectScreen } from '@/components/easy/ProjectScreen';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Note {
   id: string;
@@ -18,6 +19,7 @@ interface Note {
   tags: string[];
   created_at: string;
   updated_at: string;
+  user_id: string;
   is_custom?: boolean;
 }
 
@@ -42,40 +44,52 @@ function guessField(ev) {
   return "personal";
 }
 
-// Storage for note content (you might want to move this to Supabase too)
-const writingStorage: Record<string, string> = {};
-
 const NOTE_TYPES = ["note","article","doc","journal","draft","project"];
 
 // NoteFormModal component
 function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
   const isEdit = !!editNote;
   const [form, setForm] = useState(isEdit ? {
-    title: editNote.title,
-    type:  editNote.type,
-    field: editNote.field,
+    title: editNote.title || '',
+    type:  editNote.type || 'note',
+    field: editNote.field || 'personal',
     prompt: editNote.prompt || "",
     tags: (editNote.tags || []).join(", "),
   } : { title:"", type:"note", field:"personal", prompt:"", tags:"" });
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
-  function handleSubmit() {
-    if (!form.title.trim()) { setError("Title is required"); return; }
-    const data = {
-      title:  form.title.trim(),
-      type:   form.type,
-      field:  form.field,
-      prompt: form.prompt.trim(),
-      tags:   form.tags.split(",").map(t => t.trim()).filter(Boolean),
-      is_custom: true,
-    };
-    if (isEdit) {
-      onEdit({ ...editNote, ...data });
-    } else {
-      onAdd({ ...data });
+  async function handleSubmit() {
+    if (!form.title.trim()) { 
+      setError("Title is required"); 
+      return; 
     }
-    onClose();
+    
+    setSubmitting(true);
+    
+    const data = {
+      title: form.title.trim(),
+      type: form.type,
+      field: form.field,
+      prompt: form.prompt.trim(),
+      tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
+    };
+    
+    try {
+      if (isEdit) {
+        await onEdit({ ...editNote, ...data });
+      } else {
+        await onAdd(data);
+      }
+      onClose();
+    } catch (error) {
+      console.error('Error submitting note:', error);
+      setError('Failed to save note. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const fieldObjs = FIELDS.filter(f => f.id !== "all");
@@ -85,6 +99,7 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
     background:"#0d0d0d", border:"1px solid #222",
     color:"#d4d4d8", fontSize:13, padding:"9px 11px",
     outline:"none", fontFamily:"'Roboto',sans-serif",
+    borderRadius: "4px",
   };
   const labelSt = { fontSize:10, color:"#555", letterSpacing:0.8, textTransform:"uppercase", marginBottom:5, display:"block" };
 
@@ -123,6 +138,7 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
             onChange={e => { set("title", e.target.value); setError(""); }}
             placeholder="Note title…"
             style={inputSt}
+            disabled={submitting}
           />
           {error && <div style={{ fontSize:11, color:"#ef5350", marginTop:4 }}>{error}</div>}
         </div>
@@ -135,13 +151,15 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
               const ts = NOTE_TYPE_STYLE[t] || NOTE_TYPE_STYLE.note;
               const active = form.type === t;
               return (
-                <div key={t} onClick={() => set("type", t)} style={{
-                  padding:"5px 11px", fontSize:11, cursor:"pointer", userSelect:"none",
+                <div key={t} onClick={() => !submitting && set("type", t)} style={{
+                  padding:"5px 11px", fontSize:11, cursor: submitting ? "not-allowed" : "pointer", 
+                  userSelect:"none", opacity: submitting ? 0.5 : 1,
                   border:`1px solid ${active ? ts.color : "#222"}`,
                   background: active ? ts.bg : "transparent",
                   color: active ? ts.color : "#555",
                   letterSpacing:0.5, textTransform:"uppercase", fontWeight: active ? 700 : 400,
                   transition:"all 0.12s",
+                  borderRadius: "4px",
                 }}>
                   {t}
                 </div>
@@ -157,13 +175,15 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
             {fieldObjs.map(f => {
               const active = form.field === f.id;
               return (
-                <div key={f.id} onClick={() => set("field", f.id)} style={{
+                <div key={f.id} onClick={() => !submitting && set("field", f.id)} style={{
                   display:"flex", alignItems:"center", gap:5,
-                  padding:"5px 10px", fontSize:11, cursor:"pointer", userSelect:"none",
+                  padding:"5px 10px", fontSize:11, cursor: submitting ? "not-allowed" : "pointer", 
+                  userSelect:"none", opacity: submitting ? 0.5 : 1,
                   border:`1px solid ${active ? f.color : "#222"}`,
                   background: active ? f.color+"18" : "transparent",
                   color: active ? f.color : "#555",
                   letterSpacing:0.4, transition:"all 0.12s",
+                  borderRadius: "4px",
                 }}>
                   <span style={{ fontSize:12 }}>{f.icon}</span> {f.label}
                 </div>
@@ -181,6 +201,7 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
             placeholder="What is this note about?"
             rows={3}
             style={{ ...inputSt, resize:"none", lineHeight:1.5 }}
+            disabled={submitting}
           />
         </div>
 
@@ -192,24 +213,30 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
             onChange={e => set("tags", e.target.value)}
             placeholder="e.g. strategy, reading, ideas"
             style={inputSt}
+            disabled={submitting}
           />
         </div>
 
         {/* Actions */}
         <div style={{ display:"flex", gap:10, marginTop:4 }}>
-          <div onClick={onClose} style={{
+          <div onClick={!submitting ? onClose : undefined} style={{
             flex:1, padding:"11px 0", textAlign:"center",
             border:"1px solid #222", color:"#555", fontSize:13,
-            cursor:"pointer", userSelect:"none",
+            cursor: submitting ? "not-allowed" : "pointer", 
+            userSelect:"none", opacity: submitting ? 0.5 : 1,
+            borderRadius: "4px",
           }}>
             Cancel
           </div>
           <div onClick={handleSubmit} style={{
             flex:2, padding:"11px 0", textAlign:"center",
-            background:"#4285f4", color:"#fff", fontSize:13,
-            fontWeight:700, cursor:"pointer", userSelect:"none",
+            background: submitting ? "#2850a0" : "#4285f4", 
+            color:"#fff", fontSize:13,
+            fontWeight:700, cursor: submitting ? "not-allowed" : "pointer", 
+            userSelect:"none", opacity: submitting ? 0.8 : 1,
+            borderRadius: "4px",
           }}>
-            {isEdit ? "Save Changes" : "Create Note"}
+            {submitting ? "Saving..." : (isEdit ? "Save Changes" : "Create Note")}
           </div>
         </div>
       </div>
@@ -357,17 +384,23 @@ export function NotesTab() {
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [migrating, setMigrating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Realtime subscription reference
+  const subscription = useRef<RealtimeChannel | null>(null);
 
-  // Load notes from Supabase
-  useEffect(() => {
+  // Fetch notes function
+  const fetchNotes = useCallback(async () => {
     if (!user) {
       setNotes([]);
       setLoading(false);
       return;
     }
 
-    const fetchNotes = async () => {
+    try {
       setLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('notes')
         .select('*')
@@ -375,15 +408,73 @@ export function NotesTab() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching notes:', error);
-      } else {
-        setNotes(data || []);
+        throw error;
       }
-      setLoading(false);
-    };
 
-    fetchNotes();
+      console.log('Fetched notes:', data); // Debug log
+      setNotes(data || []);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      setError('Failed to load notes. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
+
+  // Set up realtime subscription
+  const setupRealtimeSubscription = useCallback(() => {
+    if (!user) return;
+
+    // Clean up existing subscription
+    if (subscription.current) {
+      subscription.current.unsubscribe();
+    }
+
+    // Create new subscription
+    subscription.current = supabase
+      .channel('notes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notes',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Realtime update:', payload); // Debug log
+          
+          // Handle different events
+          if (payload.eventType === 'INSERT') {
+            setNotes(prev => [payload.new as Note, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setNotes(prev => prev.map(n => 
+              n.id === payload.new.id ? { ...n, ...payload.new } : n
+            ));
+          } else if (payload.eventType === 'DELETE') {
+            setNotes(prev => prev.filter(n => n.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (subscription.current) {
+        subscription.current.unsubscribe();
+      }
+    };
+  }, [user]);
+
+  // Initial fetch and subscription setup
+  useEffect(() => {
+    fetchNotes();
+    
+    const cleanup = setupRealtimeSubscription();
+    
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [user, fetchNotes, setupRealtimeSubscription]);
 
   // Migrate localStorage data to Supabase
   const migrateLocalStorageData = async () => {
@@ -396,9 +487,13 @@ export function NotesTab() {
       if (localNotes.length === 0) return;
 
       const notesToMigrate = localNotes.map(note => ({
-        ...note,
+        title: note.title || 'Untitled',
+        type: note.type || 'note',
+        field: note.field || 'personal',
+        prompt: note.prompt || '',
+        tags: note.tags || [],
         user_id: user.id,
-        content: writingStorage[note._id] || '',
+        content: '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }));
@@ -411,13 +506,8 @@ export function NotesTab() {
         console.error('Error migrating notes:', error);
       } else {
         localStorage.removeItem('custom_notes_v1');
-        // Refresh notes
-        const { data } = await supabase
-          .from('notes')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-        setNotes(data || []);
+        // Refresh notes after migration
+        await fetchNotes();
       }
     } catch (error) {
       console.error('Migration error:', error);
@@ -428,90 +518,132 @@ export function NotesTab() {
 
   // Show migration prompt if there's localStorage data
   useEffect(() => {
-    if (user && notes.length === 0 && !migrating) {
+    if (user && notes.length === 0 && !migrating && !loading) {
       const localNotes = localStorage.getItem('custom_notes_v1');
-      if (localNotes && JSON.parse(localNotes).length > 0) {
-        if (window.confirm('Found existing notes in local storage. Would you like to import them?')) {
-          migrateLocalStorageData();
+      if (localNotes) {
+        try {
+          const parsed = JSON.parse(localNotes);
+          if (parsed.length > 0) {
+            if (window.confirm('Found existing notes in local storage. Would you like to import them?')) {
+              migrateLocalStorageData();
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing local notes:', e);
         }
       }
     }
-  }, [user, notes.length]);
+  }, [user, notes.length, migrating, loading]);
 
   const handleAddNote = async (noteData) => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('notes')
-      .insert([{
-        ...noteData,
-        user_id: user.id,
-        content: '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }])
-      .select()
-      .single();
+    try {
+      console.log('Adding note:', noteData); // Debug log
+      
+      const { data, error } = await supabase
+        .from('notes')
+        .insert([{
+          ...noteData,
+          user_id: user.id,
+          content: '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error creating note:', error);
-    } else {
+      if (error) {
+        throw error;
+      }
+
+      console.log('Note added successfully:', data); // Debug log
+      
+      // Manually update state (realtime will also handle this)
       setNotes(prev => [data, ...prev]);
+      
+      // Open the newly created note
       setSelectedNote(data);
+      
+    } catch (error) {
+      console.error('Error creating note:', error);
+      throw error; // Re-throw to be caught by the form
     }
   };
 
   const handleEditNote = async (updatedNote) => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('notes')
-      .update({
-        title: updatedNote.title,
-        type: updatedNote.type,
-        field: updatedNote.field,
-        prompt: updatedNote.prompt,
-        tags: updatedNote.tags,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', updatedNote.id)
-      .eq('user_id', user.id)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('notes')
+        .update({
+          title: updatedNote.title,
+          type: updatedNote.type,
+          field: updatedNote.field,
+          prompt: updatedNote.prompt,
+          tags: updatedNote.tags,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', updatedNote.id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error updating note:', error);
-    } else {
+      if (error) {
+        throw error;
+      }
+
+      console.log('Note updated:', data); // Debug log
+      
+      // Manually update state (realtime will also handle this)
       setNotes(prev => prev.map(n => n.id === data.id ? data : n));
       setEditingNote(null);
+      
+    } catch (error) {
+      console.error('Error updating note:', error);
+      throw error;
     }
   };
 
   const handleDeleteNote = async (noteId: string) => {
     if (!user) return;
 
-    const { error } = await supabase
-      .from('notes')
-      .delete()
-      .eq('id', noteId)
-      .eq('user_id', user.id);
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .delete()
+        .eq('id', noteId)
+        .eq('user_id', user.id);
 
-    if (error) {
-      console.error('Error deleting note:', error);
-    } else {
+      if (error) {
+        throw error;
+      }
+
+      console.log('Note deleted:', noteId); // Debug log
+      
+      // Manually update state (realtime will also handle this)
       setNotes(prev => prev.filter(n => n.id !== noteId));
+      
       if (selectedNote?.id === noteId) {
         setSelectedNote(null);
       }
+      
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      alert('Failed to delete note. Please try again.');
     }
   };
 
   const handleNoteClick = (note: Note) => {
+    console.log('Opening note:', note); // Debug log
     setSelectedNote(note);
   };
 
   const handleCloseDoc = () => {
     setSelectedNote(null);
+    // Refresh notes when closing to ensure we have latest data
+    fetchNotes();
   };
 
   const fieldObjs = FIELDS.filter(f => f.id !== "all");
@@ -529,6 +661,7 @@ export function NotesTab() {
             n.id === selectedNote.id ? { ...n, title } : n
           ));
         }}
+        onClose={handleCloseDoc}
       />
     );
   }
@@ -558,20 +691,54 @@ export function NotesTab() {
             justifyContent: 'center',
             cursor: 'pointer',
             fontSize: 20,
+            transition: 'background 0.2s',
           }}
+          onMouseEnter={e => e.currentTarget.style.background = '#5a9cfe'}
+          onMouseLeave={e => e.currentTarget.style.background = '#4285f4'}
         >
           +
         </button>
       </div>
 
+      {/* Error message */}
+      {error && (
+        <div style={{
+          padding: '12px 16px',
+          background: '#2d1a1a',
+          color: '#ef5350',
+          fontSize: 13,
+          borderBottom: '1px solid #442222',
+        }}>
+          {error}
+          <button 
+            onClick={fetchNotes}
+            style={{
+              marginLeft: 12,
+              background: 'transparent',
+              border: '1px solid #ef5350',
+              color: '#ef5350',
+              padding: '2px 8px',
+              borderRadius: 4,
+              fontSize: 11,
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Notes list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: '#555', padding: 20 }}>Loading notes...</div>
+          <div style={{ textAlign: 'center', color: '#555', padding: 40 }}>
+            <div style={{ marginBottom: 12 }}>Loading notes...</div>
+            <div style={{ width: 30, height: 30, border: '2px solid #333', borderTopColor: '#4285f4', borderRadius: '50%', margin: '0 auto', animation: 'spin 1s linear infinite' }} />
+          </div>
         ) : notes.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#555', padding: 40 }}>
-            <p>No notes yet</p>
-            <p style={{ fontSize: 13, marginTop: 8 }}>Tap + to create your first note</p>
+            <p style={{ fontSize: 16, marginBottom: 8 }}>No notes yet</p>
+            <p style={{ fontSize: 13, marginTop: 8, color: '#666' }}>Tap the + button to create your first note</p>
           </div>
         ) : (
           notes.map(note => {
@@ -591,7 +758,11 @@ export function NotesTab() {
                     padding: '16px',
                     borderBottom: '1px solid #111',
                     background: '#0a0a0a',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s',
                   }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#121212'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#0a0a0a'}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <span style={{ fontSize: 14 }}>{field?.icon}</span>
@@ -608,7 +779,7 @@ export function NotesTab() {
                     {note.tags && note.tags.length > 0 && (
                       <span style={{ fontSize: 10, color: '#555' }}>
                         {note.tags.slice(0, 2).join(', ')}
-                        {note.tags.length > 2 && '...'}
+                        {note.tags.length > 2 && ` +${note.tags.length - 2}`}
                       </span>
                     )}
                   </div>
@@ -620,6 +791,9 @@ export function NotesTab() {
                       {note.prompt.length > 100 ? note.prompt.slice(0, 100) + '...' : note.prompt}
                     </p>
                   )}
+                  <div style={{ fontSize: 10, color: '#444', marginTop: 8 }}>
+                    {new Date(note.created_at).toLocaleDateString()}
+                  </div>
                 </div>
               </SwipeableRow>
             );
@@ -645,6 +819,13 @@ export function NotesTab() {
           onEdit={handleEditNote}
         />
       )}
+
+      {/* Add spin animation */}
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
