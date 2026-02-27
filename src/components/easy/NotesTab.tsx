@@ -91,14 +91,14 @@ function AddNoteModal({ onClose, onAdd }) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.75)", zIndex:50, animation:"overlayFade 0.2s ease" }}
+        style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:9998, animation:"overlayFade 0.2s ease" }}
       />
       {/* Panel */}
       <div style={{
-        position:"absolute", left:0, right:0, bottom:0, top:"6%",
+        position:"fixed", left:0, right:0, bottom:0, top:"6%",
         background:"#0a0a0a", borderTop:"1px solid #1e1e1e",
         borderRadius:"14px 14px 0 0",
-        zIndex:51, padding:20, display:"flex", flexDirection:"column", gap:16,
+        zIndex:9999, padding:20, display:"flex", flexDirection:"column", gap:16,
         animation:"sheetUp 0.25s cubic-bezier(0.32,0.72,0,1)", overflowY:"auto",
       }}>
         {/* Drag handle */}
@@ -227,6 +227,9 @@ export function NotesTab() {
   const [addOpen, setAddOpen]         = useState(false);
   const [customNotes, setCustomNotes] = useState(() => loadCustomNotes());
 
+  const openAddModal  = () => setAddOpen(true);
+  const closeAddModal = () => setAddOpen(false);
+
   // ── NEW ──
   function handleAddNote(newNote) {
     const updated = [newNote, ...customNotes];
@@ -337,7 +340,7 @@ export function NotesTab() {
           {/* Sidebar footer — NEW: button wired up */}
           <div style={{ padding:"16px 20px", borderTop:"1px solid #111" }}>
             <div
-              onClick={() => { setSidebarOpen(false); setAddOpen(true); }}
+              onClick={() => { setSidebarOpen(false); openAddModal(); }}
               style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", background:"#4285f411", border:"1px solid #4285f422", borderRadius:4, cursor:"pointer" }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#4285f4" strokeWidth="2.5" strokeLinecap="round"/></svg>
@@ -381,7 +384,7 @@ export function NotesTab() {
             </div>
             {/* ── CHANGED: onClick wired up ── */}
             <div
-              onClick={() => setAddOpen(true)}
+              onClick={() => openAddModal()}
               style={{ width:36, height:36, borderRadius:"50%", background:"#4285f4", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>
@@ -493,7 +496,7 @@ export function NotesTab() {
       </div>
 
       {/* ── NEW: Add Note Modal ── */}
-      {addOpen && <AddNoteModal onClose={() => setAddOpen(false)} onAdd={handleAddNote} />}
+      {addOpen && <AddNoteModal onClose={closeAddModal} onAdd={handleAddNote} />}
     </div>
   );
 }
