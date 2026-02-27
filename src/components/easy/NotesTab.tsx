@@ -499,26 +499,29 @@ export function NotesTab() {
                           </div>
                         </>
                       )}
+                      {note._custom && (
+                        <div
+                          onClick={e => { e.stopPropagation(); setEditNote(note); setAddOpen(true); }}
+                          style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:4,
+                            padding:"1px 6px", fontSize:9, cursor:"pointer", userSelect:"none",
+                            border:`1px solid ${ts.color}33`, background:ts.bg,
+                            color:ts.color, letterSpacing:0.8, textTransform:"uppercase",
+                          }}
+                        >
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={ts.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                          Edit
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Arrow / Edit */}
-                  {note._custom ? (
-                    <div
-                      onClick={e => { e.stopPropagation(); setEditNote(note); setAddOpen(true); }}
-                      style={{ flexShrink:0, width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center",
-                        border:"1px solid #1e1e1e", cursor:"pointer" }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </div>
-                  ) : (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink:0 }}>
-                      <path d="M9 18l6-6-6-6" stroke="#2a2a2a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
+                  {/* Arrow */}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink:0 }}>
+                    <path d="M9 18l6-6-6-6" stroke="#2a2a2a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </div>
               );
             })}
