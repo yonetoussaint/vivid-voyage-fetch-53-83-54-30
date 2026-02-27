@@ -227,79 +227,136 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── SwipeableRow: swipe left to reveal Edit + Delete ─────────────────────────
+// ── SwipeableRow ──────────────────────────────────────────────────────────────
 function SwipeableRow({ note, onEdit, onDelete, children }) {
-  const THRESHOLD = 72; // px to reveal actions
-  const startX    = useRef(null);
-  const [offset, setOffset]   = useState(0);
-  const [swiped, setSwiped]   = useState(false);
-  const [closing, setClosing] = useState(false);
+  const ACTION_W   = 160; // total revealed width (80px each)
+  const SNAP_AT    = ACTION_W * 0.4;
+  const startX     = useRef(null);
+  const startY     = useRef(null);
+  const dragging   = useRef(false);
+  const locked     = useRef(false); // locked to horizontal swipe
+  const [offset, setOffset]     = useState(0);
+  const [isOpen,  setIsOpen]    = useState(false);
+  const [animate, setAnimate]   = useState(true);
+
+  const open  = () => { setAnimate(true); setOffset(ACTION_W); setIsOpen(true); };
+  const close = () => { setAnimate(true); setOffset(0);        setIsOpen(false); };
 
   function onTouchStart(e) {
-    startX.current = e.touches[0].clientX;
+    startX.current  = e.touches[0].clientX;
+    startY.current  = e.touches[0].clientY;
+    dragging.current = true;
+    locked.current   = false;
+    setAnimate(false);
   }
+
   function onTouchMove(e) {
-    if (startX.current === null) return;
+    if (!dragging.current) return;
     const dx = startX.current - e.touches[0].clientX;
-    if (dx > 0) setOffset(Math.min(dx, THRESHOLD));
-  }
-  function onTouchEnd() {
-    if (offset >= THRESHOLD * 0.55) {
-      setOffset(THRESHOLD);
-      setSwiped(true);
-    } else {
-      setOffset(0);
-      setSwiped(false);
+    const dy = Math.abs(e.touches[0].clientY - startY.current);
+
+    // If moving more vertically than horizontally, abort swipe
+    if (!locked.current) {
+      if (dy > Math.abs(dx) + 4) { dragging.current = false; setAnimate(true); return; }
+      if (Math.abs(dx) > 6) locked.current = true;
     }
-    startX.current = null;
+    if (!locked.current) return;
+
+    e.preventDefault(); // prevent scroll while swiping horizontally
+
+    const base = isOpen ? ACTION_W : 0;
+    const raw  = base + dx;
+    if (raw <= 0) {
+      // rubber-band right: dampened
+      setOffset(Math.max(raw * 0.15, -12));
+    } else if (raw > ACTION_W) {
+      // rubber-band past full: dampened
+      setOffset(ACTION_W + (raw - ACTION_W) * 0.15);
+    } else {
+      setOffset(raw);
+    }
   }
-  function close() {
-    setClosing(true);
-    setTimeout(() => { setOffset(0); setSwiped(false); setClosing(false); }, 220);
+
+  function onTouchEnd() {
+    if (!dragging.current) return;
+    dragging.current = false;
+    setAnimate(true);
+    if (offset >= SNAP_AT) { open(); } else { close(); }
+  }
+
+  // close when tapping the row content while open
+  function onRowClick(e) {
+    if (isOpen) { e.stopPropagation(); close(); }
   }
 
   return (
     <div style={{ position:"relative", overflow:"hidden" }}>
-      {/* Action buttons revealed behind */}
+      {/* ── Action strip behind the row ── */}
       <div style={{
-        position:"absolute", top:0, right:0, bottom:0, width:THRESHOLD,
-        display:"flex",
+        position:"absolute", top:0, right:0, bottom:0, width:ACTION_W,
+        display:"flex", overflow:"hidden",
       }}>
+        {/* Edit */}
         <div
-          onClick={e => { e.stopPropagation(); close(); onEdit(note); }}
-          style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center",
-            justifyContent:"center", gap:3, background:"#1a3a5c", cursor:"pointer" }}
+          onClick={e => { e.stopPropagation(); close(); setTimeout(() => onEdit(note), 180); }}
+          style={{
+            flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", gap:5,
+            background:"#0d2340",
+            borderLeft:"1px solid #4285f422",
+            cursor:"pointer", userSelect:"none",
+            transition:"background 0.15s",
+          }}
+          onMouseDown={e => e.currentTarget.style.background = "#1a3a5c"}
+          onMouseUp={e => e.currentTarget.style.background = "#0d2340"}
+          onTouchStart={e => e.currentTarget.style.background = "#1a3a5c"}
+          onTouchEnd={e => e.currentTarget.style.background = "#0d2340"}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4285f4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4285f4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
-          <span style={{ fontSize:9, color:"#4285f4", letterSpacing:0.6 }}>EDIT</span>
+          <span style={{ fontSize:10, color:"#4285f4", letterSpacing:0.8, fontWeight:600 }}>Edit</span>
         </div>
+
+        {/* Delete */}
         <div
-          onClick={e => { e.stopPropagation(); close(); onDelete(note); }}
-          style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center",
-            justifyContent:"center", gap:3, background:"#3a1a1a", cursor:"pointer" }}
+          onClick={e => { e.stopPropagation(); close(); setTimeout(() => onDelete(note), 180); }}
+          style={{
+            flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", gap:5,
+            background:"#2a0d0d",
+            borderLeft:"1px solid #ef535022",
+            cursor:"pointer", userSelect:"none",
+            transition:"background 0.15s",
+          }}
+          onMouseDown={e => e.currentTarget.style.background = "#3d1212"}
+          onMouseUp={e => e.currentTarget.style.background = "#2a0d0d"}
+          onTouchStart={e => e.currentTarget.style.background = "#3d1212"}
+          onTouchEnd={e => e.currentTarget.style.background = "#2a0d0d"}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef5350" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef5350" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
             <path d="M10 11v6M14 11v6"/>
             <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
           </svg>
-          <span style={{ fontSize:9, color:"#ef5350", letterSpacing:0.6 }}>DELETE</span>
+          <span style={{ fontSize:10, color:"#ef5350", letterSpacing:0.8, fontWeight:600 }}>Delete</span>
         </div>
       </div>
 
-      {/* Sliding content */}
+      {/* ── Sliding row ── */}
       <div
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        onClick={swiped ? e => { e.stopPropagation(); close(); } : undefined}
+        onClick={onRowClick}
         style={{
           transform:`translateX(-${offset}px)`,
-          transition: startX.current === null ? "transform 0.22s ease" : "none",
+          transition: animate ? "transform 0.28s cubic-bezier(0.25,1,0.5,1)" : "none",
+          willChange:"transform",
+          // Subtle swipe-hint indicator on the right edge
+          boxShadow: isOpen ? "none" : "inset -3px 0 0 #ffffff08",
         }}
       >
         {children}
@@ -371,24 +428,13 @@ export function NotesTab() {
     const accent = TYPE_META[openNote.type]?.accent || openNote.color || "#86efac";
     const key = noteKey(openNote);
     return (
-      <>
-        <DocScreen
-          ev={openNote}
-          accent={accent}
-          text={noteTexts[key] || ""}
-          setText={val => setNoteTexts(p => ({ ...p, [key]: val }))}
-          onClose={() => setOpenNote(null)}
-          onEditMeta={openNote._custom ? () => { setEditNote(openNote); setAddOpen(true); } : undefined}
-        />
-        {addOpen && (
-          <NoteFormModal
-            onClose={closeAddModal}
-            onAdd={handleAddNote}
-            onEdit={(updated) => { handleEditNote(updated); setOpenNote(updated); }}
-            editNote={editNote}
-          />
-        )}
-      </>
+      <DocScreen
+        ev={openNote}
+        accent={accent}
+        text={noteTexts[key] || ""}
+        setText={val => setNoteTexts(p => ({ ...p, [key]: val }))}
+        onClose={() => setOpenNote(null)}
+      />
     );
   }
 
