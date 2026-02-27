@@ -4,15 +4,12 @@ import { NotesTab } from '@/components/easy/NotesTab';
 import { MoneyTab } from '@/components/easy/MoneyTab';
 import { TaskDetailScreen } from '@/components/easy/TaskDetailScreen';
 import { registerOpenDetail } from '@/components/easy/EventCard';
-import SystemeStationService from '@/pages/EasyPlus';
-import { QuickAuth } from '@/components/QuickAuth';
-import { useAuth } from '@/contexts/auth/AuthContext';
+// Import the main component from your EasyPlus page
+import SystemeStationService from '@/pages/EasyPlus'; // Assuming the path is correct
 
 export default function SamsungCalendar() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("notes");
+  const [activeTab, setActiveTab] = useState("calendar");
   const [detailCtx, setDetailCtx] = useState(null);
-  const [showAuth, setShowAuth] = useState(false);
 
   useEffect(() => {
     registerOpenDetail((ctx) => setDetailCtx(ctx));
@@ -55,10 +52,12 @@ export default function SamsungCalendar() {
         </svg>
       ),
     },
+    // --- New EasyPlus Tab ---
     {
       id: "easyplus",
       label: "EasyPlus",
       icon: (active) => (
+        // Using a simple plus icon for EasyPlus; you can replace it.
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#34A853":"#555"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <line x1="12" y1="8" x2="12" y2="16"/>
@@ -80,9 +79,10 @@ export default function SamsungCalendar() {
           font-family: 'Roboto', sans-serif;
         }
 
+        /* On real mobile: fill the whole screen */
         .app-shell {
           width: 100vw;
-          height: 100dvh;
+          height: 100dvh; /* dynamic viewport height handles mobile browser chrome */
           background: #000;
           overflow: hidden;
           position: relative;
@@ -91,6 +91,7 @@ export default function SamsungCalendar() {
           color: #fff;
         }
 
+        /* On desktop (wider than 480px): show the phone-frame look */
         @media (min-width: 480px) {
           .app-outer {
             display: flex;
@@ -111,56 +112,18 @@ export default function SamsungCalendar() {
           from { opacity: 0; transform: translateY(4px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        
         div::-webkit-scrollbar, input::-webkit-scrollbar { display: none; }
       `}</style>
 
       <div className="app-outer">
         <div className="app-shell">
-          {/* Header with user info */}
-          <div style={{
-            padding: '12px 16px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid #111',
-            background: '#000',
-          }}>
-            <span style={{ color: '#fff', fontSize: 18, fontWeight: 500 }}>Vivid Voyage</span>
-            {!user ? (
-              <button
-                onClick={() => setShowAuth(true)}
-                style={{
-                  background: '#4285f4',
-                  border: 'none',
-                  color: '#fff',
-                  padding: '6px 16px',
-                  borderRadius: 20,
-                  fontSize: 13,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-              >
-                Sign In
-              </button>
-            ) : (
-              <span style={{
-                background: '#333',
-                color: '#fff',
-                padding: '4px 12px',
-                borderRadius: 16,
-                fontSize: 12,
-              }}>
-                {user.email || 'User'}
-              </span>
-            )}
-          </div>
 
           {/* Scrollable content area */}
           <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
-            {activeTab === "notes" && <NotesTab />}
+            {activeTab === "notes"    && <NotesTab />}
             {activeTab === "calendar" && <CalendarTab />}
-            {activeTab === "money" && <MoneyTab />}
+            {activeTab === "money"    && <MoneyTab />}
+            {/* Render the imported EasyPlus component */}
             {activeTab === "easyplus" && <SystemeStationService />}
           </div>
 
@@ -170,7 +133,7 @@ export default function SamsungCalendar() {
             flexShrink: 0,
             borderTop: "1px solid #111",
             background: "#000",
-            paddingBottom: "env(safe-area-inset-bottom, 8px)",
+            paddingBottom: "env(safe-area-inset-bottom, 8px)", // handles iPhone notch/home indicator
           }}>
             {TABS.map(tab => {
               const active = activeTab === tab.id;
@@ -188,7 +151,7 @@ export default function SamsungCalendar() {
                     padding: "10px 0 6px",
                     cursor: "pointer",
                     userSelect: "none",
-                    WebkitTapHighlightColor: "transparent",
+                    WebkitTapHighlightColor: "transparent", // removes tap flash on mobile
                   }}
                 >
                   {tab.icon(active)}
@@ -208,12 +171,6 @@ export default function SamsungCalendar() {
             })}
           </div>
 
-          {/* Auth Modal */}
-          {showAuth && (
-            <QuickAuth onClose={() => setShowAuth(false)} />
-          )}
-
-          {/* Task detail screen */}
           {detailCtx && (
             <TaskDetailScreen
               ev={detailCtx.ev}
@@ -224,6 +181,7 @@ export default function SamsungCalendar() {
               bump={() => detailCtx.bump && detailCtx.bump()}
             />
           )}
+
         </div>
       </div>
     </>
