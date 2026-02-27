@@ -10,7 +10,7 @@ import { CurrencyProvider } from "../contexts/CurrencyContext";
 import { RouteCacheProvider } from "../contexts/RouteCacheContext";
 import { AuthOverlayProvider } from "../context/AuthOverlayContext";
 import { ScreenOverlayProvider } from "../context/ScreenOverlayContext";
-import { AuthProvider } from "../contexts/auth/AuthContext";
+import { AuthProvider } from "@/hooks/useAuth"; // Import your new auth provider (rename import)
 import { HeaderFilterProvider } from '../contexts/HeaderFilterContext';
 import { queryClient } from "../utils/queryClient";
 
@@ -28,6 +28,7 @@ export function Providers({ children }: ProvidersProps) {
               <Router>
                 <RedirectAuthProvider>
                   <HomepageProvider>
+                    {/* Use only your new AuthProvider */}
                     <AuthProvider>
                       <AuthOverlayProvider>
                         <ScreenOverlayProvider>
