@@ -54,25 +54,36 @@ function getAllNotes(customNotes = []) {
 
 const writingStorage = {};
 
-// ── NEW: Add Note Modal ───────────────────────────────────────────────────────
+// ── NoteFormModal: handles both Add and Edit ─────────────────────────────────
 const NOTE_TYPES = ["note","article","doc","journal","draft","project"];
 
-function AddNoteModal({ onClose, onAdd }) {
-  const [form, setForm] = useState({ title:"", type:"note", field:"personal", prompt:"", tags:"" });
+function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
+  const isEdit = !!editNote;
+  const [form, setForm] = useState(isEdit ? {
+    title: editNote.title,
+    type:  editNote.type,
+    field: editNote.field,
+    prompt: editNote.prompt || "",
+    tags: (editNote.tags || []).join(", "),
+  } : { title:"", type:"note", field:"personal", prompt:"", tags:"" });
   const [error, setError] = useState("");
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   function handleSubmit() {
     if (!form.title.trim()) { setError("Title is required"); return; }
-    onAdd({
-      title: form.title.trim(),
-      type: form.type,
-      field: form.field,
+    const data = {
+      title:  form.title.trim(),
+      type:   form.type,
+      field:  form.field,
       prompt: form.prompt.trim(),
-      tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
+      tags:   form.tags.split(",").map(t => t.trim()).filter(Boolean),
       _custom: true,
-      _id: Date.now(),
-    });
+    };
+    if (isEdit) {
+      onEdit({ ...editNote, ...data });
+    } else {
+      onAdd({ ...data, _id: Date.now() });
+    }
     onClose();
   }
 
@@ -108,7 +119,7 @@ function AddNoteModal({ onClose, onAdd }) {
 
         {/* Header */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <div style={{ fontSize:16, fontWeight:700, color:"#d4d4d8" }}>New Note</div>
+          <div style={{ fontSize:16, fontWeight:700, color:"#d4d4d8" }}>{isEdit ? "Edit Note" : "New Note"}</div>
           <div onClick={onClose} style={{ fontSize:20, color:"#555", cursor:"pointer", lineHeight:1, padding:"0 4px" }}>×</div>
         </div>
 
@@ -207,7 +218,7 @@ function AddNoteModal({ onClose, onAdd }) {
             background:"#4285f4", color:"#fff", fontSize:13,
             fontWeight:700, cursor:"pointer", userSelect:"none",
           }}>
-            Create Note
+            {isEdit ? "Save Changes" : "Create Note"}
           </div>
         </div>
       </div>
@@ -226,13 +237,20 @@ export function NotesTab() {
   // ── NEW ──
   const [addOpen, setAddOpen]         = useState(false);
   const [customNotes, setCustomNotes] = useState(() => loadCustomNotes());
+  const [editNote, setEditNote]       = useState(null);
 
   const openAddModal  = () => setAddOpen(true);
-  const closeAddModal = () => setAddOpen(false);
+  const closeAddModal = () => { setAddOpen(false); setEditNote(null); };
 
   // ── NEW ──
   function handleAddNote(newNote) {
     const updated = [newNote, ...customNotes];
+    setCustomNotes(updated);
+    saveCustomNotes(updated);
+  }
+
+  function handleEditNote(updatedNote) {
+    const updated = customNotes.map(n => n._id === updatedNote._id ? updatedNote : n);
     setCustomNotes(updated);
     saveCustomNotes(updated);
   }
@@ -484,10 +502,23 @@ export function NotesTab() {
                     </div>
                   </div>
 
-                  {/* Arrow */}
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink:0 }}>
-                    <path d="M9 18l6-6-6-6" stroke="#2a2a2a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  {/* Arrow / Edit */}
+                  {note._custom ? (
+                    <div
+                      onClick={e => { e.stopPropagation(); setEditNote(note); setAddOpen(true); }}
+                      style={{ flexShrink:0, width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center",
+                        border:"1px solid #1e1e1e", cursor:"pointer" }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </div>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink:0 }}>
+                      <path d="M9 18l6-6-6-6" stroke="#2a2a2a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
                 </div>
               );
             })}
@@ -495,8 +526,15 @@ export function NotesTab() {
         ))}
       </div>
 
-      {/* ── NEW: Add Note Modal ── */}
-      {addOpen && <AddNoteModal onClose={closeAddModal} onAdd={handleAddNote} />}
+      {/* ── NEW: Add / Edit Note Modal ── */}
+      {addOpen && (
+        <NoteFormModal
+          onClose={closeAddModal}
+          onAdd={handleAddNote}
+          onEdit={handleEditNote}
+          editNote={editNote}
+        />
+      )}
     </div>
   );
 }
