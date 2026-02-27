@@ -1,12 +1,26 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { TYPE_META, NOTE_TYPE_STYLE } from '@/data/typeMeta';
-import { SAMPLE_NOTES } from '@/data/notesData';
-import { events } from '@/data/eventsData';
 import { FIELDS } from '@/data/fieldsData';
 import { DocScreen } from '@/components/easy/DocScreen';
 import { ProjectScreen } from '@/components/easy/ProjectScreen';
 
-function guessField(ev) {
+interface Note {
+  id: string;
+  title: string;
+  type: string;
+  field: string;
+  prompt?: string;
+  tags: string[];
+  content?: string;
+  word_goal?: number;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+function guessField(ev: any): string {
   const t = ((ev.title||"") + " " + (ev.prompt||"") + " " + (ev.tags||[]).join(" ")).toLowerCase();
   if (t.match(/finance|invest|stock|fund|budget|revenue|valuation|money|wealth|portfolio/)) return "finance";
   if (t.match(/econom|market|gdp|supply|demand|trade|macro|micro|inflation|recession/)) return "economics";
@@ -27,37 +41,10 @@ function guessField(ev) {
   return "personal";
 }
 
-// ── NEW: localStorage helpers ─────────────────────────────────────────────────
-const LS_KEY = "custom_notes_v1";
-function loadCustomNotes() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch { return []; }
-}
-function saveCustomNotes(notes) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(notes)); } catch {}
-}
-
-// ── CHANGED: accepts extra custom notes ───────────────────────────────────────
-function getAllNotes(customNotes = []) {
-  const writingTypes = new Set(["note","article","doc","journal","draft","project"]);
-  const out = [];
-  Object.entries(events).forEach(([, parts]) => {
-    Object.values(parts).forEach(evList => {
-      (evList||[]).forEach(ev => {
-        if (writingTypes.has(ev.type)) out.push({ ...ev, field: guessField(ev) });
-      });
-    });
-  });
-  SAMPLE_NOTES.forEach(n => out.push({ ...n, field: guessField(n) }));
-  customNotes.forEach(n => out.push(n));
-  return out;
-}
-
-const writingStorage = {};
-
-// ── NoteFormModal: handles both Add and Edit ─────────────────────────────────
 const NOTE_TYPES = ["note","article","doc","journal","draft","project"];
 
-function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
+// NoteFormModal Component
+function NoteFormModal({ onClose, onAdd, onEdit, editNote, userId }: any) {
   const isEdit = !!editNote;
   const [form, setForm] = useState(isEdit ? {
     title: editNote.title,
@@ -65,26 +52,57 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
     field: editNote.field,
     prompt: editNote.prompt || "",
     tags: (editNote.tags || []).join(", "),
-  } : { title:"", type:"note", field:"personal", prompt:"", tags:"" });
+    word_goal: editNote.word_goal || 300,
+  } : { title:"", type:"note", field:"personal", prompt:"", tags:"", word_goal:300 });
   const [error, setError] = useState("");
-  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const set = (k: string, v: any) => setForm(p => ({ ...p, [k]: v }));
 
-  function handleSubmit() {
-    if (!form.title.trim()) { setError("Title is required"); return; }
-    const data = {
-      title:  form.title.trim(),
-      type:   form.type,
-      field:  form.field,
-      prompt: form.prompt.trim(),
-      tags:   form.tags.split(",").map(t => t.trim()).filter(Boolean),
-      _custom: true,
-    };
-    if (isEdit) {
-      onEdit({ ...editNote, ...data });
-    } else {
-      onAdd({ ...data, _id: Date.now() });
+  async function handleSubmit() {
+    if (!form.title.trim()) { 
+      setError("Title is required"); 
+      return; 
     }
-    onClose();
+    
+    setIsSubmitting(true);
+    
+    const noteData = {
+      title: form.title.trim(),
+      type: form.type,
+      field: form.field,
+      prompt: form.prompt.trim(),
+      tags: form.tags.split(",").map((t: string) => t.trim()).filter(Boolean),
+      word_goal: form.word_goal,
+    };
+
+    try {
+      if (isEdit) {
+        const { data, error } = await supabase
+          .from('notes')
+          .update(noteData)
+          .eq('id', editNote.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        onEdit(data);
+      } else {
+        const { data, error } = await supabase
+          .from('notes')
+          .insert([{ ...noteData, user_id: userId }])
+          .select()
+          .single();
+
+        if (error) throw error;
+        onAdd(data);
+      }
+      onClose();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const fieldObjs = FIELDS.filter(f => f.id !== "all");
@@ -99,12 +117,10 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
 
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={onClose}
         style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:9998, animation:"overlayFade 0.2s ease" }}
       />
-      {/* Panel */}
       <div style={{
         position:"fixed", left:0, right:0, bottom:0, top:"6%",
         background:"#0a0a0a", borderTop:"1px solid #1e1e1e",
@@ -112,18 +128,15 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
         zIndex:9999, padding:20, display:"flex", flexDirection:"column", gap:16,
         animation:"sheetUp 0.25s cubic-bezier(0.32,0.72,0,1)", overflowY:"auto",
       }}>
-        {/* Drag handle */}
         <div style={{ display:"flex", justifyContent:"center", marginTop:-4, marginBottom:-4 }}>
           <div style={{ width:36, height:4, borderRadius:2, background:"#222" }} />
         </div>
 
-        {/* Header */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <div style={{ fontSize:16, fontWeight:700, color:"#d4d4d8" }}>{isEdit ? "Edit Note" : "New Note"}</div>
           <div onClick={onClose} style={{ fontSize:20, color:"#555", cursor:"pointer", lineHeight:1, padding:"0 4px" }}>×</div>
         </div>
 
-        {/* Title */}
         <div>
           <label style={labelSt}>Title *</label>
           <input
@@ -136,7 +149,6 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
           {error && <div style={{ fontSize:11, color:"#ef5350", marginTop:4 }}>{error}</div>}
         </div>
 
-        {/* Type */}
         <div>
           <label style={labelSt}>Type</label>
           <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
@@ -159,11 +171,10 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
           </div>
         </div>
 
-        {/* Field */}
         <div>
           <label style={labelSt}>Field</label>
           <div style={{ display:"flex", flexWrap:"wrap", gap:6, maxHeight:100, overflowY:"auto" }}>
-            {fieldObjs.map(f => {
+            {fieldObjs.map((f: any) => {
               const active = form.field === f.id;
               return (
                 <div key={f.id} onClick={() => set("field", f.id)} style={{
@@ -181,7 +192,6 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
           </div>
         </div>
 
-        {/* Prompt */}
         <div>
           <label style={labelSt}>Prompt / Description</label>
           <textarea
@@ -193,7 +203,18 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
           />
         </div>
 
-        {/* Tags */}
+        <div>
+          <label style={labelSt}>Word Goal</label>
+          <input
+            type="number"
+            value={form.word_goal}
+            onChange={e => set("word_goal", parseInt(e.target.value) || 300)}
+            min={50}
+            max={5000}
+            style={inputSt}
+          />
+        </div>
+
         <div>
           <label style={labelSt}>Tags (comma-separated)</label>
           <input
@@ -204,7 +225,6 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
           />
         </div>
 
-        {/* Actions */}
         <div style={{ display:"flex", gap:10, marginTop:4 }}>
           <div onClick={onClose} style={{
             flex:1, padding:"11px 0", textAlign:"center",
@@ -217,60 +237,57 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
             flex:2, padding:"11px 0", textAlign:"center",
             background:"#4285f4", color:"#fff", fontSize:13,
             fontWeight:700, cursor:"pointer", userSelect:"none",
+            opacity: isSubmitting ? 0.5 : 1,
           }}>
-            {isEdit ? "Save Changes" : "Create Note"}
+            {isSubmitting ? "Saving..." : (isEdit ? "Save Changes" : "Create Note")}
           </div>
         </div>
       </div>
     </>
   );
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
-// ── SwipeableRow ──────────────────────────────────────────────────────────────
-function SwipeableRow({ note, onEdit, onDelete, children }) {
-  const ACTION_W   = 160; // total revealed width (80px each)
-  const SNAP_AT    = ACTION_W * 0.4;
-  const startX     = useRef(null);
-  const startY     = useRef(null);
-  const dragging   = useRef(false);
-  const locked     = useRef(false); // locked to horizontal swipe
-  const [offset, setOffset]     = useState(0);
-  const [isOpen,  setIsOpen]    = useState(false);
-  const [animate, setAnimate]   = useState(true);
+// SwipeableRow Component
+function SwipeableRow({ note, onEdit, onDelete, children }: any) {
+  const ACTION_W = 160;
+  const SNAP_AT = ACTION_W * 0.4;
+  const startX = useRef<any>(null);
+  const startY = useRef<any>(null);
+  const dragging = useRef(false);
+  const locked = useRef(false);
+  const [offset, setOffset] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+  const [animate, setAnimate] = useState(true);
 
-  const open  = () => { setAnimate(true); setOffset(ACTION_W); setIsOpen(true); };
-  const close = () => { setAnimate(true); setOffset(0);        setIsOpen(false); };
+  const open = () => { setAnimate(true); setOffset(ACTION_W); setIsOpen(true); };
+  const close = () => { setAnimate(true); setOffset(0); setIsOpen(false); };
 
-  function onTouchStart(e) {
-    startX.current  = e.touches[0].clientX;
-    startY.current  = e.touches[0].clientY;
+  function onTouchStart(e: any) {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
     dragging.current = true;
-    locked.current   = false;
+    locked.current = false;
     setAnimate(false);
   }
 
-  function onTouchMove(e) {
+  function onTouchMove(e: any) {
     if (!dragging.current) return;
     const dx = startX.current - e.touches[0].clientX;
     const dy = Math.abs(e.touches[0].clientY - startY.current);
 
-    // If moving more vertically than horizontally, abort swipe
     if (!locked.current) {
       if (dy > Math.abs(dx) + 4) { dragging.current = false; setAnimate(true); return; }
       if (Math.abs(dx) > 6) locked.current = true;
     }
     if (!locked.current) return;
 
-    e.preventDefault(); // prevent scroll while swiping horizontally
+    e.preventDefault();
 
     const base = isOpen ? ACTION_W : 0;
-    const raw  = base + dx;
+    const raw = base + dx;
     if (raw <= 0) {
-      // rubber-band right: dampened
       setOffset(Math.max(raw * 0.15, -12));
     } else if (raw > ACTION_W) {
-      // rubber-band past full: dampened
       setOffset(ACTION_W + (raw - ACTION_W) * 0.15);
     } else {
       setOffset(raw);
@@ -284,19 +301,16 @@ function SwipeableRow({ note, onEdit, onDelete, children }) {
     if (offset >= SNAP_AT) { open(); } else { close(); }
   }
 
-  // close when tapping the row content while open
-  function onRowClick(e) {
+  function onRowClick(e: any) {
     if (isOpen) { e.stopPropagation(); close(); }
   }
 
   return (
     <div style={{ position:"relative", overflow:"hidden" }}>
-      {/* ── Action strip behind the row ── */}
       <div style={{
         position:"absolute", top:0, right:0, bottom:0, width:ACTION_W,
         display:"flex", overflow:"hidden",
       }}>
-        {/* Edit */}
         <div
           onClick={e => { e.stopPropagation(); close(); setTimeout(() => onEdit(note), 180); }}
           style={{
@@ -319,7 +333,6 @@ function SwipeableRow({ note, onEdit, onDelete, children }) {
           <span style={{ fontSize:10, color:"#4285f4", letterSpacing:0.8, fontWeight:600 }}>Edit</span>
         </div>
 
-        {/* Delete */}
         <div
           onClick={e => { e.stopPropagation(); close(); setTimeout(() => onDelete(note), 180); }}
           style={{
@@ -345,7 +358,6 @@ function SwipeableRow({ note, onEdit, onDelete, children }) {
         </div>
       </div>
 
-      {/* ── Sliding row ── */}
       <div
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -355,7 +367,6 @@ function SwipeableRow({ note, onEdit, onDelete, children }) {
           transform:`translateX(-${offset}px)`,
           transition: animate ? "transform 0.28s cubic-bezier(0.25,1,0.5,1)" : "none",
           willChange:"transform",
-          // Subtle swipe-hint indicator on the right edge
           boxShadow: isOpen ? "none" : "inset -3px 0 0 #ffffff08",
         }}
       >
@@ -365,80 +376,138 @@ function SwipeableRow({ note, onEdit, onDelete, children }) {
   );
 }
 
+// Main NotesTab Component
 export function NotesTab() {
+  const { user, isAuthenticated } = useAuth();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeField, setActiveField] = useState("all");
-  const [openNote, setOpenNote]       = useState(null);
-  const [search, setSearch]           = useState("");
-  const [searchOpen, setSearchOpen]   = useState(false);
-  const [noteTexts, setNoteTexts]     = useState({});
+  const [openNote, setOpenNote] = useState<any>(null);
+  const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [noteContents, setNoteContents] = useState<Record<string, string>>({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // ── NEW ──
-  const [addOpen, setAddOpen]         = useState(false);
-  const [customNotes, setCustomNotes] = useState(() => loadCustomNotes());
-  const [editNote, setEditNote]       = useState(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [editNote, setEditNote] = useState<any>(null);
 
-  const openAddModal  = () => setAddOpen(true);
+  // Fetch notes from Supabase
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchNotes();
+    } else {
+      setNotes([]);
+      setLoading(false);
+    }
+  }, [isAuthenticated, user]);
+
+  const fetchNotes = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setNotes(data || []);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openAddModal = () => setAddOpen(true);
   const closeAddModal = () => { setAddOpen(false); setEditNote(null); };
 
-  // ── NEW ──
-  function handleAddNote(newNote) {
-    const updated = [newNote, ...customNotes];
-    setCustomNotes(updated);
-    saveCustomNotes(updated);
+  async function handleAddNote(newNote: Note) {
+    setNotes(prev => [newNote, ...prev]);
   }
 
-  function handleEditNote(updatedNote) {
-    const updated = customNotes.map(n => n._id === updatedNote._id ? updatedNote : n);
-    setCustomNotes(updated);
-    saveCustomNotes(updated);
+  async function handleEditNote(updatedNote: Note) {
+    setNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n));
   }
 
-  function handleDeleteNote(note) {
-    const updated = customNotes.filter(n => n._id !== note._id);
-    setCustomNotes(updated);
-    saveCustomNotes(updated);
+  async function handleDeleteNote(note: Note) {
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .delete()
+        .eq('id', note.id);
+
+      if (error) throw error;
+      
+      setNotes(prev => prev.filter(n => n.id !== note.id));
+    } catch (error) {
+      console.error('Error deleting note:', error);
+    }
   }
 
-  // ── CHANGED: pass customNotes in ──
-  const allNotes = getAllNotes(customNotes);
+  async function handleContentSave(noteId: string, content: string) {
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .update({ content })
+        .eq('id', noteId);
 
-  // ── CHANGED: use _id as key for custom notes ──
-  const noteKey = (n) => n._id ? `custom_${n._id}` : n.title + "__" + n.type;
+      if (error) throw error;
+      
+      setNoteContents(prev => ({ ...prev, [noteId]: content }));
+    } catch (error) {
+      console.error('Error saving note content:', error);
+    }
+  }
 
-  const filtered = allNotes.filter(n => {
+  // Filter notes
+  const filtered = notes.filter(n => {
     const matchF = activeField === "all" || n.field === activeField;
     const q = search.toLowerCase();
-    const matchS = !q || (n.title + (n.prompt||"") + (n.tags||[]).join(" ")).toLowerCase().includes(q);
+    const matchS = !q || (n.title + (n.prompt || "") + (n.tags || []).join(" ")).toLowerCase().includes(q);
     return matchF && matchS;
   });
 
-  // Group by field only in "all" view
+  // Group by field
   const groups = activeField === "all"
-    ? FIELDS.slice(1).reduce((acc, f) => {
+    ? FIELDS.slice(1).reduce((acc: any[], f: any) => {
         const ns = filtered.filter(n => n.field === f.id);
         if (ns.length) acc.push({ field: f, notes: ns });
         return acc;
       }, [])
-    : [{ field: FIELDS.find(f => f.id === activeField) || FIELDS[0], notes: filtered }];
+    : [{ field: FIELDS.find((f: any) => f.id === activeField) || FIELDS[0], notes: filtered }];
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", background:"#000", color:"#fff" }}>
+        <div style={{ textAlign:"center" }}>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" style={{ margin:"0 auto 16px", display:"block" }}>
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+          <div style={{ fontSize:16, fontWeight:600, color:"#666", marginBottom:8 }}>Sign in to view your notes</div>
+          <div style={{ fontSize:13, color:"#333" }}>Your notes will appear here after login</div>
+        </div>
+      </div>
+    );
+  }
 
   if (openNote) {
     if (openNote.type === "project") {
       return <ProjectScreen ev={openNote} onClose={() => setOpenNote(null)} />;
     }
     const accent = TYPE_META[openNote.type]?.accent || openNote.color || "#86efac";
-    const key = noteKey(openNote);
     return (
       <DocScreen
         ev={openNote}
         accent={accent}
-        text={noteTexts[key] || ""}
-        setText={val => setNoteTexts(p => ({ ...p, [key]: val }))}
+        text={noteContents[openNote.id] || openNote.content || ""}
+        setText={(val: string) => handleContentSave(openNote.id, val)}
         onClose={() => setOpenNote(null)}
       />
     );
   }
 
-  const activeFieldObj = FIELDS.find(f => f.id === activeField) || FIELDS[0];
+  const activeFieldObj = FIELDS.find((f: any) => f.id === activeField) || FIELDS[0];
 
   return (
     <div style={{ display:"flex", flexDirection:"column", height:"100%", background:"#000", color:"#fff", fontFamily:"'Roboto',sans-serif", overflow:"hidden", position:"relative" }}>
@@ -451,7 +520,6 @@ export function NotesTab() {
         .sidebar-field-row:active{background:#1a1a1a!important}
       `}</style>
 
-      {/* SIDEBAR OVERLAY */}
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
@@ -459,7 +527,6 @@ export function NotesTab() {
         />
       )}
 
-      {/* SIDEBAR PANEL */}
       {sidebarOpen && (
         <div style={{
           position:"absolute", top:0, left:0, bottom:0, width:240,
@@ -467,17 +534,15 @@ export function NotesTab() {
           zIndex:40, display:"flex", flexDirection:"column",
           animation:"sidebarSlide 0.22s ease",
         }}>
-          {/* Sidebar header */}
           <div style={{ padding:"20px 20px 12px", borderBottom:"1px solid #111" }}>
             <div style={{ fontSize:13, fontWeight:700, letterSpacing:1.2, color:"#555", textTransform:"uppercase", marginBottom:2 }}>Fields</div>
-            <div style={{ fontSize:10, color:"#2a2a2a" }}>{allNotes.length} total entries</div>
+            <div style={{ fontSize:10, color:"#2a2a2a" }}>{notes.length} total entries</div>
           </div>
 
-          {/* Field list */}
           <div style={{ flex:1, overflowY:"auto", padding:"8px 0" }}>
-            {FIELDS.map(f => {
+            {FIELDS.map((f: any) => {
               const active = activeField === f.id;
-              const count = f.id === "all" ? allNotes.length : allNotes.filter(n => n.field === f.id).length;
+              const count = f.id === "all" ? notes.length : notes.filter(n => n.field === f.id).length;
               return (
                 <div
                   key={f.id}
@@ -499,7 +564,6 @@ export function NotesTab() {
             })}
           </div>
 
-          {/* Sidebar footer — NEW: button wired up */}
           <div style={{ padding:"16px 20px", borderTop:"1px solid #111" }}>
             <div
               onClick={() => { setSidebarOpen(false); openAddModal(); }}
@@ -512,11 +576,9 @@ export function NotesTab() {
         </div>
       )}
 
-      {/* HEADER */}
       <div style={{ flexShrink:0, padding:"16px 20px 0" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            {/* Hamburger button */}
             <div
               onClick={() => setSidebarOpen(s => !s)}
               style={{ width:36, height:36, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:5, cursor:"pointer", flexShrink:0 }}
@@ -532,7 +594,7 @@ export function NotesTab() {
               </div>
               <div style={{ fontSize:11, color:"#444", marginTop:2 }}>
                 {activeField === "all"
-                  ? `${allNotes.length} entries across ${FIELDS.length - 1} fields`
+                  ? `${notes.length} entries across ${FIELDS.length - 1} fields`
                   : `${filtered.length} entries`}
               </div>
             </div>
@@ -544,9 +606,8 @@ export function NotesTab() {
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={searchOpen?"#fff":"#555"} strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
             </div>
-            {/* ── CHANGED: onClick wired up ── */}
             <div
-              onClick={() => openAddModal()}
+              onClick={openAddModal}
               style={{ width:36, height:36, borderRadius:"50%", background:"#4285f4", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>
@@ -554,7 +615,6 @@ export function NotesTab() {
           </div>
         </div>
 
-        {/* Search */}
         {searchOpen && (
           <div style={{ display:"flex", alignItems:"center", gap:8, background:"#0d0d0d", border:"1px solid #1e1e1e", padding:"8px 12px", marginBottom:10, animation:"notesFade 0.15s ease" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -564,19 +624,31 @@ export function NotesTab() {
         )}
       </div>
 
-      {/* NOTES LIST */}
       <div style={{ flex:1, overflowY:"auto" }}>
-        {filtered.length === 0 && (
+        {loading && (
           <div style={{ textAlign:"center", padding:"60px 24px", color:"#222" }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1.5" style={{ margin:"0 auto 12px", display:"block" }}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            <div style={{ fontSize:13 }}>No notes in this field yet</div>
+            <div style={{ fontSize:13 }}>Loading notes...</div>
           </div>
         )}
 
-        {groups.map(({ field, notes }) => (
-          <div key={field.id} style={{ marginBottom: activeField==="all" ? 8 : 0 }}>
+        {!loading && filtered.length === 0 && (
+          <div style={{ textAlign:"center", padding:"60px 24px", color:"#222" }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1.5" style={{ margin:"0 auto 12px", display:"block" }}>
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <div style={{ fontSize:13 }}>No notes in this field yet</div>
+            <div 
+              onClick={openAddModal}
+              style={{ marginTop:16, fontSize:12, color:"#4285f4", cursor:"pointer" }}
+            >
+              + Create your first note
+            </div>
+          </div>
+        )}
 
-            {/* Field section header — only in "all" view */}
+        {groups.map(({ field, notes }: any) => (
+          <div key={field.id} style={{ marginBottom: activeField==="all" ? 8 : 0 }}>
             {activeField === "all" && (
               <div style={{ display:"flex", alignItems:"center", gap:8, padding:"14px 20px 10px", background:"#000", position:"sticky", top:0, zIndex:2 }}>
                 <span style={{ display:"flex", alignItems:"center", color:field.color }}>{field.icon}</span>
@@ -588,23 +660,21 @@ export function NotesTab() {
               </div>
             )}
 
-            {/* Note rows */}
-            {notes.map((note, i) => {
-              const ts  = NOTE_TYPE_STYLE[note.type] || NOTE_TYPE_STYLE.note;
-              const fd  = FIELDS.find(f=>f.id===note.field) || FIELDS[0];
-              const key = noteKey(note);
-              const wc  = (noteTexts[key]||"").trim().split(/\s+/).filter(Boolean).length;
-              const pct = Math.min(100, Math.round((wc / (note.wordGoal||300)) * 100));
+            {notes.map((note: Note, i: number) => {
+              const ts = NOTE_TYPE_STYLE[note.type] || NOTE_TYPE_STYLE.note;
+              const fd = FIELDS.find((f: any) => f.id === note.field) || FIELDS[0];
+              const content = noteContents[note.id] || note.content || "";
+              const wc = content.trim().split(/\s+/).filter(Boolean).length;
+              const pct = Math.min(100, Math.round((wc / (note.word_goal || 300)) * 100));
 
               const rowContent = (
-                <div key={key} className="note-row" onClick={()=>setOpenNote(note)}
+                <div key={note.id} className="note-row" onClick={() => setOpenNote(note)}
                   style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 20px", cursor:"pointer",
                     borderLeft:`3px solid ${fd.color}${activeField==="all"?"33":"55"}`,
                     borderBottom:"1px solid #080808", background:"#000",
                     animation:`notesFade 0.15s ease ${i*0.03}s both`,
                   }}
                 >
-                  {/* Type icon box */}
                   <div style={{ width:36, height:36, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
                     background:ts.bg, border:`1px solid ${ts.color}22` }}>
                     <span style={{ fontFamily:"'Courier New',monospace", fontSize:14, color:ts.color, lineHeight:1 }}>
@@ -612,15 +682,13 @@ export function NotesTab() {
                     </span>
                   </div>
 
-                  {/* Text */}
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:14, fontWeight:600, color:"#d4d4d8", marginBottom:3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                      {note._custom && (
-                        <span style={{ fontSize:9, color:"#4285f4", border:"1px solid #4285f433", padding:"1px 4px", marginRight:5 }}>NEW</span>
-                      )}
                       {note.title}
                     </div>
-                    <div style={{ fontSize:11, color:"#444", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginBottom:6 }}>{note.prompt||"No description"}</div>
+                    <div style={{ fontSize:11, color:"#444", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginBottom:6 }}>
+                      {note.prompt || "No description"}
+                    </div>
                     <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
                       <span style={{ fontSize:9, color:ts.color, border:`1px solid ${ts.color}33`, padding:"1px 5px", letterSpacing:0.8, textTransform:"uppercase" }}>{ts.label}</span>
                       {activeField==="all" && (
@@ -629,7 +697,7 @@ export function NotesTab() {
                           {fd.label}
                         </span>
                       )}
-                      {(note.tags||[]).slice(0,2).map(t=>(
+                      {(note.tags || []).slice(0,2).map(t => (
                         <span key={t} style={{ fontSize:9, color:"#333" }}>#{t}</span>
                       ))}
                       {wc > 0 && (
@@ -646,35 +714,34 @@ export function NotesTab() {
                     </div>
                   </div>
 
-                  {/* Arrow */}
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink:0 }}>
                     <path d="M9 18l6-6-6-6" stroke="#2a2a2a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
               );
 
-              return note._custom ? (
+              return (
                 <SwipeableRow
-                  key={key}
+                  key={note.id}
                   note={note}
-                  onEdit={n => { setEditNote(n); setAddOpen(true); }}
+                  onEdit={(n: Note) => { setEditNote(n); setAddOpen(true); }}
                   onDelete={handleDeleteNote}
                 >
                   {rowContent}
                 </SwipeableRow>
-              ) : rowContent;
+              );
             })}
           </div>
         ))}
       </div>
 
-      {/* ── NEW: Add / Edit Note Modal ── */}
       {addOpen && (
         <NoteFormModal
           onClose={closeAddModal}
           onAdd={handleAddNote}
           onEdit={handleEditNote}
           editNote={editNote}
+          userId={user?.id}
         />
       )}
     </div>
