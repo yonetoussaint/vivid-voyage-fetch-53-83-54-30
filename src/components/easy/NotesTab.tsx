@@ -95,11 +95,17 @@ function AddNoteModal({ onClose, onAdd }) {
       />
       {/* Panel */}
       <div style={{
-        position:"absolute", left:16, right:16, top:"50%", transform:"translateY(-50%)",
-        background:"#0a0a0a", border:"1px solid #1e1e1e",
+        position:"absolute", left:0, right:0, bottom:0, top:"6%",
+        background:"#0a0a0a", borderTop:"1px solid #1e1e1e",
+        borderRadius:"14px 14px 0 0",
         zIndex:51, padding:20, display:"flex", flexDirection:"column", gap:16,
-        animation:"notesFade 0.2s ease", maxHeight:"85%", overflowY:"auto",
+        animation:"sheetUp 0.25s cubic-bezier(0.32,0.72,0,1)", overflowY:"auto",
       }}>
+        {/* Drag handle */}
+        <div style={{ display:"flex", justifyContent:"center", marginTop:-4, marginBottom:-4 }}>
+          <div style={{ width:36, height:4, borderRadius:2, background:"#222" }} />
+        </div>
+
         {/* Header */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <div style={{ fontSize:16, fontWeight:700, color:"#d4d4d8" }}>New Note</div>
@@ -276,6 +282,7 @@ export function NotesTab() {
         @keyframes notesFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
         @keyframes sidebarSlide{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
         @keyframes overlayFade{from{opacity:0}to{opacity:1}}
+        @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
         .sidebar-field-row:active{background:#1a1a1a!important}
       `}</style>
 
