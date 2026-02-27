@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { TYPE_META, NOTE_TYPE_STYLE } from '@/data/typeMeta';
 import { SAMPLE_NOTES } from '@/data/notesData';
 import { events } from '@/data/eventsData';
@@ -227,6 +227,87 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote }) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── SwipeableRow: swipe left to reveal Edit + Delete ─────────────────────────
+function SwipeableRow({ note, onEdit, onDelete, children }) {
+  const THRESHOLD = 72; // px to reveal actions
+  const startX    = useRef(null);
+  const [offset, setOffset]   = useState(0);
+  const [swiped, setSwiped]   = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  function onTouchStart(e) {
+    startX.current = e.touches[0].clientX;
+  }
+  function onTouchMove(e) {
+    if (startX.current === null) return;
+    const dx = startX.current - e.touches[0].clientX;
+    if (dx > 0) setOffset(Math.min(dx, THRESHOLD));
+  }
+  function onTouchEnd() {
+    if (offset >= THRESHOLD * 0.55) {
+      setOffset(THRESHOLD);
+      setSwiped(true);
+    } else {
+      setOffset(0);
+      setSwiped(false);
+    }
+    startX.current = null;
+  }
+  function close() {
+    setClosing(true);
+    setTimeout(() => { setOffset(0); setSwiped(false); setClosing(false); }, 220);
+  }
+
+  return (
+    <div style={{ position:"relative", overflow:"hidden" }}>
+      {/* Action buttons revealed behind */}
+      <div style={{
+        position:"absolute", top:0, right:0, bottom:0, width:THRESHOLD,
+        display:"flex",
+      }}>
+        <div
+          onClick={e => { e.stopPropagation(); close(); onEdit(note); }}
+          style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", gap:3, background:"#1a3a5c", cursor:"pointer" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4285f4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          <span style={{ fontSize:9, color:"#4285f4", letterSpacing:0.6 }}>EDIT</span>
+        </div>
+        <div
+          onClick={e => { e.stopPropagation(); close(); onDelete(note); }}
+          style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", gap:3, background:"#3a1a1a", cursor:"pointer" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef5350" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+          <span style={{ fontSize:9, color:"#ef5350", letterSpacing:0.6 }}>DELETE</span>
+        </div>
+      </div>
+
+      {/* Sliding content */}
+      <div
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onClick={swiped ? e => { e.stopPropagation(); close(); } : undefined}
+        style={{
+          transform:`translateX(-${offset}px)`,
+          transition: startX.current === null ? "transform 0.22s ease" : "none",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function NotesTab() {
   const [activeField, setActiveField] = useState("all");
   const [openNote, setOpenNote]       = useState(null);
@@ -251,6 +332,12 @@ export function NotesTab() {
 
   function handleEditNote(updatedNote) {
     const updated = customNotes.map(n => n._id === updatedNote._id ? updatedNote : n);
+    setCustomNotes(updated);
+    saveCustomNotes(updated);
+  }
+
+  function handleDeleteNote(note) {
+    const updated = customNotes.filter(n => n._id !== note._id);
     setCustomNotes(updated);
     saveCustomNotes(updated);
   }
@@ -284,13 +371,24 @@ export function NotesTab() {
     const accent = TYPE_META[openNote.type]?.accent || openNote.color || "#86efac";
     const key = noteKey(openNote);
     return (
-      <DocScreen
-        ev={openNote}
-        accent={accent}
-        text={noteTexts[key] || ""}
-        setText={val => setNoteTexts(p => ({ ...p, [key]: val }))}
-        onClose={() => setOpenNote(null)}
-      />
+      <>
+        <DocScreen
+          ev={openNote}
+          accent={accent}
+          text={noteTexts[key] || ""}
+          setText={val => setNoteTexts(p => ({ ...p, [key]: val }))}
+          onClose={() => setOpenNote(null)}
+          onEditMeta={openNote._custom ? () => { setEditNote(openNote); setAddOpen(true); } : undefined}
+        />
+        {addOpen && (
+          <NoteFormModal
+            onClose={closeAddModal}
+            onAdd={handleAddNote}
+            onEdit={(updated) => { handleEditNote(updated); setOpenNote(updated); }}
+            editNote={editNote}
+          />
+        )}
+      </>
     );
   }
 
@@ -452,7 +550,7 @@ export function NotesTab() {
               const wc  = (noteTexts[key]||"").trim().split(/\s+/).filter(Boolean).length;
               const pct = Math.min(100, Math.round((wc / (note.wordGoal||300)) * 100));
 
-              return (
+              const rowContent = (
                 <div key={key} className="note-row" onClick={()=>setOpenNote(note)}
                   style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 20px", cursor:"pointer",
                     borderLeft:`3px solid ${fd.color}${activeField==="all"?"33":"55"}`,
@@ -499,22 +597,6 @@ export function NotesTab() {
                           </div>
                         </>
                       )}
-                      {note._custom && (
-                        <div
-                          onClick={e => { e.stopPropagation(); setEditNote(note); setAddOpen(true); }}
-                          style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:4,
-                            padding:"1px 6px", fontSize:9, cursor:"pointer", userSelect:"none",
-                            border:`1px solid ${ts.color}33`, background:ts.bg,
-                            color:ts.color, letterSpacing:0.8, textTransform:"uppercase",
-                          }}
-                        >
-                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={ts.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                          </svg>
-                          Edit
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -524,6 +606,17 @@ export function NotesTab() {
                   </svg>
                 </div>
               );
+
+              return note._custom ? (
+                <SwipeableRow
+                  key={key}
+                  note={note}
+                  onEdit={n => { setEditNote(n); setAddOpen(true); }}
+                  onDelete={handleDeleteNote}
+                >
+                  {rowContent}
+                </SwipeableRow>
+              ) : rowContent;
             })}
           </div>
         ))}
