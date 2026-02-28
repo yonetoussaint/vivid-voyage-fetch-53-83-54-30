@@ -62,12 +62,32 @@ interface AuthContextType {
   validatePassword: (pwd: string) => string | null;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const defaultAuthContext: AuthContextType = {
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  login: async () => ({ error: 'AuthProvider not mounted' }),
+  signup: async () => ({ error: 'AuthProvider not mounted' }),
+  logout: async () => {},
+  checkAuthStatus: async () => {},
+  handleOTPSignIn: async () => {},
+  checkIfFollowing: async () => false,
+  toggleFollowSeller: async () => ({ success: false, error: 'AuthProvider not mounted' }),
+  followedSellers: [],
+  notes: [],
+  notesLoading: false,
+  notesError: null,
+  refetchNotes: async () => {},
+  addNote: async () => ({ data: null, error: 'AuthProvider not mounted' }),
+  updateNote: async () => ({ data: null, error: 'AuthProvider not mounted' }),
+  deleteNote: async () => ({ error: 'AuthProvider not mounted' }),
+  validatePassword: () => null,
+};
+
+const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
+  return useContext(AuthContext);
 };
 
 // ── Provider ──────────────────────────────────────────────────────────────────
@@ -146,7 +166,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ── Notes: fetch ─────────────────────────────────────────────────────────────
   const fetchNotes = useCallback(async (userId?: string) => {
     const uid = userId || user?.id;
-    if (!uid) { setNotes([]); setNotesLoading(false); return; }
+    if (!uid || uid.startsWith('otp_')) {
+      // OTP users may have fake IDs — skip DB fetch
+      setNotes([]);
+      setNotesLoading(false);
+      return;
+    }
 
     setNotesLoading(true);
     setNotesError(null);
