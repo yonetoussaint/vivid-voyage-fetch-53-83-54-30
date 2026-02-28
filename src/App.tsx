@@ -3,38 +3,38 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
-import { RedirectAuthProvider } from "./context/RedirectAuthContext";
-import { HomepageProvider } from "./context/HomepageContext";
-import { CurrencyProvider } from "./contexts/CurrencyContext";
-import { RouteCacheProvider } from "./contexts/RouteCacheContext";
-import { AuthOverlayProvider } from "./context/AuthOverlayContext";
-import { ScreenOverlayProvider } from "./context/ScreenOverlayContext";
-import { HeaderFilterProvider } from './contexts/HeaderFilterContext';
+import { RedirectAuthProvider } from "@/context/RedirectAuthContext";
+import { HomepageProvider } from "@/context/HomepageContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { RouteCacheProvider } from "@/contexts/RouteCacheContext";
+import { AuthOverlayProvider } from "@/context/AuthOverlayContext";
+import { ScreenOverlayProvider } from "@/context/ScreenOverlayContext";
+import { HeaderFilterProvider } from "@/contexts/HeaderFilterContext";
 import { AuthProvider } from "@/hooks/useAuth";
-import { Toasters } from "./components/Toasters";
-import { queryClient } from "./utils/queryClient";
+import { Toasters } from "@/components/Toasters";
+import { queryClient } from "@/utils/queryClient";
 
-import MainLayout from "./layout/MainLayout";
-import { CategoryRoutes } from "./routes/CategoryRoutes";
-import { ContentRoutes } from "./routes/ContentRoutes";
-import { AuthRoutes } from "./routes/AuthRoutes";
-import { MiscRoutes } from "./routes/MiscRoutes";
-import AddReviewPage from '@/pages/AddReviewPage';
+import MainLayout from "@/layout/MainLayout";
+import { CategoryRoutes } from "@/routes/CategoryRoutes";
+import { ContentRoutes } from "@/routes/ContentRoutes";
+import { AuthRoutes } from "@/routes/AuthRoutes";
+import { MiscRoutes } from "@/routes/MiscRoutes";
+import AddReviewPage from "@/pages/AddReviewPage";
 import MallPage from "@/pages/MallPage";
 import Wallet from "@/pages/Wallet";
 import Messages from "@/pages/Messages";
 import GasStationSystem from "@/pages/EasyPlus";
 import GitHub from "@/pages/GitHub";
 import ProfilePage from "@/pages/ProfilePage";
-import Portfolio from "@/pages/Portfolio.tsx";
+import Portfolio from "@/pages/Portfolio";
 import ProductDetail from "@/pages/ProductDetail";
 import Calculator from "@/pages/Calculator";
 import Index from "@/pages/Index";
 import ReviewsPage from "@/components/product/ReviewsPage";
 import AuthCallback from "@/pages/AuthCallback";
-import VendorPostComments from '@/components/home/VendorPostComments';
+import VendorPostComments from "@/components/home/VendorPostComments";
 import Daily from "@/pages/Daily";
-import "./App.css";
+import "@/App.css";
 
 function App() {
   return (
