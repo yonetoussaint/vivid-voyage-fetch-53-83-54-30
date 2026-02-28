@@ -12,7 +12,6 @@ import Rapport from '@/components/easy/Rapport';
 import TasksManager from '@/components/easy/TasksManager';
 import LiasseCounter from '@/components/easy/LiasseCounter';
 import ProForma from '@/components/easy/ProForma';
-import Daily from '@/pages/Daily';
 import { useStationData } from '@/hooks/useStationData';
 
 // Import the layout components
@@ -331,7 +330,7 @@ const SystemeStationService = () => {
       // from the new raw totals
       let rebuiltSequences = [...rawBillSequencesFromDeposits];
       const completedLiasses = completedLiassesByDenom[`denom_${conditionnementDenom}`] || [];
-      
+
       // Re-apply each completed liasse's subtractions in order
       completedLiasses.forEach((liasse) => {
         const piles = rebuiltSequences.map((amount, i) => ({ originalIndex: i, amount }));
@@ -474,7 +473,7 @@ const SystemeStationService = () => {
   const handleReinitialiserShift = () => {
     reinitialiserShift(shift);
     setPompeEtendue('P1');
-    
+
     if (window.confirm('Voulez-vous aussi effacer les liasses complétées ?')) {
       setResidualSequencesByDenom({});
       setCompletedLiassesByDenom({});
@@ -484,7 +483,7 @@ const SystemeStationService = () => {
   const handleReinitialiserJour = () => {
     reinitialiserJour();
     setPompeEtendue('P1');
-    
+
     if (window.confirm('Voulez-vous aussi effacer toutes les liasses complétées ?')) {
       setResidualSequencesByDenom({});
       setCompletedLiassesByDenom({});
@@ -687,27 +686,6 @@ const SystemeStationService = () => {
         return (
           <div className="p-2 sm:p-6">
             <ProForma />
-          </div>
-        );
-
-      case 'daily':
-        return (
-          <div className="">
-            <Daily
-              date={date}
-              shift={shift}
-              vendeurs={vendeurs}
-              toutesDonnees={toutesDonnees}
-              propaneDonnees={propaneDonnees}
-              tousDepots={tousDepots}
-              ventesUSD={ventesUSD}
-              totauxAM={totauxAM}
-              totauxPM={totauxPM}
-              totauxQuotidiens={totauxQuotidiens}
-              prix={prix}
-              tauxUSD={tauxUSD}
-              prixPropane={prixPropane}
-            />
           </div>
         );
 
