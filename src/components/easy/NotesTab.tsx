@@ -1,26 +1,14 @@
-import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useRef, useCallback } from 'react';
 import { TYPE_META, NOTE_TYPE_STYLE } from '@/data/typeMeta';
+import { SAMPLE_NOTES } from '@/data/notesData';
+import { events } from '@/data/eventsData';
 import { FIELDS } from '@/data/fieldsData';
 import { DocScreen } from '@/components/easy/DocScreen';
 import { ProjectScreen } from '@/components/easy/ProjectScreen';
+import { useAuth } from '@/hooks/useAuth';
 
-interface Note {
-  id: string;
-  title: string;
-  type: string;
-  field: string;
-  prompt?: string;
-  tags: string[];
-  content?: string;
-  word_goal?: number;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-function guessField(ev: any): string {
+// ── Field guesser (kept for static/sample notes) ──────────────────────────────
+function guessField(ev) {
   const t = ((ev.title||"") + " " + (ev.prompt||"") + " " + (ev.tags||[]).join(" ")).toLowerCase();
   if (t.match(/finance|invest|stock|fund|budget|revenue|valuation|money|wealth|portfolio/)) return "finance";
   if (t.match(/econom|market|gdp|supply|demand|trade|macro|micro|inflation|recession/)) return "economics";
@@ -41,97 +29,72 @@ function guessField(ev: any): string {
   return "personal";
 }
 
+// ── Static notes (events + sample) ───────────────────────────────────────────
+function getStaticNotes() {
+  const writingTypes = new Set(["note","article","doc","journal","draft","project"]);
+  const out = [];
+  Object.entries(events).forEach(([, parts]) => {
+    Object.values(parts).forEach(evList => {
+      (evList||[]).forEach(ev => {
+        if (writingTypes.has(ev.type)) out.push({ ...ev, field: guessField(ev), _static: true });
+      });
+    });
+  });
+  SAMPLE_NOTES.forEach(n => out.push({ ...n, field: guessField(n), _static: true }));
+  return out;
+}
+
+// ── NoteFormModal ─────────────────────────────────────────────────────────────
 const NOTE_TYPES = ["note","article","doc","journal","draft","project"];
 
-// NoteFormModal Component
-function NoteFormModal({ onClose, onAdd, onEdit, editNote, userId }: any) {
+function NoteFormModal({ onClose, onSave, editNote, saving }) {
   const isEdit = !!editNote;
   const [form, setForm] = useState(isEdit ? {
-    title: editNote.title,
-    type:  editNote.type,
-    field: editNote.field,
+    title:  editNote.title,
+    type:   editNote.type,
+    field:  editNote.field,
     prompt: editNote.prompt || "",
-    tags: (editNote.tags || []).join(", "),
-    word_goal: editNote.word_goal || 300,
-  } : { title:"", type:"note", field:"personal", prompt:"", tags:"", word_goal:300 });
+    tags:   (editNote.tags || []).join(", "),
+  } : { title:"", type:"note", field:"personal", prompt:"", tags:"" });
   const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const set = (k: string, v: any) => setForm(p => ({ ...p, [k]: v }));
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   async function handleSubmit() {
-    if (!form.title.trim()) { 
-      setError("Title is required"); 
-      return; 
-    }
-    
-    setIsSubmitting(true);
-    
-    const noteData = {
-      title: form.title.trim(),
-      type: form.type,
-      field: form.field,
-      prompt: form.prompt.trim(),
-      tags: form.tags.split(",").map((t: string) => t.trim()).filter(Boolean),
-      word_goal: form.word_goal,
-    };
-
-    try {
-      if (isEdit) {
-        const { data, error } = await supabase
-          .from('notes')
-          .update(noteData)
-          .eq('id', editNote.id)
-          .select()
-          .single();
-
-        if (error) throw error;
-        onEdit(data);
-      } else {
-        const { data, error } = await supabase
-          .from('notes')
-          .insert([{ ...noteData, user_id: userId }])
-          .select()
-          .single();
-
-        if (error) throw error;
-        onAdd(data);
-      }
-      onClose();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    if (!form.title.trim()) { setError("Title is required"); return; }
+    await onSave({
+      title:  form.title.trim(),
+      type:   form.type,
+      field:  form.field,
+      prompt: form.prompt.trim() || null,
+      tags:   form.tags.split(",").map(t => t.trim()).filter(Boolean),
+    });
+    onClose();
   }
 
   const fieldObjs = FIELDS.filter(f => f.id !== "all");
-
   const inputSt = {
     width:"100%", boxSizing:"border-box",
     background:"#0d0d0d", border:"1px solid #222",
     color:"#d4d4d8", fontSize:13, padding:"9px 11px",
     outline:"none", fontFamily:"'Roboto',sans-serif",
   };
-  const labelSt = { fontSize:10, color:"#555", letterSpacing:0.8, textTransform:"uppercase", marginBottom:5, display:"block" };
+  const labelSt = {
+    fontSize:10, color:"#555", letterSpacing:0.8,
+    textTransform:"uppercase", marginBottom:5, display:"block",
+  };
 
   return (
     <>
-      <div
-        onClick={onClose}
-        style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:9998, animation:"overlayFade 0.2s ease" }}
-      />
+      <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:9998, animation:"overlayFade 0.2s ease" }} />
       <div style={{
         position:"fixed", left:0, right:0, bottom:0, top:"6%",
-        background:"#0a0a0a", borderTop:"1px solid #1e1e1e",
-        borderRadius:"14px 14px 0 0",
+        background:"#0a0a0a", borderTop:"1px solid #1e1e1e", borderRadius:"14px 14px 0 0",
         zIndex:9999, padding:20, display:"flex", flexDirection:"column", gap:16,
         animation:"sheetUp 0.25s cubic-bezier(0.32,0.72,0,1)", overflowY:"auto",
       }}>
         <div style={{ display:"flex", justifyContent:"center", marginTop:-4, marginBottom:-4 }}>
           <div style={{ width:36, height:4, borderRadius:2, background:"#222" }} />
         </div>
-
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <div style={{ fontSize:16, fontWeight:700, color:"#d4d4d8" }}>{isEdit ? "Edit Note" : "New Note"}</div>
           <div onClick={onClose} style={{ fontSize:20, color:"#555", cursor:"pointer", lineHeight:1, padding:"0 4px" }}>×</div>
@@ -139,13 +102,9 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote, userId }: any) {
 
         <div>
           <label style={labelSt}>Title *</label>
-          <input
-            autoFocus
-            value={form.title}
+          <input autoFocus value={form.title}
             onChange={e => { set("title", e.target.value); setError(""); }}
-            placeholder="Note title…"
-            style={inputSt}
-          />
+            placeholder="Note title…" style={inputSt} />
           {error && <div style={{ fontSize:11, color:"#ef5350", marginTop:4 }}>{error}</div>}
         </div>
 
@@ -163,9 +122,7 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote, userId }: any) {
                   color: active ? ts.color : "#555",
                   letterSpacing:0.5, textTransform:"uppercase", fontWeight: active ? 700 : 400,
                   transition:"all 0.12s",
-                }}>
-                  {t}
-                </div>
+                }}>{t}</div>
               );
             })}
           </div>
@@ -174,12 +131,12 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote, userId }: any) {
         <div>
           <label style={labelSt}>Field</label>
           <div style={{ display:"flex", flexWrap:"wrap", gap:6, maxHeight:100, overflowY:"auto" }}>
-            {fieldObjs.map((f: any) => {
+            {fieldObjs.map(f => {
               const active = form.field === f.id;
               return (
                 <div key={f.id} onClick={() => set("field", f.id)} style={{
-                  display:"flex", alignItems:"center", gap:5,
-                  padding:"5px 10px", fontSize:11, cursor:"pointer", userSelect:"none",
+                  display:"flex", alignItems:"center", gap:5, padding:"5px 10px",
+                  fontSize:11, cursor:"pointer", userSelect:"none",
                   border:`1px solid ${active ? f.color : "#222"}`,
                   background: active ? f.color+"18" : "transparent",
                   color: active ? f.color : "#555",
@@ -194,52 +151,30 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote, userId }: any) {
 
         <div>
           <label style={labelSt}>Prompt / Description</label>
-          <textarea
-            value={form.prompt}
-            onChange={e => set("prompt", e.target.value)}
-            placeholder="What is this note about?"
-            rows={3}
-            style={{ ...inputSt, resize:"none", lineHeight:1.5 }}
-          />
-        </div>
-
-        <div>
-          <label style={labelSt}>Word Goal</label>
-          <input
-            type="number"
-            value={form.word_goal}
-            onChange={e => set("word_goal", parseInt(e.target.value) || 300)}
-            min={50}
-            max={5000}
-            style={inputSt}
-          />
+          <textarea value={form.prompt} onChange={e => set("prompt", e.target.value)}
+            placeholder="What is this note about?" rows={3}
+            style={{ ...inputSt, resize:"none", lineHeight:1.5 }} />
         </div>
 
         <div>
           <label style={labelSt}>Tags (comma-separated)</label>
-          <input
-            value={form.tags}
-            onChange={e => set("tags", e.target.value)}
-            placeholder="e.g. strategy, reading, ideas"
-            style={inputSt}
-          />
+          <input value={form.tags} onChange={e => set("tags", e.target.value)}
+            placeholder="e.g. strategy, reading, ideas" style={inputSt} />
         </div>
 
         <div style={{ display:"flex", gap:10, marginTop:4 }}>
           <div onClick={onClose} style={{
             flex:1, padding:"11px 0", textAlign:"center",
-            border:"1px solid #222", color:"#555", fontSize:13,
-            cursor:"pointer", userSelect:"none",
-          }}>
-            Cancel
-          </div>
-          <div onClick={handleSubmit} style={{
+            border:"1px solid #222", color:"#555", fontSize:13, cursor:"pointer", userSelect:"none",
+          }}>Cancel</div>
+          <div onClick={saving ? undefined : handleSubmit} style={{
             flex:2, padding:"11px 0", textAlign:"center",
-            background:"#4285f4", color:"#fff", fontSize:13,
-            fontWeight:700, cursor:"pointer", userSelect:"none",
-            opacity: isSubmitting ? 0.5 : 1,
+            background: saving ? "#1a1a1a" : "#4285f4",
+            color: saving ? "#444" : "#fff", fontSize:13,
+            fontWeight:700, cursor: saving ? "default" : "pointer", userSelect:"none",
+            transition:"background 0.15s",
           }}>
-            {isSubmitting ? "Saving..." : (isEdit ? "Save Changes" : "Create Note")}
+            {saving ? "Saving…" : isEdit ? "Save Changes" : "Create Note"}
           </div>
         </div>
       </div>
@@ -247,328 +182,248 @@ function NoteFormModal({ onClose, onAdd, onEdit, editNote, userId }: any) {
   );
 }
 
-// SwipeableRow Component
-function SwipeableRow({ note, onEdit, onDelete, children }: any) {
-  const ACTION_W = 160;
-  const SNAP_AT = ACTION_W * 0.4;
-  const startX = useRef<any>(null);
-  const startY = useRef<any>(null);
-  const dragging = useRef(false);
-  const locked = useRef(false);
-  const [offset, setOffset] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
+// ── SwipeableRow ──────────────────────────────────────────────────────────────
+function SwipeableRow({ note, onEdit, onDelete, children }) {
+  const ACTION_W  = 160;
+  const SNAP_AT   = ACTION_W * 0.4;
+  const startX    = useRef(null);
+  const startY    = useRef(null);
+  const dragging  = useRef(false);
+  const locked    = useRef(false);
+  const [offset,  setOffset]  = useState(0);
+  const [isOpen,  setIsOpen]  = useState(false);
   const [animate, setAnimate] = useState(true);
 
-  const open = () => { setAnimate(true); setOffset(ACTION_W); setIsOpen(true); };
-  const close = () => { setAnimate(true); setOffset(0); setIsOpen(false); };
+  const open  = () => { setAnimate(true); setOffset(ACTION_W); setIsOpen(true); };
+  const close = () => { setAnimate(true); setOffset(0);        setIsOpen(false); };
 
-  function onTouchStart(e: any) {
+  function onTouchStart(e) {
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
-    dragging.current = true;
-    locked.current = false;
+    dragging.current = true; locked.current = false;
     setAnimate(false);
   }
-
-  function onTouchMove(e: any) {
+  function onTouchMove(e) {
     if (!dragging.current) return;
     const dx = startX.current - e.touches[0].clientX;
     const dy = Math.abs(e.touches[0].clientY - startY.current);
-
     if (!locked.current) {
       if (dy > Math.abs(dx) + 4) { dragging.current = false; setAnimate(true); return; }
       if (Math.abs(dx) > 6) locked.current = true;
     }
     if (!locked.current) return;
-
     e.preventDefault();
-
     const base = isOpen ? ACTION_W : 0;
-    const raw = base + dx;
-    if (raw <= 0) {
-      setOffset(Math.max(raw * 0.15, -12));
-    } else if (raw > ACTION_W) {
-      setOffset(ACTION_W + (raw - ACTION_W) * 0.15);
-    } else {
-      setOffset(raw);
-    }
+    const raw  = base + dx;
+    if (raw <= 0)            setOffset(Math.max(raw * 0.15, -12));
+    else if (raw > ACTION_W) setOffset(ACTION_W + (raw - ACTION_W) * 0.15);
+    else                     setOffset(raw);
   }
-
   function onTouchEnd() {
     if (!dragging.current) return;
-    dragging.current = false;
-    setAnimate(true);
-    if (offset >= SNAP_AT) { open(); } else { close(); }
+    dragging.current = false; setAnimate(true);
+    if (offset >= SNAP_AT) open(); else close();
   }
 
-  function onRowClick(e: any) {
-    if (isOpen) { e.stopPropagation(); close(); }
-  }
+  const ActionBtn = ({ onClick, bg, border, color, icon, label }) => (
+    <div onClick={onClick} style={{
+      flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+      justifyContent:"center", gap:5, background:bg,
+      borderLeft:`1px solid ${border}`, cursor:"pointer", userSelect:"none",
+      transition:"filter 0.12s",
+    }}
+      onMouseDown={e => e.currentTarget.style.filter = "brightness(1.4)"}
+      onMouseUp={e => e.currentTarget.style.filter = "none"}
+      onTouchStart={e => e.currentTarget.style.filter = "brightness(1.4)"}
+      onTouchEnd={e => e.currentTarget.style.filter = "none"}
+    >
+      {icon}
+      <span style={{ fontSize:10, color, letterSpacing:0.8, fontWeight:600 }}>{label}</span>
+    </div>
+  );
 
   return (
     <div style={{ position:"relative", overflow:"hidden" }}>
-      <div style={{
-        position:"absolute", top:0, right:0, bottom:0, width:ACTION_W,
-        display:"flex", overflow:"hidden",
-      }}>
-        <div
+      <div style={{ position:"absolute", top:0, right:0, bottom:0, width:ACTION_W, display:"flex" }}>
+        <ActionBtn
           onClick={e => { e.stopPropagation(); close(); setTimeout(() => onEdit(note), 180); }}
-          style={{
-            flex:1, display:"flex", flexDirection:"column", alignItems:"center",
-            justifyContent:"center", gap:5,
-            background:"#0d2340",
-            borderLeft:"1px solid #4285f422",
-            cursor:"pointer", userSelect:"none",
-            transition:"background 0.15s",
-          }}
-          onMouseDown={e => e.currentTarget.style.background = "#1a3a5c"}
-          onMouseUp={e => e.currentTarget.style.background = "#0d2340"}
-          onTouchStart={e => e.currentTarget.style.background = "#1a3a5c"}
-          onTouchEnd={e => e.currentTarget.style.background = "#0d2340"}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4285f4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          <span style={{ fontSize:10, color:"#4285f4", letterSpacing:0.8, fontWeight:600 }}>Edit</span>
-        </div>
-
-        <div
-          onClick={e => { e.stopPropagation(); close(); setTimeout(() => onDelete(note), 180); }}
-          style={{
-            flex:1, display:"flex", flexDirection:"column", alignItems:"center",
-            justifyContent:"center", gap:5,
-            background:"#2a0d0d",
-            borderLeft:"1px solid #ef535022",
-            cursor:"pointer", userSelect:"none",
-            transition:"background 0.15s",
-          }}
-          onMouseDown={e => e.currentTarget.style.background = "#3d1212"}
-          onMouseUp={e => e.currentTarget.style.background = "#2a0d0d"}
-          onTouchStart={e => e.currentTarget.style.background = "#3d1212"}
-          onTouchEnd={e => e.currentTarget.style.background = "#2a0d0d"}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef5350" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-            <path d="M10 11v6M14 11v6"/>
-            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-          </svg>
-          <span style={{ fontSize:10, color:"#ef5350", letterSpacing:0.8, fontWeight:600 }}>Delete</span>
-        </div>
+          bg="#0d2340" border="#4285f422" color="#4285f4" label="Edit"
+          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4285f4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+        />
+        <ActionBtn
+          onClick={e => { e.stopPropagation(); close(); setTimeout(() => onDelete(note.id), 180); }}
+          bg="#2a0d0d" border="#ef535022" color="#ef5350" label="Delete"
+          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef5350" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>}
+        />
       </div>
-
       <div
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onClick={onRowClick}
+        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+        onClick={isOpen ? e => { e.stopPropagation(); close(); } : undefined}
         style={{
           transform:`translateX(-${offset}px)`,
           transition: animate ? "transform 0.28s cubic-bezier(0.25,1,0.5,1)" : "none",
           willChange:"transform",
           boxShadow: isOpen ? "none" : "inset -3px 0 0 #ffffff08",
         }}
-      >
-        {children}
-      </div>
+      >{children}</div>
     </div>
   );
 }
 
-// Main NotesTab Component
+// ── Debounce helper ───────────────────────────────────────────────────────────
+function useDebounce(fn, delay) {
+  const timer = useRef(null);
+  return useCallback((...args) => {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => fn(...args), delay);
+  }, [fn, delay]);
+}
+
+// ── NotesTab ──────────────────────────────────────────────────────────────────
 export function NotesTab() {
-  const { user, isAuthenticated } = useAuth();
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { notes: dbNotes, notesLoading: loading, notesError: error, addNote, updateNote, deleteNote } = useAuth();
+
   const [activeField, setActiveField] = useState("all");
-  const [openNote, setOpenNote] = useState<any>(null);
-  const [search, setSearch] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [noteContents, setNoteContents] = useState<Record<string, string>>({});
+  const [openNote,    setOpenNote]    = useState(null);
+  const [search,      setSearch]      = useState("");
+  const [searchOpen,  setSearchOpen]  = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
-  const [editNote, setEditNote] = useState<any>(null);
+  const [addOpen,     setAddOpen]     = useState(false);
+  const [editNote,    setEditNote]    = useState(null);
+  const [saving,      setSaving]      = useState(false);
 
-  // Fetch notes from Supabase
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchNotes();
-    } else {
-      setNotes([]);
-      setLoading(false);
-    }
-  }, [isAuthenticated, user]);
+  const noteKey = n => n.id || (n.title + "__" + n.type);
 
-  const fetchNotes = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('notes')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+  // Merge: DB notes first (newest first), then static
+  const staticNotes = getStaticNotes();
+  const allNotes = [
+    ...dbNotes.map(n => ({ ...n, _custom: true, field: n.field || guessField(n) })),
+    ...staticNotes,
+  ];
 
-      if (error) throw error;
-      setNotes(data || []);
-    } catch (error) {
-      console.error('Error fetching notes:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Debounced content save to Supabase
+  const saveContent = useDebounce(async (noteId, content) => {
+    if (!noteId) return;
+    await updateNote(noteId, { content });
+  }, 1200);
 
-  const openAddModal = () => setAddOpen(true);
+  const openAddModal  = () => { setEditNote(null); setAddOpen(true); };
   const closeAddModal = () => { setAddOpen(false); setEditNote(null); };
 
-  async function handleAddNote(newNote: Note) {
-    setNotes(prev => [newNote, ...prev]);
-  }
-
-  async function handleEditNote(updatedNote: Note) {
-    setNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n));
-  }
-
-  async function handleDeleteNote(note: Note) {
-    try {
-      const { error } = await supabase
-        .from('notes')
-        .delete()
-        .eq('id', note.id);
-
-      if (error) throw error;
-      
-      setNotes(prev => prev.filter(n => n.id !== note.id));
-    } catch (error) {
-      console.error('Error deleting note:', error);
+  async function handleSave(formData) {
+    setSaving(true);
+    if (editNote) {
+      await updateNote(editNote.id, formData);
+    } else {
+      await addNote(formData);
     }
+    setSaving(false);
   }
 
-  async function handleContentSave(noteId: string, content: string) {
-    try {
-      const { error } = await supabase
-        .from('notes')
-        .update({ content })
-        .eq('id', noteId);
-
-      if (error) throw error;
-      
-      setNoteContents(prev => ({ ...prev, [noteId]: content }));
-    } catch (error) {
-      console.error('Error saving note content:', error);
-    }
-  }
-
-  // Filter notes
-  const filtered = notes.filter(n => {
+  const filtered = allNotes.filter(n => {
     const matchF = activeField === "all" || n.field === activeField;
     const q = search.toLowerCase();
-    const matchS = !q || (n.title + (n.prompt || "") + (n.tags || []).join(" ")).toLowerCase().includes(q);
+    const matchS = !q || (n.title + (n.prompt||"") + (n.tags||[]).join(" ")).toLowerCase().includes(q);
     return matchF && matchS;
   });
 
-  // Group by field
   const groups = activeField === "all"
-    ? FIELDS.slice(1).reduce((acc: any[], f: any) => {
+    ? FIELDS.slice(1).reduce((acc, f) => {
         const ns = filtered.filter(n => n.field === f.id);
         if (ns.length) acc.push({ field: f, notes: ns });
         return acc;
       }, [])
-    : [{ field: FIELDS.find((f: any) => f.id === activeField) || FIELDS[0], notes: filtered }];
+    : [{ field: FIELDS.find(f => f.id === activeField) || FIELDS[0], notes: filtered }];
 
-  if (!isAuthenticated) {
-    return (
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", background:"#000", color:"#fff" }}>
-        <div style={{ textAlign:"center" }}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" style={{ margin:"0 auto 16px", display:"block" }}>
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-          </svg>
-          <div style={{ fontSize:16, fontWeight:600, color:"#666", marginBottom:8 }}>Sign in to view your notes</div>
-          <div style={{ fontSize:13, color:"#333" }}>Your notes will appear here after login</div>
-        </div>
-      </div>
-    );
-  }
-
+  // ── DocScreen view ────────────────────────────────────────────────────────────
   if (openNote) {
     if (openNote.type === "project") {
       return <ProjectScreen ev={openNote} onClose={() => setOpenNote(null)} />;
     }
     const accent = TYPE_META[openNote.type]?.accent || openNote.color || "#86efac";
     return (
-      <DocScreen
-        ev={openNote}
-        accent={accent}
-        text={noteContents[openNote.id] || openNote.content || ""}
-        setText={(val: string) => handleContentSave(openNote.id, val)}
-        onClose={() => setOpenNote(null)}
-      />
+      <>
+        <DocScreen
+          ev={openNote}
+          accent={accent}
+          text={openNote.content || ""}
+          setText={val => {
+            // Optimistic local update
+            setOpenNote(prev => ({ ...prev, content: val }));
+            // Debounced Supabase write
+            if (openNote.id) saveContent(openNote.id, val);
+          }}
+          onClose={() => setOpenNote(null)}
+        />
+        {addOpen && (
+          <NoteFormModal
+            onClose={closeAddModal}
+            onSave={handleSave}
+            editNote={editNote}
+            saving={saving}
+          />
+        )}
+      </>
     );
   }
 
-  const activeFieldObj = FIELDS.find((f: any) => f.id === activeField) || FIELDS[0];
+  const activeFieldObj = FIELDS.find(f => f.id === activeField) || FIELDS[0];
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:"100%", background:"#000", color:"#fff", fontFamily:"'Roboto',sans-serif", overflow:"hidden", position:"relative" }}>
+    <div style={{ display:"flex", flexDirection:"column", height:"100%", background:"#000",
+      color:"#fff", fontFamily:"'Roboto',sans-serif", overflow:"hidden", position:"relative" }}>
       <style>{`
-        .note-row:active{background:#0d0d0d!important}
-        @keyframes notesFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes sidebarSlide{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
-        @keyframes overlayFade{from{opacity:0}to{opacity:1}}
-        @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-        .sidebar-field-row:active{background:#1a1a1a!important}
+        .note-row:active { background:#0d0d0d !important; }
+        @keyframes notesFade    { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes sidebarSlide { from{transform:translateX(-100%);opacity:0} to{transform:translateX(0);opacity:1} }
+        @keyframes overlayFade  { from{opacity:0} to{opacity:1} }
+        @keyframes sheetUp      { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        .sidebar-field-row:active { background:#1a1a1a !important; }
       `}</style>
 
+      {/* Sidebar overlay */}
       {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.6)", zIndex:30, animation:"overlayFade 0.2s ease" }}
-        />
+        <div onClick={() => setSidebarOpen(false)} style={{
+          position:"absolute", inset:0, background:"rgba(0,0,0,0.6)", zIndex:30, animation:"overlayFade 0.2s ease",
+        }} />
       )}
 
+      {/* Sidebar panel */}
       {sidebarOpen && (
         <div style={{
           position:"absolute", top:0, left:0, bottom:0, width:240,
           background:"#0a0a0a", borderRight:"1px solid #1a1a1a",
-          zIndex:40, display:"flex", flexDirection:"column",
-          animation:"sidebarSlide 0.22s ease",
+          zIndex:40, display:"flex", flexDirection:"column", animation:"sidebarSlide 0.22s ease",
         }}>
           <div style={{ padding:"20px 20px 12px", borderBottom:"1px solid #111" }}>
             <div style={{ fontSize:13, fontWeight:700, letterSpacing:1.2, color:"#555", textTransform:"uppercase", marginBottom:2 }}>Fields</div>
-            <div style={{ fontSize:10, color:"#2a2a2a" }}>{notes.length} total entries</div>
+            <div style={{ fontSize:10, color:"#2a2a2a" }}>{allNotes.length} total entries</div>
           </div>
-
           <div style={{ flex:1, overflowY:"auto", padding:"8px 0" }}>
-            {FIELDS.map((f: any) => {
+            {FIELDS.map(f => {
               const active = activeField === f.id;
-              const count = f.id === "all" ? notes.length : notes.filter(n => n.field === f.id).length;
+              const count  = f.id === "all" ? allNotes.length : allNotes.filter(n => n.field === f.id).length;
               return (
-                <div
-                  key={f.id}
-                  className="sidebar-field-row"
+                <div key={f.id} className="sidebar-field-row"
                   onClick={() => { setActiveField(f.id); setSidebarOpen(false); }}
                   style={{
-                    display:"flex", alignItems:"center", gap:12,
-                    padding:"12px 20px", cursor:"pointer", userSelect:"none",
+                    display:"flex", alignItems:"center", gap:12, padding:"12px 20px",
+                    cursor:"pointer", userSelect:"none",
                     background: active ? f.color+"11" : "transparent",
-                    borderLeft: `3px solid ${active ? f.color : "transparent"}`,
+                    borderLeft:`3px solid ${active ? f.color : "transparent"}`,
                     transition:"all 0.12s",
-                  }}
-                >
+                  }}>
                   <span style={{ display:"flex", alignItems:"center", color: active ? f.color : "#444", fontSize:15 }}>{f.icon}</span>
-                  <span style={{ flex:1, fontSize:13, fontWeight: active ? 600 : 400, color: active ? f.color : "#666", letterSpacing:0.2 }}>{f.label}</span>
+                  <span style={{ flex:1, fontSize:13, fontWeight: active ? 600 : 400, color: active ? f.color : "#666" }}>{f.label}</span>
                   <span style={{ fontSize:10, color: active ? f.color+"99" : "#2a2a2a", fontVariantNumeric:"tabular-nums" }}>{count}</span>
                 </div>
               );
             })}
           </div>
-
           <div style={{ padding:"16px 20px", borderTop:"1px solid #111" }}>
-            <div
-              onClick={() => { setSidebarOpen(false); openAddModal(); }}
-              style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", background:"#4285f411", border:"1px solid #4285f422", borderRadius:4, cursor:"pointer" }}
-            >
+            <div onClick={() => { setSidebarOpen(false); openAddModal(); }}
+              style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px",
+                background:"#4285f411", border:"1px solid #4285f422", borderRadius:4, cursor:"pointer" }}>
               <svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#4285f4" strokeWidth="2.5" strokeLinecap="round"/></svg>
               <span style={{ fontSize:12, color:"#4285f4", fontWeight:600 }}>New Note</span>
             </div>
@@ -576,13 +431,13 @@ export function NotesTab() {
         </div>
       )}
 
+      {/* Header */}
       <div style={{ flexShrink:0, padding:"16px 20px 0" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <div
-              onClick={() => setSidebarOpen(s => !s)}
-              style={{ width:36, height:36, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:5, cursor:"pointer", flexShrink:0 }}
-            >
+            <div onClick={() => setSidebarOpen(s => !s)}
+              style={{ width:36, height:36, display:"flex", flexDirection:"column",
+                alignItems:"center", justifyContent:"center", gap:5, cursor:"pointer", flexShrink:0 }}>
               <div style={{ width:20, height:1.5, background:"#aaa", borderRadius:1 }}/>
               <div style={{ width:14, height:1.5, background:"#aaa", borderRadius:1 }}/>
               <div style={{ width:20, height:1.5, background:"#aaa", borderRadius:1 }}/>
@@ -593,111 +448,135 @@ export function NotesTab() {
                 {activeField === "all" ? "Notes" : activeFieldObj.label}
               </div>
               <div style={{ fontSize:11, color:"#444", marginTop:2 }}>
-                {activeField === "all"
-                  ? `${notes.length} entries across ${FIELDS.length - 1} fields`
+                {loading ? "Loading…" : activeField === "all"
+                  ? `${allNotes.length} entries across ${FIELDS.length - 1} fields`
                   : `${filtered.length} entries`}
               </div>
             </div>
           </div>
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-            <div
-              onClick={() => { setSearchOpen(s=>!s); if(searchOpen) setSearch(""); }}
-              style={{ width:36, height:36, borderRadius:"50%", background:searchOpen?"#1e1e1e":"transparent", border:"1px solid #1e1e1e", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={searchOpen?"#fff":"#555"} strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+            <div onClick={() => { setSearchOpen(s=>!s); if(searchOpen) setSearch(""); }}
+              style={{ width:36, height:36, borderRadius:"50%", background:searchOpen?"#1e1e1e":"transparent",
+                border:"1px solid #1e1e1e", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={searchOpen?"#fff":"#555"} strokeWidth="2" strokeLinecap="round">
+                <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
             </div>
-            <div
-              onClick={openAddModal}
-              style={{ width:36, height:36, borderRadius:"50%", background:"#4285f4", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}
-            >
+            <div onClick={openAddModal}
+              style={{ width:36, height:36, borderRadius:"50%", background:"#4285f4",
+                display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
               <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>
             </div>
           </div>
         </div>
 
         {searchOpen && (
-          <div style={{ display:"flex", alignItems:"center", gap:8, background:"#0d0d0d", border:"1px solid #1e1e1e", padding:"8px 12px", marginBottom:10, animation:"notesFade 0.15s ease" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input autoFocus value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search notes, tags, topics…" style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"#bbb", fontSize:13 }}/>
+          <div style={{ display:"flex", alignItems:"center", gap:8, background:"#0d0d0d",
+            border:"1px solid #1e1e1e", padding:"8px 12px", marginBottom:10, animation:"notesFade 0.15s ease" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input autoFocus value={search} onChange={e=>setSearch(e.target.value)}
+              placeholder="Search notes, tags, topics…"
+              style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"#bbb", fontSize:13 }}/>
             {search && <div onClick={()=>setSearch("")} style={{ fontSize:16, color:"#333", cursor:"pointer", lineHeight:1 }}>×</div>}
           </div>
         )}
       </div>
 
+      {/* Notes list */}
       <div style={{ flex:1, overflowY:"auto" }}>
+
+        {/* Loading */}
         {loading && (
-          <div style={{ textAlign:"center", padding:"60px 24px", color:"#222" }}>
-            <div style={{ fontSize:13 }}>Loading notes...</div>
+          <div style={{ textAlign:"center", padding:"60px 24px" }}>
+            <div style={{ fontSize:13, color:"#333", letterSpacing:0.5, animation:"notesFade 0.4s ease" }}>Loading notes…</div>
           </div>
         )}
 
+        {/* Error */}
+        {error && !loading && (
+          <div style={{ margin:"16px 20px", padding:"12px 16px", background:"#1a0d0d", border:"1px solid #ef535033" }}>
+            <div style={{ fontSize:11, color:"#ef5350" }}>Failed to load notes</div>
+            <div style={{ fontSize:10, color:"#555", marginTop:3 }}>{error}</div>
+          </div>
+        )}
+
+        {/* Empty */}
         {!loading && filtered.length === 0 && (
           <div style={{ textAlign:"center", padding:"60px 24px", color:"#222" }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1.5" style={{ margin:"0 auto 12px", display:"block" }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1.5"
+              style={{ margin:"0 auto 12px", display:"block" }}>
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
             </svg>
             <div style={{ fontSize:13 }}>No notes in this field yet</div>
-            <div 
-              onClick={openAddModal}
-              style={{ marginTop:16, fontSize:12, color:"#4285f4", cursor:"pointer" }}
-            >
-              + Create your first note
-            </div>
           </div>
         )}
 
-        {groups.map(({ field, notes }: any) => (
+        {/* Groups */}
+        {!loading && groups.map(({ field, notes }) => (
           <div key={field.id} style={{ marginBottom: activeField==="all" ? 8 : 0 }}>
+
             {activeField === "all" && (
-              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"14px 20px 10px", background:"#000", position:"sticky", top:0, zIndex:2 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"14px 20px 10px",
+                background:"#000", position:"sticky", top:0, zIndex:2 }}>
                 <span style={{ display:"flex", alignItems:"center", color:field.color }}>{field.icon}</span>
                 <span style={{ fontSize:11, fontWeight:700, color:field.color, letterSpacing:0.8, textTransform:"uppercase" }}>{field.label}</span>
                 <span style={{ fontSize:10, color:"#333" }}>{notes.length}</span>
-                <div onClick={()=>setActiveField(field.id)} style={{ marginLeft:"auto", display:"flex", alignItems:"center", cursor:"pointer", padding:"4px", opacity:0.5 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={field.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                <div onClick={()=>setActiveField(field.id)}
+                  style={{ marginLeft:"auto", display:"flex", alignItems:"center", cursor:"pointer", padding:"4px", opacity:0.5 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={field.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
                 </div>
               </div>
             )}
 
-            {notes.map((note: Note, i: number) => {
-              const ts = NOTE_TYPE_STYLE[note.type] || NOTE_TYPE_STYLE.note;
-              const fd = FIELDS.find((f: any) => f.id === note.field) || FIELDS[0];
-              const content = noteContents[note.id] || note.content || "";
-              const wc = content.trim().split(/\s+/).filter(Boolean).length;
-              const pct = Math.min(100, Math.round((wc / (note.word_goal || 300)) * 100));
+            {notes.map((note, i) => {
+              const ts  = NOTE_TYPE_STYLE[note.type] || NOTE_TYPE_STYLE.note;
+              const fd  = FIELDS.find(f=>f.id===note.field) || FIELDS[0];
+              const key = noteKey(note);
+              // Word count from stored content (strip HTML tags)
+              const wc  = (note.content||"").replace(/<[^>]*>/g,"").trim().split(/\s+/).filter(Boolean).length;
+              const pct = Math.min(100, Math.round((wc / (note.wordGoal||300)) * 100));
 
               const rowContent = (
-                <div key={note.id} className="note-row" onClick={() => setOpenNote(note)}
+                <div key={key} className="note-row" onClick={()=>setOpenNote(note)}
                   style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 20px", cursor:"pointer",
                     borderLeft:`3px solid ${fd.color}${activeField==="all"?"33":"55"}`,
                     borderBottom:"1px solid #080808", background:"#000",
-                    animation:`notesFade 0.15s ease ${i*0.03}s both`,
-                  }}
-                >
-                  <div style={{ width:36, height:36, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
-                    background:ts.bg, border:`1px solid ${ts.color}22` }}>
+                    animation:`notesFade 0.15s ease ${Math.min(i,10)*0.03}s both`,
+                  }}>
+                  {/* Type icon */}
+                  <div style={{ width:36, height:36, flexShrink:0, display:"flex", alignItems:"center",
+                    justifyContent:"center", background:ts.bg, border:`1px solid ${ts.color}22` }}>
                     <span style={{ fontFamily:"'Courier New',monospace", fontSize:14, color:ts.color, lineHeight:1 }}>
                       {note.type==="note"?"§":note.type==="article"?"¶":note.type==="doc"?"#":note.type==="journal"?"~":note.type==="project"?"◎":"✎"}
                     </span>
                   </div>
 
+                  {/* Text */}
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:14, fontWeight:600, color:"#d4d4d8", marginBottom:3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                    <div style={{ fontSize:14, fontWeight:600, color:"#d4d4d8", marginBottom:3,
+                      overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                      {note._custom && !note._static && (
+                        <span style={{ fontSize:9, color:"#4285f4", border:"1px solid #4285f433", padding:"1px 4px", marginRight:5 }}>DB</span>
+                      )}
                       {note.title}
                     </div>
-                    <div style={{ fontSize:11, color:"#444", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginBottom:6 }}>
-                      {note.prompt || "No description"}
-                    </div>
+                    <div style={{ fontSize:11, color:"#444", overflow:"hidden", textOverflow:"ellipsis",
+                      whiteSpace:"nowrap", marginBottom:6 }}>{note.prompt||"No description"}</div>
                     <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-                      <span style={{ fontSize:9, color:ts.color, border:`1px solid ${ts.color}33`, padding:"1px 5px", letterSpacing:0.8, textTransform:"uppercase" }}>{ts.label}</span>
+                      <span style={{ fontSize:9, color:ts.color, border:`1px solid ${ts.color}33`,
+                        padding:"1px 5px", letterSpacing:0.8, textTransform:"uppercase" }}>{ts.label}</span>
                       {activeField==="all" && (
                         <span style={{ display:"flex", alignItems:"center", gap:3, fontSize:9, color:fd.color+"99" }}>
                           <span style={{ display:"flex", alignItems:"center", transform:"scale(0.7)", transformOrigin:"left" }}>{fd.icon}</span>
                           {fd.label}
                         </span>
                       )}
-                      {(note.tags || []).slice(0,2).map(t => (
+                      {(note.tags||[]).slice(0,2).map(t=>(
                         <span key={t} style={{ fontSize:9, color:"#333" }}>#{t}</span>
                       ))}
                       {wc > 0 && (
@@ -714,34 +593,34 @@ export function NotesTab() {
                     </div>
                   </div>
 
+                  {/* Arrow */}
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink:0 }}>
                     <path d="M9 18l6-6-6-6" stroke="#2a2a2a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
               );
 
-              return (
-                <SwipeableRow
-                  key={note.id}
-                  note={note}
-                  onEdit={(n: Note) => { setEditNote(n); setAddOpen(true); }}
-                  onDelete={handleDeleteNote}
+              // Only DB notes get swipe (static notes are read-only)
+              return note._custom && !note._static ? (
+                <SwipeableRow key={key} note={note}
+                  onEdit={n => { setEditNote(n); setAddOpen(true); }}
+                  onDelete={n => deleteNote(n.id)}
                 >
                   {rowContent}
                 </SwipeableRow>
-              );
+              ) : rowContent;
             })}
           </div>
         ))}
       </div>
 
+      {/* Add / Edit modal */}
       {addOpen && (
         <NoteFormModal
           onClose={closeAddModal}
-          onAdd={handleAddNote}
-          onEdit={handleEditNote}
+          onSave={handleSave}
           editNote={editNote}
-          userId={user?.id}
+          saving={saving}
         />
       )}
     </div>
