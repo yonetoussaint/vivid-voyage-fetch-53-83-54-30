@@ -1,48 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { TYPE_META, NOTE_TYPE_STYLE } from '@/data/typeMeta';
-import { SAMPLE_NOTES } from '@/data/notesData';
-import { events } from '@/data/eventsData';
 import { FIELDS } from '@/data/fieldsData';
 import { DocScreen } from '@/components/easy/DocScreen';
 import { ProjectScreen } from '@/components/easy/ProjectScreen';
 import { useAuth } from '@/hooks/useAuth';
-
-// ── Field guesser (kept for static/sample notes) ──────────────────────────────
-function guessField(ev) {
-  const t = ((ev.title||"") + " " + (ev.prompt||"") + " " + (ev.tags||[]).join(" ")).toLowerCase();
-  if (t.match(/finance|invest|stock|fund|budget|revenue|valuation|money|wealth|portfolio/)) return "finance";
-  if (t.match(/econom|market|gdp|supply|demand|trade|macro|micro|inflation|recession/)) return "economics";
-  if (t.match(/business|startup|product|strategy|brand|sales|client|customer|commerce|scent/)) return "business";
-  if (t.match(/psycholog|mental|behavior|cognit|emotion|habit|mind|therapy|anxiety/)) return "psychology";
-  if (t.match(/philosoph|ethic|logic|moral|exist|meaning|truth|stoic|virtue/)) return "philosophy";
-  if (t.match(/science|physics|biology|chemistry|research|experiment|crispr|genome/)) return "science";
-  if (t.match(/tech|software|api|code|auth|system|ai|ml|oauth|microservice|architect/)) return "technology";
-  if (t.match(/math|calcul|algebra|statistic|probability|formula|bayes/)) return "mathematics";
-  if (t.match(/histor|war|civiliz|empire|century|ancient|constantinople|byzantine/)) return "history";
-  if (t.match(/literatur|novel|book|story|fiction|essay|piranesi|writing|narrative/)) return "literature";
-  if (t.match(/law|legal|regulat|contract|right|court|policy|antitrust/)) return "law";
-  if (t.match(/medicine|medic|health|doctor|treatment|diagnos|vo2|longevity/)) return "medicine";
-  if (t.match(/art|design|music|film|creative|aesthetic|visual|bauhaus/)) return "arts";
-  if (t.match(/social|society|community|culture|norms|group|dunbar/)) return "sociology";
-  if (t.match(/politic|government|democra|power|elect|demagogu|republic/)) return "politics";
-  if (t.match(/engineer|architect|system|build|infra|migration/)) return "engineering";
-  return "personal";
-}
-
-// ── Static notes (events + sample) ───────────────────────────────────────────
-function getStaticNotes() {
-  const writingTypes = new Set(["note","article","doc","journal","draft","project"]);
-  const out = [];
-  Object.entries(events).forEach(([, parts]) => {
-    Object.values(parts).forEach(evList => {
-      (evList||[]).forEach(ev => {
-        if (writingTypes.has(ev.type)) out.push({ ...ev, field: guessField(ev), _static: true });
-      });
-    });
-  });
-  SAMPLE_NOTES.forEach(n => out.push({ ...n, field: guessField(n), _static: true }));
-  return out;
-}
 
 // ── NoteFormModal ─────────────────────────────────────────────────────────────
 const NOTE_TYPES = ["note","article","doc","journal","draft","project"];
@@ -294,12 +255,8 @@ export function NotesTab() {
 
   const noteKey = n => n.id || (n.title + "__" + n.type);
 
-  // Merge: DB notes first (newest first), then static
-  const staticNotes = getStaticNotes();
-  const allNotes = [
-    ...dbNotes.map(n => ({ ...n, _custom: true, field: n.field || guessField(n) })),
-    ...staticNotes,
-  ];
+  // DB notes only — no static/mock data
+  const allNotes = dbNotes.map(n => ({ ...n, _custom: true }));
 
   // Debounced content save to Supabase
   const saveContent = useDebounce(async (noteId, content) => {
@@ -560,9 +517,6 @@ export function NotesTab() {
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:14, fontWeight:600, color:"#d4d4d8", marginBottom:3,
                       overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                      {note._custom && !note._static && (
-                        <span style={{ fontSize:9, color:"#4285f4", border:"1px solid #4285f433", padding:"1px 4px", marginRight:5 }}>DB</span>
-                      )}
                       {note.title}
                     </div>
                     <div style={{ fontSize:11, color:"#444", overflow:"hidden", textOverflow:"ellipsis",
@@ -600,15 +554,15 @@ export function NotesTab() {
                 </div>
               );
 
-              // Only DB notes get swipe (static notes are read-only)
-              return note._custom && !note._static ? (
+              // All notes are from DB — all are swipeable
+              return (
                 <SwipeableRow key={key} note={note}
                   onEdit={n => { setEditNote(n); setAddOpen(true); }}
                   onDelete={n => deleteNote(n.id)}
                 >
                   {rowContent}
                 </SwipeableRow>
-              ) : rowContent;
+              );
             })}
           </div>
         ))}
