@@ -14,7 +14,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { Toasters } from "@/components/Toasters";
 import { queryClient } from "@/utils/queryClient";
 
-import MainLayout from "@/layout/MainLayout";
+import MainLayout from "@/components/layout/MainLayout";
 import { CategoryRoutes } from "@/routes/CategoryRoutes";
 import { ContentRoutes } from "@/routes/ContentRoutes";
 import { AuthRoutes } from "@/routes/AuthRoutes";
