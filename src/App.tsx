@@ -52,6 +52,7 @@ function App() {
                           <HeaderFilterProvider>
                             <div className="App min-h-screen h-full bg-background text-foreground flex flex-col">
                               <Routes>
+                                {/* Public routes that don't need MainLayout */}
                                 <Route path="auth/callback" element={<AuthCallback />} />
                                 <Route path="/product/:productId/add-review" element={<AddReviewPage />} />
 
@@ -74,7 +75,6 @@ function App() {
                                 />
 
                                 <Route path="comments" element={<VendorPostComments />} />
-                                <Route path="daily" element={<Daily />} />
                                 <Route path="product/:id/:tab" element={<ProductDetail />} />
                                 <Route path="portfolio" element={<Portfolio />} />
                                 <Route path="product/:id" element={<Navigate to="overview" replace />} />
@@ -84,12 +84,17 @@ function App() {
                                 <Route path="easy" element={<GasStationSystem />} />
                                 <Route path="github" element={<GitHub />} />
 
+                                {/* All routes that need MainLayout (with header, bottom nav, etc.) */}
                                 <Route path="/" element={<MainLayout />}>
                                   <Route index element={<Index />} />
                                   <Route path="for-you" element={<Index />} />
                                   <Route path="wallet" element={<Wallet />} />
                                   <Route path="messages" element={<Messages />} />
                                   <Route path="profile/*" element={<ProfilePage />} />
+                                  
+                                  {/* MOVED: Daily route is now inside MainLayout */}
+                                  <Route path="daily" element={<Daily />} />
+                                  
                                   {CategoryRoutes()}
                                   {ContentRoutes()}
                                   {AuthRoutes()}
