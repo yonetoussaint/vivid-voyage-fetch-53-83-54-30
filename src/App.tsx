@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
+
 import { RedirectAuthProvider } from "@/context/RedirectAuthContext";
 import { HomepageProvider } from "@/context/HomepageContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
@@ -11,6 +12,7 @@ import { AuthOverlayProvider } from "@/context/AuthOverlayContext";
 import { ScreenOverlayProvider } from "@/context/ScreenOverlayContext";
 import { HeaderFilterProvider } from "@/contexts/HeaderFilterContext";
 import { AuthProvider } from "@/hooks/useAuth";
+
 import { Toasters } from "@/components/Toasters";
 import { queryClient } from "@/utils/queryClient";
 
@@ -19,6 +21,7 @@ import { CategoryRoutes } from "@/routes/CategoryRoutes";
 import { ContentRoutes } from "@/routes/ContentRoutes";
 import { AuthRoutes } from "@/routes/AuthRoutes";
 import { MiscRoutes } from "@/routes/MiscRoutes";
+
 import AddReviewPage from "@/pages/AddReviewPage";
 import MallPage from "@/pages/MallPage";
 import Wallet from "@/pages/Wallet";
@@ -34,6 +37,7 @@ import ReviewsPage from "@/components/product/ReviewsPage";
 import AuthCallback from "@/pages/AuthCallback";
 import VendorPostComments from "@/components/home/VendorPostComments";
 import Daily from "@/pages/Daily";
+
 import "@/App.css";
 
 function App() {
@@ -43,16 +47,20 @@ function App() {
         <TooltipProvider>
           <CurrencyProvider>
             <RouteCacheProvider>
-              <Router>
-                <RedirectAuthProvider>
-                  <HomepageProvider>
-                    <AuthProvider>
+
+              {/* ✅ AUTH MUST WRAP EVERYTHING THAT USES useAuth */}
+              <AuthProvider>
+                <Router>
+                  <RedirectAuthProvider>
+                    <HomepageProvider>
                       <AuthOverlayProvider>
                         <ScreenOverlayProvider>
                           <HeaderFilterProvider>
+
                             <div className="App min-h-screen h-full bg-background text-foreground flex flex-col">
                               <Routes>
-                                {/* Public routes that don't need MainLayout */}
+
+                                {/* Public routes (no layout) */}
                                 <Route path="auth/callback" element={<AuthCallback />} />
                                 <Route path="/product/:productId/add-review" element={<AddReviewPage />} />
 
@@ -61,10 +69,14 @@ function App() {
                                   element={
                                     <div className="min-h-screen bg-white flex items-center justify-center p-4">
                                       <div className="text-center">
-                                        <h1 className="text-2xl font-bold text-red-600 mb-4">Authentication Error</h1>
-                                        <p className="text-gray-600 mb-4">There was a problem signing in with Google.</p>
+                                        <h1 className="text-2xl font-bold text-red-600 mb-4">
+                                          Authentication Error
+                                        </h1>
+                                        <p className="text-gray-600 mb-4">
+                                          There was a problem signing in.
+                                        </p>
                                         <button
-                                          onClick={() => window.location.href = '/'}
+                                          onClick={() => (window.location.href = "/")}
                                           className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600"
                                         >
                                           Go to Homepage
@@ -84,33 +96,36 @@ function App() {
                                 <Route path="easy" element={<GasStationSystem />} />
                                 <Route path="github" element={<GitHub />} />
 
-                                {/* All routes that need MainLayout (with header, bottom nav, etc.) */}
+                                {/* Routes using MainLayout */}
                                 <Route path="/" element={<MainLayout />}>
                                   <Route index element={<Index />} />
                                   <Route path="for-you" element={<Index />} />
                                   <Route path="wallet" element={<Wallet />} />
                                   <Route path="messages" element={<Messages />} />
                                   <Route path="profile/*" element={<ProfilePage />} />
-                                  
-                                  {/* MOVED: Daily route is now inside MainLayout */}
+
+                                  {/* Daily now safely inside AuthProvider */}
                                   <Route path="daily" element={<Daily />} />
-                                  
+
                                   {CategoryRoutes()}
                                   {ContentRoutes()}
                                   {AuthRoutes()}
                                   {MiscRoutes()}
                                   <Route path="mall" element={<MallPage />} />
                                 </Route>
+
                               </Routes>
                               <Toasters />
                             </div>
+
                           </HeaderFilterProvider>
                         </ScreenOverlayProvider>
                       </AuthOverlayProvider>
-                    </AuthProvider>
-                  </HomepageProvider>
-                </RedirectAuthProvider>
-              </Router>
+                    </HomepageProvider>
+                  </RedirectAuthProvider>
+                </Router>
+              </AuthProvider>
+
             </RouteCacheProvider>
           </CurrencyProvider>
         </TooltipProvider>
