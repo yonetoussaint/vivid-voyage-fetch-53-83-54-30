@@ -1,4 +1,4 @@
-// Rename this file to Daily.jsx or Daily.tsx
+// Daily.jsx or Daily.tsx
 
 import { useState, useEffect } from 'react';
 import { CalendarTab } from '@/components/easy/CalendarTab';
@@ -7,16 +7,12 @@ import { MoneyTab } from '@/components/easy/MoneyTab';
 import { TaskDetailScreen } from '@/components/easy/TaskDetailScreen';
 import { registerOpenDetail } from '@/components/easy/EventCard';
 import SystemeStationService from '@/pages/EasyPlus';
-
-// Wrap with necessary providers if this component needs auth
-import { AuthProvider } from '@/hooks/useAuth';
-import { AuthOverlayProvider } from '@/context/AuthOverlayContext';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/utils/queryClient';
+import { useAuth } from '@/hooks/useAuth'; // Import useAuth
 
 export default function Daily() {
   const [activeTab, setActiveTab] = useState("calendar");
   const [detailCtx, setDetailCtx] = useState(null);
+  const { user, isAuthenticated } = useAuth(); // Now this will work
 
   useEffect(() => {
     registerOpenDetail((ctx) => setDetailCtx(ctx));
@@ -72,8 +68,7 @@ export default function Daily() {
     },
   ];
 
-  // Wrap the component content with necessary providers
-  const ComponentContent = () => (
+  return (
     <>
       <style jsx global>{`
         html, body {
@@ -189,17 +184,5 @@ export default function Daily() {
         </div>
       </div>
     </>
-  );
-
-  // If the component needs auth, wrap it with providers
-  // Otherwise, just return the content directly
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AuthOverlayProvider>
-          <ComponentContent />
-        </AuthOverlayProvider>
-      </AuthProvider>
-    </QueryClientProvider>
   );
 }
