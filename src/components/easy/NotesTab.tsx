@@ -1,9 +1,9 @@
+// components/easy/NotesTab.jsx
 import { useState, useRef, useCallback } from 'react';
 import { TYPE_META, NOTE_TYPE_STYLE } from '@/data/typeMeta';
 import { FIELDS } from '@/data/fieldsData';
 import { DocScreen } from '@/components/easy/DocScreen';
 import { ProjectScreen } from '@/components/easy/ProjectScreen';
-import { useAuth } from '@/hooks/useAuth';
 
 // ── NoteFormModal ─────────────────────────────────────────────────────────────
 const NOTE_TYPES = ["note","article","doc","journal","draft","project"];
@@ -241,9 +241,14 @@ function useDebounce(fn, delay) {
 }
 
 // ── NotesTab ──────────────────────────────────────────────────────────────────
-export function NotesTab() {
-  const { notes: dbNotes, notesLoading: loading, notesError: error, addNote, updateNote, deleteNote } = useAuth();
-
+export function NotesTab({ 
+  notes: dbNotes = [], 
+  notesLoading: loading = false, 
+  notesError: error = null, 
+  addNote, 
+  updateNote, 
+  deleteNote 
+}) {
   const [activeField, setActiveField] = useState("all");
   const [openNote,    setOpenNote]    = useState(null);
   const [search,      setSearch]      = useState("");
