@@ -1,5 +1,4 @@
-// Daily.jsx or Daily.tsx
-
+// pages/Daily.jsx
 import { useState, useEffect } from 'react';
 import { CalendarTab } from '@/components/easy/CalendarTab';
 import { NotesTab } from '@/components/easy/NotesTab';
@@ -7,12 +6,14 @@ import { MoneyTab } from '@/components/easy/MoneyTab';
 import { TaskDetailScreen } from '@/components/easy/TaskDetailScreen';
 import { registerOpenDetail } from '@/components/easy/EventCard';
 import SystemeStationService from '@/pages/EasyPlus';
-import { useAuth } from '@/hooks/useAuth'; // Import useAuth
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Daily() {
   const [activeTab, setActiveTab] = useState("calendar");
   const [detailCtx, setDetailCtx] = useState(null);
-  const { user, isAuthenticated } = useAuth(); // Now this will work
+  
+  // Get auth state at the Daily level
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     registerOpenDetail((ctx) => setDetailCtx(ctx));
@@ -121,6 +122,11 @@ export default function Daily() {
 
       <div className="app-outer">
         <div className="app-shell">
+          {/* Optional: Show auth status for debugging */}
+          <div style={{ position: 'absolute', top: 0, right: 0, fontSize: 10, color: '#333', padding: 4 }}>
+            {isLoading ? 'Loading...' : (isAuthenticated ? `✓ ${user?.email}` : '✗ Not logged in')}
+          </div>
+
           <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
             {activeTab === "notes"    && <NotesTab />}
             {activeTab === "calendar" && <CalendarTab />}
