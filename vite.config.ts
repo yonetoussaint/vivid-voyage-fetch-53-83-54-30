@@ -11,6 +11,10 @@ export default defineConfig(({ mode }) => ({
     host: "0.0.0.0",
     port: 5000,
     allowedHosts: true,
+    headers: {
+      // Add proper MIME types for .mjs files
+      "Content-Type": "application/javascript",
+    },
   },
   plugins: [
     react(),
@@ -57,10 +61,6 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "onnxruntime-web": path.resolve(
-        __dirname,
-        "node_modules/onnxruntime-web"
-      ),
     },
   },
   build: {
@@ -86,7 +86,7 @@ export default defineConfig(({ mode }) => ({
     global: "globalThis",
   },
   optimizeDeps: {
-    exclude: ["@xenova/transformers", "onnxruntime-web"],
+    include: ["onnxruntime-web"], // CHANGE: Include instead of exclude
     esbuildOptions: {
       target: "es2020",
     },
