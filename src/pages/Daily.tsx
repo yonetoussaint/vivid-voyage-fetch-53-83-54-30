@@ -1,13 +1,20 @@
+// Rename this file to Daily.jsx or Daily.tsx
+
 import { useState, useEffect } from 'react';
 import { CalendarTab } from '@/components/easy/CalendarTab';
 import { NotesTab } from '@/components/easy/NotesTab';
 import { MoneyTab } from '@/components/easy/MoneyTab';
 import { TaskDetailScreen } from '@/components/easy/TaskDetailScreen';
 import { registerOpenDetail } from '@/components/easy/EventCard';
-// Import the main component from your EasyPlus page
-import SystemeStationService from '@/pages/EasyPlus'; // Assuming the path is correct
+import SystemeStationService from '@/pages/EasyPlus';
 
-export default function SamsungCalendar() {
+// Wrap with necessary providers if this component needs auth
+import { AuthProvider } from '@/hooks/useAuth';
+import { AuthOverlayProvider } from '@/context/AuthOverlayContext';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/utils/queryClient';
+
+export default function Daily() {
   const [activeTab, setActiveTab] = useState("calendar");
   const [detailCtx, setDetailCtx] = useState(null);
 
@@ -52,12 +59,10 @@ export default function SamsungCalendar() {
         </svg>
       ),
     },
-    // --- New EasyPlus Tab ---
     {
       id: "easyplus",
       label: "EasyPlus",
       icon: (active) => (
-        // Using a simple plus icon for EasyPlus; you can replace it.
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#34A853":"#555"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <line x1="12" y1="8" x2="12" y2="16"/>
@@ -67,7 +72,8 @@ export default function SamsungCalendar() {
     },
   ];
 
-  return (
+  // Wrap the component content with necessary providers
+  const ComponentContent = () => (
     <>
       <style jsx global>{`
         html, body {
@@ -79,10 +85,14 @@ export default function SamsungCalendar() {
           font-family: 'Roboto', sans-serif;
         }
 
-        /* On real mobile: fill the whole screen */
+        .app-outer {
+          width: 100%;
+          height: 100%;
+        }
+
         .app-shell {
           width: 100vw;
-          height: 100dvh; /* dynamic viewport height handles mobile browser chrome */
+          height: 100dvh;
           background: #000;
           overflow: hidden;
           position: relative;
@@ -91,7 +101,6 @@ export default function SamsungCalendar() {
           color: #fff;
         }
 
-        /* On desktop (wider than 480px): show the phone-frame look */
         @media (min-width: 480px) {
           .app-outer {
             display: flex;
@@ -117,23 +126,19 @@ export default function SamsungCalendar() {
 
       <div className="app-outer">
         <div className="app-shell">
-
-          {/* Scrollable content area */}
           <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
             {activeTab === "notes"    && <NotesTab />}
             {activeTab === "calendar" && <CalendarTab />}
             {activeTab === "money"    && <MoneyTab />}
-            {/* Render the imported EasyPlus component */}
             {activeTab === "easyplus" && <SystemeStationService />}
           </div>
 
-          {/* Bottom navigation */}
           <div style={{
             display: "flex",
             flexShrink: 0,
             borderTop: "1px solid #111",
             background: "#000",
-            paddingBottom: "env(safe-area-inset-bottom, 8px)", // handles iPhone notch/home indicator
+            paddingBottom: "env(safe-area-inset-bottom, 8px)",
           }}>
             {TABS.map(tab => {
               const active = activeTab === tab.id;
@@ -151,7 +156,7 @@ export default function SamsungCalendar() {
                     padding: "10px 0 6px",
                     cursor: "pointer",
                     userSelect: "none",
-                    WebkitTapHighlightColor: "transparent", // removes tap flash on mobile
+                    WebkitTapHighlightColor: "transparent",
                   }}
                 >
                   {tab.icon(active)}
@@ -181,9 +186,20 @@ export default function SamsungCalendar() {
               bump={() => detailCtx.bump && detailCtx.bump()}
             />
           )}
-
         </div>
       </div>
     </>
+  );
+
+  // If the component needs auth, wrap it with providers
+  // Otherwise, just return the content directly
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AuthOverlayProvider>
+          <ComponentContent />
+        </AuthOverlayProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
